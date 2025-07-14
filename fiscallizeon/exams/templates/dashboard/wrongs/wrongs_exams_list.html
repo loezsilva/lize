@@ -1,0 +1,509 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load cleaned_params %}
+{% load exclude_especific_params %}
+
+{% block title %}Listagem de erratas - Lize{% endblock title %}
+
+{% block css-additional %}
+
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+
+<link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+
+<style>
+  .select2-selection__choice__remove{
+    display: none !important;
+  }
+  .alternative p {
+    margin-bottom: 5px;
+  }
+</style>
+
+{% endblock %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">ERRATAS</a></li>
+          <li class="breadcrumb-item active" aria-current="page">LISTAGEM</li>
+        </ol>
+      </nav> 
+      <h4>Erratas solicitadas 
+        {% if exam %}
+          do caderno: {{ exam.name }}
+        {% endif %}
+      </h4>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1rem; justify-content: space-between;">
+      <!-- Empty -->
+    </div>
+    <div>
+      <h4>Erratas solicitadas 
+        {% if exam %}
+          do caderno: {{ exam.name }}
+        {% endif %}
+      </h4>
+    </div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+              
+              <div>
+                <h6 class="mg-b-5">Erratas</h6> 
+                <p class="tx-13 tx-color-03 mg-b-5">Gerencie todas as erratas solicitadas na listadas abaixo</p>
+              </div>
+              
+              <div class="float-right text-right">
+
+                <button data-toggle-off-canvas="#right-off-canvas"
+                  class="btn btn-sm btn-info btn-icon rounded-pill off-canvas-menu  mb-2">
+                  <i class="fas fa-search"></i> Filtrar listagem 
+                  
+                  {% if count_filters > 0 %}
+                  <span class="badge badge-danger">{{count_filters}} Aplicado(s)</span>
+                  {% endif %}
+
+                </button>
+                {% if count_filters > 0 %}
+                <a href="{% url 'exams:wrongs_list' %}{% if exam %}?exam={{exam.pk}}{%endif%}"
+                  class="btn btn-sm btn-info btn-icon rounded-pill mb-2">
+                  <i class="fas fa-eraser"></i> Apagar filtro(s)
+                </a>
+                {% endif %}
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-dashboard mg-b-1">
+                <thead>
+                  <tr>
+                    <th>Aluno</th>
+                    {% if '0' in status %}
+                      <th>Aguardando Revisão</th>
+                    {% endif %}
+                    {% if '1' in status %}
+                      <th>Aprovada</th>
+                    {% endif %}
+                    {% if '2' in status %}
+                      <th>Reprovada</th>
+                    {% endif %}
+                    {% if '3' in status %}
+                      <th>Reaberta</th>
+                    {% endif %}
+                    <th class="text-wrap"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for student in student_list %}
+                    <tr>
+                      <td class="tx-medium">
+                        {{student.name}}
+                      </td>
+                      {% if '0' in status %}
+                        <td class="">
+                          <span class="badge badge-warning">
+                            {{student.opened_wrongs}} Aguardando
+                          </span>
+                        </td>
+                      {% endif %}
+                      {% if '1' in status %}
+                        <td class="">
+                          <span class="badge badge-primary">
+                            {{student.opened_accepteds}} Aceitas
+                          </span>
+                        </td>
+                      {% endif %}
+                      {% if '2' in status %}
+                        <td class="">
+                          <span class="badge badge-primary">
+                            {{student.opened_refuseds}} Reprovadas
+                          </span>
+                        </td>
+                      {% endif %}
+                      {% if '3' in status %}
+                        <td class="">
+                          <span class="badge badge-primary">
+                            {{student.opened_reopeneds}} Reabertas
+                          </span>
+                        </td>
+                      {% endif %}
+                      <td class="text-wrap">
+                          <div class="d-flex justify-content-end">
+                            <div class="dropdown mr-2">
+                              <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButtonConfig"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-cog"></i> Opções
+                              </button>
+                              <div class="dropdown-menu" aria-labelledby="dropdownMenuButtonConfig">
+                                {% if user_type == 'coordination' or user_type == 'teacher' %}
+                                  <a href="{% url 'exams:wrongs_student_detail' student.id %}?{{request|exclude_especific_params:'student'}}" class="dropdown-item nav-link"><i class="fas fa-edit"></i> 
+                                    Ver solicitações
+                                  </a>                      
+                                {% endif %}
+                              </div>
+                            </div>
+                          </div>
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="4">Não há erratas cadastradas</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+        </div>
+        {% include 'includes/pagination.html' with objects=student_list %}
+    </div>    
+</div>
+</div>
+{% endblock content-fixed %}
+
+
+{% block off-canvas %}
+  <div id="right-off-canvas" class="off-canvas off-canvas-right wd-400 bg-white"
+    style="overflow-y: auto; overflow-x: hidden;">
+    <form action="" method="GET">
+    <div class="row p-3">
+      <div class="col-12">
+        <h5>Filtrar erratas</h5>
+        <p>Selecione os filtros que você deseja aplicar na listagem abaixo</p>
+        <hr/>
+      </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="id_student_name" class="mb-1">Nome do aluno</label>
+            <input type="text" value="{{student_name}}" id="id_student_name" name="student_name" class="form-control" placeholder="Digite o nome do aluno">
+          </div>
+        </div>
+
+        
+        {% if not exam %}
+          <div class="col-12">
+            <div class="form-group mb-3">
+              <label for="id_exam_name" class="mb-1">Nome do exame</label>
+              <input type="text" value="{{exam_name}}" id="id_exam_name" name="exam_name" class="form-control" placeholder="Digite o nome da prova">
+            </div>
+          </div>
+        {% endif %}
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="id_status" class="mb-1">Status da solicitação</label>
+            <select name="status" id="id_status" class="form-control" multiple="multiple">
+              <option value="0" {% if '0' in status %}selected="selected"{% endif %}>Aguardando Revisão</option>
+              <option value="1" {% if '1' in status %}selected="selected"{% endif %}>Aprovada</option>
+              <option value="2" {% if '2' in status %}selected="selected"{% endif %}>Reprovada</option>
+              <option value="3" {% if '3' in status %}selected="selected"{% endif %}>Reaberta</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-12 mt-5">
+          <button type="submit" class="btn btn-primary btn-block">
+            <i class="fas fa-search"></i>
+            Aplicar filtro
+          </button>
+        </div>
+
+      </div>
+      <input type="hidden" name="exam" value="{{exam.pk}}">
+    </form>
+  </div>
+{% endblock %}
+
+
+{% block extra-modal %}
+
+{% comment %}
+  {% include 'includes/confirm_modal.html' %}
+{% endcomment %}
+
+<div class="modal fade" id="modalWrongDetailAndUpdate" tabindex="-1" aria-labelledby="modalWrongDetailAndUpdateLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+        <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </a>
+        <div class="media align-items-center">
+          <span class="tx-color-03 d-none d-sm-block">
+            <div class="media-body mg-sm-l-20">
+            <h4 class="tx-18 tx-sm-20 mg-b-2">Revisão de errata</h4>
+            <p class="tx-13 tx-color-03 mg-b-0"></p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-body pd-sm-t-30 pd-sm-b-40 pd-sm-x-30" v-if="selectedWrong">
+        <div class="form-group">
+          <label class="tx-10 tx-uppercase tx-medium tx-color-03">Anotação do aluno</label>
+          <p v-html="selectedWrong.student_description"></p>
+          <template v-if="selectedAnswer.arquivo">
+            <a :href="selectedAnswer.arquivo" target="_blank" class="tx-10 tx-uppercase tx-medium tx-primary">Clique aqui para visualizar a resposta do aluno</a>
+          </template>
+          <br>
+          <a href="javascript:void(0)" data-toggle="modal" data-target="#modalQuestionDetail" class="tx-10 tx-uppercase tx-medium tx-primary">Clique aqui para visualizar informações da questão</a>
+        </div>
+        <div class="row row-sm">
+          <div class="col-sm">
+            <label class="tx-10 tx-uppercase tx-medium tx-spacing-1 mb-0 tx-color-02">Sua anotação</label>
+            <br>
+            <small>Esta anotação será mostrada ao aluno</small>
+            <textarea id="response" class="form-control" v-model="selectedWrong.response" placeholder="Digite um motivo que justifica a sua ação" rows="5"></textarea>
+          </div>
+        </div>
+        
+        <div class="row row-sm">
+          <div class="col-6" v-if="!selectedAnswer.question_option">
+            <label class="tx-10 tx-uppercase tx-medium tx-spacing-1 mg-b-5 tx-color-02">Informações do aluno</label>
+            <h6>Nota atual: ${selectedAnswer.teacher_grade}</h6>
+          </div>
+          <div class="col-6">
+            <label class="tx-10 tx-uppercase tx-medium tx-spacing-1 mg-b-5 tx-color-02">Informações da questão</label>
+            <h6>Peso: ${selectedWrong.exam_question.weight}</h6>
+          </div>
+        </div>
+
+        <div class="row row-sm">
+          <div class="col-4" v-if="!selectedAnswer.question_option">
+            <label class="tx-10 tx-uppercase tx-medium tx-spacing-1 mg-b-5 tx-color-02">Alterar Nota</label>
+            <input type="number" class="form-control" step="any" v-model="selectedAnswer.teacher_grade" placeholder="Digite a nova nota">
+          </div>
+          <div class="col-4">
+            <label class="tx-10 tx-uppercase tx-medium tx-spacing-1 mg-b-5 tx-color-02">Status da Solicitação</label>
+            <select class="form-control" v-model="selectedWrong.status">
+              <option value="0">Aguardando Revisão</option>
+              <option value="1">Aprovada</option>
+              <option value="2">Reprovada</option>
+              <option value="3">Reaberta</option>
+            </select>
+          </div>
+        </div>
+        <div class="row row-sm">
+          <div class="col-sm">
+            <button class="btn btn-primary" :disabled="!selectedWrong.response || selectedWrong.response && selectedWrong.response.length == 0" @click="verifications('put', selectedWrong.id)">Finalizar Análise de Errata</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="modalQuestionDetail" tabindex="-1" aria-labelledby="modalQuestionDetailLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+        <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </a>
+        <div class="media align-items-center">
+          <span class="tx-color-03 d-none d-sm-block">
+            <div class="media-body mg-sm-l-20">
+            <h4 class="tx-18 tx-sm-20 mg-b-2">Detalhes da questão</h4>
+            <p class="tx-13 tx-color-03 mg-b-0"></p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-body pd-sm-t-30 pd-sm-b-40 pd-sm-x-30" v-if="selectedWrong.exam_question">
+        <div class="row">
+          <div class="col-12">
+            <div v-html="selectedWrong.exam_question.question.enunciation"></div>
+          </div>
+          <template v-if="selectedAnswer.content">
+            <div class="col-12">
+              <p class="m-0 pt-3 tx-bold">Resposta do aluno:</p>
+              <div v-html="selectedAnswer.content"></div>
+            </div>
+          </template>
+          <template v-if="selectedWrong.exam_question.question">
+            <div class="col-12">
+              <table class="table table-striped">
+                <tbody>
+                  <tr v-for="(alternative, index) in selectedWrong.exam_question.question.alternatives">
+                    <td v-html="alternative.text" class="alternative align-middle" v-bind:class="alternative.is_correct ? 'text-success': selectedAnswer.question_option == alternative.id && !selectedAnswer.is_correct ? 'tx-danger':''"></td>
+                    <td class="align-middle">
+                      <span v-if="selectedAnswer.question_option == alternative.id" class="badge badge-primary">Selecionada</span></td>
+                    <td class="align-middle">
+                      <template v-if="alternative.is_correct">
+                        <span class="badge badge-danger" @click="changeAlternative(alternative, false, index)" style="cursor: pointer;">Desmarcar gabarito</span>
+                      </template>
+                      <template v-else>
+                        <span class="badge badge-primary" @click="changeAlternative(alternative, true, index)" style="cursor: pointer;">Marcar como correta</span>
+                      </template>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock extra-modal %}
+
+{% block js-additional %}
+
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+<script>
+  moment.locale('pt-br');
+  var app = new Vue({
+    el: '#app',
+    delimiters: ['${', '}'],
+    data: {
+      selectedWrong: '',
+      selectedQuestion: '',
+      urls: {
+        wrongRetrieveUpdate: "{% url 'exams:student_correccion_contestation_retrieve_update' pk='00000000-0000-0000-0000-000000000000' %}",
+        wrongChangeOptionAnswer: "{% url 'exams:wrongs_change_option_answer' pk='00000000-0000-0000-0000-000000000000' %}",
+      },
+      selectedAnswer: '',
+      saving: false,
+    },
+    methods: {
+      getUrl(url, id) {
+        return url.replace('00000000-0000-0000-0000-000000000000', id)
+      },
+      wrongRetrieveUpdate(method="get", wrong_id, student = '') {
+        if(method == "get") {
+          axios.get(this.getUrl(this.urls.wrongRetrieveUpdate, wrong_id)+ `?student=${student}`).then((response) => {
+            this.selectedWrong = response.data
+            this.getStudentResponse(response.data.student)
+          })
+        } else {
+          this.saving = true
+          if(this.selectedAnswer.teacher_grade) {
+            this.selectedWrong['selected_answer'] = this.selectedAnswer
+          }
+          axios.put(this.getUrl(this.urls.wrongRetrieveUpdate, wrong_id), this.selectedWrong).then((response) => {
+            this.selectedWrong = response.data
+            Swal.fire({
+              title: 'Sucesso',
+              text: 'Ação realizada com sucesso',
+              icon: 'success',
+              showConfirmButton: false,
+              timer: 1500,
+            })
+            setTimeout(() => {
+              window.location.reload()
+            }, 1500)
+          }).catch((e) => {
+            Swal.fire({
+              title: 'Erro',
+              text: 'Ocorreu um erro ao realizar a ação',
+              icon: 'error',
+              showConfirmButton: false,
+              timer: 1000,
+            })
+            this.saving = false
+          })
+        }
+      },
+      verifications(method, wrong_id) {
+        if(this.selectedAnswer.teacher_grade > this.selectedWrong.exam_question.weight) {
+          Swal.fire({
+            title: 'Informação',
+            html: `A nota não pode ser maior que o peso da questão, certifique-se de usar um valor menor ou igual a <strong>${this.selectedWrong.exam_question.weight}</strong>`,
+            icon: 'info',
+            showConfirmButton: true,
+            confirmButtonText: 'Entendi!',
+          })
+        } else {
+          this.wrongRetrieveUpdate(method, wrong_id)
+        }
+      },
+      getStudentResponse(student_id) {
+        this.selectedAnswer = this.selectedWrong.exam_question.answers.find((student) => student_id == student.student_application.student_id)
+      },
+      changeAlternative(alternative, value, index) {
+        let alternatives = 'ABCDEFG'
+        let text = `Você confirma esta ação? você escolheu marcar a alternativa <strong>${alternatives[index]}</strong> como `
+        if(value) {
+          text += '<strong>correta</strong>'
+        } else {
+          text += '<strong>incorreta</strong>'
+        }
+        Swal.fire({
+          title: 'Confirmação',
+          html: text,
+          icon: 'info',
+          confirmButtonText: 'Sim, confirmo',
+          cancelButtonText: 'Não',
+          showCancelButton: true
+        }).then((result) => {
+          if(result.isConfirmed) {
+            axios.put(this.getUrl(this.urls.wrongChangeOptionAnswer, this.selectedAnswer.question_option), { is_correct: value }).then((response) => {
+              Swal.fire({
+                title: 'Sucesso',
+                text: 'Ação realizada com sucesso',
+                icon: 'success',
+                showConfirmButton: false,
+                timer: 1500,
+              })
+              alternative.is_correct = value
+            }).catch((e) => {
+              Swal.fire({
+                title: 'Erro',
+                text: 'Ocorreu um erro ao realizar a ação',
+                icon: 'error',
+                showConfirmButton: false,
+                timer: 1000,
+              })
+              this.saving = false
+            })
+          }
+        })
+      }
+    },
+    mounted() {
+      $('.off-canvas-menu').on('click', function (e) {
+        e.preventDefault();
+        var target = $(this).attr('data-toggle-off-canvas');
+        $(target).addClass('show');
+      });
+  
+      $('.off-canvas .close').on('click', function (e) {
+        e.preventDefault();
+        $(this).closest('.off-canvas').removeClass('show');
+      })
+  
+      $(document).on('click touchstart', function (e) {
+        if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+          return
+        }
+        e.stopPropagation();
+  
+        if (!$(e.target).closest('.off-canvas-menu').length) {
+          var offCanvas = $(e.target).closest('.off-canvas').length;
+          if (!offCanvas) {
+            $('.off-canvas.show').removeClass('show');
+          }
+        }
+      });
+      $('#id_status').select2({
+        placeholder: "Selecione uma opção",
+        closeOnSelect: false
+      });
+    }
+  }) 
+</script>
+{% endblock %}

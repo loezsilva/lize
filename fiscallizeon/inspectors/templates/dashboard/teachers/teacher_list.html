@@ -1,0 +1,351 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load permissions %}
+{% load filter_inspector_subjects %}
+
+{% block css-additional %}
+
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+
+<link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+
+<style>
+  .select2-selection__choice__remove{
+    display: none !important;
+  }
+</style>
+{% endblock %}
+
+{% block title %}Listagem de professores - Lize{% endblock title %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">PROFESSORES</a></li>
+          <li class="breadcrumb-item active" aria-current="page">LISTAGEM</li>
+        </ol>
+      </nav> 
+      <h4>Seus Professores</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <a href="{% url 'inspectors:import_teachers' %}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+            <i data-feather="plus" class="wd-10 mg-r-5"></i> Importar professor
+        </a>
+        <a href="{% url 'inspectors:teachers_create' %}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+            <i data-feather="plus" class="wd-10 mg-r-5"></i> Cadastrar Professor
+        </a>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1rem; justify-content: space-between;">
+      <div style="flex: 1;">
+        <form method="GET">
+          <div class="form-group row m-0 d-flex align-items-center">
+            <div class="col-9 col-xl-9 px-0">
+              <input class="form-control form-control-sm" type="text" name="q_name" value="{{q_name}}" placeholder="Busque pelo nome ou email do professor">
+            </div>
+            <div class="col-3 col-xl-2">
+            <button class="btn btn-primary btn-sm d-flex align-items-center" type="submit">
+                <i class="fas fa-search"></i>
+              <span class="tw-ml-2 d-none d-lg-inline d-xl-inline">Filtrar</span>
+            </button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="flex justify-between">
+        {% if user|has_perm:'inspectors.can_export_teacher' %}
+          <a href="{% url 'inspectors:export_teachers_csv' %}?{{request.GET.urlencode}}" onclick="generateCSVFile(this.href)" class="btn btn-sm pd-x-15 btn-secondary btn-uppercase" title="Exporte professores filtrados">
+            <i data-feather="download-cloud"></i> Exportar Professores
+          </a>
+        {% endif %}
+        {% if user|has_perm:'inspectors.add_teacher' %}
+          <a href="{% url 'inspectors:teachers_create' %}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+            <i data-feather="plus" class="wd-10 mg-r-5"></i> Cadastrar Professor
+          </a>
+        {% endif %}
+      </div>      
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+              <div>
+                <h6 class="mg-b-5">Professores</h6>
+                <p class="tx-13 tx-color-03 mg-b-5">Gerencie todos os seus professores listadas abaixo</p>
+              </div>
+              <div class="float-right text-right">
+                <button data-toggle-off-canvas="#right-off-canvas"
+                    class="btn btn-sm btn-info btn-icon rounded-pill off-canvas-menu  mb-2">
+                    <i class="fas fa-search"></i> Filtrar listagem 
+                    
+                    {% if count_filters > 0 %}
+                    <span class="badge badge-danger">{{count_filters}} Aplicado(s)</span>
+                    {% endif %}
+
+                  </button>
+                  {% if count_filters > 0 %}
+                  <a href="{% url 'inspectors:teachers_list' %}" class="btn btn-sm btn-info btn-icon rounded-pill mb-2">
+                    <i class="fas fa-eraser"></i> Apagar filtro(s)
+                  </a>
+                  {% endif %}
+              </div>
+            </div>
+            
+            <div class="table-responsive" style="overflow: inherit !important;">
+              <table class="table table-dashboard mg-b-1">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Disciplinas</th>
+                    <th class="text-wrap text-right"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for inspector in object_list %}
+                  <tr>
+                    <td class="tx-medium">{{inspector.name}}</td>
+                    <td>{{inspector.email}}</td>
+                    <td>
+                      {% for subject in inspector|filter_inspector_subjects %}
+                        <span class="badge badge-secondary">{{subject.name}}</span>
+                      {% endfor %}
+                    </td>
+                    <td class="text-wrap">
+                      <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton"
+                          data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                          Opções
+                        </button>
+                        <div class="dropdown-menu" style="position: relative !important;" aria-labelledby="dropdownMenuButton">
+                          
+                          {% if user|has_perm:'inspectors.change_teacher' %}
+                            <a href="{% url 'inspectors:teachers_update' inspector.pk %}" class="nav-link d-none d-sm-block" data-toggle="tooltip" data-placement="top" title="Editar Professor">
+                              <i class="fas fa-edit"></i> Editar
+                            </a>
+                          {% endif %}
+                          
+                          {% if user|has_perm:'accounts.can_change_permissions' %}
+                            {% if inspector.user %}
+                              <a href="{% url 'accounts:user_permissions' inspector.user.pk %}" class="nav-link d-none d-sm-block" data-toggle="tooltip" data-placement="top" title="Alter permissões">
+                                <i class="fas fa-user-lock"></i> Permissões
+                              </a>
+                            {% endif %}
+                          {% endif %}
+                          
+                          {% if user|has_perm:'inspectors.delete_teacher' %}
+                            <a href="javascript:void(0)" class="nav-link d-none d-sm-block" data-toggle="tooltip" data-placement="top" title="Remover Professor" onClick="confirmCancel('{% url "inspectors:teachers_delete" inspector.pk %}')" data-toggle="tooltip" data-placement="top" title="Deletar">
+                              <i class="fas fa-trash"></i> Deletar
+                            </a>
+                          {% endif %}
+
+                          <input type="hidden" id="teacherEmail-{{ inspector.pk }}" name="teacherEmail-{{ inspector.pk }}" value="{{ inspector.email }}" />
+                          
+                          {% if user|has_perm:'inspectors.can_reset_password' %}
+                            <a href="javascript:void(0)" onClick="reset('{% url 'inspectors:teachers_password_reset' inspector.pk %}?{% if params %}{{params}}{% endif %}', '{{inspector.email}}')" class="nav-link d-none d-sm-block" data-toggle="tooltip" data-placement="top" title="Resetar senha do professor">
+                              <i class="fas fa-key"></i> Resetar Senha
+                            </a>
+                          {% endif %}
+
+                          {% if user|has_perm:'accounts.can_use_hijack' %}
+                            <form action="{% url 'core:hijack-login-user' %}" method="POST" class="tw-flex tw-items-center ">
+                              {% csrf_token %}
+                              {% if inspector.user %}
+                                <input type="hidden" name="user_pk" value="{{ inspector.user.pk }}">
+                              {% endif %}
+                              <input type="hidden" name="next" value="{{ request.path }}">
+                              <button type="submit" class="dropdown-item nav-link" data-toggle="tooltip" data-placement="top" title="Entrar com o professor">
+                                <i class="fas fa-sign-in-alt"></i> Logar com o professor
+                              </button>
+                            </form>
+                          {% endif %}
+                            
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="4">
+                      Não há Professores cadastrados até o momento.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+        </div>
+          {% include 'includes/pagination.html' with objects=object_list %}
+    </div>  
+  </div>
+</div>
+{% endblock content-fixed %}
+
+{% block off-canvas %}
+
+  <div id="right-off-canvas" class="off-canvas off-canvas-right wd-400 bg-white"
+    style="overflow-y: auto; overflow-x: hidden;">
+    <form action="" method="GET">
+    <div class="row p-3">
+      <div class="col-12">
+        <h5>Filtrar Professores</h5>
+        <p>Adicione abaixo os filtros que deseja aplicar na listagem de professores</p>
+        <hr/>
+      </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="application_name_id" class="mb-1">Nome do professor</label>
+            <input type="text" value="{{q_name}}" id="application_name_id" name="q_name" class="form-control" placeholder="Digite o nome do professor">
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="name_id" class="mb-1">Disciplina</label>
+            <input type="text" value="{{q_subject}}" id="name_id" name="q_subject" class="form-control" placeholder="Digite uma disciplina">
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="classe_id" class="mb-1">Segmento</label>
+            <select name="q_levels" id="classe_id" class="form-control" multiple="multiple">
+              {% for level in levels %}
+              <option value="{{level.pk}}" {% if level.pk|stringformat:'s' in q_levels %}selected="selected"
+                {% endif %}>
+                {{ level }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="col-12 mt-5">
+          <button type="submit" class="btn btn-primary btn-block">
+            <i class="fas fa-search"></i>
+            Aplicar filtro
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+{% endblock %}
+
+{% block extra-modal %}
+  {% include 'includes/confirm_modal.html' %}
+{% endblock extra-modal %}
+
+{% block js-additional %}
+
+  <script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+  <script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+  <script>
+
+  
+  $('#classe_id').select2({
+    placeholder: "Selecione uma opção",
+  });
+
+  $('.table-responsive').on('show.bs.dropdown', function () {
+    $('.table-responsive').css( "overflow", "inherit" );
+  });
+  
+  $('.table-responsive').on('hide.bs.dropdown', function () {
+    $('.table-responsive').css( "overflow", "auto" );
+  })
+
+
+  $(function () {
+    'use strict'
+
+    $('.off-canvas-menu').on('click', function (e) {
+      e.preventDefault();
+      var target = $(this).attr('data-toggle-off-canvas');
+      $(target).addClass('show');
+    });
+
+    $('.off-canvas .close').on('click', function (e) {
+      e.preventDefault();
+      $(this).closest('.off-canvas').removeClass('show');
+    })
+
+    $(document).on('click touchstart', function (e) {
+      e.stopPropagation();
+
+      if (!$(e.target).closest('.off-canvas-menu').length) {
+        var offCanvas = $(e.target).closest('.off-canvas').length;
+        if (!offCanvas) {
+          $('.off-canvas.show').removeClass('show');
+        }
+      }
+    });
+
+    const url = new URL(window.location.href)
+    const resetPassword = url.searchParams.get('reset_password')
+    if (resetPassword) {
+      const urlResetPassword = "{% url 'inspectors:teachers_password_reset' pk='00000000-0000-0000-0000-000000000000' %}"
+      const url = urlResetPassword.replace('00000000-0000-0000-0000-000000000000', resetPassword)
+      const email = document.getElementById(`teacherEmail-${resetPassword}`).value
+      reset(`${url}?{% if params %}{{ params }}{% endif %}`, email)
+    }
+  });
+    function reset(url, email) {
+      Swal.fire({
+        title: 'Informação importante!',
+        html: `Você resetará o acesso do professor para os seguintes dados <br /> <br />
+              <strong>Usuário:</strong> ${email} <br /><strong>Senha:</strong> ${email}`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Ok, Resetar!'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.location.href = url
+          }
+      })
+    };
+
+    function generateCSVFile(link) {
+      Swal.fire({
+        title: "Gerando Exportação dos Dados",
+        html: "Estamos gerando o arquivo CSV com a lista de Professores, aguarde um momento.",
+        timerProgressBar: true,
+        showConfirmButton: false
+      });
+      swal.showLoading();
+
+      var xhr = new XMLHttpRequest();
+      xhr.open('HEAD',link, true);
+      xhr.onreadystatechange = function() {
+          if (xhr.readyState === 4) {
+              Swal.close(); 
+              if (xhr.status === 200) {
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Download Concluído!',
+                  text: 'Seu arquivo CSV foi gerado com sucesso.',
+                });
+              } else {
+                Swal.fire({
+                  icon: 'erro',
+                  title: 'Falha ao realizar Download!',
+                  text: 'Ocorreu um erro ao gerar sua exportação, por favor, tente novamente.',
+                });
+              }
+          }
+      };
+      xhr.send();
+    }
+  </script>
+{% endblock js-additional %}

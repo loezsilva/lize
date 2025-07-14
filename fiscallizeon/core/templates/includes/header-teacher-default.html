@@ -1,0 +1,333 @@
+{% load cache %}
+{% load static %}
+{% load get_exemteacher_count %}
+
+{% block css-additional %}
+  <style>
+    .menu {
+      left: -300px;
+    }
+    .menu::after {
+      display: block;
+      left: 300px;
+    }
+  </style>
+{% endblock css-additional %}
+
+{% if not is_popup %}
+
+  <header
+    class="navbar navbar-header navbar-header-fixed"
+    style="z-index: 6; background-color: #009ede"
+  >
+    <a href="" id="mainMenuOpen" class="burger-menu">
+      <i data-feather="menu"></i>
+    </a>
+    <div class="navbar-brand">
+      <a href="{% url 'core:redirect_dashboard' %}" class="df-logo">
+        <img
+          src="{% static 'symbol.svg' %}"
+          alt=""
+          style="max-width: 150px"
+        />
+      </a>
+    </div>
+    {% cache 600 navbar request.user.pk %}
+      <div id="navbarMenu" class="navbar-menu-wrapper">
+        <div class="navbar-menu-header">
+          <a href="" class="df-logo">
+            <img
+              src="{% static 'fiscallize-remote-logo.png' %}"
+              alt=""
+              style="max-width: 150px"
+            />
+          </a>
+          <a id="mainMenuClose" href=""><i data-feather="x"></i></a>
+        </div>
+        <ul class="nav navbar-menu" style="max-width: 900px;">
+          <li class="nav-label pd-l-20 pd-lg-l-25 d-lg-none">Menu principal</li>
+          <li class="nav-item active">
+            <a href="{% url 'core:redirect_dashboard' %}" class="nav-link">
+              Início
+            </a>
+          </li>
+          {% if user.client_has_exam_elaboration and user.client_teachers_can_elaborate_exam %}
+            <li class="nav-item">
+              <a href="{% url 'applications:applications_list' %}" class="nav-link">
+                Lista de Aplicações
+              </a>
+            </li>
+          {% endif %}
+          {% if user.inspector.can_elaborate_questions %}
+            {% if user.client_has_exam_elaboration %}
+              <li class="nav-item with-sub">
+                <a href="" class="nav-link">
+                  <i data-feather="layers"></i> Banco de Questões
+                </a>
+                <div class="navbar-menu-sub">
+                  <div class="d-lg-flex">
+                    <ul>
+                      <li class="nav-sub-item">
+                        <a
+                          href="{% url 'questions:questions_list' %}"
+                          class="nav-sub-link"
+                        >
+                          <i data-feather="lock" class="mr-1"></i> Questões Privadas
+                        </a>
+                        <p
+                          style="font-size: 12px; line-height: 14px; margin-top: 3px"
+                          class="text-muted"
+                        >
+                          Questões elaboradas por você e sua instituição.
+                        </p>
+                      </li>
+                      {% if user.client_has_public_questions %}
+                        <li class="nav-sub-item">
+                          <a
+                            href="{% url 'questions:public_questions_list' %}"
+                            class="nav-sub-link"
+                          >
+                            <i data-feather="book-open" class="mr-1"></i>
+                            Questões Lize
+                            <span class="badge badge-success ml-2"> Novo</span>
+                            <br />
+                          </a>
+                          <p
+                            style="font-size: 12px; line-height: 14px; margin-top: 3px"
+                            class="text-muted"
+                          >
+                            Centenas de questões que a Lize disponibiliza para você
+                            utilizar gratuitamente.
+                          </p>
+                        </li>
+                      {% endif %}
+                    </ul>
+                  </div>
+                </div>
+              </li>
+            {% endif %}
+          {% endif %}
+          {% if user.client_has_exam_elaboration %}
+            {% if user.client_has_exam_elaboration %}
+              <li class="nav-item with-sub">
+                <a href="" class="nav-link">
+                  <i data-feather="book"></i>
+                  Cadernos
+                </a>
+                <div class="navbar-menu-sub">
+                  <div class="d-lg-flex">
+                    <ul>
+                      <li class="nav-label">CADERNOS</li>
+                      <li class="nav-sub-item">
+                        <a
+                          href="{% url 'exams:exams_list' %}"
+                          class="nav-sub-link d-flex"
+                        >
+                          <div class="row m-0">
+                            <div class="col pl-0 pr-2">
+                              <i class="fas fa-book text-dark"></i> Meus Cadernos
+                            </div>
+                          </div>
+                        </a>
+                      </li>
+                      {% if user.client_teachers_can_elaborate_exam %}
+                        <li class="nav-sub-item">
+                          <a
+                            href="{% url 'exams:exams_list' %}?q_created_by=me"
+                            class="nav-sub-link d-flex"
+                          >
+                            <div class="row m-0">
+                              <div class="col pl-0 pr-2">
+                                <i class="fas fa-book text-dark"></i> Criados por mim
+                                <span class="badge badge-primary">Novo</span>
+                              </div>
+                            </div>
+                          </a>
+                        </li>
+                      {% endif %}
+                      <li class="nav-sub-item">
+                        <a
+                          href="{% url 'exams:exams_list' %}?q_unanswered=true"
+                          class="nav-sub-link d-flex"
+                        >
+                          <div class="row m-0">
+                            <div class="col pl-0 pr-1">
+                              <i class="fas fa-clock text-dark"></i> Aguardando correção
+                            </div>
+                          </div>
+                        </a>
+                      </li>
+                      {% if user.client_has_wrongs %}
+                        {% if user.inspector.can_response_wrongs %}
+                          <li class="nav-label mg-t-20">
+                            ERRRATAS <span class="badge badge-primary">Novo</span>
+                          </li>
+                          <li class="nav-sub-item">
+                            <a
+                              href="{% url 'exams:wrongs_list' %}"
+                              class="nav-sub-link d-flex"
+                            >
+                              <div class="row m-0">
+                                <div class="col pl-0 pr-2">
+                                  <i class="fas fa-comment-slash text-dark"></i>
+                                </div>
+                                <div class="col pl-0">Responder Erratas</div>
+                              </div>
+                            </a>
+                          </li>
+                        {% endif %}
+                      {% endif %}
+                    </ul>
+                  </div>
+                </div>
+              </li>
+            {% endif %}
+            {% if user.inspector.is_discipline_coordinator and request.user|examteachersubject_count > 0 %}
+              <li class="nav-item">
+                <a href="{% url 'exams:exams_review' %}" class="nav-link">
+                  Cadernos para Revisar
+                  <span class="badge bg-danger rounded-circle m-1 font-weight-bold">
+                    {{request.user|examteachersubject_count}}
+                  </span>
+                </a>
+              </li>
+            {% endif %}
+          {% endif %}
+        </ul>
+      </div>
+    {% endcache %}
+    <div class="navbar-right">
+      {% if help_links %}
+        <div class="dropdown dropdown-notification">
+          <a
+            href=""
+            class="dropdown-link new-indicator"
+            data-toggle="dropdown"
+            aria-expanded="true"
+          >
+            <i data-feather="help-circle"></i>
+            <span id="notifications-count" class="bg-secondary">
+              {{ help_links.count }}
+            </span>
+          </a>
+          <div class="dropdown-menu dropdown-menu-right">
+            <div class="dropdown-header">Ajuda</div>
+            <div style="max-height: 280px; overflow: auto">
+              {% for help in help_links %}
+                <a
+                  href="{{ help.article_url }}"
+                  target="_blank"
+                  class="dropdown-item pl-0"
+                >
+                  <div class="media">
+                    <div class="media-body">
+                      <h6 class="mb-0">{{ help.article_name }}</h6>
+                      <p>{{ help.article_description }}</p>
+                    </div>
+                  </div>
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+      <div class="dropdown dropdown-notification">
+        <a
+          href=""
+          class="dropdown-link new-indicator"
+          data-toggle="dropdown"
+          aria-expanded="true"
+        >
+          <i data-feather="bell"></i>
+          <span id="notifications-count" class="d-none"></span>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right">
+          <div class="dropdown-header">Notificações</div>
+          {% for notification in notifications %}
+            <a
+              href="#"
+              onClick="updateCounter('{{notification.pk}}')"
+              data-toggle="modal"
+              data-target="#modal-{{notification.pk}}"
+              class="dropdown-item pl-0"
+            >
+              <div class="media">
+                <div class="media-body">
+                  <h6 class="mb-0">
+                    {{ notification.title }}
+                    <span class="badge badge-success text-white">
+                      {{ notification.get_category_display }}
+                    </span>
+                  </h6>
+                  <p>{{ notification.description }}</p>
+                </div>
+              </div>
+            </a>
+          {% empty %}
+            <div class="media">
+              <div class="media-body">
+                <p class="pt-3 pb-3">Sem novas notificações 🙂</p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="dropdown dropdown-profile">
+        <a
+          href=""
+          class="dropdown-link"
+          data-toggle="dropdown"
+          data-display="static"
+        >
+          <div class="avatar avatar-sm">
+            <img
+              src="{% static 'administration/assets/img/avatar.png' %}"
+              class="rounded-circle"
+              alt=""
+            />
+          </div>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right tx-13">
+          <div class="avatar avatar-lg mg-b-15">
+            <img
+              src="{% static 'administration/assets/img/avatar.png' %}"
+              class="rounded-circle"
+              alt=""
+            />
+          </div>
+          <h6 class="tx-semibold mg-b-5" style="overflow-wrap: anywhere">
+            {{ user }}
+          </h6>
+          <p class="mg-b-25 tx-12 tx-color-03" style="overflow-wrap: anywhere">
+            {{ user.email }}
+          </p>
+          <div class="dropdown-divider"></div>
+          <a href="{% url 'accounts:password_change' %}" class="dropdown-item">
+            <i data-feather="lock"></i>Alterar senha
+          </a>
+          <a href="{% url 'accounts:logout' %}" class="dropdown-item">
+            <i data-feather="log-out"></i>Sair
+          </a>
+          <div class="dropdown-divider"></div>
+          <a
+            href="{% url 'terms' slug='aviso-privacidade' %}"
+            target="_blank"
+            class="dropdown-item"
+          >
+            <i data-feather="bookmark"></i> Aviso de Privacidade
+          </a>
+          <a
+            href="{% url 'terms' slug='condicoes-uso' %}"
+            target="_blank"
+            class="dropdown-item"
+          >
+            <i data-feather="bookmark"></i> Condições de Uso
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+{% endif %}
+
+{% block js-additional %}{% endblock %}

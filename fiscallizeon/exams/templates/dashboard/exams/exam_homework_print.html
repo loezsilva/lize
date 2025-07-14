@@ -1,0 +1,352 @@
+{% extends 'dashboard/clean_base_without_header.html' %}
+{% load static %}
+{% load remove_line_break %}
+
+{% block title %}
+    Lize - Impressão de prova
+{% endblock title %}
+
+{% block css-additional %}
+
+<style>
+    body {
+        font-family: "IBM Plex Sans", sans-serif !important;
+        background-color: #FFF !important;
+        margin: 0 auto !important;
+    }
+
+    span.question-number {
+        width: 25px;
+        height: 25px;
+        min-width: 25px;
+        line-height: normal;
+        border-radius: 50%;
+        color: #fff;
+        display: inline-block;
+        text-align: center;
+        margin: 5px;
+        background: #000;
+        padding-top: 4px;
+    }
+
+    div.question {
+        padding-bottom: 15px;
+    }
+
+    div.alternatives p {
+        margin: 0 !important;
+    }
+
+
+    div.question.font-1x * {
+        font-size: 13px !important;
+    }
+
+    div.question.font-2x *:not(.katex *) {
+        font-size: 16px !important;
+    }
+
+
+    div.question.font-3x * {
+        font-size: 19px !important;
+    }
+
+    div.question.font-4x * {
+        font-size: 23px !important;
+    }
+
+    .bg-black {
+        background-color: #000 !important;
+    }
+
+    .bg-black * {
+        color: white !important;
+    }
+
+    .question * {
+        white-space: unset !important;
+    }
+
+    mjx-container.MathJax {
+        font-size: 160% !important;
+    }
+
+    img {
+        max-width: 100%;
+    }
+
+    table tr td.cell-h-30 {
+        height: 30px;
+    }
+
+    table tr td {
+        min-width: 60px;
+    }
+
+
+    @media print {
+        a {
+            text-decoration-line: none !important;
+            color: #000;
+        }
+        div.question, div.question *, div:not(".MathJax"){
+            font-size: 1rem !important;
+        }
+                
+        .textual-question {
+            padding-bottom: 6cm;
+        }
+
+        article#in-question {
+            column-count: unset;
+        }
+
+        div.break-inside-avoid  {
+            break-inside: avoid;
+            column-fill: auto !important;
+            -moz-column-fill: auto;
+            column-fill: auto;
+        }
+
+        div.break-inside-auto *{
+            break-inside: auto;
+            column-fill: auto !important;
+            -moz-column-fill: auto;
+            column-fill: auto;
+        }
+
+        div.subject-section {
+            page-break-before: always;
+        }
+        
+        div.header{
+            margin:0mm;
+        }
+    }
+
+    @page{
+        size: A4;
+        margin-left: 2mm;
+        margin-top: 10mm;
+        margin-right: 2mm;
+        margin-bottom: 10mm;
+    }
+
+    @page :first{
+        margin-top: 5mm;
+    }
+
+
+</style>
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+    integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+
+{% endblock %}
+
+{% block content %}
+
+    <div class="row header">
+        <div class="col-12">
+            <table class="table table-bordered">
+                <tr>
+                    <td class="w-25 p-4" rowspan="6">
+                        <img src="{{ object.coordinations.all.0.unity.client.logo.url }}" alt="">
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="5" class="font-weight-bold text-center align-middle">
+                        {{ object.coordinations.all.0.unity.client.name|upper }}
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="5" class="align-middle">PROVA: <span class="font-weight-bold">{{object.name|upper}}</span></td>
+                </tr>
+                <tr>
+                    <td colspan="5" class="align-middle">ALUNO:
+                        <span class="font-weight-bold">
+                            {{application_student.student.name|upper}}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Nº:
+                        <span class="font-weight-bold">
+                            {{application_student.student.enrollment_number}}
+                        </span>
+                    </td>
+                    <td>SÉRIE:
+                        <span class="font-weight-bold">
+                            {{application_student.get_last_class_student.grade|upper}}
+                        </span>
+                    </td>
+                    <td>TURMA:
+                        <span class="font-weight-bold">
+                            {{application_student.get_last_class_student.name|upper}}
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <article class="exam-content text-justify pd-l-10 pd-r-10">
+                {% if object.get_base_text_location_display == 'Textos base no início do caderno' or object.application.exam.get_base_text_location_display == 'Textos base no início do caderno' %}
+                    {% include "dashboard/exams/includes/base_texts/exam_top_bottom.html" %}
+                {% endif %}
+                <template v-for="knowledgeArea in knowledgeAreas">
+                    <h5 class="mb-0 text-muted">
+                        ${knowledgeArea.name}
+                    </h5>
+                    <template v-for="subject in knowledgeArea.subjects">
+                        {% if object.get_base_text_location_display == 'Textos base por disciplina' or object.application.exam.get_base_text_location_display == 'Textos base por disciplina' %}
+                            {% include "dashboard/exams/includes/base_texts/subjects_top.html" %}
+                        {% endif %}
+                        <div class="container-exam">
+                            <div class="question" :id="'question-'+question.id" v-for="question in subject.questions">
+                                <div class="row" v-bind:class="[question.break_enunciation ? 'break-inside-auto' : 'break-inside-avoid']">
+                                    <div class="col-12">
+                                        <span class="tx-bold tx-20">${subject.name}</span>
+                                        {% if object.get_base_text_location_display == 'Textos base por questão' or object.application.exam.get_base_text_location_display == 'Textos base por questão' %}
+                                            {% include "dashboard/exams/includes/base_texts/per_questions.html" %}
+                                        {% endif %}
+                                        <div class="row break-inside-avoid mb-0 mt-2">
+                                            <div class="col-12 question-number-title">
+                                                <h5 class="m-0">Questão ${ question.number_print }</h5>
+                                                <div class="w-100 m-0">
+                                                    <hr class="border-dark border m-0 mb-3">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mb-0 mt-0 question-enunciation">
+                                            <div class="col-12">
+                                                <article id="in-question">
+
+                                                    {% include "dashboard/exams/includes/base_texts/text_relation.html" %}
+
+                                                    <question-enunciation ref="refEnuntiation" :question="question">
+                                                    </question-enunciation>
+                                                </article>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <template v-if="!(question.print_only_enunciation || question.number_is_hidden)"> 
+                                    <template v-if="question.category == 'Objetiva'">
+                                        <div class="row alternatives mb-0 break-inside-avoid">
+                                            <div class="col-12">
+                                                <div v-if="question.category == 'Objetiva'">
+                                                    <table class="table table-striped">
+                                                        <tr class="d-flex align-items-center"
+                                                            v-for="(alternative, index) in question.alternatives">
+                                                            <td class="pl-0 py-0 d-flex align-items-center w-100">
+                                                                <span
+                                                                    class="d-flex align-items-center justify-content-center question-number question-alternative text-uppercase font-weight-bold"
+                                                                    v-bind:class="{'alternative-scratched' : alternative.scratched }"
+                                                                    :for="'alternative-'+alternative.id">
+                                                                    ${generateAlternativeOrder(index)}
+                                                                </span>
+                                                                <div>
+                                                                    <span :for="'alternative-'+alternative.id"
+                                                                        v-html="generateAlternativeText(alternative, index)">
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+                {% if object.get_base_text_location_display == 'Textos base no final do caderno' or object.application.exam.get_base_text_location_display == 'Textos base no final do caderno' %}
+                    {% include "dashboard/exams/includes/base_texts/exam_top_bottom.html" %}
+                {% endif %}
+            </article>
+        </div>
+    </div>
+
+{% endblock content %}
+
+{% block extra-modal %}
+    {% include "dashboard/exams/includes/base_texts/modals/detail.html" %}
+{% endblock extra-modal %}
+
+{% block js-additional %}
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous">
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+
+
+<script type="application/javascript">
+    Vue.config.devtools = false
+
+    var questionEnunciation = Vue.component('question-enunciation', {
+        props: ['question', ],
+        data: function () {
+            return {
+                timer: false
+            }
+        },
+        template: `
+            <div class="enunciation" :timing="question.timing" ref="enunciationEl"
+                v-html="question.enunciation"></div>
+        `,
+    })
+
+    var app_question = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        components: {
+            'question-enunciation': questionEnunciation,
+        },
+        data: {
+            {% include 'dashboard/exams/exam_preview/includes/exam_data.js' with object=object iterator=iterator %}
+            baseTexts: [],
+            questions: [],
+            selectedBaseText: '',
+        },
+        methods: {
+            generateAlternativeOrder(index) {
+                return "abcdefghij" [index]
+            },
+            generateAlternativeText(alternative, index) {
+                return `${alternative.text}`
+            },
+            getQuestions() {
+                if (this.knowledgeAreas.length) {
+                    this.knowledgeAreas.forEach((area) => area.subjects.forEach((subject) => subject.questions.forEach((question) => this.questions.push(question))))
+                }
+            },
+            {% include "dashboard/exams/includes/base_texts/methods/base_texts-functions.js" %}
+        },
+        mounted: function () {
+            document.title = "{{ object.name }}"
+            this.getQuestions()
+            this.getBaseTextsExam('{{object.pk}}').finally(() => this.gerateBaseTextNumbers().finally(() => {
+                $('[data-baseNumber]').each(function(index, el) {
+                    $(el).html(index + 1)
+                })
+                setTimeout(() => {
+                    window.print();
+                    window.onafterprint = () => window.close();
+                }, 500)
+            }))
+        }
+    })
+</script>
+
+{% endblock js-additional %}

@@ -1,0 +1,121 @@
+{% extends request.user.get_base_url|default:'redesign/base.html' %}
+
+{% block title %}Introdução banco de questões - Lize{% endblock title %}
+
+{% block css-additional %}
+<style>
+  .content-auth {
+    min-height: calc(100vh - 106px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .content-auth>.container {
+    padding: 0;
+  }
+
+  @media (max-width: 1139px) {
+    .content-auth>.container {
+      max-width: none;
+      padding: 0 20px;
+    }
+  }
+
+  .content-auth>.container:first-child {
+    flex: 1;
+  }
+
+  .content-auth-alt {
+    min-height: calc(100vh - 106px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .content-auth-alt .container {
+    padding: 0;
+  }
+
+  @media (max-width: 1139px) {
+    .content-auth-alt .container {
+      max-width: none;
+    }
+  }
+
+  .sign-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 340px;
+  }
+
+  @media (min-width: 1200px) {
+    .sign-wrapper {
+      width: 340px;
+    }
+  }
+
+  .sign-wrapper .form-group label {
+    display: block;
+    margin-bottom: 5px;
+  }
+</style>
+{% endblock css-additional %}
+
+{% block content %}
+<div class="ard cer dcv tw-mb-16">
+  <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+    <!-- Empty -->
+  </div>
+  <div class="card w-100">
+    <div class="card-body">
+      <div class="row d-flex justify-content-center">
+        <div class="col-12 col-lg-5">
+          <div class="d-flex flex-column justify-content-center align-items-center" style="min-height: calc(100vh - 180px);">
+            <h4 class="tx-20 tx-sm-24 tx-center">Seja bem vindo ao banco de questões</h4>
+            <p class="tx-color-03 mg-b-30 tx-center">
+              Melhoramos a experiência para facilitar o seu dia-a-dia.
+              <br>
+              Observe as instruções abaixo:
+            </p>
+            <div class="mg-b-40 mg-t-20">
+              <div class="d-flex align-items-center mg-b-15">
+                <kbd style="background-color: #CED8E0; width: 30px; height: 30px;" class="d-flex align-items-center justify-content-center mr-2 rounded-circle tx-16 tx-color-03 tx-bold">1</kbd>
+                <p class="tx-color-03 m-0 align-items-center justify-content-center"> Filtre facilmente os assuntos desejados</p>
+              </div>
+              <div class="d-flex align-items-center mg-b-15">
+                <kbd style="background-color: #CED8E0; width: 30px; height: 30px;" class="d-flex align-items-center justify-content-center mr-2 rounded-circle tx-16 tx-color-03 tx-bold">2</kbd>
+                <p class="tx-color-03 m-0 align-items-center justify-content-center"> Salve e organize os filtros mais utilizados</p>
+              </div>
+              <div class="d-flex align-items-center mg-b-50">
+                <kbd style="background-color: #CED8E0; width: 30px; height: 30px;" class="d-flex align-items-center justify-content-center mr-2 rounded-circle tx-16 tx-color-03 tx-bold">3</kbd>
+                <p class="tx-color-03 m-0 align-items-center justify-content-center"> Selecione as questões de forma simples</p>
+              </div>
+              <button type="button" onclick="goToNextPage()" class="btn btn-primary btn-block">Escolher filtros</button>
+            </div>
+            <div class="mt-2">
+              <div class="custom-control custom-checkbox">
+                <input type="checkbox" class="custom-control-input" id="skip">
+                <label class="custom-control-label tx-color-02 tx-medium" for="skip">Pular essa tela da próxima vez</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
+{% block js-additional %}
+
+<script>
+  function goToNextPage() {
+    let href = "{% url 'exams:exam_teacher_subject_add_questions' object.id %}"
+    window.location.href = $("#skip").prop('checked') ? href += "?skip_introduction=true" : href
+  }
+</script>
+
+{% endblock js-additional %}

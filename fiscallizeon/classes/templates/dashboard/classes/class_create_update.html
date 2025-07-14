@@ -1,0 +1,244 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+  {% if not object %}
+    Adicionar turma - Lize
+  {% else %}
+    Alteração de turma - Lize
+  {% endif %}
+{% endblock title %}
+
+{% block css-additional %}
+
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">TURMAS</a></li>
+          <li class="breadcrumb-item active" aria-current="page">CADASTRAR</li>
+        </ol>
+      </nav> 
+      <h4>Cadastrar turma</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <button class="btn btn-sm pd-x-15 btn-white btn-uppercase" onclick="history.back();">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </button>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+      <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+        <nav class="ls" aria-label="Breadcrumb">
+          <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+            <li>
+              <div>
+                <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                    <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+                </a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="{% url 'classes:classes_list' %}" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Turmas</a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">{% if not object %}Cadastrar{% else %}Editar{% endif %}</a>
+              </div>
+            </li>
+          </ol>
+        </nav>
+        <div class="d-none d-md-block">
+          <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+          </a>
+        </div>
+      </div>
+
+<div class="row">
+    <div class="col-md-9">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+              <div>
+                <h6 class="mg-b-5">{% if not object %}Cadastrar uma nova turma{% else %}Editar a turma{% endif %}</h6>
+                <p class="tx-13 tx-color-03 mg-b-5">Informe os dados abaixo e {% if not object %}cadastre uma nova{% else %}edite a{% endif %} turma</p>
+              </div>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="{{ form.name.auto_id }}">{{ form.name.label }}</label>
+                            {% render_field form.name class="form-control" %}
+                            <small class="form-text text-muted">
+                                {{ form.name.help_text }}
+                            </small>
+                            {% if form.name.errors %}
+                                <label class="text-danger">
+                                {{ form.name.errors.0 }}</label>
+                            {% endif %}
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="{{ form.grade.auto_id }}">{{ form.grade.label }}</label>
+                            {% render_field form.grade class="form-control" %}
+                            <small class="form-text text-muted">
+                                {{ form.grade.help_text }}
+                            </small>
+                            {% if form.grade.errors %}
+                                <label class="text-danger">
+                                {{ form.grade.errors.0 }}</label>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="{{ form.coordination.auto_id }}">{{ form.coordination.label }}</label>
+                            {% render_field form.coordination class="form-control" %}
+                            <small class="form-text text-muted">
+                                {{ form.coordination.help_text }}
+                            </small>
+                            {% if form.coordination.errors %}
+                                <label class="text-danger">
+                                {{ form.coordination.errors.0 }}</label>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="{{ form.turn.auto_id }}">{{ form.turn.label }}</label>
+                            {% render_field form.turn class="form-control" %}
+                            <small class="form-text text-muted">
+                                {{ form.turn.help_text }}
+                            </small>
+                            {% if form.turn.errors %}
+                                <label class="text-danger">
+                                {{ form.turn.errors.0 }}</label>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="{{ form.course.auto_id }}">{{ form.course.label }}</label>
+                            {% render_field form.course class="form-control" %}
+                            <small class="form-text text-muted">
+                                {{ form.course.help_text }}
+                            </small>
+                            {% if form.course.errors %}
+                                <label class="text-danger">
+                                {{ form.course.errors.0 }}</label>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                            {{ form.students.label }}
+                            <select 
+                                name="{{ form.students.html_name }}"
+                                id="{{ form.students.id_for_label }}"
+                                class="form-control"
+                                multiple="multiple"
+                            >
+                            {% for student in form.instance.students.all|dictsort:'name' %}
+                                <option value="{{ student.pk }}" selected="selected">{{ student.name|upper }}</option>
+                            {% endfor %}
+                            </select>
+                            <small class="form-text text-muted">
+                                {{ form.students.help_text }}
+                            </small>
+                            {% if form.students.errors %}
+                                <label class="text-danger">
+                                {{ form.students.errors.0 }}</label>
+                            {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <div class="custom-control custom-switch">
+                                {% render_field form.temporary_class class="custom-control-input" %}
+                                <!-- <input type="checkbox" name="{{form.temporary_class.name}}" id="{{form.temporary_class.auto_id}}" class="custom-control-input"> -->
+                                <label class="custom-control-label" for="{{form.temporary_class.auto_id}}">{{form.temporary_class.label}}</label>
+                                 <small class="form-text text-muted">
+                                     {{ form.temporary_class.help_text }}
+                                 </small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <div class="custom-control custom-switch">
+                                {% render_field form.is_itinerary class="custom-control-input" %}
+                                <label class="custom-control-label" for="{{form.is_itinerary.auto_id}}">{{form.is_itinerary.label}}</label>
+                                 <small class="form-text text-muted">
+                                     {{ form.is_itinerary.help_text }}
+                                 </small>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary float-right">Salvar turma</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+
+
+<script type="text/javascript">
+    $(document).ready(function() {
+
+        $('#{{form.students.auto_id}}').select2({
+            placeholder: 'Buscar...',
+            closeOnSelect: false,
+            minimumInputLength: 3,
+            ajax: {
+                url: '{% url "students:students_list_api" %}',
+                delay: 250,
+                data: function (params) {
+                return {
+                    search: params.term
+                }
+                },
+                processResults: function(results) {
+                    let new_results = $.map(results, function(element) {
+                        element.text = element.name
+                        return element 
+                    })
+
+                    return {
+                        results: new_results,
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock js-additional %}

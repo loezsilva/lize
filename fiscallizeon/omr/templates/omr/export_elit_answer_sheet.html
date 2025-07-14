@@ -1,0 +1,246 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Respostas ELIT</title>
+
+  <link rel="stylesheet" href="{% static 'administration/assets/css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'administration/assets/css/app-extra.css' %}">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #fff;
+    }
+
+    .rectangle {
+      height: 40mm;
+      width: 100%;
+      border: 5px solid #000;
+      box-sizing: border-box;
+      margin-bottom: 3mm;
+    }
+
+    .student-area {
+        max-width: 320px;
+        min-width: 315px;
+    }
+
+    .student-qr img {
+        padding: 1mm 1mm;
+    }
+
+    .index {
+        font-weight: bold;
+        text-align: center;
+        vertical-align: middle;
+        margin-left: 3mm;
+        min-width: 10mm !important;
+        font-size: 10pt !important;
+    }
+
+    .omr-row {
+        border-top: 1px solid #adb0b8;
+    }
+
+    .omr-td {
+        font-size: 8pt;
+        text-align: center;
+        min-width: 2mm !important;
+        border: none !important;
+        padding: 1mm 0.5mm !important; 
+    }
+
+    span.omr-circle {
+        border: solid 0.5mm #464646;
+        padding: 0.5mm 0.4mm;
+        border-radius: 5mm;
+        width: 6mm;
+        height: 6mm;
+        display: inline-block;
+    }
+    span.omr-circle-white {
+        border: solid 0.5mm white;
+        padding: 0.5mm 0.4mm;
+        border-radius: 5mm;
+        width: 6mm;
+        height: 6mm;
+        display: inline-block;
+    }
+
+    span.omr-circle-gray {
+        border: solid 0.5mm  #eaedf3;
+        padding: 0.5mm 0.4mm;
+        border-radius: 5mm;
+        width: 6mm;
+        height: 6mm;
+        display: inline-block;
+    }
+
+
+    .bg-strip {
+        background-color: #eaedf3 !important;
+    }
+
+    @page {
+        size: A4;
+        margin-left: 8mm;
+        margin-top: 5mm;
+        margin-right: 8mm;
+        margin-bottom: 0mm;
+    }
+
+    @media print {
+        .rectangle { 
+            display: block;
+            page-break-inside: avoid;
+        }
+    }
+  </style>
+
+</head>
+<body>
+    <div class="container" id="app">
+        <header class="mb-3">
+            <div class="row m-0">
+                <div class="col-3 p-0 border d-flex justify-content-center align-items-center">
+                    <div style="height: 140px;" class="d-flex align-items-center">
+                        {% if client.logo %}
+                        <img src="{{ client.logo.url }}" class="img-fluid border-0" style="max-width: 150px !important;" alt="">
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col m-0 p-0 border d-flex flex-column justify-content-between">
+                    <div class="row m-0" style="height: 100%;">
+                        <div class="col-12 border d-flex align-items-center justify-content-center">
+                            <span class="font-weight-bold text-uppercase"> {{client.name}} </span>
+                        </div>
+                    </div>
+                    <div class="row m-0" style="height: 100%;">
+                        <div class="col-6 border d-flex align-items-center">
+                            {% if is_dettached %} UNIDADE: {% endif %}
+                            <span class="font-weight-bold text-uppercase"> {{school_class.coordination.unity.name}}</span>
+                        </div>
+                        <div class="col-6 border d-flex align-items-center">
+                            TURMA:&nbsp;<span class="font-weight-bold text-uppercase"> {{school_class.name}}</span>
+                        </div>
+                    </div>
+                    <div class="row m-0" style="height: 100%;">
+                        <div class="col-12 border d-flex align-items-center">
+                            PROVA:&nbsp;<span class="font-weight-bold"> {{application.exam.name|upper}}
+                        </div>
+                    </div>
+                    <div class="row m-0" style="height: 100%;">
+                        <div class="col-12 border d-flex align-items-center">
+                            APLICADOR:
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <div class="rectangle d-flex flex-row pt-1" v-for="student in applicationStudents">
+            <div class="d-flex flex-column student-area pl-2">
+                <h6 class="mb-0 font-weight-bold" style="flex-grow: 1;" v-if="isDettached">Aluno:</h6>
+                <h6 class="mb-0 font-weight-bold" style="flex-grow: 1;" v-else>${student.name}</h6>
+
+                <p class="mb-0">OBSERVAÇÕES:</p>
+                <span class="m-0 d-flex align-items-center"><span class="omr-circle mr-1"></span> Ausente</span>
+                <span class="m-0 mt-1 mb-1 d-flex align-items-center"><span class="omr-circle mr-1"></span> Anulado</span>
+            </div>
+            <div class="ml-3 mt-0">
+                <table>
+                    {% for i in '1234'|make_list %}
+                    <tr class="{% cycle 'bg-strip' '' %}">
+                        <td class="index omr-td">{{i}}</td>
+                        <td class="omr-td"><span class="omr-circle">A</span></td>
+                        <td class="omr-td"><span class="omr-circle">B</span></td>
+                        <td class="omr-td"><span class="omr-circle">C</span></td>
+                        <td class="omr-td"><span class="omr-circle">D</span></td>
+                        <td class="omr-td"><span class="{% cycle 'omr-circle-gray' 'omr-circle-white' %}"></span></td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            <div class="ml-3 mt-0">
+                <table>
+                    {% for i in '567'|make_list %}
+                    <tr class="{% cycle 'bg-strip' '' %}">
+                        <td class="index omr-td">{{i}}</td>
+                        <td class="omr-td"><span class="omr-circle">A</span></td>
+                        <td class="omr-td"><span class="omr-circle">B</span></td>
+                        <td class="omr-td"><span class="omr-circle">C</span></td>
+                        <td class="omr-td"><span class="omr-circle">D</span></td>
+                        <td class="omr-td"><span class="{% cycle 'omr-circle-gray' 'omr-circle-white' %}"></span></td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            <div class="d-flex flex-column ml-2 pr-1 w-100">
+                <div class="d-flex w-100 justify-content-end" style="flex-grow: 1;">
+                    <span class="student-qr" :data-student="student.id"></span>
+                </div>
+                <span class="align-self-end" style="color: #000; font-size: 8pt;">#${isDettached ? 'A' : 'S'}:${student.id.toUpperCase()}#</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/vue.min.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+    <script src="{% static 'administration/lib/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'js/qrcode.js' %}"></script>
+    <script src="{% static 'administration/lib/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+    <script>
+        var app_question = new Vue({
+            delimiters: ['${', '}'],
+            el: '#app',
+            data: {
+                isDettached: {{is_dettached|yesno:"true,false"}},
+                applicationStudents: [
+                    {% for application_student in application_students %}
+                    {
+                        "id": "{{application_student.pk}}",
+                        "name": "{{application_student.student.name|safe}}"
+                    },
+                    {% endfor %}
+                ]
+            },
+            methods: {
+                generateQRCode(element, content, width=100, height=100) {
+                    var qrcode = new QRCode(element, {
+                        text: content,
+                        width: width,
+                        height: height,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.M
+                    })
+                },
+            },
+            mounted() {
+                document.title = "{{ object.name }}"
+                window.onload = () => {}
+                
+                let studentQrs = Array.from(document.getElementsByClassName('student-qr'))
+                for (let studentQr of studentQrs) {
+                    let qrContent = studentQr.getAttribute('data-student')
+                    qrPrefix = this.isDettached ? 'A:' : 'S:'
+                    this.generateQRCode(studentQr, qrPrefix + qrContent, 80, 80)
+                }
+            }
+        })
+    </script>
+
+    <script defer>
+        document.addEventListener('DOMContentLoaded', function() {
+        let loadedElement = document.createElement('div')
+        loadedElement.id = 'loaded'
+        document.body.appendChild(loadedElement)
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,304 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}  
+
+  {% if object %}
+    Modificar grupo de permissões - Lize
+  {% else %}
+    Criar grupo de permissões - Lize
+  {% endif %}
+  
+{% endblock title %}
+
+{% block css-additional %}
+<style>
+  .text {
+    font-family: Inter;
+    font-weight: 600;
+    line-height: 20px;
+    letter-spacing: 0em;
+    text-align: left;
+  }
+  .hovable:hover {
+    color: #fea464 !important;
+  }
+</style>
+{% endblock css-additional %}
+
+{% block content-fixed %}
+<div class="tw-flex tw-justify-center">
+  <div class="ard cer dcv tw-pb-8 tw-max-w-[100rem] tw-flex-1 tw-mb-16" v-if="group">
+
+    <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1.5rem; justify-content: space-between;">
+      <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-6 sm:tw-flex-nowrap tw-w-full">
+        <h1 class="tw-text-xl tw-font-semibold tw-leading-7 tw-text-[#374151] sm:tw-truncate sm:tw-text-2xl sm:tw-tracking-tight tw-mb-0">
+          Criação de grupos
+        </h1>
+        <div class="tw-ml-auto tw-flex tw-gap-3">
+          <a href="javascript:;" onclick="history.back()" role="tab" aria-selected="true" tabindex="0" class="tw-flex tw-items-center tw-rounded-md tw-py-[0.4375rem] tw-px-3 tw-text-sm tw-font-semibold tw-bg-white tw-shadow">
+            <span class="tw-text-slate-900">Voltar</span>
+          </a>
+          <button type="button" @click="save()" class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600 hover:tw-text-white">
+            Salvar grupo
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="lize-card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-12">
+            <div class="row">
+              <div class="col-12">
+                <label for="" class="tx-18 tx-semibold">Informações do grupo</label>
+                <hr class="my-1">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="groupName">Nome do grupo</label>
+                <input type="text" class="form-control" v-model="group.name" id="groupName" autofocus placeholder="">
+                <span class="text-danger" v-if="group.errors.name" v-for="error in group.errors.name">${error}</span>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label>Segmento de usuários</label>
+                <select class="form-control" v-model="group.segment">
+                  <option value="coordination">Coordenações</option>
+                  <!-- <option value="student">Alunos</option> -->
+                  <option value="teacher">Professores</option>
+                  <!-- <option value="inspector">Fiscais</option> -->
+                  <!-- <option value="partner">Parceiros</option> -->
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <div class="custom-control custom-switch">
+                  <input type="checkbox" class="custom-control-input" v-model="group.default" id="customSwitch1">
+                  <label class="custom-control-label" for="customSwitch1">Grupo padrão para o segmento</label>
+                </div>
+                <p class="tx-14 my-2">Ao habilitar esta opção, qualquer usuário criado neste segmento será automaticamente adicionado a este grupo.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <template v-if="permissionsList.length">
+          <div class="row">
+            <div class="col-12">
+              <label for="" class="tx-18 tx-semibold">Permissões do grupo</label>
+              <hr class="my-1">
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-6">
+              <div class="col-12 my-4" v-for="(perm, key) in permissions" v-if="permissionsList.indexOf(key) % 2 === 0">
+                <div class=" d-flex aling-items-center justify-content-between">
+                  <h5 class="tx-bold text tx-24">${perm.name}</h5>
+                  <div>
+                    <a href="javascript:;" class="m-1" @click="selectAllPermissions(key)" style="color: #fea464;">Todas</a> <span style="color: #D3D6DB;">|</span>
+                    <a href="javascript:;" class="m-1" @click="removeAllPermissions(key)" style="color: #fea464;">Nenhuma</a>
+                  </div>
+                </div>
+                <div class="mt-1">
+                  <span v-for="(permission, permissionKey) in perm.permissions">
+                    <label  class="d-flex justify-content-between aling-items-center cp py-1 px-2" onMouseOver="this.style.backgroundColor = '#f9fafa'" onMouseOut="this.style.backgroundColor = ''" :for="key +'-'+ permissionKey" :class="{ 'text-muted': !group.permissions.includes(permissionKey) }">
+                      <span class="text">${permission}</span>
+                      <span class="rounded-circle">
+                        <template v-if="group.permissions.includes(permissionKey)">
+                          <i class="fas fa-check-circle tx-18" style="color: #41C588;"></i>
+                        </template>
+                        <template v-else>
+                          <i class="fas fa-times-circle tx-18" style="color: #FF00005A;"></i>
+                        </template>
+                      </span>
+                    </label>
+                    <input type="checkbox" class="d-none" :data-permission="key" :checked="group.permissions.includes(permissionKey)" @change="handleChangePermission(permissionKey)" :id="key +'-'+ permissionKey">
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="col-12 my-4" v-for="(perm, key) in permissions" v-if="permissionsList.indexOf(key) % 2 > 0">
+                <div class=" d-flex aling-items-center justify-content-between">
+                  <h5 class="tx-bold text tx-24">${perm.name}</h5>
+                  <div>
+                    <a href="javascript:;" class="m-1" @click="selectAllPermissions(key)" style="color: #fea464;">Todas </a> <span style="color: #D3D6DB;">|</span>
+                    <a href="javascript:;" class="m-1" @click="removeAllPermissions(key)" style="color: #fea464;">Nenhuma</a>
+                  </div>
+                </div>
+                <div class="mt-1">
+                  <span v-for="(permission, permissionKey) in perm.permissions">
+                    <label  class="d-flex justify-content-between aling-items-center cp py-1 px-2" onMouseOver="this.style.backgroundColor = '#f9fafa'" onMouseOut="this.style.backgroundColor = ''" :for="key +'-'+ permissionKey" :class="{ 'text-muted': !group.permissions.includes(permissionKey) }">
+                      <span class="text">${permission}</span>
+                      <span class="rounded-circle">
+                        <template v-if="group.permissions.includes(permissionKey)">
+                          <i class="fas fa-check-circle tx-18" style="color: #41C588;"></i>
+                        </template>
+                        <template v-else>
+                          <i class="fas fa-times-circle tx-18" style="color: #FF00005A;"></i>
+                        </template>
+                      </span>
+                    </label>
+                    <input type="checkbox" class="d-none" :data-permission="key" :checked="group.permissions.includes(permissionKey)" @change="handleChangePermission(permissionKey)" :id="key +'-'+ permissionKey">
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+    <div class="row mt-3">
+      <div class="col-12">
+        <button type="button" @click="save()" class="tw-w-full tw-items-center tw-gap-x-1 tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600 hover:tw-text-white">
+          Salvar grupo
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+<script type="text/javascript">
+  moment.locale('pt-br');
+  var app_question = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {
+      group: {
+        id: '',
+        name: '',
+        segment: '',
+        default: false,
+        permissions: [],
+        errors: {},
+      },
+      saving: false,
+      permissions: null,
+      permissionsList: [],
+      allPermissions: {},
+    },
+    computed: {
+      
+    },
+    methods: {
+      handleChangePermission(permission) {
+        this.group.permissions.includes(permission) ? this.group.permissions.splice(this.group.permissions.indexOf(permission), 1):this.group.permissions.push(permission)
+      },
+      handleChangeGroup(group) {
+        this.userGroups.includes(group) ? this.userGroups.splice(this.userGroups.indexOf(group), 1):this.userGroups.push(group)
+      },
+      removeAllPermissions(where) {
+        if(where) {
+          for(permission in this.permissions[where].permissions) {
+            if(this.group.permissions.includes(permission)) {
+              this.group.permissions.splice(this.group.permissions.indexOf(permission), 1)
+            }
+          }
+        } else {
+          this.group.permissions = []
+        }
+      },
+      selectAllPermissions(where) {
+        if(where) {
+          for(permission in this.permissions[where].permissions) {
+            if(!this.group.permissions.includes(permission)) {
+              this.group.permissions.push(permission)
+            }
+          }
+        } else {
+          this.group.permissions = []
+          for(key in this.permissions) {
+            for(permission in this.permissions[key].permissions) {
+              if(!this.group.permissions.includes(permission)) {
+                this.group.permissions.push(permission)
+              }
+            }
+          }
+        }
+      },
+      save() {
+        if(this.group.permissions.length) {
+          this.saving = true
+          let payload = { ...this.group, permissions: this.group.permissions }
+          let method = "{{object.id|default:''|safe}}" ? 'PUT':'POST'
+          axios({
+            url: "{% url 'api2:permissions-create-update-group' %}",
+            method: method,
+            data: payload
+          }).then(() => {
+            Swal.fire({
+              title: "Sucesso!",
+              text: "O grupo foi salvo com sucesso.",
+              icon: "success"
+            });
+            if(method == 'POST') {
+              window.location.href = "{% url 'accounts:groups' %}"
+            }
+          }).catch((e) => {
+            this.group.errors = e.response.data
+            if(this.group.errors.non_field_errors) {
+              Swal.fire({
+                title: "Erro!",
+                text: "Já existe um grupo com esta nome.",
+                icon: "error"
+              });
+            } else {
+              Swal.fire({
+                title: "Erro!",
+                text: "Ocorreu um erro ao tentar salvar o grupo. Por favor, verifique se todos os campos estão preenchidos corretamente.",
+                icon: "error"
+              });
+            }
+          }).finally(() => {
+            this.saving = false
+          })
+        } else {
+          Swal.fire({
+            title: "Erro!",
+            text: "Você deve selecionar pelo menos uma permissão para o grupo.",
+            icon: "error"
+          });
+        }
+      },
+      async getSegmentPermissions() {
+        this.permissions = []
+        this.permissionsList = []
+        this.allPermissions = {}
+
+        axios.get(`{% url 'api2:permissions-permissions' %}${this.group.segment}`).then((response) => {
+          this.permissions = response.data
+          for(perm in response.data) {
+            this.permissionsList.push(perm)
+            this.allPermissions = { ...this.allPermissions, ...response.data[perm].permissions }
+          }
+        })
+      },
+    },
+    watch: {
+      'group.segment': async function(val) {
+        this.getSegmentPermissions()
+      }
+    },
+    mounted() {
+      {% if object %}
+        axios.get("{{object.urls.api_detail}}").then((response) => {
+          this.group = response.data
+          this.group['errors'] = {}
+        })
+      {% endif %}
+    },
+  })
+
+
+</script>
+{% endblock %}

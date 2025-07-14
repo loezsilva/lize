@@ -1,0 +1,52 @@
+{% extends 'dashboard/base_fixed.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+  Lize - Atualizar matrículas
+{% endblock title %}
+
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-30">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="{% url 'applications:applications_list' %}">ALUNOS</a></li>
+          <li class="breadcrumb-item active" aria-current="page">ATUALIZAR MATRÍCULAS</li>
+        </ol>
+      </nav>
+      <h4>Atualização de matrículas (CSV)</h4>
+      <p>O arquivo CSV deve possuir todos os campos preenchidos. Você pode baixar o modelo de arquivo <a href="{% static 'modelo_atualizacao_matricula.csv' %}">neste link</a>.</p>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+
+
+{% block content-fixed %}
+<form method="POST" enctype='multipart/form-data'>
+  {% csrf_token %}
+  <div class="row">
+    <div class="form-group col-12">
+      <div class="custom-file">
+        {% render_field form.students_file class="custom-file-input" %}
+        <label class="custom-file-label" for="{{ form.students_file.id_for_label }}">Selecione o arquivo CSV...</label>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <button class="btn btn-primary btn-block" type="submit">Enviar</button>
+    </div>
+  </div>
+</form>
+
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script>
+  $('.custom-file input').change(function (e) {
+      if (e.target.files.length) {
+          $(this).next('.custom-file-label').html(e.target.files[0].name);
+      }
+  });
+</script>
+{% endblock %}

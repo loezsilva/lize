@@ -1,0 +1,27 @@
+{% extends 'dashboard/clean_base_without_header.html' %}
+{% load static %}
+
+{% block css-additional %}
+<style>
+    body{
+        background-color: #f7f7f7;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12 text-center">
+            <a href="{% url 'core:redirect_dashboard' %}">
+                {% include 'redesign/includes/logo.html' with height=200 width=200 %}
+            </a>
+        </div>
+        <div class="col-12 col-md-8 offset-md-2">
+            {{ content|safe }}
+        </div>
+    </div>
+</div>
+    
+
+{% endblock content %}

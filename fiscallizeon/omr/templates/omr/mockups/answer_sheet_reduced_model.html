@@ -1,0 +1,599 @@
+{% load static %}
+{% load increment %}
+{% load truncate %}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <style>
+        @-moz-document url-prefix() {
+            .omr-content {
+                min-height: 70mm !important;
+                max-height: 70mm !important;
+            }
+        }
+        @page {
+            size: A5;
+            margin: 0mm;
+        }
+        img {
+            max-width: 100%;
+        }
+
+        header {
+            margin-bottom: 4mm;
+        }
+
+        table tr td.cell-h-30{
+            height: 30px;
+        }
+        table tr td{
+            min-width: 40px;
+            margin-top: 0px;
+            padding-top: 0px;
+        }
+
+        .table-border > tbody > tr > td {
+            border: 1px solid rgba(72, 94, 144, 0.16) !important;
+        }
+
+        .td-border {
+            padding: 3px;
+            border: 1px solid #999999 !important;
+            font-size: 11pt;
+        }
+
+        .table-image {
+            max-height: 20mm;
+            max-width: 50mm;
+        }
+ 
+        .table-enrollment {
+            min-height: 10mm;   
+            max-height: 10mm;
+        } 
+
+        .table-instructions {
+            min-height: 8mm;
+            max-height: 10mm;
+        } 
+		
+        .instructions {
+            max-height: 18mm;
+            min-height: 0mm; 
+            margin-bottom: 1mm;
+            margin-left: 2mm;
+            font-size: 10pt;
+            text-align: justify;
+        }
+
+        .td-fit {
+            width: 1%;
+            white-space: nowrap;
+        }
+
+        tr.tr-borderless, tr.tr-borderless > td {
+            border-right: 1px solid white !important;
+            border-left: 1px solid white !important;
+        }
+
+        tr.tr-borderless-bottom, tr.tr-borderless-bottom > td {
+            border-bottom: 1px solid white !important;
+        }
+
+        tr.tr-borderless-top, tr.tr-borderless-top > td {
+            border-top: 1px solid white !important;
+        }
+
+        td.td-borderless-top {
+            border-top: 1px solid white !important;
+        }
+        
+        .bg-grey-instructions {
+            background-color: #DEDEDE;
+            font-size: 11pt;
+        }
+        
+        .fill-instructions-text {
+            max-width: 170mm;
+        }
+
+        .fill-img-example {
+            max-height: 13mm;
+        }
+
+        .bg-strip {
+            {% if disable_strip %}
+                background-color: #fff !important;
+            {% else %}
+                background-color: #eaedf3 !important;
+            {% endif %}
+        }
+
+        .randomization-version {
+            overflow: hidden;
+            font-weight: bold;
+            font-size: 9pt;
+            text-align: center;
+        }
+
+        .enrollment-index{
+            padding: 0 !important;
+            color: white;
+            text-align: center;
+            min-width: 0 !important;
+            border-width: 2px !important;
+        }
+
+        .enrollment-table {
+            border: 2px solid #e1e5ed;
+        }
+
+        .enrollment-table tr.tr-borderless, .enrollment-table tr.tr-borderless > td {
+            border-right: 1px solid #999999 !important;
+            border-left: 1px solid #999999 !important;
+        }
+
+        .enrollment-box {
+            margin-top: 4mm;
+            padding-right: 2.3mm;
+        }
+
+        .omr-marker-top {
+            background: 
+                url({% static 'omr_marker.jpg' %}) left 1mm top 1mm no-repeat,
+                url({% static 'omr_marker.jpg' %}) right 1mm top 1mm no-repeat,
+                white;
+            background-size: 8mm;
+        }
+
+        .omr-marker-top-left {
+            background: 
+                url({% static 'omr_marker.jpg' %}) left 1mm top 1mm no-repeat,
+                white;
+            background-size: 8mm;
+        }
+
+        .omr-marker-top-right {
+            background: 
+                url({% static 'omr_marker.jpg' %}) right 1mm top 1mm no-repeat,
+                white;
+            background-size: 8mm;
+        }
+
+        .omr-marker-bottom {
+            background: 
+                url({% static 'omr_marker.jpg' %}) left 1mm bottom 1mm no-repeat,
+                url({% static 'omr_marker.jpg' %}) right 1mm bottom 1mm no-repeat,
+                white;
+            background-size: 8mm;
+        }
+
+        .omr-content {
+            display: flex;
+            padding-bottom: 15mm;
+            margin-left: 5mm;
+            flex-direction: column;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            min-height: 70mm;
+            max-height: 70mm; 
+            overflow: hidden; 
+        } 
+
+        .omr-box .omr-row {
+            border-top: 1px solid #adb0b8;
+        }
+
+        .enrollment-table tr.solid-bottom {
+            border-bottom: 1px solid #adb0b8;
+        }
+
+        .enrollment-table .enrollment-index,
+        .enrollment-table .omr-td {
+            border-right: 1px solid #adb0b8 !important;
+        }
+
+        .omr-question {
+            padding: 0 3.15mm;
+        }
+
+        .omr-question .omr-td {
+            font-size: 8pt;
+            text-align: center;
+            min-width: 2mm !important;
+            border: none !important;
+            padding: 1mm 0.5mm !important; 
+        }
+
+        .omr-question .omr-vertical-aligned {
+            display: flex;
+            align-items: center;
+        }
+
+        .omr-question .index {
+            font-weight: bold;
+            text-align: center;
+            vertical-align: middle;
+            margin-left: 1mm;
+            min-width: 10mm !important;
+        }
+
+        .omr-question .omr-td span.omr-circle {
+            border: solid 0.5mm #464646;
+            padding-bottom: 0.3mm;
+            padding-right: 0.3mm;
+            padding-left: 0.2mm;
+            border-radius: 5mm;
+            width: 3mm;
+            height: 3mm;
+            display: inline-block;
+            {% if complete_fill %}
+            background-color: #000;
+            {% endif %}
+        }
+        html {
+            height: 100%;
+        }
+        body {
+            margin: 0px;
+            padding: 0px;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            font-family: "IBM Plex Sans", sans-serif;
+        }
+        .container {
+            height:100%;
+            border-right: 1px dotted #000;
+            padding: 4mm 4mm 0 4mm;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .header, .instructions,  {
+            margin-bottom: 0mm;
+        }
+        .header input {
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 5px;
+            margin-left: 5px;
+        }
+        .response-table table {
+            width: 75%;
+            border-collapse: collapse;
+            padding-left: 3px;
+            margin-bottom: 0px;
+        }
+        .response-table td, .response-table th {
+            padding: 0px;
+            text-align: center;
+        }
+        .page-break {
+            display: none;
+        }
+		.custom-table {
+            width: 100px; 
+            height: 100px;
+			width: 75%;
+			border-collapse: collapse;
+		}
+		
+		.custom-table .table-label {
+			width: 30%; 
+			padding: 4px;
+            overflow: hidden;
+            table-layout: fixed;
+			font-family: Arial, sans-serif; 
+			font-size: 14px; 
+			border: 1px solid #ccc;
+		}
+		
+		.custom-table .table-content {
+			width: 70%;
+            overflow: hidden;
+			padding: 4px;
+			border: 1px solid #ccc;
+		}
+        .custom-table span {
+            display: inline-block;
+            white-space: nowrap;
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            max-width: 300px; 
+        }
+
+		.qrcode img {
+            margin-left: 20px; 
+            text-align: center;
+            max-width: 80%;
+        }
+        .qrcode-version {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px; ]
+        }
+		.randomization-version {
+            overflow: hidden;
+            font-weight: bold;
+            font-size: 9pt;
+            text-align: center;
+        }
+		.table-qrcode {
+            display: flex;
+            align-items: center;
+        }
+		.fill-img-example {
+            max-height: 13mm;
+            align-items: center;
+        }
+        .qrcontent{
+            font-size: 10pt;
+            padding: 8px;
+            text-align: center;
+        }
+        .qrcode-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .truncate-text-foreign {
+            font-size: 8pt;
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis;
+            display: inline-block;
+            max-width: 150px;
+            min-width: 150px;
+        }
+        .font-white {
+            color: #fff;
+        }
+        .all-white *{
+            border-color: white !important;
+            color: white !important;
+        }
+
+        .bg-strip .all-white *{
+            border-color:#eaedf3 !important;
+            color:#eaedf3 !important;
+        }
+
+    </style>
+</head>
+<body >
+    <div id="app">
+        <div class="container"> 
+            <div class="header">
+                <div class="response-table">
+                    <div class="tr-borderless tr-borderless-top">
+                        <div class="omr-marker-top" colspan="2" style="padding-top: 3px; margin-bottom: 7px;">
+                            <p class="qrcontent" style="margin-bottom: 0px;">#${qrContent}#</p>
+                        </div>
+                    </div>
+                    <div class="table-qrcode">
+                        <table class="custom-table">
+                            <tr>
+                                <td class="table-label"  style="font-size: 10pt;"  colspan="4">{{ client.name }}</td>
+                            </tr>
+                            <tr>
+                                <td class="table-label"  style="font-size: 10pt;">Nome:</td>
+                                <td class="table-content {% if detached %}font-white{% endif %}" style="font-size: 10pt;" colspan="3" >
+                                    <span style="font-weight: bold; text-transform: uppercase;">
+                                        {% if application_students %} 
+                                            {{application_students.0.student.name}}
+                                            (Mat. {{application_students.0.student.enrollment_number}})
+                                        {% else %}
+                                            #NomeDoAluno
+                                        {% endif %}
+                                    </span>
+                            </tr>
+                            <tr>
+                                <td class="table-label"  style="font-size: 10pt;">Unidade:</td>
+                                <td class="table-content {% if detached %}font-white{% endif %}" style="font-size: 10pt;" colspan="2">
+                                    <span style="font-weight: bold; text-transform: uppercase;">
+                                        {% if application_students %} 
+                                            {{ application_students.0.school_class.coordination.unity.name }}
+                                        {% else %}
+                                            #Unidade
+                                        {% endif %}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="table-label"  style="font-size: 10pt;">Turma:</td>
+                                <td class="table-content {% if detached %}font-white{% endif %}"  style="font-size: 10pt;" colspan="2" >
+                                    <span style="font-weight: bold; text-transform: uppercase;">
+                                        {% if application_students %} 
+                                            {{application_students.0.school_class.name}}
+                                        {% else %}
+                                            #Turma
+                                        {% endif %}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="table-label"  style="font-size: 10pt;" >Prova:</td>
+                                <td class="table-content"  style="font-size: 10pt;" colspan="5"> 
+                                    <span>  {{object.exam.name|upper}} {% if application_randomization_version %} - V{{application_randomization_version.version_number}}{% endif %}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="table-label"  style="font-size: 10pt;">Assinatura:</td>
+                                <td class="table-content" style="font-size: 10pt;" colspan="5"></td>
+                            </tr>
+                        </table>
+                        <div class="qrcode-container">
+                            <div class="randomization-version">
+                                <span style="margin-left: 22px; ">{% if application_randomization_version %}V{{application_randomization_version.version_number}}{% endif %}</span>
+                            </div>
+                            <div class="qrcode" id="qrcode" style="max-width: 100px; text-align: center; margin-top: 3px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <table class="response-table table table-enrollment" > 
+                <tr>
+                    <td colspan="2">
+                        <p style="font-size: 10pt;  margin: 0mm; ">Orientações</p>
+                        <div class="instructions">
+                            <ul style="font-size: 10pt; margin-top: 2mm;" >
+                                <li>O preenchimento deste caderno de respostas é de responsabilidade do aluno e deverá ser realizado com caneta esferográfica de cor <b>PRETA</b>. </li>
+                                <li>Não serão consideradas as respostas rasuradas, marcações duplicadas, marcadas fora do local ou sem o preenchimento total do espaço correspondente.</li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+            <table class="table table-instructions" style="margin: 0px; max-height: 80px; min-height: 80px; " >
+                <tr>
+                    <td class="td-border align-middle  fill-instructions-text " style="font-size: 10pt;">
+                        Preencha os círculos deste cartão resposta com nitidez, completamente e utilizando caneta esferográfica de cor preta, conforme exemplo ao lado:
+                    </td>
+                    <td class="td-border text-center align-middle "{% if not object.exam.has_foreign_languages %}colspan="3"{% endif %}>
+                        <img src="{% static 'exemplo-marcacao.png' %}" class="fill-img-example">
+                    </td>
+                    {% if object.exam.has_foreign_languages %}
+                    <td class="td-border" style="min-width: 35mm; padding: 0px; ">
+                        <div class="omr-question p-0" style="padding: 0px;">
+                            <table class="table table-instructions" style="padding: 0px; margin:0px;  ">
+                                <tbody>
+                                    <tr class="tr-borderless-top" style="padding: 0px;">
+                                        <td style="font-size: 10pt;">Escolha a opção:</td>
+                                    </tr>
+                                    <tr class="omr-row" style="margin-right: 1px; ">
+                                        <td class="omr-td text-left omr-vertical-aligned" style="margin-left: 1px; text-align: left;">
+                                            <span class="omr-circle mr-1" style="margin-right: 2px;"></span>
+                                            <span class="truncate-text-foreign">
+                                                {% if object.exam.is_abstract %}
+                                                    {{object.exam.get_foreign_exam_questions.first.question.subject.name|default:"língua inglesa"|upper}}
+                                                {% else %}
+                                                    {{object.exam.get_foreign_exam_teacher_subjects.0.teacher_subject.subject.name|truncate:16|upper}}
+                                                {% endif %}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr class="omr-row">
+                                        <td class="omr-td text-left omr-vertical-aligned" style="margin-left: 1px; text-align: left;">
+                                            <span class="omr-circle mr-1" style="margin-right: 2px;"></span>
+                                            <span class="truncate-text-foreign">
+                                                {% if object.exam.is_abstract %}
+                                                    {{object.exam.get_foreign_exam_questions.last.question.subject.name|default:"língua espanhola"|upper}}
+                                                {% else %}
+                                                    {{object.exam.get_foreign_exam_teacher_subjects.1.teacher_subject.subject.name|truncate:16|upper}}
+                                                {% endif %}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+                    {% endif %}
+                </tr>
+            </table>
+            <table class="response-table table table-border " style="margin-bottom: 0px; ">
+                <tr>
+                    <td colspan="4" class="omr-marker-bottom">
+                        <p class="text-center font-weight-bold" style="font-size: 10pt;">Respostas</p>
+                        <div class="omr-content">
+                            {% for exam_question in exam_questions|slice:":36" %}
+                                {% if exam_question.question.category == 1 %}
+                                    <div class="omr-question">
+                                        <table>
+                                            <tr class="omr-row {% cycle 'bg-strip' '' %}">
+                                                {% if application_randomization_version %}
+                                                    <td class="index omr-td">{{exam_question.question|randomized_application_number_print_question:application_randomization_version}}</td>
+                                                {% else %}
+                                                    <td class="index omr-td">{{exam_question.question|number_print_question:exam_question.exam}}</td>
+                                                {% endif %}
+                                                <td class="omr-td"><span class="omr-circle">A</span></td>
+                                                <td class="omr-td"><span class="omr-circle">B</span></td>
+                                                <td class="omr-td
+                                                {% if exam_question.question.alternatives.all.count < 3 %}
+                                                    all-white
+                                                {% endif %}
+                                                "><span class="omr-circle">C</span></td>
+                                                <td class="omr-td
+                                                    {% if exam_question.question.alternatives.all.count < 4 %}
+                                                        all-white
+                                                    {% endif %} 
+                                                "><span class="omr-circle">D</span></td>
+
+                                                <td class="omr-td
+                                                    {% if exam_question.question.alternatives.all.count < 5 %}
+                                                        all-white
+                                                    {% endif %} 
+                                                "><span class="omr-circle">E</span></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </td>
+                </tr>
+            </table> 
+            <span class="text-center" style="margin: 0px; text-align: center; padding: 0px; font-size: 9pt;">
+                <span></span> Lize - {% now "Y" %} - {% now "U" %}</span>
+            </span>
+        </div>
+    </div>
+
+
+
+
+    <script src="{% static 'js/vue.min.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+    <script src="{% static 'administration/lib/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'js/qrcode.js' %}"></script>
+    <script src="{% static 'administration/lib/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+    <script type="application/javascript">
+        var app_question = new Vue({
+            delimiters: ['${', '}'],
+            el: '#app',
+            data: {
+                qrContent: "{{ qr_code_text|default:'###QR_CONTENT###' }}",
+            },
+            methods: {
+                generateQRCode(element, qrcontent) {
+                    var qrcode = new QRCode(element, {
+                        text: this.qrContent,
+                        width: 100,
+                        height: 100,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.M
+                    });
+                    
+                },
+            },
+
+            mounted() {
+                document.title = "{{ object.name }}"
+                let element = $("#qrcode")[0]
+
+                window.onload = () => {
+                    this.generateQRCode(element, this.qrcontent)
+                }
+            }
+        })
+    </script>
+
+    <script defer>
+        document.addEventListener('DOMContentLoaded', function() {
+            let loadedElement = document.createElement('div')
+            loadedElement.id = 'loaded'
+            document.body.appendChild(loadedElement)
+        });
+    </script>
+</body>
+</html> 

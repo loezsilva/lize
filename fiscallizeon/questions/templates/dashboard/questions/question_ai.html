@@ -1,0 +1,129 @@
+{% extends 'redesign/base.html' %}
+{% load static %}
+
+{% block title %}Criar questão - Lize{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+
+<style>
+.correct {
+  color: rgb(44, 114, 44);
+  font-weight: bold;
+}
+
+.base-image {
+  max-width: 450px;
+  margin: 0 auto;
+}
+</style>
+{% endblock %}
+
+{% block content-fixed %}
+<div class="col-12">
+  <div class="card mt-5">
+    <div class="card-body">
+      <form>
+        <div class="form-group">
+          <label for="exampleTextarea">Como deseja criar a sua questão?</label>
+          <textarea 
+            class="form-control" 
+            id="exampleTextarea" 
+            rows="4" 
+            placeholder="Quero uma questão sobre fotossíntese, relacionando o elemento magnésio com o ciclo do carbono"
+            v-model="userPrompt"
+          ></textarea>
+        </div>
+        <div class="mb-3">
+          <label for="fileInput" class="form-label">Escolha uma imagem caso queira usá-la como base</label>
+          <input type="file" id="fileInput" v-on:change="onFileChange">
+        </div>
+        <button v-if="loading" type="button" disabled="disabled" class="btn btn-primary float-right" @click.prevent.default="createQuestion()">
+          <i class="fas fa-spinner fa-spin"></i> Criando questão 
+        </button>
+        <button v-else type="button" class="btn btn-primary float-right" @click.prevent.default="createQuestion()">Criar com IA</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card mt-5" v-if="generatedQuestion.enunciation">
+    <div class="card-body text-justify">
+      <p v-if="generatedQuestion.baseImage" class="text-center"><img :src="generatedQuestion.baseImage" class="base-image"></p>
+      <p v-html="generatedQuestion.baseText"></p>
+      <p v-html="generatedQuestion.enunciation"></p>
+      <div>
+        <p v-bind:class="{ correct: generatedQuestion.alternatives[0].isCorrect }">A) ${generatedQuestion.alternatives[0].text}</p>
+        <p v-bind:class="{ correct: generatedQuestion.alternatives[1].isCorrect }">B) ${generatedQuestion.alternatives[1].text}</p>
+        <p v-bind:class="{ correct: generatedQuestion.alternatives[2].isCorrect }">C) ${generatedQuestion.alternatives[2].text}</p>
+        <p v-bind:class="{ correct: generatedQuestion.alternatives[3].isCorrect }">D) ${generatedQuestion.alternatives[3].text}</p>
+        <p v-bind:class="{ correct: generatedQuestion.alternatives[4].isCorrect }">E) ${generatedQuestion.alternatives[4].text}</p>
+      </div>
+      <p><span class="font-weight-bold">Resposta comentada:</span> <span v-html="generatedQuestion.commentedAnswer"></span></p>
+    </div>
+  </div>
+
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script>
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {
+      loading: false,
+      userPrompt: '',
+      selectedFile: null,
+      generatedQuestion: {
+        'baseText': '',
+        'baseImage': '',
+        'enunciation': '',
+        'commentedAnswer': '',
+        'alternatives':[]
+      }
+    },
+    methods: {
+      onFileChange(e) {
+        var files = e.target.files || e.dataTransfer.files;
+        this.selectedFile = files
+      },
+      createQuestion: function() {
+        this.loading = true
+        const endpointUrl = "{% url 'questions:questions-create-ai-question' %}"
+
+        const formData = new FormData()
+        formData.append('user_prompt', this.userPrompt)
+
+        if (this.selectedFile) {
+          formData.append('base_image', this.selectedFile[0])
+        }
+
+        const requestOptions = {
+          method: 'POST',
+          body: formData
+        }
+
+        fetch(endpointUrl, requestOptions)
+        .then(response => {
+          if (!response.ok) {
+            this.loading = false
+            throw new Error('Erro na solicitação POST')
+          }
+          return response.json()
+        })
+        .then(data => {
+          console.log('Resposta do servidor:', data)
+          this.generatedQuestion = data
+          this.loading = false
+        })
+        .catch(error => {
+          console.error('Erro:', error)
+          this.loading = false
+        });
+      }
+    },
+    watch: {},
+    mounted: function(){},
+  })
+</script>
+{% endblock %}

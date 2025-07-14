@@ -1,0 +1,485 @@
+{% extends 'dashboard/base_without_header.html' %}
+{% load static %}
+{% load compress %}
+{% load remove_line_break %}
+
+{% block title %}
+  Lize - Sala de prova
+{% endblock title %}
+
+{% block css-additional %}
+<style>
+  *::-webkit-media-controls-panel {
+    display: none!important;
+    -webkit-appearance: none;
+  }
+
+  /* Old shadow dom for play button */
+
+  *::-webkit-media-controls-play-button {
+    display: none!important;
+    -webkit-appearance: none;
+  }
+
+  /* New shadow dom for play button */
+
+  /* This one works! */
+
+  *::-webkit-media-controls-start-playback-button {
+    display: none!important;
+    -webkit-appearance: none;
+  }
+
+    #local-stream {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        min-width: 100%;
+        min-height: 100%;
+        max-width: 100%;
+    }
+    .content {
+        position: fixed;
+        bottom: 0;
+        color: #f1f1f1;
+        width: 100%;
+        padding: 20px;
+    }
+    .btn-circle {
+        width: 60px;
+        height: 60px;
+        padding: 6px 0px;
+        border-radius: 30px;
+        text-align: center;
+        font-size: 12px;
+        line-height: 1.42857;
+        margin: 2px;
+    }
+
+    .modal-body{
+      max-height: 70vh;
+      height: 70vh;
+      overflow: auto;
+    }
+
+    @media (max-width: 767px) {
+  
+      .modal-dialog {
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        margin: 0;
+        padding: 0;
+        max-width: inherit !important; 
+    }
+
+    .modal-content {
+        height: auto;
+        min-height: 100%;
+        max-height: 100%;
+        overflow: auto;
+        border-radius: 0;
+        background: white;
+        border: 0;
+    }
+    
+    .modal-body{
+        padding: 5px;
+        padding-top: 65px;
+        padding-bottom: 100px;
+
+        max-height: inherit;
+        height: inherit;
+        overflow: auto;
+    } 
+
+    .modal-header{
+      position: fixed;
+      top: 0;
+      right: 0;
+      left: 0;
+      z-index: 1030;
+    }
+
+    .modal-footer{
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1030;
+    }
+  
+  }
+
+    
+    @keyframes fa-blink {
+        0% { opacity: 1; }
+        50% { opacity: 0.75; }
+        100% { opacity: 0.4; }
+    }
+    .fa-blink {
+        -webkit-animation: fa-blink 1.05s linear infinite;
+        -moz-animation: fa-blink 1.05s linear infinite;
+        -ms-animation: fa-blink 1.05s linear infinite;
+        -o-animation: fa-blink 1.05s linear infinite;
+        animation: fa-blink 1.05s linear infinite;
+    }
+    
+  .notification {
+    position: relative;
+  }
+
+  .notification .badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    border-radius: 100%;
+    background: red;
+    color: white;
+    font-weight: bold;
+  }
+  .opacity{
+    background-color: rgba(256, 256, 256, 0.5)  
+  }
+  .list-orientations ul{
+    padding-left: 15px;
+  }
+  .list-orientations li{
+    margin: 0;
+    margin-top:4px;
+    line-height: 15px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="fixed-top text-right">
+        <div class="row  p-2">
+
+          <div class="col-6 col-lg-3 col-md-6 text-left orientations d-none">
+            {% if object.application.orientations %}
+              <div class="opacity p-1">
+                <h6 class="mb-0">ORIENTAÇÕES</h6>
+                <div class="list-orientations">
+                  {{object.application.orientations|safe}}
+                </div>
+                <button data-toggle="modal" data-target="#chatOrientations"  class="btn btn-sm btn-primary p-1 btn-block">Ver tudo</button>
+              </div>
+              {% endif %}
+            </div>
+            <template v-if="inspectors.length">
+                <div class="col-6 offset-lg-6 col-lg-3 col-md-3">
+                    <div v-for="inspector in inspectors">
+                        <div class="marker pos-absolute p-1">
+                        <i alt="Online" title="Online" class="text-success fas fa-circle fa-blink"></i> ${inspector.displayName}
+                        </div>
+                        <video  style="max-width: 100%; width: 100%; background-image: url('{% static 'administration/assets/img/inspector-icon.png' %}'); background-size: cover; background-position: center;" :id="'remote-video-'+inspector.id" autoplay playsinline />
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+    
+    <video class="bg-dark" id="local-stream" autoplay playsinline ></video>
+    
+    <div class="content text-center">
+
+        <div class="row mb-0">
+          <div class="col-12" v-if="state == 'started' || state == 'paused'">
+            <h1 id="countDown" class="font-weight-bold text-white mb-0">
+              ${time}
+            </h1>
+          </div>
+          <div class="col-12">
+              <button @click="beforeStartApplication()" v-if="state == 'waiting'" class="btn btn-circle btn-primary font-weight-bold mt-1">
+                  <span class="fas fa-play" style="font-size:20px;"></span> 
+                  <p class="m-0 p-0">Iniciar</p>
+              </button>
+      
+              <button @click="requestApplicationPause()" v-if="state == 'started'" class="btn btn-circle btn-success font-weight-bold mt-1">
+                  <span class="fas fa-toilet" style="font-size:20px;"></span>
+                  <p class="m-0 p-0">Pausar</p>
+              </button>
+      
+              <button @click="openedChat=true; chatNotificationCount=0;" id="btnChat" data-toggle="modal" data-target="#chatModal" class="btn notification btn-circle btn-secondary font-weight-bold mt-1">
+                <span>
+                  <span class="fas fa-comments " style="font-size:20px;"></span> 
+                  <p class="m-0 p-0">Chat </p>
+                </span>
+                <span class="badge"  v-if="chatNotificationCount > 0">
+                  ${chatNotificationCount}
+                </span>
+              </button>
+
+
+              <button data-toggle="modal" data-target="#noticeModal" class="btn notification btn-circle btn-secondary font-weight-bold mt-1">
+                <span>
+
+                  <span class="fas fa-bullhorn" style="font-size:20px;"></span> 
+                  <p class="m-0 p-0">Avisos </p>
+                </span>
+                <span class="badge"  v-if="notices.length">
+                  ${notices.length}
+                </span>
+              </button>
+              
+      
+              <button @click="finishApplication()" v-if="state == 'started'" class="btn btn-circle btn-danger font-weight-bold mt-1">
+                  <span class="fas fa-stop" style="font-size:20px;"></span> 
+                  <p class="m-0 p-0">Finalizar</p>
+              </button>
+      
+              <a href="{% url 'core:redirect_dashboard' %}"  v-if="state == 'waiting'" class="btn btn-circle btn-danger font-weight-bold mt-1">
+                <span class="fas fa-times-circle mt-1" style="font-size:20px;"></span> 
+                <p class="m-0 p-0">Sair</p>
+              </a>
+          </div>
+        </div>
+        
+    </div>
+
+    <div class="modal pr-0" tabindex="-1" role="dialog" id="chatModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+            <div class="modal-header bg-white">
+                <h5 class="modal-title">
+                  <i style="cursor: pointer;" class="fas fa-arrow-left mr-2" data-dismiss="modal" aria-label="Close"></i>
+                  Chat com fiscal
+                </h5>
+                <button @click="openedChat=false;" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <i class="fas fa-times-circle"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+              <div class="divScrollLab">
+                <template v-if="messages" v-for="message in messages">
+                    <div class="text-left p-2" v-if="message.function == 'Aluno'">
+                        <p class="mb-0">
+                            <span class="font-weight-bold">${message.name} (Aluno)</span>
+                            <span class="text-muted">${message.date_time}</span>
+                        </p>
+                            <p class="p-2 mb-0 bg-light mr-3">
+                                ${message.message}
+                            </p>
+                    </div>
+                    <div class="text-right p-2" v-else>
+                        <p class="mb-0">
+                            <span class="text-muted"> ${message.date_time}</span>
+                            <span class="font-weight-bold"> ${message.name} (${message.function})</span>
+                        </p>
+                        <p class="p-2 mb-0 bg-light ml-3 text-left">
+                            ${message.message}
+                        </p>
+                    </div>
+                </template>
+                <template v-else>
+                  <p>Ainda não há mensagens entre você e o fiscal</p>
+                </template>
+              </div>
+            </div>
+            <div class="modal-footer bg-dark p-2">
+                <div class="input-group">
+                    <div class="input-group-text border-0 bg-white">
+                        <button class="btn btn-default" data-dismiss="modal" aria-label="Close">
+                            <i class="fas fa-arrow-left" ></i> 
+                        </button>
+                      </div>
+                    <textarea v-model="textMessage" type="text" class="form-control" placeholder="Escreva sua mensagem" rows="2" maxlength="255"></textarea>
+                    <div class="input-group-prepend">
+                            <div class="input-group-text border-0 bg-white">
+                    <button class="btn btn-primary btnSend" v-on:click="sendMessage()" :disabled="textMessage == '' || sendingMessage">
+                        <i v-if="sendingMessage" class="fas fa-spinner fa-spin"></i>
+                        <i v-else class="fas fa-paper-plane"></i>
+                        </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <div class="modal pr-0" tabindex="-1" role="dialog" id="chatOrientations">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+            <div class="modal-header bg-white">
+                <h5 class="modal-title">Orientações da aplicação</h5>
+                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                {{object.application.orientations|safe}}
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <div class="modal pr-0" tabindex="-1" role="dialog" id="noticeModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+            <div class="modal-header bg-white">
+                <h5 class="modal-title">Avisos da aplicação</h5>
+                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+              <div class="row  p-2">
+                  <div v-if="notices.length == 0">
+                    <p>Não há avisos até o momento</p>
+                  </div>
+                  <template v-for="notice in notices">
+                    <div class="col-12">
+                        <blockquote class="blockquote mb-0">
+                          <p class="mb-1">${notice.notice}</p>
+                          <footer class="blockquote-footer mb-3">${notice.name} (${notice.function}) às ${notice.time}</footer>
+                        </blockquote>
+                    </div>
+                  </template>
+                </div>
+            </div>
+        </div>
+      </div>
+    </div>
+
+{% endblock content %}
+
+
+{% block js-additional %}
+
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+<script>
+
+  $(function() {
+      'use strict'
+      // Ja abre o modal com o scroll na ultima mensagem enviada
+      $('#btnChat').click(() => {
+        setTimeout(() => {
+          $('.divScrollLab div').last()[0].scrollIntoView()
+        }, 300)
+      })
+      // Quando o aluno envia uma mensagem envia o scroll para o ultimo elemento depois de 300ms
+      $('.btnSend').on("click keypress", () => {
+        setTimeout(() => {
+          $('.divScrollLab div').last()[0].scrollIntoView()
+        }, 300)
+      })
+  })
+  
+  moment.locale('pt-br');
+
+  $( window ).on( "load", function() {
+    setInterval(function(){
+      $(".list-orientations > ul  > li:gt(1)").remove();
+      $(".orientations").removeClass("d-none")
+    }, 10)
+  });
+
+
+</script>
+
+{% compress js %}
+<script type="text/javascript">
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data:{
+      {% include 'dashboard/monitoring/student/includes/student-new-data.js' with object=object %},
+    },
+    watch:{
+      sfutest: function(val){
+        if (!this.registred)
+          this.registerUsername()
+      }
+    },
+    methods: {
+      {% include 'dashboard/monitoring/student/includes/student-new-function-chat.js' with object=object %},
+      {% include 'dashboard/monitoring/student/includes/student-new-function-general.js' with object=object %},
+      {% include 'dashboard/monitoring/student/includes/student-new-function-video.js' with object=object %},
+      {% include 'dashboard/monitoring/student/includes/student-new-function-action.js' with object=object %}    
+    },
+    mounted: function(){
+      var self = this;
+
+      if(self.isIos() && self.isChrome()){
+        Swal.fire({
+            icon: 'error',
+            title: 'Navegador não compatível!',
+            text: 'O seu navegador não é compatível com as tecnologias utilizadas pela Lize Remote.',
+            showConfirmButton: true,
+            confirmButtonText: '<i class="fab fa-safari"></i> Irei utilizar o Safari'
+        }).then((value) => {
+          window.location.href = "/painel/aluno"
+        });
+      }
+
+      self.checkPendingRequest()
+      self.countDown()
+
+      Janus.init({debug: false, callback: function() {
+          if(!Janus.isWebrtcSupported()) {
+            var confirmButtonText = ""
+            var href = ""
+
+            if (self.isIos()){
+              confirmButtonText = '<i class="fab fa-safari"></i> Irei utilizar o Safari'
+              // href = "https://support.apple.com/pt_BR/downloads/safari"
+            }else{
+              confirmButtonText = '<i class="fab fa-chrome"></i> Irei utilizar o Google Chrome'
+              // href = "https://play.google.com/store/apps/details?id=com.android.chrome&hl=pt_BR"
+            }
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Navegador não compatível!',
+                text: 'O seu navegador não é compatível com as tecnologias utilizadas pela Lize Remote.',
+                showConfirmButton: true,
+                confirmButtonText: confirmButtonText
+            }).then((value) => {
+              window.location.href = "/painel/aluno"
+            });
+
+            return;
+          }
+          // Create session
+          self.createNewVideoSession()
+          self.createNewTextSession()
+
+      }});
+    
+
+      {% if object.application_state == 'waiting' %}
+        
+        var start_time_delay = self.getApplicationDelay()
+
+        if(start_time_delay >= 0) {
+            this.beforeStartApplication();
+        } else {
+            Swal.fire({
+                icon: 'info',
+                title: 'Bem vindo ao ambiente de monitoramento!',
+                text: 'A partir das {{ object.application.start }} você poderá começar sua prova clicando no botão "iniciar" na aba lateral direita.',
+                showConfirmButton: true,
+                confirmButtonText: 'Entendi'
+            })
+        }
+      {% endif %}
+
+      document.addEventListener('visibilitychange', function(ev) {
+        if (document.visibilityState === "visible" && self.isMob())
+          window.location.reload();
+      });
+
+    }
+  })
+</script>
+
+
+{% endcompress %}
+
+{% endblock js-additional %}

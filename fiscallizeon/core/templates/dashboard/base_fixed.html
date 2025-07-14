@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  {% if not hide_navbar %}
+    {% if user.user_type == 'teacher' %}
+      {% include 'includes/header-teacher.html' with user=user applications_actived=applications_actived %}
+    {% else %}
+      {% include 'includes/header.html' with user=user applications_actived=applications_actived %}
+    {% endif %}
+  {% endif %}
+{% endblock header %}
+
+
+{% block content %}
+  <div class="off-canvas-pusher" style="position: inherit !important; background-color: #f5f6fa;">
+    <div class="content content-fixed py-2" style="background-color: #f5f6fa;">
+      <div class="container pb-5">
+        {% if DEBUG %}
+          <div class="alert alert-warning text-center text-white p-1" role="alert" style="background-color: #EB9D1B; font-size: 1rem;">
+            <strong>Você está no ambiente de homologação</strong>
+          </div>
+        {% endif %}
+        {% block breadcrumb-fixed %}{% endblock breadcrumb-fixed %}
+
+        {% include 'includes/messages.html' with messages=messages only %}
+
+        {% block content-fixed %}{% endblock content-fixed %}
+      </div>
+    </div>
+  </div>
+{% endblock content %}

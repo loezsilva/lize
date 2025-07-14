@@ -1,0 +1,568 @@
+{% load static %}
+{% load increment %}
+{% load truncate %}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>   
+    <meta charset="utf-8">
+
+    <link rel="stylesheet" href="{% static 'administration/assets/css/app.css' %}">
+    <link rel="stylesheet" href="{% static 'administration/assets/css/app-extra.css' %}">
+
+    <style>
+        @-moz-document url-prefix() {
+            .omr-content {
+                min-height: 225mm !important;
+                max-height: 225mm !important;
+            }
+        }
+
+        body {
+            -webkit-print-color-adjust: exact;
+            font-family: "IBM Plex Sans", sans-serif !important;
+            background-color: #FFF !important;
+            margin: 0 auto !important;
+            width: 280mm;
+            height: 297mm;
+        }
+
+        img {
+            max-width: 100%;
+        }
+
+        header {
+            margin-bottom: 4mm;
+        }
+
+        table tr td.cell-h-30{
+            height: 30px;
+        }
+
+        table tr td{
+            min-width: 60px;
+        }
+
+        .table-border > tbody > tr > td {
+            border: 1px solid rgba(72, 94, 144, 0.16) !important;
+        }
+
+        .td-border {
+            border: 2px solid #999999 !important;
+        }
+
+        .table-image {
+            max-height: 20mm;
+            max-width: 50mm;
+        }
+
+        .table-enrollment {
+            min-height: 50mm;   
+            max-height: 50mm;
+        }
+
+        .table-instructions {
+            min-height: 21mm;
+            max-height: 21mm;
+        }
+
+        .instructions {
+            margin-top: 4mm;
+            max-height: 30mm;
+            min-height: 30mm;
+            font-size: 11pt;
+            text-align: justify;
+        }
+
+        .signature {
+            position: relative;
+            top: 15mm;
+            text-align: center;
+            border-top: solid 1px;
+            margin: 0 auto;
+            max-width: 50%;
+        }
+
+        .td-fit {
+            width: 1%;
+            white-space: nowrap;
+        }
+
+        tr.tr-borderless, tr.tr-borderless > td {
+            border-right: 1px solid white !important;
+            border-left: 1px solid white !important;
+        }
+
+        tr.tr-borderless-bottom, tr.tr-borderless-bottom > td {
+            border-bottom: 1px solid white !important;
+        }
+
+        tr.tr-borderless-top, tr.tr-borderless-top > td {
+            border-top: 1px solid white !important;
+        }
+
+        td.td-borderless-top {
+            border-top: 1px solid white !important;
+        }
+        
+        .bg-grey-instructions {
+            background-color: #DEDEDE;
+            font-size: 11pt;
+        }
+        
+        .fill-instructions-text {
+            max-width: 170mm;
+        }
+
+        .fill-img-example {
+            max-height: 13mm;
+        }
+
+        .bg-strip {
+            {% if disable_strip %}
+                background-color: #fff !important;
+            {% else %}
+                background-color: #eaedf3 !important;
+            {% endif %}
+        }
+
+        .randomization-version {
+            overflow: hidden;
+            font-weight: bold;
+            font-size: 9pt;
+            text-align: center;
+        }
+
+        .enrollment-index{
+            padding: 0 !important;
+            color: white;
+            text-align: center;
+            min-width: 0 !important;
+            border-width: 2px !important;
+        }
+
+        .enrollment-table {
+            border: 2px solid #e1e5ed;
+        }
+
+        .enrollment-table tr.tr-borderless, .enrollment-table tr.tr-borderless > td {
+            border-right: 1px solid #999999 !important;
+            border-left: 1px solid #999999 !important;
+        }
+
+        .enrollment-box {
+            margin-top: 4mm;
+            padding-right: 2.3mm;
+        }
+
+        .omr-marker-top {
+            background: 
+                url({% static 'omr_marker.jpg' %}) left 1mm top 1mm no-repeat,
+                url({% static 'omr_marker.jpg' %}) right 1mm top 1mm no-repeat,
+                white;
+            background-size: 8mm;
+        }
+
+        .omr-marker-top-left {
+            background: 
+                url({% static 'omr_marker.jpg' %}) left 1mm top 1mm no-repeat,
+                white;
+            background-size: 8mm;
+        }
+
+        .omr-marker-top-right {
+            background: 
+                url({% static 'omr_marker.jpg' %}) right 1mm top 1mm no-repeat,
+                white;
+            background-size: 8mm;
+        }
+
+        .omr-marker-bottom {
+            background: 
+                url({% static 'omr_marker.jpg' %}) left 1mm bottom 1mm no-repeat,
+                url({% static 'omr_marker.jpg' %}) right 1mm bottom 1mm no-repeat,
+                white;
+            background-size: 8mm;
+        }
+
+        .omr-content {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            grid-template-rows: repeat(2, minmax(0, 1fr));
+            grid-auto-flow: row;
+            padding-left: 4mm;
+            padding-bottom: 4mm;
+            min-height: 266mm;
+            max-height: 266mm;
+        }
+
+        .omr-subject {
+            min-height: 120mm;
+            max-height: 120mm;
+        }
+
+        .omr-box .omr-row {
+            border-top: 1px solid #adb0b8;
+        }
+
+        .enrollment-table tr.solid-bottom {
+            border-bottom: 1px solid #adb0b8;
+        }
+
+        .enrollment-table .enrollment-index,
+        .enrollment-table .omr-td {
+            border-right: 1px solid #adb0b8 !important;
+        }
+
+        .omr-question {
+            padding: 0 5.15mm;
+        }
+
+        .omr-question .omr-td {
+            font-size: 8pt;
+            text-align: center;
+            min-width: 2mm !important;
+            border: none !important;
+            padding: 1mm 0.5mm !important; 
+        }
+
+        .omr-question .omr-vertical-aligned {
+            display: flex;
+            align-items: center;
+        }
+
+        .omr-question .index {
+            font-size: 10pt;
+            font-weight: bold;
+            text-align: center;
+            vertical-align: middle;
+            margin-left: 1mm;
+            min-width: 10mm !important;
+        }
+
+        .omr-question .omr-td span.omr-circle {
+            border: solid 0.5mm #464646;
+            font-size: 10pt;
+            padding: 0.6mm;
+            border-radius: 6mm;
+            width: 6mm;
+            height: 6mm;
+            display: inline-block;
+        }
+
+        .subject-name {
+            white-space: nowrap;
+            overflow: hidden;
+            padding: 0 5.15mm;
+        }
+
+        @media all {
+            .pagebreak { display: none; }
+        }
+        
+        .pagebreak { 
+            display: block; 
+            page-break-before: always; 
+            break-before: always;
+        }
+
+        .no-break,
+        table {
+            break-inside: avoid;
+            page-break-after: avoid;
+        }
+
+        html, body {
+            height: auto;
+        }
+
+        @page {
+            size: A4;
+            margin-left: 8mm;
+            margin-top: 5mm;
+            margin-right: 8mm;
+            margin-bottom: 0mm;
+        }
+
+        .class-page {
+            page-break-after: always;
+            min-height: 298mm;
+            max-height: 298mm;
+            text-align: center;
+            padding-top: 100mm;
+            font-size: 22pt;
+        }
+
+        .qr-text {
+            font-size: 10pt;
+        }
+
+        .qrcode img {
+            display: inline !important;
+        }
+
+        .all-white *{
+            border-color: white !important;
+            color: white !important;
+        }
+
+        .bg-strip .all-white *{
+            border-color:#eaedf3 !important;
+            color:#eaedf3 !important;
+        }
+        
+        .qrcontent {
+            letter-spacing: 0.05em;
+            font-size: 12pt;
+        }
+
+    </style>
+  </head>
+
+  <body class="df-roboto">
+    <div id="app" style="min-height:100%;">
+        <header>
+            <div class="row m-0">
+                <div class="col-12">
+                    <p class="text-center mb-0 qrcontent">#${qrContent}#</p>
+                </div>
+                <div class="col-3 p-0 border d-flex justify-content-center align-items-center">
+                    <div style="height: 140px;" class="d-flex align-items-center">
+                        {% if client.logo %}
+                        <img src="{{ client.logo.url }}" class="img-fluid border-0" style="max-width: 150px !important;" alt="">
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col m-0 p-0 border d-flex flex-column justify-content-between">
+                    <div class="row m-0" style="height: 100%;">
+                        <div class="col-12 border d-flex align-items-center justify-content-center">
+                            <span class="font-weight-bold text-uppercase"> {{client.name}}</span>
+                        </div>
+                    </div>
+                    <div class="row m-0" style="height: 100%;">
+                        <div class="col-6 border d-flex align-items-center">
+                            {% if application_students.0.detached %}
+                                UNIDADE:
+                            {% endif %}
+                            <span class="font-weight-bold text-uppercase">
+                                {% if object and application_students %}
+                                    {{ application_students.0.school_class.coordination.unity.name }}
+                                {% else %}
+                                    #Unidade
+                                {% endif %}
+                            </span> 
+                        </div>
+                        <div class="col-6 border d-flex align-items-center">
+                            TURMA:&nbsp;<span class="font-weight-bold text-uppercase">
+                                {% if application_students %}
+                                    {{application_students.0.school_class.name}}
+                                {% else %}
+                                    #Turma
+                                {% endif %}
+                            </span> 
+                        </div>
+                    </div>
+                    <div class="row m-0" style="height: 100%;">
+                        <div class="col-12 border d-flex align-items-center">
+                            PROVA:&nbsp;<span class="font-weight-bold text-uppercase"> 
+                                {{object.exam.name|upper}}
+                                {% if application_randomization_version %} - V{{application_randomization_version.version_number}}{% endif %}
+                        </div>
+                    </div>    
+                    <div class="row m-0" style="height: 100%;">
+                        <div class="col-12 border d-flex align-items-center">
+                            ALUNO:&nbsp;
+                            <span class="font-weight-bold text-uppercase">
+                                {% if application_students %}
+                                    {{ application_students.0.student.name }}
+                                    {% if application_students.0.student.name %}(Mat. {{ application_students.0.student.enrollment_number }}){% endif %}
+                                {% else %}
+                                    #NomeDoAluno
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>    
+                </div>
+                <div class="col-2 border border-left-0 d-flex justify-content-center align-items-center">
+                    <div>
+                        <div class="randomization-version">
+                            {% if application_randomization_version %}V{{application_randomization_version.version_number}}{% endif %}
+                        </div>
+                        <div class="qrcode" id="qrcode"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <table class="table table-header table-enrollment mb-2">
+            <tr class="tr-borderless tr-borderless-top">
+                <td class="omr-marker-top pt-3" colspan="2">
+                    <p class="text-center font-weight-bold">Orientações</p>
+                    <div class="instructions">
+                        <ul>
+                            <li>Preencha esse cartão com caneta de cor <b>PRETA</b>. Não faça nenhuma marcação fora dos círculos.</li>
+                            <li>Não pinte os círculos pretos nos cantos desta folha.</li>
+                        </ul>
+                        <div class="signature">
+                            Assinatura do aluno
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        
+        <table class="table table-header table-instructions mb-3">
+            <tr>
+                <td class="align-middle p-1 pl-3 bg-grey-instructions fill-instructions-text w-50">
+                    Preencha completamente os círculos utilizando caneta de cor preta, conforme exemplo ao lado:
+                </td>
+                <td class="text-center align-middle bg-grey-instructions" {% if not object.exam.has_foreign_languages %}colspan="3"{% endif %}>
+                    <img src="{% static 'exemplo-marcacao.png' %}" class="fill-img-example">
+                </td>
+                {% if object.exam.has_foreign_languages %}
+                <td style="display: inline; border-top: none;"></td>
+                <td class="p-0 td-border" style="min-width: 35mm;">
+                    <div class="omr-question p-0">
+                        <table class="table m-0 p-0 b-0">
+                            <tbody>
+                                <tr class="p-0 bg-grey-instructions text-center font-weight-bold tr-borderless-top">
+                                    <td class="p-0">Escolha a opção:</td>
+                                </tr>
+                                <tr class="omr-row">
+                                    <td class="omr-td text-left omr-vertical-aligned ml-1">
+                                        <span class="omr-circle mr-1"></span>
+                                        {% if object.exam.is_abstract %}
+                                            {{object.exam.get_foreign_exam_questions.first.question.subject.name|default:"língua inglesa"|upper}}
+                                        {% else %}
+                                            {{object.exam.get_foreign_exam_teacher_subjects.0.teacher_subject.subject.name|truncate:16|upper}}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr class="omr-row">
+                                    <td class="omr-td text-left omr-vertical-aligned ml-1">
+                                        <span class="omr-circle mr-1"></span>
+                                        {% if object.exam.is_abstract %}
+                                            {{object.exam.get_foreign_exam_questions.last.question.subject.name|default:"língua espanhola"|upper}}
+                                        {% else %}
+                                            {{object.exam.get_foreign_exam_teacher_subjects.1.teacher_subject.subject.name|truncate:16|upper}}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+                {% endif %}
+            </tr>
+        </table>
+
+        <p class="text-center font-weight-bold mb-1" style="font-size: 12pt;">RESPOSTAS</p>
+        <table class="table table-border table-header mb-0">
+            <tr>
+                <td colspan="4" class="omr-marker-bottom pl-0">
+                    <div class="omr-content">
+                        {% regroup exam_questions by subject as subjects %}
+
+                        {% for subject in subjects %}
+                            <div class="omr-subject">
+                                {% for exam_question in subject.list %}
+                                    {% cycle 'bg-strip' '' as strip silent %}
+                                    
+                                    {% if not forloop.counter0 %}
+                                    <div class="text-center font-weight-bold text-uppercase subject-name">
+                                        <span>{{ subject.grouper|truncatechars:25 }}</span>
+                                    </div>
+                                    {% endif %}
+                                    <div class="omr-question">
+                                        <table>
+                                            <tr class="omr-row {{strip}}">
+                                                {% if application_randomization_version %}
+                                                    <td class="index omr-td">{{exam_question.question|randomized_application_number_print_question:application_randomization_version}}</td>
+                                                {% else %}
+                                                    <td class="index omr-td">{{exam_question.question|number_print_question:exam_question.exam}}</td>
+                                                {% endif %}
+                                                <td class="omr-td"><span class="omr-circle">A</span></td>
+                                                <td class="omr-td"><span class="omr-circle">B</span></td>
+                                                <td class="omr-td
+                                                {% if exam_question.question.alternatives.all.count < 3 %}
+                                                        all-white
+                                                {% endif %} "
+                                                >
+                                                    <span class="omr-circle">C</span>
+                                                </td>
+                                                <td class="omr-td
+                                                    {% if exam_question.question.alternatives.all.count < 4 %}
+                                                        all-white
+                                                    {% endif %} 
+                                                "><span class="omr-circle">D</span></td>
+
+                                                <td class="omr-td
+                                                    {% if exam_question.question.alternatives.all.count < 5 %}
+                                                        all-white
+                                                    {% endif %} 
+                                                "><span class="omr-circle">E</span></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                {% endfor %}
+                                {% resetcycle %}
+                            </div>
+                            
+                        {% endfor %}
+                    </div>
+                </td>
+            </tr>
+        </table> 
+
+        <p class="text-center m-0">
+            Lize - {% now "Y" %} <br> 
+            <span>{% now "U" %}</span>
+        </p>
+    </div>
+
+    <script src="{% static 'js/vue.min.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+    <script src="{% static 'administration/lib/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'js/qrcode.js' %}"></script>
+    <script src="{% static 'administration/lib/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+    <script type="application/javascript">
+
+        var app_question = new Vue({
+            delimiters: ['${', '}'],
+            el: '#app',
+            data: {
+                qrContent: {% if qr_code_text %} "{{qr_code_text}}" {% else %} "###QR_CONTENT###" {% endif %},
+            },
+            methods: {
+                generateQRCode() {
+                    let element = $("#qrcode")[0]
+                    var qrcode = new QRCode(element, {
+                        text: this.qrContent,
+                        width: 100,
+                        height: 100,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.M
+                    });
+                },
+            },
+            mounted() {
+                document.title = "{{ object.name }}"
+                window.onload = () => {
+                    this.generateQRCode()
+                }
+            }
+        })
+    </script>
+
+    <script defer>
+        document.addEventListener('DOMContentLoaded', function() {
+        let loadedElement = document.createElement('div')
+        loadedElement.id = 'loaded'
+        document.body.appendChild(loadedElement)
+        });
+    </script>
+
+  </body>
+</html>

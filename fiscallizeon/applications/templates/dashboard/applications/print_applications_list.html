@@ -1,0 +1,507 @@
+{% extends 'redesign/base.html' %}
+{% load static %}
+
+{% block title %}
+Impressão de provas - Lize
+{% endblock title %}
+
+{% load get_answer_sheet_link %}
+{% load getlist %}
+{% load cdn_url %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+
+<style>
+  .select2-selection__choice__remove{
+    display: none !important;
+  }
+  .column-300 {
+    max-width: 400px;
+  }
+  #blocked:hover { /* round facebook icon*/
+    background: #dc3545;
+    border: 1px solid #dc3545;
+  }
+  #unlock:hover { /* round facebook icon*/
+    background: #009ede;
+    border: 1px solid #009ede;
+  }
+</style>
+{% endblock %}
+
+{% block content-fixed %}
+<div class="ard cer dcv tw-mb-16">
+<div class="row" style="margin-top: 1.25rem; margin-bottom: 1rem; justify-content: space-between;">
+    <div class="col-md-12">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+              
+              <div>
+                <h6 class="mg-b-5">Impressões</h6>
+                <p class="tx-13 tx-color-03 mg-b-5">Gerencie suas impressões de aplicações</p>
+              </div>
+              
+              <div class="d-flex align-items-center mb-2">
+                <div class="dropdown">
+                  <button class="btn btn-info btn-sm rounded-pill dropdown-toggle" type="button" id="dropdownMenuButtonReport"
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-file-export"></i> Exportar listagem
+                  </button>
+                  <div class="dropdown-menu" aria-labelledby="dropdownMenuButtonReport">
+                    <a href="{{export_list_url}}&amp;type=csv" target="_blank" class="dropdown-item nav-link">
+                      <i class="fas fa-file-csv"></i> planilha por turma</a>
+                    <a href="{{export_list_url}}&amp;type=application" target="_blank" class="dropdown-item nav-link">
+                      <i class="fas fa-file-csv"></i> planilha por malote</a>
+                    <a href="{{export_list_url}}&amp;type=pdf" target="_blank"
+                      class="dropdown-item nav-link"><i class="fas fa-file-pdf"></i> PDF
+                    </a>
+                  </div>
+                </div>
+                <button data-toggle-off-canvas="#right-off-canvas"
+                  class="btn btn-sm btn-primary btn-icon rounded-pill off-canvas-menu  m-1">
+                  <i class="fas fa-search"></i> Filtrar listagem 
+                  
+                  {% if count_filters > 0 %}
+                  <span class="badge badge-danger">{{count_filters}} Aplicado(s)</span>
+                  {% endif %}
+
+                </button>
+                {% if count_filters > 0 %}
+                <a href="{% url 'applications:print_applications_list' %}"
+                  class="btn btn-sm btn-info btn-icon rounded-pill">
+                  <i class="fas fa-eraser"></i> Apagar filtro(s)
+                </a>
+                {% endif %}
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-dashboard mg-b-1">
+                <thead>
+                  <tr>
+                    <th>Caderno</th>
+                    <th>Alunos</th>
+                    <th>Malote</th>
+                    <th>Folhas Malote</th>
+                    <th>Baixar Caderno</th>
+                    <th>Folhas Caderno</th>
+                    <th>Controle</th>
+                  </tr>
+                </thead>
+                <tbody>                  
+                  <tr v-for="application in applications">
+                    <td class="align-middle">
+                      <span class="tx-medium">${ application.exam }</span>
+                      <br/>
+                      <span class="text-muted">${ momentRef(application.date).format('DD/MM/YYYY') }</span>
+                    </td>
+                    <td class="align-middle">
+                      ${application.studentsCount}
+                    </td>
+                    <td class="align-middle">
+                      <template v-if="application.sheetsExportingStatus === 1">
+                        Gerando cartões... 
+                        <i class="fas fa-spinner fa-spin text-primary"></i>
+                        <div class="progress">
+                          <div
+                              class="progress-bar bg-primary progress-bar-striped progress-bar-animated" 
+                              role="progressbar"
+                              :style="{ width: application.sheetsExportingProgress + '%' }">
+                          </div>
+                        </div>
+                      </template>
+                      <span 
+                        v-else-if="application.sheetsExportingStatus == 2 && application.answerSheetUrl"
+                      >
+                        <a :href="application.answerSheetUrl" target="_blank">
+                          <i class="fas fa-file-download"></i> Baixar malote
+                        </a>
+                      </span>
+                      <span class="text-danger" v-else-if="application.sheetsExportingStatus == 3">
+                        Erro na exportação                  
+                      </span>
+                      <p v-if="application.is_printed" class="rounded text-success tx-bold">Impresso <i class="fas fa-check">
+                    </td>
+                    <td class="align-middle">
+                      <input type="number" min="0" class="pages form-control w-50" :value="application.bag_pages" @focusout="handleFocusOut($event, application, 'bag')"/>
+                    </td>
+                    <td class="align-middle">
+                      <template v-if="downloading.includes(application.id)">
+                        <span><i class="fas fa-spinner fa-spin"></i> Baixando</span>
+                      </template>
+                      <template v-else>
+                        <a href="javascript:;" @click="printExam(`${application.examsUrls.print_exam_with_print_service}?${application.examPrintParamsUrl}`, application)">
+                          <i class="fas fa-file-download"></i> Baixar caderno
+                        </a>
+                      </template>
+                      <p v-if="application.bookIsPrinted" class="rounded text-success tx-bold">Impresso <i class="fas fa-check">
+                    </td>
+                      <td class="align-middle">
+                        <input type="number" min="0" class="pages form-control w-50" :value="application.book_pages" @focusout="handleFocusOut($event, application, 'book')"/>
+                      </td>
+                    <td class="text-wrap">
+                      <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" :disabled="application.category != 3">
+                          <i class="fas fa-print"></i>
+                        </button>
+                        <div class="dropdown-menu" x-placement="bottom-start">
+                          <h6 class="dropdown-header tx-uppercase tx-11 tx-bold tx-inverse tx-spacing-1">Controle de impressão</h6>
+                          <a href="javascript:void(0)" class="dropdown-item" @click="changeIsPrinted(application)">
+                            <span v-if="application.is_printed"><i class="fa fa-times"></i> Desmarcar malote como impresso</span>
+                            <span v-else><i class="fa fa-check-double"></i> Marcar malote como impresso</span>
+                          </a>
+                          <a href="javascript:void(0)" class="dropdown-item" @click="changeBookIsPrinted(application)">
+                            <span v-if="application.bookIsPrinted"><i class="fa fa-times"></i> Desmarcar caderno como impresso</span>
+                            <span v-else><i class="fa fa-check-double"></i> Marcar caderno como impresso</span>
+                          </a>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div><!-- table-responsive -->
+        </div><!-- card -->
+        {% include 'includes/pagination.html' with objects=object_list %}
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+{% block off-canvas %}
+<div id="right-off-canvas" class="off-canvas off-canvas-right wd-400 bg-white"
+  style="overflow-y: auto; overflow-x: hidden;">
+  <form action="" method="GET">
+  <div class="row p-3">
+      <div class="col-12">
+        <h5>Filtrar aplicações</h5>
+        <p>Adiciona abaixo os filtros que você deseja aplicar na listagem abaixo</p>
+        <hr/>
+      </div>
+
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="application_name_id" class="mb-1">Nome do caderno</label>
+          <input type="text" value="{{q_name}}" id="application_name_id" name="q_name" class="form-control" placeholder="Digite o nome do caderno aqui">
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="grade_id" class="mb-1">Séries</label>
+          <select name="q_grades" id="grade_id" class="form-control" multiple="multiple">
+            {% for grade in grades %}
+              <option value="{{grade.pk}}" {% if grade.pk|stringformat:'s' in q_grades %} selected="selected" {% endif %}>
+                {{grade}}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="unity_id" class="mb-1">Unidades</label>
+          <select name="q_unities" id="unity_id" class="form-control" multiple="multiple">
+            {% for unity in unities %}
+              <option value="{{unity.pk}}" {% if unity.pk|stringformat:'s' in q_unities %} selected="selected" {% endif %}>
+                {{unity}}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="system_id" class="mb-1">Sistemas de ensino</label>
+          <select name="q_systems" id="system_id" class="form-control" multiple="multiple">
+            {% for system in systems %}
+              <option value="{{system.pk}}" {% if system.pk|stringformat:'s' in q_systems %} selected="selected" {% endif %}>
+                {{system}}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="col-12 mb-3">
+        <div class="custom-control custom-switch ">
+          <input {% if q_is_printed %}checked="checked"{% endif %} type="checkbox" id="is_printed_id" name="q_is_printed" class="custom-control-input">
+          <label class="custom-control-label" for="is_printed_id">Malote impresso</label>
+          <small class="form-text text-muted mt-0">Selecine caso queira ver apenas aplicações com malote marcado como impresso.</small>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="custom-control custom-switch ">
+          <input {% if q_book_is_printed %}checked="checked"{% endif %} type="checkbox" id="book_is_printed_id" name="q_book_is_printed" class="custom-control-input">
+          <label class="custom-control-label" for="book_is_printed_id">Caderno impresso</label>
+          <small class="form-text text-muted mt-0">Selecine caso queira ver apenas aplicações com cadernos marcados como impresso.</small>
+        </div>
+      </div>
+
+      <div class="col-12 mt-5">
+        <button type="submit" class="btn btn-primary btn-block">
+          <i class="fas fa-search"></i>
+          Aplicar filtro
+        </button>
+      </div>
+  </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script>
+
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {
+      today: "{% now 'Ymd' %}",
+      selectedApplication: null,
+      answer_sheet_model: "fiscallize",
+      blank_pages: false,
+      includeDiscursives: false,
+      includeExams: false,
+      discursiveOptions: {
+        split_subjects: 0,
+      },
+      examPrintConfig: {},
+      printDefaults: [],
+      addAndDeleteStudentUrl: "{% url "applications:applications_add_del_student" '00000000-0000-0000-0000-000000000000' %}",
+      deleteApplicationUrl: "{% url "applications:applications_delete" '00000000-0000-0000-0000-000000000000' %}",
+      detailsApplicationUrl: "{% url "applications:applications_detail" '00000000-0000-0000-0000-000000000000' %}",
+      updateApplicationUrl: "{% url "applications:applications_update" '00000000-0000-0000-0000-000000000000' %}",
+      discloseApplicationUrl: "{% url "applications:applications_disclose" '00000000-0000-0000-0000-000000000000' %}",
+      exportExamsBag: "{% url "applications:export_application_exams_bag" pk="00000000-0000-0000-0000-000000000000" %}",
+      {% if has_discursives %}
+        exportDetachedDiscursiveAnswerSheetUrl: "{% url "omr:export_answer_sheet_discursive_detached" '00000000-0000-0000-0000-000000000000' %}",
+      {% endif %}
+      export_list_url: "{{ export_list_url }}",
+      url_params_export: "?name='blabal'",
+      applications: [
+        {% for application in object_list %}
+          {
+            "id": "{{ application.pk }}",
+            "date": "{{ application.date|safe }}",
+            "start": "{{ application.start|safe }}",
+            "end": "{{ application.end|safe }}",
+            "category": {{ application.category }},
+            "subject": "{{ application.subject }}",
+            "studentStatsPermissionDate": "{{ application.student_stats_permission_date|safe }}",
+            "exam": "{{ application.exam.name|safe }}",
+            "examPk": "{{ application.exam.pk|safe }}",
+            "examPrintParamsUrl": "{{ application.exam.get_printing_params|safe }}",
+            "examsUrls": {{application.exam.urls|safe}},
+            "abstractExam": {{ application.exam.is_abstract|default:False|lower }},
+            "studentsCount": {{ application.applicationstudent_set.all.count }},
+            "answerSheetUrl": "{{ application|default_if_none:''|get_answer_sheet_link|cdn_url|safe }}",
+            "lastAnswerSheetGeneration": moment("{{ application.last_answer_sheet_generation|safe }}").locale('pt-br').fromNow(),
+            "schoolClasses": [
+              {% for school_class in application.get_classes %}
+                "{{ school_class.name }} - {{ school_class.coordination__unity__name }}",
+              {% endfor %}
+            ],
+            "sheetsExportingStatus": {{ application.sheet_exporting_status }},
+            "sheetsExportingCount": {{ application.sheet_exporting_count }},
+            "sheetsExportingProgress": 0,
+            "is_printed": {{ application.is_printed|default:False|lower }},
+            "bookIsPrinted": {{ application.book_is_printed|default:False|lower }},
+            "urls": {{ application.urls|safe }},
+            "releaseResultAtEnd": {{ application.release_result_at_end|default:False|lower }},
+            "bag_pages": {{ application.bag_pages }},
+            "book_pages": {{ application.book_pages }},
+          },
+        {% endfor %}
+      ],
+      downloading: [],
+    },
+    methods: {
+      async printExam(printUrl, application) {
+        this.downloading.push(application.id)
+        params = $("#configure_print_form_id").serialize()
+        let url = printUrl
+        let filename = `${application.exam}.pdf`
+        await this.downloadFile(url, filename)
+        this.downloading.splice(application.id, 1)
+      },
+      async downloadFile(url, filename) {
+        return await axios({
+          url: url,
+          method: 'GET',
+          responseType: 'blob'
+        }).then(response => {
+          const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+        }).catch(error => {
+          console.error('Erro ao baixar o arquivo:', error)
+          this.alertTop('Erro ao baixar o arquivo', icon='error')
+        });
+      },
+      handleFocusOut(event, application, type) {
+        let url = application.urls.application_pages_quantity
+        axios.post(url, {
+          value: event.target.value,
+          type: type
+        }).then((res) => {
+          let app = this.applications.find(app => app.id === application.id)
+          if(type === 'bag'){
+            app.bag_pages = event.target.value
+          }else{
+            app.book_pages = event.target.value
+          }
+          this.alertTop('O número de folhas foi alterado')
+        })
+      },
+      momentRef(args) {
+        return moment(args)
+      },
+      changeIsPrinted(application) {
+        let url = application.urls.api_change_is_printed
+        axios.post(url, {}).then((response) => {
+          this.alertTop('A prova foi marcado como impressa.')
+          let app = this.applications.find(app => app.id === application.id)
+          app.is_printed = !app.is_printed
+        }).catch((e) => {
+          this.alertTop('Ocorreu um erro ao tentar alterar o prova, tente novamente, caso o erro persista entre em contato com o suporte.', 'error')
+        })
+      },
+      changeBookIsPrinted(application){
+        let url = application.urls.api_change_book_is_printed
+        axios.post(url, {}).then((response) => {
+          this.alertTop('O caderno de prova foi marcado como impresso.')
+          let app = this.applications.find(app => app.id === application.id)
+          app.bookIsPrinted = !app.bookIsPrinted
+        }).catch((e) => {
+          this.alertTop('Ocorreu um erro ao tentar alterar a prova, tente novamente, caso o erro persista entre em contato com o suporte.', 'error')
+        })
+      },    
+      fetchExportStatus(applications) {
+          const self = this
+          applications.map(function(application) {
+              let url = "{% url 'omr:omr_export_task_status' '00000000-0000-0000-0000-000000000000' 9999 %}"
+              url = url.replace('9999', application.sheetsExportingCount)
+              url = url.replace('00000000-0000-0000-0000-000000000000', application.id)
+              fetch(url)
+              .then(response => response.json())
+              .then(data => {
+                switch (data.status) {
+                  case 'STARTED':
+                    application.sheetsExportingProgress = Math.round(data.percent * 100)
+                    break
+                  case 'SUCCESS':
+                    application.sheetsExportingStatus = 2
+                    application.answerSheetUrl = data.application.answer_sheet
+                    application.lastAnswerSheetGeneration = moment().fromNow()
+                    break
+                  case 'FAILURE':
+                    application.sheetsExportingStatus = 3
+                    break;
+                }
+              })
+          })           
+        },
+      alertTop(text, icon = 'success') {
+        Swal.fire({
+          position: 'top-end',
+          text: text,
+          icon: icon,
+          showConfirmButton: false,
+          timer: 1500,
+          toast: true,
+          timerProgressBar: true,
+        })
+      },
+    },
+    mounted: function(){   
+      $('[data-toggle="tooltip"]').tooltip()
+      setInterval(() => {
+          const pendingExports = this.applications.filter(
+            application => application.sheetsExportingStatus == 1
+          )
+
+          if(pendingExports) {
+              this.fetchExportStatus(pendingExports)
+          }
+      }, 1000)
+      $('.pages').on('focusout', (e) => {
+        if(e.target.value === '' || e.target.value < 0){
+          e.target.value = 0
+        }
+      })
+      $('.off-canvas-menu').on('click', function (e) {
+        e.preventDefault();
+        var target = $(this).attr('data-toggle-off-canvas');
+        $(target).addClass('show');
+      });
+
+      $('.off-canvas .close').on('click', function (e) {
+        e.preventDefault();
+        $(this).closest('.off-canvas').removeClass('show');
+      })
+
+      $(document).on('click touchstart', function (e) {
+        if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+          return
+        }
+        e.stopPropagation();
+
+        if (!$(e.target).closest('.off-canvas-menu').length) {
+          var offCanvas = $(e.target).closest('.off-canvas').length;
+          if (!offCanvas) {
+            $('.off-canvas.show').removeClass('show');
+          }
+        }
+      });
+    
+      $('#grade_id').select2({
+        placeholder: "Selecione uma opção",
+        closeOnSelect: false,
+      }).on('select2:selecting', function(e) {
+        let cur = e.params.args.data.id;
+        let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+        $(e.target).val(old).trigger('change');
+        $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+        return false;
+      });
+      $('#unity_id').select2({
+        placeholder: "Selecione uma opção",
+        closeOnSelect: false,
+      }).on('select2:selecting', function(e) {
+        let cur = e.params.args.data.id;
+        let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+        $(e.target).val(old).trigger('change');
+        $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+        return false;
+      });
+      $('#system_id').select2({
+        placeholder: "Selecione uma opção",
+        closeOnSelect: false,
+      }).on('select2:selecting', function(e) {
+        let cur = e.params.args.data.id;
+        let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+        $(e.target).val(old).trigger('change');
+        $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+        return false;
+      });
+    
+      $('.table-responsive').on('show.bs.dropdown', function () {
+        $('.table-responsive').css( "overflow", "inherit" );
+      });
+      
+      $('.table-responsive').on('hide.bs.dropdown', function () {
+        $('.table-responsive').css( "overflow", "auto" );
+      })
+
+    },
+  })
+
+</script>
+{% endblock %}

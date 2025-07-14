@@ -1,0 +1,221 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Cadastro de parceiros - Lize{% endblock title %}
+
+{% block css-additional %}
+
+{% endblock css-additional %}
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+      <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+        <nav class="ls" aria-label="Breadcrumb">
+          <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+            <li>
+              <div>
+                <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                    <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+                </a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="{% url 'clients:partners_list' %}" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Parceiros</a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">{% if not object %}Cadastrar{% else %}Editar{% endif %}</a>
+              </div>
+            </li>
+          </ol>
+        </nav>
+        <div class="d-none d-md-block">
+          <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+          </a>
+        </div>
+      </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card mg-b-10">
+                <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+                    <div>
+                        <h6 class="mg-b-5">{% if not object %}Cadastrar um novo{% else %}Editar {% endif %} parceiro</h6>
+                    </div>
+                </div>
+                <div class="card-body">
+                  <ul class="nav nav-tabs mb-4">
+                    <li class="nav-item">
+                      <a class="{% if form.password.errors or form.username.errors %}nav-link{% else %}nav-link active{% endif %}"
+                        data-toggle="tab" href="#student-data" aria-current="page">
+                        <i class="fas fa-align-right mr-1"></i>
+                        Dados do aluno</a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="{% if form.password.errors or form.username.errors %}nav-link active{% else %}nav-link{% endif %}" data-toggle="tab" href="#user-data">
+                        <i class="fas fa-user mr-1"></i> Dados de usuário
+                      </a>
+                    </li>
+                  </ul>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="tab-content">
+                          <div class="{% if form.password.errors or form.username.errors %}tab-pane fade{% else %}tab-pane fade show active{% endif %}" id="student-data" role="tabpanel" aria-labelledby="student-data">
+                            <div class="form-row">
+                                <div class="col-md-6 mt-1 mb-2">
+                                    <label for="{{form.name.auto_id}}">{{form.name.label}}</label>
+                                    {% render_field form.name placeholder="nome" autocomplete="new-password" class="form-control" %}
+                                    {% for error in form.name.errors %}
+                                    <small class="text-danger">{{error}}</small>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="col-md-6 mt-1 mb-2">
+                                    <label for="{{form.email.auto_id}}">{{form.email.label}}</label>
+                                    {% render_field form.email placeholder="email" autocomplete="new-password" class="form-control" %}
+                                    <small class="form-text text-muted">O parceiro deverá usar o email como senha para acessar pela primeira vez</small>
+                                    {% for error in form.email.errors %}
+                                    <small class="text-danger">{{error}}</small>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div>
+                                <div class="col-md-6 mt-1 mb-2 custom-control custom-checkbox">
+                                  {% render_field form.is_printing_staff class="custom-control-input" %}
+                                  <label class="custom-control-label" for="{{form.is_printing_staff.auto_id}}">{{form.is_printing_staff.label}}</label>
+                                  <small class="form-text text-muted">
+                                    {{ form.is_printing_staff.help_text }}
+                                  </small>
+                                  {% for error in form.name.errors %}
+                                    <small class="text-danger">{{error}}</small>
+                                  {% endfor %}
+                                </div>
+                            </div>
+                          </div>
+                        <div class="{% if form.password.errors or form.username.errors %}tab-pane fade show active{% else %}tab-pane fade{% endif %}" id="user-data" role="tabpanel" aria-labelledby="contact-tab">
+                          <h5>Dados de usuário</h5>
+                          <p class="tx-13 tx-color-03 mg-b-5">Informe os dados do usuário abaixo</p><hr>
+                          <div class="row">
+                            <div class="col-sm-7">
+                              <div class="form-group">
+                                <label for="{{form.username.auto_id}}">{{ form.username.label }}</label>
+                                <div class="input-group mb-2">
+                                  <div class="input-group-prepend">
+                                    <div class="input-group-text"><i class="fas fa-user mr-1"></i></div>
+                                  </div>
+                                  <input class="form-control" autocomplete="new-password"  type="text" name="{{form.username.name}}" id="{{form.username.auto_id}}" placeholder="{{object.user.username}}">
+                                </div>
+                                {% if form.username.errors %}
+                                {% for error in form.username.errors %}
+                                <small class="text-danger">{{error}}</small>
+                                {% endfor %}
+                                {% endif %}
+                              </div>
+                              <div class="form-group">
+                                <label for="{{form.password.auto_id}}">{{ form.password.label }}</label>
+                                <div class="input-group mb-2">
+                                  <div class="input-group-prepend">
+                                    <div class="input-group-text"><i class="fas fa-key mr-1"></i></div>
+                                  </div>
+                                  <input class="form-control" autocomplete="new-password"  name="{{form.password.name}}" type="password" id="{{form.password.auto_id}}">
+                                </div>
+                                <div class="invalid-feedback">{{ form.errors.old_password }}</div>
+                                {% if form.password.errors %}
+                                {% for error in form.password.errors %}
+                                <small class="text-danger">
+                                  <li>{{error}}</li>
+                                </small>
+                                {% endfor %}
+                                {% endif %}
+                              </div>
+                              <div class="form-group">
+                                <label for="{{form.confirmation_password.auto_id}}">{{ form.confirmation_password.label }}</label>
+                                <div class="input-group mb-2">
+                                  <div class="input-group-prepend">
+                                    <div class="input-group-text"><i class="fas fa-key mr-1"></i></div>
+                                  </div>
+                                  <input class="form-control" autocomplete="new-password"  name="{{form.confirmation_password.name}}" type="password" id="{{form.confirmation_password.auto_id}}">
+                                </div>
+                                <div class="invalid-feedback">{{ form.errors.old_password }}</div>
+                                {% if form.confirmation_password.errors %}
+                                {% for error in form.confirmation_password.errors %}
+                                <small class="text-danger">
+                                  <li>{{error}}</li>
+                                </small>
+                                {% endfor %}
+                                {% endif %}
+                              </div>
+                              <div class="form-group">
+                                <div class="custom-control custom-switch">
+                                  {% render_field form.must_change_password class="custom-control-input" %}
+                                  <label class="custom-control-label" for="{{form.must_change_password.auto_id}}">
+                                    {{ form.must_change_password.label }}</label>
+                                  <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                    {{ form.must_change_password.help_text }}
+                                  </small>
+                                  {% if form.must_change_password.errors %}
+                                  <label class="text-danger">
+                                    {{ form.must_change_password.errors.0 }}
+                                  </label>
+                                  {% endif %}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <button class="btn btn-primary" type="submit">Criar</button>
+                            </div>
+                        </div>
+                        <input type="hidden" name="client" value="{{user.get_clients_cache.0}}">
+                    </form>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+
+{% endblock extra-modal %}
+
+{% block js-additional %}
+
+<script type="text/javascript" src="{% static 'tinymce/tinymce.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.20/lodash.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    var app = new Vue({
+        el: '#app',
+        delimiters: ['${', '}'],
+        data: {
+        },
+        watch:{
+        },
+        methods: {
+        },
+        mounted() {
+            
+        }
+    });
+</script>
+{% endblock js-additional %}

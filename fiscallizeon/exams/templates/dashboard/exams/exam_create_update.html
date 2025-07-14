@@ -1,0 +1,336 @@
+{% extends 'dashboard/base_fixed.html' %}
+
+{% block title %}
+  {% if not object %}
+    Lize - Solicitação de prova
+  {% else %}
+    Lize - Alteração de prova
+  {% endif %}
+{% endblock title %}
+  
+
+{% load static %}
+{% load widget_tweaks %}
+{% load insert_field %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<link rel="stylesheet" href="{% static 'administration/lib/quill/quill.snow.css' %}">
+<link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+
+<style>
+  .list-group-item:hover{
+    background-color: #f3f3f3;
+    cursor: move;
+  }
+  .list-group-item .btn:hover{
+    cursor: pointer;
+  }
+</style>
+
+{% endblock css-additional %}
+
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="{% url 'applications:applications_list' %}">PROVA</a></li>
+          <li class="breadcrumb-item active" aria-current="page">GERENCIAR</li>
+        </ol>
+      </nav> 
+      <h4>Gerenciar prova</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+
+
+{% block content-fixed %}
+
+<div class="row">
+    <div class="col-md-7">
+        <div class="card mg-b-10">
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    {{ question_formset.management_form }}
+
+                    <div class="form-row">
+                      <div class="form-group col-md-12">
+                        {{ form.coordinations.label }}
+                        {% render_field form.coordinations class="form-control" %}
+                        <small class="form-text text-muted">
+                          {{ form.coordinations.help_text }}
+                        </small>
+                        {% if form.coordinations.errors %}
+                        <label class="text-danger">
+                          {{ form.coordinations.errors.0 }}</label>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                          {{ form.name.label }}
+                          {% render_field form.name class="form-control" %}
+                          <small class="form-text text-muted">
+                              {{ form.name.help_text }}
+                          </small>
+                          {% if form.name.errors %}
+                              <label class="text-danger">
+                              {{ form.name.errors.0 }}</label>
+                          {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-12 p-0 mb-4">
+                        {{ form.status.label }}
+                        {% render_field form.status class="form-control" %}
+                        <small class="form-text text-muted">
+                            {{ form.status.help_text }}
+                        </small>
+                        {% if form.status.errors %}
+                            <label class="text-danger">
+                            {{ form.status.errors.0 }}</label>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-row mb-3">
+                        <div class="col-md-4">
+                          <div class="custom-control custom-switch ">
+                            {% render_field form.random_alternatives class="custom-control-input" %}
+                            <label class="custom-control-label" for="{{form.random_alternatives.auto_id}}">
+                                <i class="fas fa-random"></i>
+                              {{ form.random_alternatives.label }}</label>
+                            <small class="form-text text-muted mt-0" style="line-height: initial;">
+                              {{ form.random_alternatives.help_text }}
+                            </small>
+                            {% if form.random_alternatives.errors %}
+                            <label class="text-danger">
+                              {{ form.random_alternatives.errors.0 }}
+                            </label>
+                            {% endif %}
+                          </div>
+                        </div>
+
+                        <div class="col-md-4">
+                          <div class="custom-control custom-switch">
+                            {% render_field form.random_questions class="custom-control-input" %}
+                            <label class="custom-control-label" for="{{form.random_questions.auto_id}}">
+                                <i class="fas fa-random"></i>
+                              {{ form.random_questions.label }}
+                            </label>
+                            <small class="form-text text-muted mt-0" style="line-height: initial;">
+                              {{ form.random_questions.help_text }}
+                            </small>
+                          {% if form.random_questions.errors %}
+                              <label class="text-danger">
+                                {{ form.random_questions.errors.0 }}
+                              </label>
+                          {% endif %}
+                          </div>
+                        </div>
+
+                        <div class="col-md-4">
+                          <div class="custom-control custom-switch">
+                              {% render_field form.group_by_topic class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.group_by_topic.auto_id}}">
+                                <i class="fas fa-list"></i>
+                                {{ form.group_by_topic.label }}</label>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.group_by_topic.help_text }}
+                              </small>
+                            {% if form.group_by_topic.errors %}
+                                <label class="text-danger">
+                                  {{ form.group_by_topic.errors.0 }}
+                                </label>
+                            {% endif %}
+                          </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="col-md-12 p-0" id="question-container">
+                      <h5>Questões</h5>
+                      <h6 class="text-muted">Altera a ordem das questões ou remova-as da prova na listagem abaixo!</h6>
+
+                      <draggable
+                      :list="selectedQuestions"
+                      class="list-group"
+                      ghost-class="ghost"
+                      @start="dragging = true"
+                      @end="dragging = false"
+                    >
+                      <div class="list-group-item" v-for="(question, index) in selectedQuestions" :key="question.pk">
+                        <span class="float-right">
+                          <button class="btn btn-xs btn-default p-0 m-0" @click="removeQuestion(index)">
+                              <span class="fas fa-trash text-danger" aria-hidden="true"></span>
+                          </button>
+                        </span>
+                        <div>
+                          <div class=" w-100">
+                            <span class="badge badge-success">Utilizada ${question.used_times} Vez(es)</span>  <span class="badge badge-warning ">${question.get_level_display}</span>
+                            <h6 class="mb-1">${question.enunciation}</h6>
+                            <input type="hidden" v-if="question.id !== question.pk" :name="'Exam_questions-'+index+'-id'" :value="question.id">
+                            <input type="hidden" v-if="question.id !== question.pk" :name="'Exam_questions-'+index+'-exam'" value="{{object.pk}}">
+                            <input type="hidden" :name="'Exam_questions-'+index+'-question'" :value="question.pk">
+                          </div>
+                          <p class="mb-1">
+                            <span class="badge badge-primary ">${question.topic_name}</span>
+                          </p>
+                        </div>
+                      </div>
+                    </draggable> 
+                    </div>
+
+                    <button type="submit" class="btn btn-primary float-right mt-3">Salvar prova</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5">
+      <div style="position: -webkit-sticky; position: sticky; top: 100px;">
+        <div class="card mg-b-10">
+          <div class="card-body">
+            <h5>Adicione as questões na prova</h5>
+            <div class="form-group">
+              Selecione a questão abaixo
+              <select 
+                  name="search-question"
+                  id="search-question"
+                  class="form-control question">
+              </select> 
+              
+            </div>
+                <button class="btn btn-primary float-right" type="buttom">Inserir questão</button>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
+
+{% endblock content-fixed %}
+
+{% block js-additional %}
+
+
+<script src="{% static 'administration/lib/typeahead.js/typeahead.bundle.min.js' %}"></script>
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'administration/assets/vendor/jquery.mask.min.js' %}"></script>
+
+
+
+<script type="text/javascript">
+
+  var app_question = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {
+      dragging: false,
+      selectedQuestions: [
+        {% for question in question_formset %}
+          {% for hidden_field in question.hidden_fields %}
+              {% if hidden_field.name == "id" %}
+                {{question.instance.question.object_serialized|insert_field:hidden_field.value|safe}}
+              {% endif %}
+          {% endfor %},
+        {% endfor %}
+      ],
+    },
+    methods: {
+      removeQuestion(index){
+        this.selectedQuestions.splice(index, 1)
+        this.updateCountTotalForms()
+      },
+      initializeSelect2: function() {
+        self = this
+        $('#'+"{{form.coordinations.auto_id}}").select2({})
+        $('.question').select2({
+            placeholder: 'Buscar pelo enunciado da questão...',
+            minimumInputLength: 3,
+            allowClear: true,
+            closeOnSelect: false,
+            escapeMarkup: function (text) { return text; },
+            ajax: {
+                url: '{% url "questions:questions_api_list" %}',
+                delay: 250,
+                data: function (params) {
+                return {
+                    search: params.term
+                }
+                },
+                processResults: function(results) {
+                    let new_results = $.map(results, function(element) {
+                        element.text = element.enunciation
+                        element.id = element.pk
+                        return element
+                    })
+
+                    return {
+                        results: new_results,
+                    }
+                }
+            },
+            templateResult: (data) => {
+              return this.templateSelect(data)
+            }
+            
+        })
+      },
+      templateSelect: function(data){
+          var used_times_text = data.used_times > 0 ?`<span class="badge badge-warning float-right">
+            ${data.used_times} vez(es)</span>` : `<span class="badge badge-primary float-right">Inédita</span>`
+          
+          var result = `
+            <div class="row mb-0">
+              <div class="col-10 mb-0">
+                <div class="font-weight-bold" style="line-height: 15px; white-space: break-spaces; ">${data.enunciation}...</div>
+              </div>
+              <div class="col-2 mb-0">
+                <span class="float-right text-muted font-weight-normal">
+                  ${data.get_level_display}
+                </span>
+                ${used_times_text}
+              </div>
+            </div>
+            <div class="row"><div class="col-12">`
+              
+          if (data.topic_name)
+            result += `<span class="badge badge-success">${data.topic_name}</span>`
+          
+            result += ` <span class="badge badge-success">${data.topic_name}</span>`
+
+          result += '</div></div>'
+          return result
+      },
+      updateCountTotalForms(){
+        const formsetPrefix = "{{ question_formset.prefix }}";
+        const totalForms = $(`#id_${formsetPrefix}-TOTAL_FORMS`);
+        const formsCount = this.selectedQuestions.length
+        totalForms.val(formsCount)
+      }
+    },
+    mounted: function(){
+      self = this
+      
+      self.initializeSelect2()
+
+      $('.question').on('select2:select', (e) => {
+          this.selectedQuestions.push(e.params.data)
+          this.updateCountTotalForms()
+      });
+    },
+  })
+
+
+</script>
+
+
+{% endblock %}

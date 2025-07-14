@@ -1,0 +1,576 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load format_duration %}
+
+{% block title %}Detalhes da aplicação - Lize{% endblock title %}
+
+{% block css-additional %}
+<style>
+.card-detail{
+    max-height: 70vh;
+    overflow: auto;
+
+}
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  display: none;
+}
+</style>
+{% endblock %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">APLICAÇÕES</a></li>
+          <li class="breadcrumb-item active" aria-current="page">DETALHES</li>
+        </ol>
+      </nav>
+      <h4>Aplicação do dia {{object.date}} às {{object.start}}</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <a href="#" onClick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+        <nav class="ls" aria-label="Breadcrumb">
+          <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+            <li>
+              <div>
+                <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                    <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+                </a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="{% url 'applications:applications_list' %}?category=online" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Aplicações</a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Detalhes</a>
+              </div>
+            </li>
+          </ol>
+        </nav>
+        <div class="d-none d-md-block">
+          <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+          </a>
+        </div>
+      </div>
+
+<div class="row">
+    {% include 'includes/messages.html' %}
+    <div class="col-12 mb-3">
+        <h4>Aplicação do dia {{object.date}} às {{object.start}}</h4>
+    </div>
+    <div class="col-sm-4 col-lg-2">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Alunos registrados</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">{{all_students.count}}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4 col-lg-2">
+            <div class="card card-body">
+                <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Alunos concluiram</h6>
+                <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                    <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">
+                        {{finish_students_count}}
+                    </h3>
+                </div>
+            </div>
+        </div>
+    <div class="col-sm-4 col-lg-2">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Alunos não presentes</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">
+                    {{missing_students_count}}
+                </h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4 col-lg-2">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Pausas Solicitadas</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">
+                    {{object.pauses_count}}
+                </h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4 col-lg-2">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Alunos com saídas da aplicação</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">
+                    {{count_students_exits}}
+                </h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4 col-lg-2">
+            <div class="card card-body">
+                <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Duração média das pausas</h6>
+                <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                    <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">
+                        {% if  object.pause_average_duration %}
+                            {{object.pause_average_duration|format_duration}}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </h3>
+                </div>
+            </div>
+        </div>
+    <div class="col-sm-4 col-lg-2">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Duração média de prova</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">
+                    {% if object.average_duration %}
+                        {{object.average_duration|format_duration}}
+                    {% else %}
+                        -
+                    {% endif %}
+                </h3>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <form method="GET" class="col-md-12 tw-flex tw-gap-4">
+        <input class="form-control form-control-sm col-md-6" type="text" name="q_student_name" value="{{ q_student_name }}" placeholder="Busque pelo nome ou email do aluno">
+        <button data-toggle-off-canvas="#right-off-canvas"
+            class="btn btn-sm btn-info btn-icon rounded-pill off-canvas-menu  mb-2">
+            <i class="fas fa-search"></i> Filtrar listagem 
+        </button>
+        <a href="{% url 'applications:applications_detail' object.pk %}" class="btn btn-sm btn-info btn-icon rounded-pill mb-2">
+            <i class="fas fa-eraser"></i> Limpar filtro
+        </a>
+    </form>
+</div>
+<div class="row">
+    <div class="col-md-12 ">
+        <div class="row mb-0">
+            <div class="col-md-4 p-2 pl-4">
+                <h6 class="mg-b-0 text-muted">NOME</h6>
+            </div>
+            <div class="col-md-2 p-2">
+                {% if object.category == 3 %}
+                    <span style="cursor: pointer" onclick="changeOrder('is_omr')">
+                        <h6 class="mg-b-0 {% if not orderby == 'is_omr' and not orderby == '-is_omr' %}text-muted{% endif %}">
+                            PRESENÇA
+                            {% if orderby == 'is_omr' or orderby == '-is_omr' %}
+                                {% if '-' in orderby %}
+                                    <i class="fas fa-sort-numeric-down"></i>
+                                {% else %}
+                                    <i class="fas fa-sort-numeric-up"></i>
+                                {% endif %}
+                            {% endif %}
+
+                        </h6>
+                    </span>
+                {% else %}
+                <span style="cursor: pointer" onclick="changeOrder('duration')">
+                    <h6 class="mg-b-0 {% if not orderby == 'duration' and not orderby == '-duration' %}text-muted{% endif %}">
+                        DURAÇÃO
+                        {% if orderby == 'duration' or orderby == '-duration' %}
+                            {% if '-' in orderby %}
+                                <i class="fas fa-sort-numeric-down"></i>
+                            {% else %}
+                                <i class="fas fa-sort-numeric-up"></i>
+                            {% endif %}
+                        {% endif %}
+
+                    </h6>
+                    </span>
+                {% endif %}
+            </div>
+            <div class="col-md-2 p-2">
+                <span style="cursor: pointer" onclick="changeOrder('pauses')">
+                    <h6 class="mg-b-0 {% if not orderby == 'pauses' and not orderby == '-pauses' %}text-muted{%endif%}">PAUSAS
+
+                            {% if orderby == 'pauses' or orderby == '-pauses' %}
+                            {% if '-' in orderby %}
+                                <i class="fas fa-sort-numeric-down"></i>
+                            {% else %}
+                                <i class="fas fa-sort-numeric-up"></i>
+                            {% endif %}
+                        {% endif %}
+                    </h6>
+                </span>
+            </div>
+            <div class="col-md-2 p-2">
+                <span style="cursor: pointer" onclick="changeOrder('notes')">
+                    <h6 class="mg-b-0 {% if not orderby == 'notes' and not orderby == '-notes' %}text-muted{%endif%}">ANOTAÇÕES
+
+                            {% if orderby == 'notes' or orderby == '-notes' %}
+                            {% if '-' in orderby %}
+                                <i class="fas fa-sort-numeric-down"></i>
+                            {% else %}
+                                <i class="fas fa-sort-numeric-up"></i>
+                            {% endif %}
+                        {% endif %}
+                    </h6>
+                </span>
+            </div>
+            <div class="col-md-2 p-2">
+                <span style="cursor: pointer" onclick="changeOrder('-exits_student')">
+                    <h6 class="mg-b-0 {% if not orderby == 'exits_student' and not orderby == '-exits_student' %}text-muted{%endif%}">
+                        SAÍDAS
+                        {% if orderby == 'exits_student' or orderby == '-exits_student' %}
+                            {% if '-' in orderby %}
+                            <i class="fas fa-sort-numeric-down"></i>
+                            {% else %}
+                            <i class="fas fa-sort-numeric-up"></i>
+                            {% endif %}
+                        {% endif %}
+                    </h6>
+                </span>
+            </div>
+        </div>
+
+        
+        <div id="accordion">
+            {% for student in students %}
+                <div class="card">
+                    <a href="#collapse-{{student.pk}}" data-toggle="collapse"
+                     {% if student.exits_student > 0 %} 
+                     {% endif %}>
+                        <div class="card-header">
+                            <div class="row mb-0">
+                                <div class="col-md-2">
+                                    {% if student.duration %}
+                                        <span data-toggle="tooltip" title="Concluído" class="d-block wd-10 ht-10 rounded mg-t-3 mg-r-5 bg-info float-left"></span>
+                                    {% elif student.start_time %}
+                                        <span data-toggle="tooltip" title="Realizando" class="d-block wd-10 ht-10 rounded mg-t-3 mg-r-5 bg-success float-left"></span>
+                                    {% elif student.missed %}
+                                        <span data-toggle="tooltip" title="Falta marcada" class="d-block wd-10 ht-10 rounded mg-t-3 mg-r-5 bg-danger float-left"></span>
+                                    {% elif student.is_omr %}
+                                        <span data-toggle="tooltip" title="Presente" class="d-block wd-10 ht-10 rounded mg-t-3 mg-r-5 bg-success float-left"></span>
+                                    {% else %}
+                                        <span data-toggle="tooltip" title="Faltante" class="d-block wd-10 ht-10 rounded mg-t-3 mg-r-5 bg-danger float-left"></span>
+                                    {% endif %}
+                                        <h6 class="mg-b-0">
+                                            {{student.student.name}}</h6>
+                                </div>
+                                <div class="col-md-1">
+                                    {% if student.has_annotation_suspicion_taking_advantage %}
+                                    <i data-toggle="tooltip"
+                                            original-title="Suspeita de Obtenção de Vantagem Indevida"
+                                            title="Suspeita de Obtenção de Vantagem Indevida"
+                                            class="fas fa-exclamation-triangle fa-lg text-danger m-0 p-0 mt-2"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-1">
+                                    <h6 class="mg-b-0">
+                                        {% if student.start_time  %}
+                                            <h4 class="m-0">
+                                                <i class="{{student.get_text_icon_device}}"></i>
+                                                <i class="{{student.get_text_icon_operation_system}}"></i>
+                                            </h4>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </h6>
+                                </div>
+                                <div class="col-md-2">
+                                    <h6 class="mg-b-0">
+                                    {% if student.missed %}
+                                        Ausente
+                                    {% elif student.duration %}
+                                        {{student.duration|format_duration}}
+                                        <span class="text-muted">{{student.start_time|date:'H:i'}} às {{student.end_time|date:'H:i'}}</span>
+                                    {% elif student.is_omr %}
+                                        Presente
+                                    {% elif student.start_time %}
+                                        Realizando
+                                    {% else %}
+                                        Ausente
+                                    {% endif %}
+                                    </h6>
+                                </div>
+                                <div class="col-md-2">
+                                    <h6 class="mg-b-0">{{student.bathroom_events.count}}</h6>
+                                </div>
+                                <div class="col-md-2">
+                                    <h6 class="mg-b-0">{{student.annotations.count}}</h6>
+                                </div>
+                                <div class="col-md-2">
+                                    <h6 class="mg-b-0">{{student.exits_student}}</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    <div class="collapse card-body" id="collapse-{{student.pk}}" data-parent="#accordion" style="background: #f5f6fa;">
+                        
+                        {% if student.justification_delay %}
+                            <div class="row">
+                                <div class="col-md-12 mg-t-10">
+                                    <div class="card card-detail">
+                                        <div class="card-body">
+                                            <h6 class="tx-16">Este aluno entrou atrasado na prova</h6>
+                                            <span>Justificativa:</span> 
+                                            <p class="text-muted">{{student.justification_delay}}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                        <div class="row">
+                            <div class="col-md-3 mg-t-10">
+                                <div class="card card-detail">
+                                    <div class="card-header pd-x-20">
+                                        <div class="d-sm-flex align-items-center justify-content-between">
+                                            <h6 class="mg-b-0">Atividades</h6>
+                                        </div>
+                                    </div>
+                                    <div class="card-body pd-20">
+                                        
+                                        {% if student.start_time %}
+                                        
+                                        
+                                        <ul class="activity tx-13">
+                                            <li class="activity-item">
+                                                <div class="activity-icon bg-primary-light tx-primary">
+                                                    <i class="fas fa-play"></i>
+                                                </div>
+                                                <div class="activity-body">
+                                                    <p class="mg-b-2"><strong>Prova Iniciada</strong></p>
+                                                    <span class="tx-color-03">{{student.start_time}}</span>
+                                                </div>
+                                            </li>
+
+                                            {% for event in student.bathroom_events.all %}
+                                            <li class="activity-item">
+                                                <div class="activity-icon bg-success-light tx-success">
+                                                    <i class="fas fa-pause"></i>
+                                                </div>
+                                                <div class="activity-body">
+                                                    <p class="mg-b-2"><strong>Pause solicidado</strong> Ida ao banheiro</p>
+                                                    <span class="tx-color-03">Solicitação às {{event.created_at|date:'H:i'}}</span>
+                                                    <p class="mg-b-2">
+                                                    {% if event.response == 0 %}
+                                                        <i class="fas fa-thumbs-up text-success"></i> Aprovado por 
+                                                    {% elif event.response == 1 %}
+                                                        <i class="fas fa-thumbs-down text-danger"></i> Rejeitado por 
+                                                    {% endif %}
+                                                    <strong>
+                                                        {{event.inspector.get_user_first_name}} ({{event.inspector.get_user_function}})
+                                                    </strong> às {{event.start|date:'H:i'}} </p>
+                                                </div>
+                                            </li>
+                                            {% if  event.response == 0 %}
+                                                <li class="activity-item">
+                                                    <div class="activity-icon bg-primary-light tx-primary">
+                                                        <i class="fas fa-play"></i>
+                                                    </div>
+                                                    <div class="activity-body">
+                                                        <p class="mg-b-2"><strong>Prova retomada</strong></p>
+                                                        <span class="tx-color-03">{{event.end|date:'H:i'}}</span>
+                                                    </div>
+                                                </li>
+                                            {% endif %}
+                                            {% endfor %}
+                                            
+                                            {% if student.end_time %}
+                                            <li class="activity-item">
+                                                <div class="activity-icon bg-primary-light tx-danger">
+                                                    <i class="fas fa-stop"></i>
+                                                </div>
+                                                <div class="activity-body">
+                                                    <p class="mg-b-2"><strong>Prova finalizada</strong></p>
+                                                    <span class="tx-color-03">{{student.end_time|date:'H:i'}}</span>
+                                                </div>
+                                            </li>
+                                            {% endif %}
+                                        </ul>
+
+                                        {% else %}
+                                            <p>O aluno não iniciou a prova</p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mg-t-10">
+                                <div class="card card-detail">
+                                    <div class="card-header ">
+                                        <div class="d-sm-flex align-items-center justify-content-between">
+                                            <h6 class="mg-b-0">Anotações sobre o aluno</h6>
+                                        </div>
+                                    </div>
+                                    <div class="card-body p-3">
+                                        {% for annotation in student.annotations.all %}
+                                        
+                                        <div class="">
+                                            <p class="font-weight-bold mb-0">
+                                                {{annotation.inspector.get_user_first_name}} ({{annotation.inspector.get_user_function}})
+                                                <span class="text-muted">
+                                                    {{annotation.created_at|date:'H:i'}}
+                                                </span>
+                                            </p>
+                                            {% if annotation.suspicion_taking_advantage %}
+                                            <p class="m-0"><span class="badge badge-danger">Suspeita obtenção de vantagem</span></p>
+                                            {% endif %}
+                                            {{annotation.annotation}}
+                                            <hr/>
+                                        </div>
+                                        {% empty %}
+                                        <span>Não há anotações para esse aluno</span>
+                                        {%  endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mg-t-10">
+                                <div class="card card-detail">
+                                    <div class="card-header pd-x-20">
+                                        <div class="d-sm-flex align-items-center justify-content-between">
+                                            <h6 class="mg-b-0">Chat com fiscais</h6>
+                                            
+                                        </div>
+                                    </div>
+                                    <div class="card-body pd-20">
+                                        {% for message in student.messages.all %}
+                                    
+                                        <div class="mb-2">
+                                            <p class="font-weight-bold mb-0">
+                                                {{message.sender.get_user_first_name}} ({{message.sender.get_user_function}} )
+                                                <span class="text-muted"> às {{message.created_at|date:'H:i'}}</span>
+                                            </p>
+                                            <span class="">
+                                                {{message.content}}
+                                            </span>
+                                        </div>
+                                        {% empty %}
+                                        <span>Não houve conversa entre esse aluno e um fiscal</span>
+                                        {%  endfor %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3 mg-t-10">
+                                <div class="card card-detail shadow-sm">
+                                    <div class="card-header pd-x-20">
+                                        <h6 class="mg-b-0">Saídas do aluno</h6>
+                                        <span class="small">{{ student.exits_student_data.count }} saída(s)</span>
+                                    </div>
+                                    <div class="card-body pd-20">
+                                        {% for exit in student.exits_student_data.exits %}
+                                            <div class="border rounded p-2 mb-1 shadow-sm">
+                                                <p class="font-weight-bold mb-1">
+                                                    {{ forloop.counter }}º saída
+                                                </p>
+                                                <p class="text-muted small mb-0">
+                                                    {{ exit.created_at|date:'H:i:s' }} até {{ exit.end|date:'H:i:s' }}
+                                                </p>
+                                            </div>
+                                        {% empty %}
+                                            <p class="text-muted">Nenhuma saída registrada para este aluno.</p>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>  
+
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        {% if not students %}
+            <div class="row">
+                <div class="col-12">
+                    <h5 class="text-muted">
+                        Nenhum aluno encontrado com esse filtro.
+                    </h5>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    <div class="pagination">
+        <span class="step-links">
+            {% if students.has_previous %}
+                <span style="cursor: pointer" onclick="changePage(1)" ><i class="fas fa-angle-double-left"></i></span>
+                
+                <span style="cursor: pointer" onclick="changePage({{ students.previous_page_number }})" ><i class="fas fa-chevron-left"></i></span>
+            {% endif %}
+    
+            <span class="current mx-3" >
+                Página <input id="current-page" class="mt-3 rounded-lg" value="{{ students.number }}" type="number" inputmode="numeric" pattern="[0-9]*" style="width: 4ch;" />  de {{ students.paginator.num_pages }}.
+            </span>
+    
+            {% if students.has_next %}
+                <span style="cursor: pointer" onclick="changePage({{ students.next_page_number }})" ><i class="fas fa-chevron-right"></i></span>
+                
+                <span style="cursor: pointer" onclick="changePage({{ students.paginator.num_pages }})" ><i class="fas fa-angle-double-right"></i></span>
+            {% endif %}
+        </span>
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script>
+
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {},
+        methods: {}
+    })
+
+    const changePage = (page) => {
+        let params = new URLSearchParams(window.location.search);
+        params.set('page', page);
+        window.location.href = window.location.pathname + '?' + params.toString();
+    }
+    const changeOrder = (param) => {
+        let params = new URLSearchParams(window.location.search);
+        if (params.get('orderby') == param){
+            if (param[0] == '-'){
+                params.set('orderby', param.slice(1));
+            }else{
+                params.set('orderby', '-' + param);
+            }
+        }else{
+            params.set('orderby', param);
+        }
+        window.location.href = window.location.pathname + '?' + params.toString();
+    }
+    $(document).ready(function(){
+        $('#current-page').change(function(event){
+            var page = $(this).val();
+            let params = new URLSearchParams(window.location.search);
+            params.set('page', page);
+            window.location.href = window.location.pathname + '?' + params.toString();
+        });
+    });
+</script>
+{% endblock js-additional %}

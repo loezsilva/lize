@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:16
+    shm_size: 1g
+    ports:
+      - "8888:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data/
+      - "./docker_compose/postgres/init_scripts:/docker-entrypoint-initdb.d"
+      - "./docker_compose/postgres/volumemap:/var/lib/postgresql/volumemap"
+
+  web:
+    build: .
+    env_file: .env
+    command: /code/entrypoint.sh
+    volumes:
+      - .:/code
+      - static_data:/code/staticfiles
+      - media_data:/code/media
+    ports:
+      - "80:8000"
+      - "8000:8000"
+    depends_on:
+      - postgres
+
+  celery:
+    build: .
+    env_file: .env
+    entrypoint: [
+      "celery", "-A", "fiscallizeon", "--workdir=/code", "worker", 
+      "--pool=gevent", "--concurrency=10", "--loglevel=info",
+      "-Q", "${CELERY_QUEUE_NAME_PREFIX}celery,${CELERY_QUEUE_NAME_PREFIX}omr-export,${CELERY_QUEUE_NAME_PREFIX}omr-import"
+    ]
+    deploy:
+      replicas: 1
+    volumes:
+      - .:/code
+    depends_on:
+      - redis
+
+  redis:
+    image: "redis:latest"
+    expose:
+      - "6379"
+
+volumes:
+  pgdata:
+  static_data:
+  media_data:
+  minio_data:

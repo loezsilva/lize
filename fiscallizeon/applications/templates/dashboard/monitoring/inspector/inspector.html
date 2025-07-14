@@ -1,0 +1,1539 @@
+{% extends 'dashboard/base_fixed.html' %}
+{% load static %}
+{% load compress %}
+
+{% block title %}
+  LizeEdu - Sala de prova
+{% endblock title %}
+
+{% load remove_line_break %}
+{% block css-additional %}
+
+<style>
+.grid-container {
+  display: grid;
+  grid-gap: 0.1rem;
+}
+
+.grid-container--fit {
+
+  {% if students.count <= 2 %}
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  {% elif students.count <= 8 %}
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  {% elif students.count <= 12 %}
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  {% else %}
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  {% endif %}
+
+  max-height: 200px;
+}
+
+.grid-element {
+  display: flex;
+  justify-content: center;
+  border: 0 solid #d2d6dc;
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,.1), 0 1px 2px 0 rgba(0,0,0,.06);
+  max-height: 200px;
+  background-color:#3c3c3c;
+}
+
+.blink {
+    animation: blinker 1s cubic-bezier(.5, 0, 1, 1) infinite alternate;  
+}
+
+@keyframes blinker {  
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@media (min-width: 1200px){
+  .container {
+      max-width: 100% !important;
+  }
+}
+
+@media (min-width: 992px){
+  .container {
+      max-width: 100% !important;
+  }
+}
+
+@media (min-width: 720px){
+  .container {
+      max-width: 100% !important;
+  }
+}
+
+@media (min-width: 576px){
+  .container {
+      max-width: 100% !important;
+  }
+}
+
+.config-button{
+  position: fixed; 
+  bottom: 30px; 
+  right: 40px; 
+  background-color: #009ede; 
+  z-index: 1;
+}
+
+i.icon-badge{
+  font-size:12px;
+}
+
+/* A div não pode ser muito pequena  */
+.divScrollLab {
+  min-height: 240px;
+  overflow-x: hidden; 
+  overflow-y: scroll;
+}
+
+.shadow-bot {
+  -webkit-box-shadow: 0px 7px 4px 0px rgba(50, 50, 50, 0.20);
+  -moz-box-shadow: 0px 7px 4px 0px rgba(50, 50, 50, 0.20);
+  box-shadow: 0px 7px 4px 0px rgba(50, 50, 50, 0.20);
+}
+</style>
+
+{% endblock css-additional %}
+
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">FISCAL</a></li>
+          <li class="breadcrumb-item active" aria-current="page">MONITORAMENTO</li>
+        </ol>
+      </nav> 
+      <h4>Monitoramento</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <h3 class="tx-normal tx-rubik mg-b-0">
+          <small class="tx-color-04 display-6">{% now "d/m/Y" %}</small> ${time}
+        </h3>
+    </div>
+  </div>
+  <button @click="application.notificationChatCount = 0;" style="z-index: 10;" data-toggle-off-canvas="#right-off-canvas" class="btn btn-lg btn-info btn-icon rounded-pill off-canvas-menu config-button">
+      <i class="fas fa-cog"></i> Op. Gerais
+      <span class="badge badge-danger" v-if="application.notificationChatCount > 0">
+        ${application.notificationChatCount}
+      </span>
+  </button>
+{% endblock breadcrumb-fixed %}
+
+{% block content-fixed %}
+
+<div class="row row-xs">
+    <div class="col-12">
+      <label class="d-block tx-medium tx-10 tx-uppercase tx-sans tx-spacing-1 tx-color-03">
+          Alunos realizando prova
+      </label>
+    </div>
+
+    <div  class="col-6 col-md-3 col-lg-2">
+     <div class="pos-relative video-mask">
+          <div class="marker pos-absolute b-5 l-0 p-1">
+            <i class="fas fa-video"></i>
+            <i class="fas fa-microphone"></i>
+            {{user.get_user_first_name}}
+          </div>
+          
+          <video style="max-width: 100%; width: 100%; background: #3c3c3c;" id="local-stream" autoplay playsinline />
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="grid-container grid-container--fit">
+          <div class="pos-relative off-canvas-menu w-100 grid-element" v-for="student in students" data-toggle-off-canvas="#left-off-canvas" v-on:click="setSelectStudent(student)">
+            <div v-if="student.micOn == false" class="marker-icon marker-danger marker-top-right pos-absolute t-0 r-0">
+              <i class="fas fa-video-slash" style="margin-left: auto; margin-right: calc(30% - 8px); margin-top: calc(30% - 8px); margin-left: calc(30% - -8px); position: relative; z-index: 1;"></i>
+            </div>
+            <div v-else class="marker-icon marker-success marker-top-right pos-absolute t-0 r-0">
+                <i class="fas fa-video" style="margin-left: auto; margin-right: calc(30% - 8px); margin-top: calc(30% - 8px); margin-left: calc(30% - -8px); position: relative; z-index: 1;"></i>
+            </div>
+            <div class="marker pos-absolute b-0 l-0 p-1">
+
+                <i v-if="student.state == 'waiting'" alt="Aguardando" title="Aguardando" class="text-secondary fas fa-circle"></i>
+                <i v-if="student.state == 'started'" alt="Realizando" title="Realizando" class="text-success fas fa-circle"></i>
+                <i v-if="student.state == 'paused'"  alt="Pausado" title="Pausado" class="text-warning fas fa-circle blink" ></i>
+                <i v-if="student.state == 'finished'" alt="Finalizado" title="Finalizado" class="text-primary fas fa-circle" ></i>
+
+                <i class="fas fa-microphone"></i>
+              ${student.firstName}
+              
+              <span class="df-roboto text-danger"  v-if="student.notificationChatCount > 0">
+                <i class="fas fa-comment"></i>${student.notificationChatCount}
+              </span>
+
+              <span class="df-roboto text-primary" v-if="student.notificationPauseCount > 0">
+                <i class="fas fa-reply"></i>${student.notificationPauseCount} 
+              </span>
+
+
+            </div>
+
+            <video :id="'remote-video-'+student.studentId"  style="max-height: 300px; max-width: 100%; width: 100%; background-image: url('{% static 'administration/assets/img/cam-off-bg.png' %}'); background-size: cover; background-position: center;" autoplay playsinline />
+            
+        </div>
+    </div>
+    </div>
+</div>
+{% endblock content-fixed %}
+
+{% block off-canvas %}
+<div id="left-off-canvas" class="off-canvas off-canvas-push wd-400 bg-white" v-if="selectedStudent" style="    overflow-y: auto;
+overflow-x: hidden;">
+  <div class="row p-3">
+    <div class="col-12">
+      <figure class="pos-relative mg-b-0 wd-100p wd-100">
+        <div class="pos-relative off-canvas-menu" data-toggle-off-canvas="#left-off-canvas">
+            <video  id="selected-student" class="wd-100p bg-dark wd-100" autoplay playsinline muted="muted" />
+          </div>
+        <figcaption class="pos-absolute b-5 l-0 wd-100p pd-20 d-flex justify-content-center">
+          <div class="btn-group">
+            <!-- <button v-if="selectedStudent.micOn == false" @click="toggleCam(true)" href="" class="btn btn-success btn-icon">
+              <i class="fas fa-toggle-on"></i>
+            </button>
+            <button v-else @click="toggleCam(false)" href="" class="btn btn-danger btn-icon">
+              <i class="fas fa-toggle-off"></i>
+            </button> -->
+          </div>
+        </figcaption>
+      </figure>
+    </div>
+    <div class="col-12">
+        <ul class="nav nav-line" id="myTab" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link active" id="chat-tab" data-toggle="tab" href="#chattab" role="tab" aria-controls="chat" aria-selected="true">Chat</a>
+          </li>
+          <li class="nav-item">
+              <a class="nav-link" id="requests" data-toggle="tab" href="#requeststab" role="tab" aria-controls="requests" aria-selected="false">Solicitações</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="annotations-tab" data-toggle="tab" href="#annotationstab" role="tab" aria-controls="annotations" aria-selected="false">Anotações</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link " id="about-tab" data-toggle="tab" href="#abouttab" role="tab" aria-controls="about" aria-selected="false">Sobre</a>
+          </li>
+        </ul>
+        <div class="tab-content bd bd-gray-300 bd-t-0 pd-20" id="myTabContent">
+          <div class="tab-pane fade show active" id="chattab" role="tabpanel" aria-labelledby="chat-tab">   
+            <div class="divScrollLab">
+              <template v-for="message in selectedStudent.messages">
+                  <div class="text-left" v-if="message.function == 'Aluno'">
+                      <p class="mb-0">
+                        <span class="font-weight-bold">${message.name} (Aluno)</span>
+                        <span class="text-muted">${message.date_time}</span>
+                      </p>
+                        <p class="p-2 bg-light mr-3">
+                            ${message.message}
+                        </p>
+                  </div>
+                  <div class="text-right" v-else>
+                      <p class="mb-0">
+                        <span class="text-muted"> ${message.date_time}</span>
+                        <span class="font-weight-bold"> ${message.name} (${message.function})</span>
+                      </p>
+                      <p class="p-2 bg-light ml-3 text-left">
+                          ${message.message}
+                      </p>
+                  </div>
+              </template>
+            </div>
+            <div class="input-group input-group-send pt-3">
+              <textarea v-model="textMessage" type="text" class="form-control" placeholder="Escreva a anotação" rows="2" maxlength="255"></textarea>
+                <div class="input-group-prepend">
+                  <div class="input-group-text border-0 bg-white">
+                    <button class="btn btn-primary" v-on:click="sendMessage()" :disabled="textMessage == '' || sendingMessage">
+                      <i v-if="sendingMessage" class="fas fa-spinner fa-spin"></i>
+                      <i v-else class="fas fa-paper-plane"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+          </div>
+          <div class="tab-pane fade" id="requeststab" role="tabpanel" aria-labelledby="requests-tab">
+            <h6>${selectedStudent.name}</h6>
+            <template v-for="event in selectedStudent.events">
+              <div class="bg-light p-3 mb-2">
+                <div class="row mb-0">
+                  <div class="col-9 text-left">
+                    <h6>Solicitação de pausa</h6>
+                    <h6>Motivo: <span class="font-weight-normal">${event.get_event_type_display}</span></h6>
+                    <h6>Situação: 
+                      <span class="font-weight-normal">${event.get_response_display}</span>
+                    </h6>
+                    <h6 v-if="event.get_response_display != 'Pendente'">Fiscal: 
+                      <span class="font-weight-normal">
+                        ${event.inspector_first_name} 
+                        <span> 
+                          às ${momentConvert(event.response_datetime, 'HH:mm')}
+                        </span>
+                      </span>
+                    </h6>
+                  </div>
+                  <div class="col-3 text-right">
+                    <h6>${momentConvert(event.created_at, 'HH:mm')}</h6>
+                  </div>
+                  <div v-if="event.get_response_display == 'Pendente'" class="col-6">
+                    <button @click="answerRequest(event, 0)" class="btn btn-primary btn-block">
+                      <i class="fas fa-thumbs-up"></i>
+                      Aprovar
+                    </button>
+                  </div>
+                  <div @click="answerRequest(event, 1)" v-if="event.get_response_display == 'Pendente'" class="col-6">
+                    <button class="btn btn-danger btn-block">
+                      <i class="fas fa-thumbs-down"></i>
+                      Negar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+          </div>
+          <div class="tab-pane fade"  id="annotationstab" role="tabpanel" aria-labelledby="annotations-tab">  
+            <div class="input-group">
+              <textarea v-model="textAnnotation" type="text" class="form-control" placeholder="Escreva a anotação" rows="2" maxlength="255"></textarea>
+                <div class="input-group-prepend">
+                  <div class="input-group-text border-0 bg-white">
+                    <button class="btn btn-primary" v-on:click="sendNewAnnotation()" :disabled="textAnnotation == '' || sendingAnnotation">
+                      <i v-if="sendingAnnotation" class="fas fa-spinner fa-spin"></i>
+                      <i v-else class="fas fa-paper-plane"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <hr>
+            <div class="divScrollLab">
+              <template v-for="annotation in selectedStudent.annotations">
+                <span class="font-weight-bold">${annotation.name} (${annotation.function})</span><span class=text-muted> às ${annotation.time}</span>
+                <p>${annotation.annotation}</p>
+              </template>
+            </div>
+          </div>
+          <div class="tab-pane fade" id="abouttab" role="tabpanel" aria-labelledby="about-tab">
+            <h6>Sobre o aluno</h6>
+            <p><span class="font-weight-bold">Nome:</span> ${selectedStudent.name}</p>
+          </div>
+        </div>
+    </div>
+  </div>
+</div>
+
+<div id="right-off-canvas" class="off-canvas off-canvas-push off-canvas-right wd-400 bg-white" style="overflow-y: auto; overflow-x: hidden;">
+  <div class="row p-3">
+    <div class="col-12">
+      <h5>Operações gerais</h5>
+    </div>
+    <div class="col-12">
+        <ul class="nav nav-line" id="myTab" role="tablist">
+            <!-- <li class="nav-item">
+              <a class="nav-link active" id="chat-tab" data-toggle="tab" href="#chattab-2" role="tab" aria-controls="chat" aria-selected="true">Chat</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="requests" data-toggle="tab" href="#requeststab-2" role="tab" aria-controls="requests" aria-selected="false">Solicitações</a>
+            </li> -->
+            <li class="nav-item">
+                <a class="nav-link active" id="announce-tab" data-toggle="tab" href="#chatcoordinationtab" role="tab" aria-controls="chat" aria-selected="false">
+                  <i data-toggle="tooltip" title="Chat coordenação" original-title="Chat coordenação" class="fas fa-comment"></i>
+                  Chat coordenação
+                </a>
+              </li>
+            <li class="nav-item">
+              <a class="nav-link" id="annotations-tab" data-toggle="tab" href="#annotationstab-2" role="tab" aria-controls="annotations" aria-selected="false">
+                <i  data-toggle="tooltip" title="Anotações" original-title="Anotações" class="fas fa-clipboard"></i>
+                Anotações
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="announce-tab" data-toggle="tab" href="#announcetab" role="tab" aria-controls="announce" aria-selected="false">
+                <i data-toggle="tooltip" title="Avisos" original-title="Avisos" class="fas fa-bullhorn"></i>
+                Avisos
+              </a>
+            </li>
+            <!-- <li class="nav-item">
+              <a class="nav-link " id="about-tab" data-toggle="tab" href="#abouttab-2" role="tab" aria-controls="about" aria-selected="false">Sobre</a>
+            </li> -->
+          </ul>
+          <div class="tab-content bd bd-gray-300 bd-t-0 pd-20" id="myTabContent">
+            <div class="tab-pane fade show active" id="chatcoordinationtab" role="tabpanel" aria-labelledby="chat-tab">
+                <div style="max-height: 65vh; overflow: auto;" id="coordination-chat">
+                    <template v-if="application.messages" v-for="message in application.messages">
+                        <div class="text-left p-2">
+                            <p class="mb-0">
+                                <span class="font-weight-bold">${message.sender}</span> - 
+                                <span class="text-muted">${message.created_at}</span>
+                            </p>
+                                <p class="p-2 mb-0 bg-light mr-3">
+                                    ${message.content}
+                                </p>
+                        </div>
+                    </template>
+                    <template v-else>
+                    <p>Ainda não há mensagens entre você e o fiscal</p>
+                    </template>
+                </div>
+  
+                <div class="input-group">
+                    <textarea v-model="textMessageCoordination" @keyup.enter="sendMessageChat()" type="text" class="form-control" placeholder="Escreva a mensagem" rows="2" maxlength="255"></textarea>
+                    <div class="input-group-prepend">
+                        <div class="input-group-text border-0 bg-white">
+                        <button class="btn btn-primary" v-on:click="sendMessageChat()" :disabled="textMessageCoordination == '' || sendingMessage">
+                            <i v-if="sendingMessage" class="fas fa-spinner fa-spin"></i>
+                            <i v-else class="fas fa-paper-plane"></i>
+                        </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div class="tab-pane fade"  id="annotationstab-2" role="tabpanel" aria-labelledby="annotations-tab">  
+                <p class="text-muted">Não será possível editar ou remover suas anotações acerca dessa aplicação após o cadastro.</p>
+                <div class="text-right">
+                <textarea @keyup.enter="sendNewApplicationAnnotation()" v-model="textApplicationAnnotation" type="text" class="form-control" placeholder="Escreva uma anotação para a aplicação" rows="2" maxlength="255"></textarea>
+                <button class="btn btn-primary mt-1" v-on:click="sendNewApplicationAnnotation()" :disabled="textApplicationAnnotation == '' || sendingApplicationAnnotation">
+                  <i v-if="sendingApplicationAnnotation" class="fas fa-spinner fa-spin"></i>
+                  <template v-else>Registrar anotação</template>
+                </button>
+              </div>
+               
+              <hr>
+              <div class="divScrollLab">
+                <template v-for="annotation in applicationAnnotations">
+                  <span class="font-weight-bold">${annotation.name} (${annotation.function})</span><span class=text-muted> às ${annotation.time}</span>
+                  <p>${annotation.annotation}</p>
+                </template>
+              </div>
+            </div>
+            <div class="tab-pane fade" id="announcetab" role="tabpanel" aria-labelledby="announce-tab">
+              <p class="text-muted">
+                As mensagem enviadas aqui serão direcionadas para todos os alunos ativos dessa aplicação.
+              </p>
+                
+              <div class="text-right">
+                <textarea v-model="textApplicationNotice" @keyup.enter="sendNewApplicationNotice()"  type="text" class="form-control" placeholder="Escreva o aviso que deseja enviar para todos os alunos" rows="2" maxlength="255"></textarea>
+              
+                <button class="btn btn-primary mt-1" v-on:click="sendNewApplicationNotice()" :disabled="textApplicationNotice == '' || sendingApplicationNotice">
+                    <i v-if="sendingApplicationNotice" class="fas fa-spinner fa-spin"></i>
+                    <template v-else>Enviar aviso</template>
+              </button>
+              </div>
+              <hr/>
+              <template v-for="notice in applicationNotices">
+                <span class="font-weight-bold">${notice.name} (${notice.function})</span><span class=text-muted> às ${notice.time}</span>
+                <p>${notice.notice}</p>
+              </template>
+            </div>
+            <!-- <div class="tab-pane fade" id="abouttab-2" role="tabpanel" aria-labelledby="about-tab">
+              <h6>Sobre o aluno</h6>
+              <p><span class="font-weight-bold">Nome:</span> ${selectedStudent.name}</p>
+            </div> -->
+          </div>
+    </div>
+  </div>
+</div>
+{% endblock %}a
+
+{% block js-additional %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"></script>
+
+
+<script>
+
+  $(function(){
+    'use strict'
+
+    $('.off-canvas-menu').on('click', function(e){
+        e.preventDefault();
+        var target = $(this).attr('data-toggle-off-canvas');
+        $(target).addClass('show');
+
+        // Sempre que abrir o canva, define o tamanho do chat para ele não ficar grandão
+        // Ja abre o chat com o scroll na ultima mensagem enviada
+        $('.divScrollLab').height(window.innerHeight - 250 - $('.input-group-send').innerHeight() - 250)
+        $('.divScrollLab div').last()[0].scrollIntoView()
+    });
+
+    $('.off-canvas .close').on('click', function(e){
+        e.preventDefault();
+        $(this).closest('.off-canvas').removeClass('show');
+    })
+
+    $(document).on('click touchstart', function(e){
+      if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+        return
+      }
+        e.stopPropagation();
+
+        if(!$(e.target).closest('.off-canvas-menu').length) {
+            var offCanvas = $(e.target).closest('.off-canvas').length;
+            if(!offCanvas) {
+                $('.off-canvas.show').removeClass('show');
+            }
+        }
+    });
+
+    // Envia o scroll para a ultima mensagem que o usuário mandar após 300ms
+    $('textarea, button').on("click keypress", () => {
+      setTimeout(() => {
+        $('.divScrollLab div').last()[0].scrollIntoView()
+      }, 300)
+    })
+
+});
+
+</script>
+
+{% compress js %}
+
+<script>
+  moment.locale('pt-br');
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {
+        application: {
+          id: "{{object.pk}}",
+          myid: "",
+          participants: {},
+          server: "{{object.prefix|default_if_none:'00000'}}.rtc.fiscallize.com.br",
+          textRoomId: {{ object.chat_room_id }},
+          textRoomPin: "{{ object.chat_room_pin }}",
+          subject: "{{object.subject|capfirst}}",
+          opaqueId: "textroom-"+Janus.randomString(12),
+          notificationChatCount:0,
+          registred:false,
+          messages: [
+              {% for message in object.messages.all %}
+              {
+                  sender: "{{message.sender.get_user_first_name}} ({{message.sender.get_user_function}})",
+                  content: "{{message.content}}",
+                  created_at: "Hoje às {{message.created_at|date:'H:i'}}",
+              },
+              {% endfor %}
+          ],
+          pluginHandle: null,
+          start: "{{object.start}}",
+          end: "{{object.end}}",
+      },
+      notificationSound: new Audio("{% static 'administration/assets/sound/not_sound.mp3' %}"),
+      server: "{{object.prefix|default_if_none:'00000'}}.rtc.fiscallize.com.br",
+      janus: null,
+      session: null,
+      mypvtid: null,
+      mystream: null,
+      firstName: "{{user.get_user_first_name}}",
+      function: "{{user.get_user_function}}",
+      selectedStudent: {},
+      transactions: [],
+      textMessageCoordination: '',
+      // ANOTAÇÃO
+      textAnnotation:"",
+      sendingAnnotation: false,
+      sendingMessage: false,
+      // MENSAGEM
+      textMessage:"",
+      // ANOTAÇÃO DA APLICAÇÃO
+      textApplicationAnnotation:"",
+      sendingApplicationAnnotation: false,
+      // AVISOS DA APLICAÇÃO
+      textApplicationNotice:"",
+      sendingApplicationNotice: false,
+      // CONTADOR DE TEMPO
+      time:"",
+      applicationAnnotations: [
+        {% for annotation in object.annotations.all %}
+          {
+            "name":"{{annotation.inspector.get_user_first_name}}",
+            "function":"{{annotation.inspector.get_user_function}}",
+            "time":"{{annotation.created_at|date:'H:i'}}",
+            "annotation":"{{annotation.annotation|remove_line_break}}"
+          },
+        {% endfor %}
+      ],
+      applicationNotices: [
+        {% for notice in object.notices.all %}
+          {
+            "name":"{{notice.inspector.get_user_first_name}}",
+            "function":"{{notice.inspector.get_user_function}}",
+            "time":"{{notice.created_at|date:'H:i'}}",
+            "notice":"{{notice.notice|remove_line_break}}"
+          },
+        {% endfor %}
+      ],
+      students: [
+        {% for student in students %}
+            {
+              "id":"{{student.id}}",
+              "name": "{{student.student.name}}",
+              "micOn": false,
+              "firstName": "{{student.student.first_name}}",
+              "roomId": {{student.room_id}},
+              "roomPin":"{{student.room_pin}}",
+              "registred":false,
+              "studentId": {{student.student_room_id|safe}},
+              "opaqueId": "videoroom-"+Janus.randomString(12),
+              "status": "created",
+              "session":null,
+              "pluginHandle": null,
+              "notificationChatCount":0,
+              "notificationPauseCount":0,
+              "state":"{{student.application_state}}",
+              "annotations":[
+                {% for annotation in student.annotations.all %}
+                  {
+                    "name":"{{annotation.inspector.get_user_first_name}}",
+                    "function":"{{annotation.inspector.get_user_function}}",
+                    "time":"{{annotation.created_at|date:'H:i'}}",
+                    "annotation":"{{annotation.annotation|remove_line_break}}"
+                  },
+                {% endfor %}
+              ],
+              "messages":[
+              {% for message in student.messages.all %}
+                {
+                  "name": "{{message.sender.get_user_first_name}}",
+                  "function": "{{message.sender.get_user_function}}",
+                  "date_time": "{{message.created_at|date:'d/m/Y \à\s H:i'}}",
+                  "message": "{{message.content|remove_line_break}}",
+                },
+                {% endfor %}
+              ],
+              "events":[
+                {% for event in student.events.all %}
+                {
+                  "pk":"{{event.pk}}",
+                  "get_event_type_display": "{{event.get_event_type_display}}",
+                  "created_at": "{{event.created_at|date:'c'}}",
+                  "start": "{{event.start}}",
+                  "end": "{{event.end}}",
+                  "inspector_first_name": "{{event.inspector.get_user_first_name}}",
+                  "get_response_display": "{{event.get_response_display}}",
+                  "response_datetime": "{{event.response_datetime|date:'c'}}",
+                },
+                {% endfor %}
+              ]
+            },
+        {% endfor %}
+      ],
+    },
+    methods: {
+      momentConvert(date, format){
+        return moment(date).format(format)
+      },
+      countDown: function(){
+          var countDownDate = new Date("{{object.date_time_end_tz|date:'Y-m-d H:i:s'}}").getTime();
+          var x = setInterval(function() {
+
+            var now = new Date().getTime();
+
+            var distance = countDownDate - now;
+
+            var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            self.time = ('0' + hours).slice(-2) + ":" + ('0' + minutes).slice(-2) + ":" + ('0' + seconds).slice(-2);
+
+            if (distance < 0) {
+              clearInterval(x);
+              self.time = "Encerrado";
+            }
+          }, 1000);
+      },
+      // toggleCam: function(status){
+      //   self = this
+      //   student = self.selectedStudent
+      //   self.selectedStudent.micOn = status
+
+      //   var message = {
+      //     "type": self.selectedStudent.micOn == true ? "openmic" : "offmic"
+      //   }
+
+      //   self.selectedStudent.pluginHandle.data({
+      //     text: JSON.stringify(message),
+      //     error: function(reason) { },
+      //     success: function() {
+
+      //       if (self.selectedStudent.micOn){
+      //         app.publishOwnFeed(useAudio=true, useVideo=true, student)
+      //         $('#remote-video-'+self.selectedStudent.studentId).prop('muted', false);
+      //       }
+      //       else{
+      //         app.publishOwnFeed(useAudio=false, useVideo=false, student)
+      //         $('#remote-video-'+self.selectedStudent.studentId).prop('muted', true);
+      //       }
+
+      //     },
+      //   });        
+      // },
+      answerRequest: function(event, resp){
+        self = this
+
+        data = {"response": resp}
+
+        url = "{% url 'events:event_update' pk='00000000-0000-0000-0000-000000000000'  %}"
+        axios.put(url.replace("00000000-0000-0000-0000-000000000000", event.pk), data
+        ).then(function(response){
+
+          new_event = response.data
+
+          //aprovado
+          if (resp == 0)
+            self.selectedStudent.state = 'paused'
+
+          event.start = new_event.start
+          event.inspector_first_name = new_event.inspector_first_name
+          event.get_response_display = new_event.get_response_display
+          event.response_datetime = new_event.response_datetime
+
+          var message = {
+            "message": new_event,
+            "type":"answerRequest"
+          }
+
+          self.selectedStudent.pluginHandle.data({
+            text: JSON.stringify(message),
+            error: function(reason) { },
+            success: function() {},
+          });
+
+        }).catch(function(error){
+          Swal.fire(
+            'Aconteceu algum problema',
+            'Atualize sua página e tente novamente em breve.',
+            'error'
+          )
+        })
+      },
+      sendMessage: function(){
+        self = this
+
+        pluginHandle = self.selectedStudent.pluginHandle
+
+        var newMessage = {
+          "application_student": self.selectedStudent.id,
+          "content": self.textMessage
+        }
+
+        var message = {
+          "name": self.firstName,
+          "function": self.function,
+          "date_time": moment().calendar(),
+          "message": self.textMessage,
+          "type":"message"
+        }
+
+
+        pluginHandle.data({
+          text: JSON.stringify(message),
+          error: function(reason) { alert(reason) },
+          success: function() { 
+              axios.post("{% url 'events:text_message_create'  %}", newMessage).then(function(response){
+                self.selectedStudent.messages.push({
+                "name": self.firstName,
+                "function": self.function,
+                "date_time": moment().calendar(),
+                "message": self.textMessage
+              })
+              self.textMessage = ""
+            })
+           },
+        });
+
+
+      },
+      sendNewAnnotation: function(){
+        self = this
+        self.sendingAnnotation = true
+        var newAnnotation = {
+          "application_student": self.selectedStudent.id,
+          "annotation": self.textAnnotation
+        }
+
+        axios.post("{% url 'applications:annotation_create_api'  %}", newAnnotation)
+        .then(function(response){
+          self.selectedStudent.annotations.unshift({
+            "name":response.data.first_name,
+            "function":response.data.function,
+            "time":response.data.date_time,
+            "annotation":response.data.annotation
+          })
+
+          self.textAnnotation = ''
+          self.sendingAnnotation = false
+          
+        }); 
+
+      },
+      sendNewApplicationAnnotation: function(){
+        self = this
+        self.sendingApplicationAnnotation = true
+
+        self.textApplicationAnnotation = self.textApplicationAnnotation.replace("\n", "").trim()
+
+        if (self.textApplicationAnnotation == ""){
+          self.sendingApplicationAnnotation = false
+          return
+        }
+
+        var newApplicationAnnotation = {
+          "application": "{{ object.pk }}",
+          "annotation": self.textApplicationAnnotation
+        }
+
+        axios.post("{% url 'applications:application_annotation_create_api'  %}", newApplicationAnnotation)
+        .then(function(response){
+          self.applicationAnnotations.unshift({
+            "name":response.data.first_name,
+            "function":response.data.function,
+            "time":response.data.date_time,
+            "annotation":response.data.annotation
+          })
+
+          self.textApplicationAnnotation = ''
+          self.sendingApplicationAnnotation = false
+          
+        }); 
+      },
+      sendNewApplicationNotice: function(){
+        self = this
+        self.textApplicationNotice = self.textApplicationNotice.replace("\n", "").trim()
+
+        Swal.fire({
+          title: 'Certeza que deseja enviar este aviso?',
+          text: "Ao confirmar o aviso será enviado para todos os alunos dessa aplicação",
+          icon: "question",
+          showCancelButton: true,
+          cancelButtonText: 'Cancelar',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'Sim, enviar aviso',
+          showConfirmButton: true,
+        }).then((result) => {
+          if (result.value) {
+            self.sendingApplicationNotice = true
+            
+            if (self.textApplicationNotice == ""){
+              self.sendingApplicationNotice = false
+              return
+            }
+
+            var newApplicationNotice = {
+              "application": "{{ object.pk }}",
+              "notice": self.textApplicationNotice
+            }
+
+            axios.post("{% url 'applications:application_notice_create_api'  %}", newApplicationNotice)
+            .then(function(response){
+              self.applicationNotices.unshift({
+                "name":response.data.first_name,
+                "function":response.data.function,
+                "time":response.data.date_time,
+                "notice":response.data.notice
+              })
+
+              var message = {
+                "name": response.data.first_name,
+                "function": response.data.function,
+                "time": moment().calendar(),
+                "notice": response.data.notice,
+                "type":"notice"
+              }
+
+              self.students.forEach(function(student){
+                  student.pluginHandle.data({
+                    text: JSON.stringify(message),
+                    error: function(reason) { alert(reason) },
+                    success: function() {}
+                  })
+              })
+
+              self.textApplicationNotice = ''
+              self.sendingApplicationNotice = false
+
+            }); 
+          }
+        });
+      },
+      setSelectStudent: function(student){
+        
+        if (!jQuery.isEmptyObject(this.selectedStudent) && this.selectedStudent !== student && this.selectedStudent.micOn){
+          // app.toggleCam(false)
+        }
+
+        this.selectedStudent = student
+        
+        var isFirefox = typeof InstallTrigger !== 'undefined';
+        if (isFirefox) {
+          var studentVideoStream = document.getElementById('remote-video-'+student.studentId).mozCaptureStream()
+        }else{
+          var studentVideoStream = document.getElementById('remote-video-'+student.studentId).captureStream()
+
+        }
+
+        var selectedStudentVideo = document.getElementById('selected-student')
+
+        selectedStudentVideo.srcObject = studentVideoStream
+
+        student.notificationChatCount = 0
+        student.notificationPauseCount = 0
+
+
+        $("#left-off-canvas").addClass('show');
+      },
+      publishOwnFeed: function(useAudio=false, useVideo=false, student) {
+        var self = this
+        student.pluginHandle.createOffer({
+            media: { audioRecv: false, videoRecv: true, audioSend: useAudio, videoSend: useVideo, data:true },
+            simulcast: false,
+            simulcast2: false,
+            success: function(jsep) {
+              Janus.debug("Got publisher SDP!", jsep);
+              var publish = { request: "configure", audio: useAudio, video:useVideo };
+              student.pluginHandle.send({ message: publish, jsep: jsep });
+            },
+            error: function(error) {
+              Janus.error("WebRTC error:", error);
+              if(useAudio && useVideo) {
+                app.publishOwnFeed(useAudio=!useAudio, useVideo=!useVideo, student=student);
+              } else {
+                alert("WebRTC error... xx" + error.message);
+              }
+            }
+          });
+      },
+      newRemoteFeed: function(id, display, audio, video, student) {
+        var remoteFeed = null;
+        var self = this
+        self.session.attach({
+            plugin: "janus.plugin.videoroom",
+            opaqueId: student.opaqueId,
+            success: function(pluginHandle) {
+              remoteFeed = pluginHandle;
+              remoteFeed.simulcastStarted = false;
+              Janus.log("Plugin attached! (" + remoteFeed.getPlugin() + ", id=" + remoteFeed.getId() + ")");
+              Janus.log("  -- This is a subscriber");
+
+
+              var subscribe = {
+                request: "join",
+                room: student.roomId,
+                displayName: self.firstName,
+                ptype: "subscriber",
+                feed: student.studentId,
+                pin: student.roomPin,
+              };
+
+              if(Janus.webRTCAdapter.browserDetails.browser === "safari" &&
+                  (video === "vp9" || (video === "vp8" && !Janus.safariVp8))) {
+                if(video)
+                  video = video.toUpperCase()
+                alert("Publisher is using " + video + ", but Safari doesn't support it: disabling video");
+                subscribe["offer_video"] = false;
+              }
+              remoteFeed.videoCodec = video;
+              remoteFeed.send({ message: subscribe });
+            },
+            error: function(error) {
+              Janus.error("  -- Error attaching plugin...", error);
+              alert("Error attaching plugin... " + error);
+            },
+            onmessage: function(msg, jsep) {
+              Janus.debug(" ::: Got a message (subscriber) :::", msg);
+              var event = msg["videoroom"];
+              Janus.debug("Event: " + event);
+              if(msg["error"]) {
+                alert(msg["error"]);
+              } else if(event) {
+                if(event === "attached") {
+                  
+                  remoteFeed.rfid = msg["id"];
+                  remoteFeed.rfdisplay = msg["display"];
+
+                  Janus.log("Successfully attached to feed " + remoteFeed.rfid + " (" + remoteFeed.rfdisplay + ") in room " + msg["room"]);
+
+                
+                } else if(event === "event") {
+                  // Check if we got an event on a simulcast-related event from this publisher
+                  var substream = msg["substream"];
+                  var temporal = msg["temporal"];
+                  if((substream !== null && substream !== undefined) || (temporal !== null && temporal !== undefined)) {
+                    if(!remoteFeed.simulcastStarted) {
+                      remoteFeed.simulcastStarted = true;
+                    }
+                  }
+                  // student.pluginHandle = remoteFeed
+                } else {
+                  // What has just happened?
+                }
+              }
+              if(jsep !== undefined && jsep !== null) {
+                Janus.debug("Handling SDP as well...", jsep);
+                // Answer and attach
+                remoteFeed.createAnswer(
+                  {
+                    jsep: jsep,
+                    // Add data:true here if you want to subscribe to datachannels as well
+                    // (obviously only works if the publisher offered them in the first place)
+                    media: { audioSend: true, videoSend: true, data:true },	// We want recvonly audio/video
+                    success: function(jsep) {
+                      Janus.debug("Got SDP!", jsep);
+                      var body = { request: "start", room: self.roomId };
+                      remoteFeed.send({ message: body, jsep: jsep });
+                    },
+                    error: function(error) {
+                      Janus.error("WebRTC error:", error);
+                      Swal.fire({
+                          icon: 'error',
+                          title: 'Câmera e Microfone Desativado!',
+                          text: 'Para utilizar nossa plataform é necessário que você autorize sua câmera e microfone.',
+                          showConfirmButton: true,
+                          confirmButtonText: 'Ok, irei autorizar!'
+                      })
+                    }
+                  });
+              }
+            },
+            iceState: function(state) {
+              Janus.log("ICE state of this WebRTC PeerConnection (feed #" + student.studentId + ") changed to " + state);
+            },
+            webrtcState: function(on) {
+              Janus.log("Janus says this WebRTC PeerConnection (feed #" + student.studentId + ") is " + (on ? "up" : "down") + " now");
+            },
+            onlocalstream: function(stream) {
+              // The subscriber stream is recvonly, we don't expect anything here
+            },
+            onremotestream: function(stream) {
+              Janus.debug("Remote feed #" + student.studentId + ", stream:", stream);
+
+              Janus.attachMediaStream($('#remote-video-'+student.studentId).get(0), stream);
+              $('#remote-video-'+student.studentId).get(0).muted = "muted";
+
+            },
+            ondataopen: function(data) {
+            },
+            ondata: function(data) {
+              message = JSON.parse(data)
+
+
+              switch(message.type){
+                case "message":
+                  student.notificationChatCount++;
+                  student.messages.push(message)
+                  break;
+                case "outScreen":
+                  student.isOut = true;
+                  break;
+                case "inScreen":
+                  student.isOut = false;
+                  break;
+                case "changeState":
+                  student.state = message.message
+                  break;
+                case "requestPause":
+                  student.notificationPauseCount++;
+                  student.events.unshift(message.message)
+                  break;
+                default:
+                  break;
+              }
+            },
+            oncleanup: function() {
+
+              Janus.log(" ::: Got a cleanup notification (remote feed " + id + ") :::");
+              if(remoteFeed.spinner)
+                remoteFeed.spinner.stop();
+              remoteFeed.spinner = null;
+            },
+            
+          });
+      },
+      registerUsername: function(student) {        
+        var username = "fiscal"
+        var self = this
+        var register = {
+          request: "join",
+          ptype: "publisher",
+          display: "Fiscal - "+ " " +self.firstName,
+          room: student.roomId,
+          pin: student.roomPin,
+        };
+        try {
+          student.pluginHandle.send({ message: register });
+          student.registred = true
+        }
+        catch (e) {
+          console.log(e)
+          student.registred = false
+        }
+      },
+      registerUsernameText: function(application){
+        self = this 
+        application.myid = Janus.randomString(12);
+        var username = `${self.firstName} (${self.function})`
+        var transaction = Janus.randomString(12);
+        var register = {
+          textroom: "join",
+          transaction: transaction,
+          room: application.textRoomId,
+          username: application.myid,
+          display: username,
+          pin: application.textRoomPin
+        };
+        myusername = username;
+        self.transactions[transaction] = function(response) {
+          if(response["textroom"] === "error") {
+            // Something went wrong
+            if(response["error_code"] === 417) {
+              console.error("Criação de ambiente sendo executada.");
+            } else {
+              console.error(response["error"]);
+            }
+            return;
+          }
+          
+          if(response.participants && response.participants.length > 0) {
+            for(var i in response.participants) {
+              var p = response.participants[i];
+              application.participants[p.username] = p.display ? p.display : p.username;
+              if(p.username !== application.myid && $('#rp' + p.username).length === 0) {
+                // Add to the application.participants list frontend
+              }
+            }
+          }
+        };
+        application.pluginHandle.data({
+          text: JSON.stringify(register),
+          error: function(reason) {
+            console.error("--- Enviar mensagem para coordenação "+reason);
+          }
+        });
+      },
+      getStudent: function(studentId){
+        return this.students.find(element => element.studentId == studentId)
+      },
+      createNewSession: function(){
+        self = this
+        self.session = new Janus({
+          server: "wss://"+self.server+"/ws",
+          iceServers :[
+            {
+                "url":"stun:global.stun.twilio.com:3478?transport=udp",
+                "urls":"stun:global.stun.twilio.com:3478?transport=udp"
+            },
+            {
+                "url":"turn:global.turn.twilio.com:3478?transport=udp",
+                "username":"7278daa5512b41784b32bd4d85238190bdaec6bf6e494320a3afc4909d9e473d",
+                "urls":"turn:global.turn.twilio.com:3478?transport=udp",
+                "credential":"9TWaAt45RIOm5N4WxW/1QdvabgOCNsAZCi+H0zYyzZ8="
+            },
+            {
+                "url":"turn:global.turn.twilio.com:3478?transport=tcp",
+                "username":"7278daa5512b41784b32bd4d85238190bdaec6bf6e494320a3afc4909d9e473d",
+                "urls":"turn:global.turn.twilio.com:3478?transport=tcp",
+                "credential":"9TWaAt45RIOm5N4WxW/1QdvabgOCNsAZCi+H0zYyzZ8="
+            },
+            {
+                "url":"turn:global.turn.twilio.com:443?transport=tcp",
+                "username":"7278daa5512b41784b32bd4d85238190bdaec6bf6e494320a3afc4909d9e473d",
+                "urls":"turn:global.turn.twilio.com:443?transport=tcp",
+                "credential":"9TWaAt45RIOm5N4WxW/1QdvabgOCNsAZCi+H0zYyzZ8="
+            }
+          ],
+          success: function() {
+
+            self.students.forEach(function(student){
+
+              self.session.attach({
+                  plugin: "janus.plugin.videoroom",
+                  opaqueId: student.opaqueId,
+                  success: function(pluginHandle) {
+                    student.pluginHandle = pluginHandle;
+                    Janus.log("Plugin attached! (" + student.pluginHandle.getPlugin() + ", id=" + student.pluginHandle.getId() + ")");
+                    Janus.log("  -- This is a publisher/manager");
+                    app.registerUsername(student)
+                  },
+                  error: function(error) {
+                    Janus.error("  -- Error attaching plugin...", error);
+                  },
+                  consentDialog: function(on) {
+                    Janus.debug("Consent dialog should be " + (on ? "on" : "off") + " now");
+                    if(on) {
+                      // alert("permita o uso da camera")
+                    } else {
+                      // Restore screen
+                    }
+                  },
+                  iceState: function(state) {
+                    Janus.log("ICE state changed to " + state);
+                  },
+                  mediaState: function(medium, on) {
+                    Janus.log("Janus " + (on ? "started" : "stopped") + " receiving our " + medium);
+                  },
+                  webrtcState: function(on) {
+                    Janus.log("Janus says our WebRTC PeerConnection is " + (on ? "up" : "down") + " now");
+                    if(!on)
+                      return;
+                  },
+                  onmessage: function(msg, jsep) {
+                    Janus.debug(" ::: Got a message (publisher) :::", msg);
+                    var event = msg["videoroom"];
+                    Janus.debug("Event: " + event);
+                    if(event) {
+                      if(event === "joined") {
+                        // Publisher/manager created, negotiate WebRTC and attach to existing feeds, if any
+                        myid = msg["id"];
+                        self.mypvtid = msg["private_id"];
+                        Janus.log("Successfully joined room " + msg["room"] + " with ID " + myid);
+                        app.publishOwnFeed(useAudio=false, useVideo=false, student=student);
+                        // Any new feed to attach to?
+                        if(msg["publishers"]) {
+                          var list = msg["publishers"];
+                          Janus.debug("Got a list of available publishers/feeds:", list);
+                          for(var f in list) {
+                            var id = list[f]["id"];
+                            var display = list[f]["display"];
+                            var audio = list[f]["audio_codec"];
+                            var video = list[f]["video_codec"];
+                            Janus.debug("  >> [" + id + "] " + display + " (audio: " + audio + ", video: " + video + ")");
+                            
+                            new_student = app.getStudent(id)
+
+                            if (new_student !==  null && new_student !==  undefined)
+                              app.newRemoteFeed(id, display, audio, video, student);
+                          }
+                        }
+                      } else if(event === "destroyed") {
+                        // The room has been destroyed
+                        Janus.error("The room has been destroyed!");
+                      } else if(event === "event") {
+                        // Any new feed to attach to?
+                        if(msg["publishers"]) {
+                          var list = msg["publishers"];
+                          Janus.debug("Got a list of available publishers/feeds:", list);
+                          for(var f in list) {
+                            var id = list[f]["id"];
+                            var display = list[f]["display"];
+                            var audio = list[f]["audio_codec"];
+                            var video = list[f]["video_codec"];
+                            Janus.debug("  >> [" + id + "] " + display + " (audio: " + audio + ", video: " + video + ")");
+                            
+                            new_student = app.getStudent(id)
+                            if (new_student !==  null && new_student !==  undefined)
+                              app.newRemoteFeed(id, display, audio, video, student);
+                          }
+                        } else if(msg["leaving"]) {
+                          // One of the publishers has gone away?
+                          var leaving = msg["leaving"];
+                          Janus.log("Publisher left: " + leaving);
+                          var remoteFeed = null;
+
+                          student = app.getStudent(leaving)
+                          student.registred = false
+                          if(student !== undefined && student !== null) {
+                            student.status = "leaving"
+
+                            if(student.remoteFeed !== undefined && student.remoteFeed !== null) 
+                              student.remoteFeed.detach();
+                          }
+                        } else if(msg["unpublished"]) {
+                          var unpublished = msg["unpublished"];
+                          Janus.log("Publisher left: " + unpublished);
+                          if(unpublished === 'ok') {
+                            student.pluginHandle.hangup();
+                            return;
+                          }
+                          var remoteFeed = null;
+                          
+                          student = app.getStudent(unpublished)
+
+                          
+                          if(student !== undefined && student !== null) {
+                            student.status = "unpublished"
+                            Janus.debug("Feed has left the room, detaching");
+                            
+                            if(student.remoteFeed !== undefined && student.remoteFeed !== null) 
+                              student.remoteFeed.detach();
+                          }
+
+                        } else if(msg["error"]) {
+                          if(msg["error_code"] === 426) {
+                            // This is a "no such room" error: give a more meaningful description
+                            console.error(
+                              "<p>Apparently room <code>" + student.firstName + "</code> (the one this demo uses as a test room) " +
+                              "does not exist...</p><p>Do you have an updated <code>janus.plugin.videoroom.jcfg</code> " +
+                              "configuration file? If not, make sure you copy the details of room <code>" + self.roomId + "</code> " +
+                              "from that sample in your current configuration file, then restart Janus and try again."
+                            );
+                          } else {
+                            console.error(msg["error"]);
+                          }
+                        }
+                      }
+                    }
+                    if(jsep) {
+                      Janus.debug("Handling SDP as well...", jsep);
+                      student.pluginHandle.handleRemoteJsep({ jsep: jsep });
+                      // Check if any of the media we wanted to publish has
+                      // been rejected (e.g., wrong or unsupported codec)
+                      var audio = msg["audio_codec"];
+                      if(self.mystream && self.mystream.getAudioTracks() && self.mystream.getAudioTracks().length > 0 && !audio) {
+                        // Audio has been rejected
+                        console.error("Our audio stream has been rejected, viewers won't hear us");
+                      }
+                      var video = msg["video_codec"];
+                      if(self.mystream && self.mystream.getVideoTracks() && self.mystream.getVideoTracks().length > 0 && !video) {
+                        // Video has been rejected
+                        console.error("Our video stream has been rejected, viewers won't see us");
+                        // Hide the webcam video
+                      }
+                    }
+                  },
+                  onlocalstream: function(stream) {
+                    Janus.debug(" ::: Got a local stream :::", stream);
+                    self.mystream = stream;
+
+                    Janus.attachMediaStream($('#local-stream').get(0), stream);
+
+                    $("#local-stream").get(0).muted = "muted";
+                    
+                    // if(student.pluginHandle.webrtcStuff.pc.iceConnectionState !== "completed" &&
+                    //     student.pluginHandle.webrtcStuff.pc.iceConnectionState !== "connected") {
+
+
+                    // }
+                  },
+                  onremotestream: function(stream) {
+                    // The publisher stream is sendonly, we don't expect anything here
+                  },
+                  oncleanup: function() {
+                    Janus.log(" ::: Got a cleanup notification: we are unpublished now :::");
+                  },
+              });
+
+            })
+          },
+          error: function(error) {
+            Janus.error(error);
+          }
+        })
+      },
+      createNewTextSession: function() {
+        var self = this
+        var janus = new Janus({
+            server: `wss://${self.server}/ws`,
+            iceServers :[
+                {
+                    url: 'turn:'+self.server,
+                    username: 'gA42zcNAp8',
+                    credential: 'uzQNsqqF8c',
+                },
+                {
+                    url: 'stun:stun.fiscallize.com.br'
+                },
+            ],
+            success: function() {
+                janus.attach({
+                    plugin: "janus.plugin.textroom",
+                    opaqueId: self.application.opaqueId,
+                    success: function(pluginHandle) {
+
+                        self.application.pluginHandle = pluginHandle;
+                
+                        Janus.log("Plugin attached! (" + self.application.pluginHandle.getPlugin() + ", id=" + self.application.pluginHandle.getId() + ")");
+                        // Setup the DataChannel
+                        var body = { request: "setup" };
+                        Janus.debug("Sending message:", body);
+                        self.application.pluginHandle.send({ message: body });
+            
+                    },
+                    error: function(error) {
+                        console.error("  -- Error attaching plugin..." + error);
+                    },
+                    iceState: function(state) {
+                        Janus.log("ICE state changed to " + state);
+                    },
+                    mediaState: function(medium, on) {
+                        Janus.log("Janus " + (on ? "started" : "stopped") + " receiving our " + medium);
+                    },
+                    webrtcState: function(on) {
+                        Janus.log("Janus says our WebRTC PeerConnection is " + (on ? "up" : "down") + " now");
+                    },
+                    onmessage: function(msg, jsep) {
+                        Janus.debug(" ::: Got a message :::", msg);
+                        if(msg["error"]) {
+                            alert(msg["error"]);
+                        }
+                        if(jsep) {
+                            // Answer
+                            self.application.pluginHandle.createAnswer(
+                                {
+                                    jsep: jsep,
+                                    media: { audio: false, video: false, data: true },
+                                    success: function(jsep) {
+                                        Janus.debug("Got SDP!", jsep);
+                                        var body = { request: "ack" };
+                                        self.application.pluginHandle.send({ message: body, jsep: jsep });
+                                    },
+                                    error: function(error) {
+                                        Janus.error("WebRTC error:", error);
+                                        alert("WebRTC error... " + error.message);
+                                    }
+                                });
+                        }
+                    },
+                    ondataopen: function(data) {
+                        app.registerUsernameText(self.application)
+                    },
+                    ondata: function(data) {
+                        Janus.debug("We got data from the DataChannel!", data);
+                        var json = JSON.parse(data);
+                        var transaction = json["transaction"];
+                        if(self.transactions[transaction]) {
+                            // Someone was waiting for this
+                            self.transactions[transaction](json);
+                            delete self.transactions[transaction];
+                            return;
+                        }
+                
+                        var what = json["textroom"];
+                
+                        if(what === "message") {
+                            var msg = json["text"];
+                            msg = msg.replace(new RegExp('<', 'g'), '&lt');
+                            msg = msg.replace(new RegExp('>', 'g'), '&gt');
+                            var from = json["from"];
+
+                            if (self.application.participants[from] !== `${self.firstName} (${self.function})`){
+                              self.notificationSound.play();
+                              self.application.notificationChatCount += 1;
+                            }
+
+                            self.application.messages.push({
+                                "sender": self.application.participants[from],
+                                "content": msg,
+                                "created_at": moment().calendar()
+                            });
+
+                            app.downScroll("#coordination-chat")
+
+                        }  else if(what === "join") {
+                            var username = json["username"];
+                            var display = json["display"];
+                            self.application.participants[username] = display ? display : username;
+                            
+                        } else if(what === "leave") {
+                            var username = json["username"];                    
+                            delete self.application.participants[username];
+                    
+                        } else if(what === "destroyed") {
+                            if(json["room"] !== self.application.textRoomId)
+                                return;
+                            // Room was destroyed, goodbye!
+                            alert("A sala foi removida")
+                        }
+                    },
+                    oncleanup: function() {
+                        Janus.log(" ::: Got a cleanup notification :::");
+                    }
+                });
+
+            },
+            error: function(error) {
+              },
+            destroyed: function() {
+                alert("Servidor foi removido!")
+            }
+        });
+      },
+      sendMessageChat: function(){
+        self = this
+        self.sendingMessage = true
+        self.textMessageCoordination = self.textMessageCoordination.replace("\n", "").trim()
+
+        if (self.textMessageCoordination == ""){
+          self.sendingMessage = false
+          return
+        }
+
+        var message = {
+          textroom: "message",
+          transaction: Janus.randomString(12),
+          room: self.application.textRoomId,
+          text: self.textMessageCoordination,
+        };
+
+        self.application.pluginHandle.data({
+          text: JSON.stringify(message),
+          error: function(reason) { alert("error"); },
+          success: function() { 
+            self.application.notificationChatCount = 0;
+            
+            var newMessage = {
+              "application": self.application.id,
+              "content": self.textMessageCoordination
+            }
+
+            axios.post("{% url 'events:aplication_message_create'  %}", newMessage).then(function(response){
+              app.downScroll("#coordination-chat")
+
+              self.textMessageCoordination = ""
+              self.sendingMessage = false
+            })
+          }
+        });
+      },
+      downScroll: function(element_id){
+        $(element_id).animate({ scrollTop: 99999999999 }, 300);
+      },
+    },
+    mounted: function(){
+      var self = this;
+      self.countDown()
+      Janus.init({debug: "false", callback: function() {
+        if(!Janus.isWebrtcSupported()) {
+            alert("No WebRTC support... ");
+            return;
+        }
+
+        self.createNewSession()
+        self.createNewTextSession()
+      }});
+      
+      $(function(){
+          'use strict'
+
+          $('#left-off-canvas .close').on('click', function(e){
+              e.preventDefault();
+              $(this).closest('#left-off-canvas').removeClass('show');
+          })
+
+          $(document).on('click touchstart', function(e){
+            if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+              return
+            }
+              e.stopPropagation();
+
+              if(!$(e.target).closest('.off-canvas-menu').length) {
+                  var offCanvas = $(e.target).closest('#left-off-canvas').length;
+                  if(!offCanvas) {
+                      $('#left-off-canvas.show').removeClass('show');
+                  }
+              }
+          });
+      });
+    }
+  })
+</script>
+
+{% endcompress %}
+
+<div class="backdrop"></div>
+{% endblock js-additional %}

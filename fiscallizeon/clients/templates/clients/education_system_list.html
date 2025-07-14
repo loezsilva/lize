@@ -1,0 +1,151 @@
+{% extends 'redesign/base.html' %}
+{% load permissions %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Listagem de sistemas de ensino - Lize{% endblock title %}
+
+{% block css-additional %}
+
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+<div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                <li class="breadcrumb-item"><a href="#">SISTEMA DE ENSINO</a></li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    LISTAGEM
+                </li>
+            </ol>
+        </nav> 
+        <h4>
+            Listar sistemas de ensino
+        </h4>
+    </div>
+    <div class="d-none d-md-block">
+        <a href="{% url 'clients:education-system-create' %}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+            <i data-feather="plus" class="wd-10 mg-r-5"></i> NOVO SISTEMA   
+        </a>
+    </div>
+</div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+      <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1rem; justify-content: space-between;">
+        <div style="flex: 1;">
+          <!-- Empty -->
+        </div>
+        {% if user|has_perm:'clients.add_educationsystem' %}
+            <div>
+            <a href="{% url 'clients:education-system-create' %}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+                <i data-feather="plus" class="wd-10 mg-r-5"></i> Novo sistema
+            </a>
+            </div>
+        {% endif %}
+      </div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+            <div>
+                <h6 class="mg-b-5">
+                    Listar sistema de ensino
+                </h6>
+            </div>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Sistema de ensino</th>
+                            <th>Unidades</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="edutationSystem in edutationSystems">
+                            <td>#{edutationSystem.name}</td>
+                            <td>
+                                <span class="badge badge-primary m-1" v-for="unity in edutationSystem.selectedUnities">#{unity.name}</span>
+                            </td>
+                            <td class="text-right">
+                                {% if user|has_perm:'clients.change_educationsystem' %}
+                                    <a class="px-2" :href="edutationSystem.urls.detail">
+                                        <i class="fas fa-edit" ></i>
+                                    </a>
+                                {% endif %}
+                                {% if user|has_perm:'clients.delete_educationsystem' %}
+                                    <a class="px-2" href="javascript:void(0)" @click="deleteEducationSystem(edutationSystem)">
+                                        <i class="fas fa-times" ></i>
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr v-if="!edutationSystems.length">
+                            <td colspan="3">Nenhum sistema de ensino encontrado</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+<script>
+    moment.locale('pt-br')
+    var app = new Vue({
+        delimiters: ['#{', '}'],
+        el: '#app',
+        data: {
+            edutationSystems: [],
+        },
+        methods: {
+            deleteEducationSystem(edutationSystem) {
+                Swal.fire({
+                    title: 'Confirmação',
+                    text: "Você confirma que quer remover o sistema selecionado? esta operação é irreversível!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Sim, confirmar!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        axios.delete(edutationSystem.urls.apiDetail).then((response) => {
+                            Swal.fire(
+                                'Removido!',
+                                'Sistema de ensino removido com sucesso.',
+                                'success'
+                            )
+                            this.edutationSystems.splice(this.edutationSystems.indexOf(edutationSystem), 1)
+                        }).catch((e) => {
+                            Swal.fire(
+                                'Erro!',
+                                'Ocorreu um erro ao tentar remover o sistema de ensino, tente novamente em alguns instantes, caso o erro persista, entre em contato com o suporte',
+                                'error'
+                            )
+                        })
+                    }
+                })
+            },
+        },
+        mounted() {  
+            axios.get("{% url 'api:clients:education-system-list' %}").then((response) => this.edutationSystems = response.data)
+        },
+    })
+</script>
+
+{% endblock %}

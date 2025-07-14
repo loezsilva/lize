@@ -1,0 +1,3376 @@
+{% extends 'redesign/base.html' %}
+{% load split %}
+{% load permissions %}
+
+{% block title %}
+  Dashboard - Lize
+{% endblock title %}
+
+{% block css-additional %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css">
+<style>
+  /*///////////////////////////////////////////////////////////////////////////*/
+  /* SELECT2 */
+  /*///////////////////////////////////////////////////////////////////////////*/
+  span#id-students-select2.select2-container .select2-selection--single, span#id-students-select2.select2-container--default .select2-selection--single .select2-selection__rendered {
+    height: 72px;
+  }
+
+  * {
+    font-family: inter !important;
+  }
+
+  .hover-gray:hover {
+    background-color: #FAFBFC;
+    font-weight: 600 !important;
+  }
+
+  span#id-students-select2.select2-container--default.select2-container--open.select2-container--below .select2-selection--single, span#id-students-select2.select2-container--default.select2-container--open.select2-container--below .select2-selection--multiple {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  span#id-students-select2.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 100%;
+  }
+
+  span#id-students-select2.select2-container .select2-selection--single .select2-selection__rendered {
+    padding: 0;
+  }
+
+  span#id-students-select2.select2-container--default .select2-selection--single {
+    border: 1px solid #E5E7EA;
+    border-radius: 8px;
+    box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+  }
+
+  span#id-students-select2 .select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: #D0D5DD transparent transparent transparent;
+  }
+
+  span#id-students-select2 .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+    border-color: transparent transparent #D0D5DD transparent;
+  }
+
+  span#id-students-select2-dropdown .select2-dropdown {
+    border: 1px solid #E5E7EA;
+    box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+    border-bottom-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+  }
+
+  span#id-students-select2-dropdown .select2-search__field {
+    border: unset;
+  }
+
+  /*///////////////////////////////////////////////////////////////////////////*/
+  /* DATERANGEPICKER */
+  /*///////////////////////////////////////////////////////////////////////////*/
+
+  .daterangepicker .ranges li.active {
+    background-color: #FF8F3E;
+  }
+
+  .daterangepicker td.in-range {
+    background-color: #FFF6EB;
+  }
+
+  .daterangepicker td.active, .daterangepicker td.active:hover {
+    background-color: #F47605;
+  }
+
+  /*///////////////////////////////////////////////////////////////////////////*/
+  /* RESET ECHARTS TOOLTIP */
+  /*///////////////////////////////////////////////////////////////////////////*/
+
+  .reset-echarts-tooltip {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    background-color: unset !important;
+  }
+  .dropdown-toggle {
+    border: none;
+  }
+  .filter-option-inner-inner {
+    text-align: right;
+  }
+  input:focus {
+    border-color: transparent !important;
+    box-shadow: none !important;
+  }
+  @media print {
+    * {
+      overflow: hidden !important;
+    }
+    .content-header {
+      display: none;
+    }
+    .no-print {
+      display: none;
+    }
+    body, .content {
+      height: auto;
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content-body %}<div id="app" class="content-body p-0 m-0" style="overflow-x: hidden;">{% endblock content-body %}
+
+{% block content-fixed %}
+<div class="tw-flex tw-justify-center tw-bg-white">
+  <div class="tw-max-w-[100rem] tw-flex-1">
+    <div class="tw-pb-8 tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" style="padding-bottom: 40px;">
+      <div class="tw-pt-8">
+        <h3 class="no-print" style="font-size: 16px; line-height: 24px; font-weight: 500; color: #101828; margin-bottom: 16px;">
+          Encontramos para você
+        </h3>
+        <div class="tw-grid tw-grid-cols-1 tw-gap-x-4 tw-gap-y-8 sm:tw-grid-cols-8" :style="loadingRequest ? 'pointer-events: none;':''">
+          <div class="sm:tw-col-span-4 sm:tw-col-start-1">
+            <search-component></search-component>
+          </div>
+          <div class="sm:tw-col-span-2">
+            <select-component ref="selectComponent"></select-component>
+          </div>
+          <div class="sm:tw-col-span-2">
+            <div id="id-date" class="tw-flex tw-justify-between tw-w-full tw-rounded-md tw-border-0 tw-p-6 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" style="font-size: 16px; font-weight: 500; line-height: 24px;">
+              <span class="tw-truncate"></span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M21 10H3M16 2V6M8 2V6M7.8 22H16.2C17.8802 22 18.7202 22 19.362 21.673C19.9265 21.3854 20.3854 20.9265 20.673 20.362C21 19.7202 21 18.8802 21 17.2V8.8C21 7.11984 21 6.27976 20.673 5.63803C20.3854 5.07354 19.9265 4.6146 19.362 4.32698C18.7202 4 17.8802 4 16.2 4H7.8C6.11984 4 5.27976 4 4.63803 4.32698C4.07354 4.6146 3.6146 5.07354 3.32698 5.63803C3 6.27976 3 7.11984 3 8.8V17.2C3 18.8802 3 19.7202 3.32698 20.362C3.6146 20.9265 4.07354 21.3854 4.63803 21.673C5.27976 22 6.11984 22 7.8 22Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <template>
+      <div class="row m-0">
+        <div class="col-12 d-flex justify-content-center">
+          <div class="mx-3 cp" @click="controls.selectedTab = 'classe'">
+            <div class="d-flex pb-4" :style="controls.selectedTab == 'classe' ? 'border-bottom: 2px solid #FF8F3D;':''">
+              <svg width="20" height="17" viewBox="0 0 20 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13.3333 1.8898C14.5681 2.50343 15.4166 3.77762 15.4166 5.25C15.4166 6.72238 14.5681 7.99657 13.3333 8.6102M15 12.972C16.2595 13.5419 17.3937 14.4708 18.3333 15.6667M1.66663 15.6667C3.2887 13.6021 5.49094 12.3333 7.91663 12.3333C10.3423 12.3333 12.5445 13.6021 14.1666 15.6667M11.6666 5.25C11.6666 7.32107 9.98769 9 7.91663 9C5.84556 9 4.16663 7.32107 4.16663 5.25C4.16663 3.17893 5.84556 1.5 7.91663 1.5C9.98769 1.5 11.6666 3.17893 11.6666 5.25Z" :stroke="controls.selectedTab == 'classe' ? '#FF8F3D':'#D3D6DB'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="ml-2" style="font-size: 14px; line-height: 20px;" :style="controls.selectedTab == 'classe' ? 'font-weight: 600; color: #101828;':'font-weight: 500; color: #667085;'">Turma</span>
+            </div>
+          </div>
+          <div class="mx-3 cp" @click="controls.selectedTab = 'student'">
+            <div class="d-flex pb-4" :style="controls.selectedTab == 'student' ? 'border-bottom: 2px solid #FF8F3D;':''">
+              <svg width="16" height="18" viewBox="0 0 16 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14.6667 16.5C14.6667 15.337 14.6667 14.7555 14.5232 14.2824C14.2 13.217 13.3663 12.3834 12.301 12.0602C11.8278 11.9167 11.2463 11.9167 10.0834 11.9167H5.91671C4.75374 11.9167 4.17225 11.9167 3.69909 12.0602C2.63375 12.3834 1.80007 13.217 1.47691 14.2824C1.33337 14.7555 1.33337 15.337 1.33337 16.5M11.75 5.25C11.75 7.32107 10.0711 9 8.00004 9C5.92897 9 4.25004 7.32107 4.25004 5.25C4.25004 3.17893 5.92897 1.5 8.00004 1.5C10.0711 1.5 11.75 3.17893 11.75 5.25Z" :stroke="controls.selectedTab == 'student' ? '#FF8F3D':'#D3D6DB'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>              
+              <span class="ml-2" style="font-size: 14px; line-height: 20px;" :style="controls.selectedTab == 'student' ? 'font-weight: 600; color: #101828;':'font-weight: 500; color: #667085;'">Alunos</span>
+            </div>
+          </div>
+          <div class="mx-3 cp" @click="controls.selectedTab = 'teacher'">
+            <div class="d-flex pb-4" :style="controls.selectedTab == 'teacher' ? 'border-bottom: 2px solid #FF8F3D;':''">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="10.8337" y="12.5011" width="4.1684" height="2.50104" rx="1" :stroke="controls.selectedTab == 'teacher' ? '#FF8F3D':'#D3D6DB'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M7.49897 17.5031H2.08005C1.84983 17.5031 1.66321 17.3165 1.66321 17.0863V16.7478C1.66596 15.7848 2.44594 15.0048 3.40894 15.0021H6.17009C7.13308 15.0048 7.91307 15.7848 7.91581 16.7478V17.0863C7.91581 17.3165 7.72919 17.5031 7.49897 17.5031Z" :stroke="controls.selectedTab == 'teacher' ? '#FF8F3D':'#D3D6DB'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M4.78949 12.9179C3.86883 12.9161 3.12372 12.1687 3.12463 11.2481C3.12556 10.3274 3.87216 9.58154 4.79283 9.58154C5.7135 9.58154 6.4601 10.3274 6.46102 11.2481C6.46194 12.1687 5.71683 12.9161 4.79616 12.9179H4.78949Z" :stroke="controls.selectedTab == 'teacher' ? '#FF8F3D':'#D3D6DB'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3.33057 7.49903V4.16431C3.33057 3.24345 4.07707 2.49695 4.99793 2.49695H16.6695C17.5903 2.49695 18.3368 3.24345 18.3368 4.16431V13.3348C18.3368 14.2557 17.5903 15.0022 16.6695 15.0022H10" :stroke="controls.selectedTab == 'teacher' ? '#FF8F3D':'#D3D6DB'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>                            
+              <span class="ml-2" style="font-size: 14px; line-height: 20px;" :style="controls.selectedTab == 'teacher' ? 'font-weight: 600; color: #101828;':'font-weight: 500; color: #667085;'">Professor</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+    
+    <hr style="margin: 0; border-color: #E5E7EA;" />
+
+    <div :style="['classe', 'teacher'].includes(who) && controls.selectedTab == 'classe' ? '':'display: none;'">
+      
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" style="padding-top: 40px;">
+        <h3 style="font-family: 'Inter'; font-size: 30px; line-height: 34px; font-weight: 500; color: #282F3E; letter-spacing: -0.01em; margin-bottom: 0;">
+          Desempenho Geral
+        </h3>
+      </div>
+
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" style="padding-top: 24px;">
+        <div class="tw-grid tw-grid-cols-1 tw-gap-x-8 tw-gap-y-16 sm:tw-grid-cols-3">
+          <div style="display: flex; flex-direction: column; border: 1px solid #E5E7EA; height: 320px; border-radius: 12px; padding: 24px 0;" ref="frequency">
+            <div class="tw-flex tw-justify-between tw-items-center tw-pb-2" style="padding: 0 24px;">
+              <h3 style="font-size: 16px; line-height: 24px; font-weight: 500; color: #101828; margin-bottom: 0;">
+                Participações
+              </h3>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-left: 8px;">
+                <g clip-path="url(#clip0_2002_1216)">
+                  <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_2002_1216">
+                    <rect width="16" height="16" fill="white"/>
+                  </clipPath>
+                </defs>
+              </svg>
+            </div>
+            <div style="flex: 1;">
+              <skeleton-card v-if="['loading', 'idle'].includes(frequency.status)"></skeleton-card>
+              <div id="chartFrequency" style="height: 100%;" :style="{ 'visibility': ['loading', 'idle'].includes(frequency.status) ? 'hidden':''  }"></div>
+            </div>
+          </div>  
+            
+          <div style="display: flex; flex-direction: column; border: 1px solid #E5E7EA; height: 320px; border-radius: 12px; padding: 24px 0;" ref="objectivesHitsAndMisses">
+            <div class="tw-flex tw-justify-between tw-items-center tw-pb-2" style="padding: 0 24px;">
+              <h3 style="font-size: 16px; line-height: 24px; font-weight: 500; color: #101828; margin-bottom: 0;">
+                Múltipla escolha
+              </h3>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-left: 8px;">
+                <g clip-path="url(#clip0_2002_1216)">
+                  <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_2002_1216">
+                    <rect width="16" height="16" fill="white"/>
+                  </clipPath>
+                </defs>
+              </svg>
+            </div>
+            <div style="flex: 1;">
+              <skeleton-card v-if="['loading', 'idle'].includes(objectivesHitsAndMisses.status)"></skeleton-card>
+              <div id="chartObjectivesHitsAndMisses" style="height: 100%;" :style="{ 'visibility': ['loading', 'idle'].includes(objectivesHitsAndMisses.status) ? 'hidden':''  }"></div>
+            </div>
+          </div>
+  
+          <div style="display: flex; flex-direction: column; border: 1px solid #E5E7EA; height: 320px; border-radius: 12px; padding: 24px;" ref="discursivesHitsAndMisses">
+            <div class="tw-flex tw-justify-between tw-items-center tw-pb-4">
+              <h3 style="font-size: 16px; line-height: 24px; font-weight: 500; color: #101828; margin-bottom: 0;">
+                Discursivas
+              </h3>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-left: 8px;">
+                <g clip-path="url(#clip0_2002_1216)">
+                  <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_2002_1216">
+                    <rect width="16" height="16" fill="white"/>
+                  </clipPath>
+                </defs>
+              </svg>
+            </div>
+            <div style="flex: 1;">
+              <skeleton-card v-if="['loading', 'idle'].includes(discursivesHitsAndMisses.status)"></skeleton-card>
+              <div id="chartDiscursivesHitsAndMisses" style="height: 100%;" :style="{ 'visibility': ['loading', 'idle'].includes(discursivesHitsAndMisses.status) ? 'hidden':''  }"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" style="padding-top: 24px;">
+        <div class="tw-grid tw-grid-cols-1 tw-gap-x-8 tw-gap-y-16 sm:tw-grid-cols-3">
+          <div style="display: flex; flex-direction: column; border: 1px solid #E5E7EA; height: 320px; border-radius: 12px; padding: 24px;" ref="average">
+            <div class="tw-flex tw-justify-between tw-items-center tw-pb-2">
+              <h3 style="font-size: 16px; line-height: 24px; font-weight: 500; color: #101828; margin-bottom: 0;">
+                Média geral
+              </h3>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-left: 8px;">
+                <g clip-path="url(#clip0_2002_1216)">
+                  <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_2002_1216">
+                    <rect width="16" height="16" fill="white"/>
+                  </clipPath>
+                </defs>
+              </svg>
+            </div>
+            <div>
+              <span class="tw-flex tw-items-center">
+                <template v-if="schoolAverage">
+                  <template v-if="schoolAverage.toFixed(0) > average.data.toFixed(0)">
+                    <span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7 7L17 17M17 17V7M17 17H7" stroke="#D92D20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </span>
+                    <span style="font-size: 14px; font-family: 'Inter'; font-weight: 600; line-height: 20px; color: #D92D20; margin-left: 4px;">#{(schoolAverage - average.data).toFixed(0)}%</span>
+                    <span style="font-size: 12px; font-family: 'Roboto'; font-weight: 400; line-height: 16px; color: #D92D20; margin-left: 8px;">abaixo da média da escola</span>
+                  </template>
+                  <template v-else-if="schoolAverage.toFixed(0) < average.data.toFixed(0)">
+                    <span>
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M4.66602 11.3333L11.3327 4.66666M11.3327 4.66666V11.3333M11.3327 4.66666H4.66602" stroke="#41C588" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    <span style="font-size: 14px; font-family: 'Inter'; font-weight: 600; line-height: 20px; color: #41C588; margin-left: 4px;">#{(average.data - schoolAverage).toFixed(0)}%</span>
+                    <span style="font-size: 12px; font-family: 'Roboto'; font-weight: 400; line-height: 16px; color: #667085; margin-left: 8px;">melhor que a média da escola</span>
+                  </template>
+                </template>
+              </span>
+            </div>
+            <div style="flex: 1;">
+              <skeleton-card v-if="['loading', 'idle'].includes(average.status)"></skeleton-card>
+              <div id="chartAvg" style="height: 100%;" :style="{ 'visibility': ['loading', 'idle'].includes(average.status) ? 'hidden':''  }"></div>
+            </div>
+          </div>
+          
+          <div style="display: flex; flex-direction: column; border: 1px solid #E5E7EA; height: 320px; border-radius: 12px; padding-top: 24px;" ref="progressByMonth">
+            <div class="tw-flex tw-justify-between tw-items-center tw-pb-2" style="padding: 0 24px;">
+              <h3 style="font-size: 16px; line-height: 24px; font-weight: 500; color: #101828; margin-bottom: 0;">
+                Progresso
+              </h3>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-left: 8px;">
+                <g clip-path="url(#clip0_2002_1216)">
+                  <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_2002_1216">
+                    <rect width="16" height="16" fill="white"/>
+                  </clipPath>
+                </defs>
+              </svg>
+            </div>
+            <div style="flex: 1;">
+              <skeleton-card v-if="['loading', 'idle'].includes(progressByMonth.status)"></skeleton-card>
+              <div id="chartProgressByMonth" style="height: 100%;" :style="{ 'visibility': ['loading', 'idle'].includes(progressByMonth.status) ? 'hidden':''  }"></div>
+            </div>
+          </div>
+  
+          <div style="display: flex; flex-direction: column; border: 1px solid #E5E7EA; height: 320px; border-radius: 12px; padding: 24px;" ref="questionsSummary">
+            <div class="tw-flex tw-justify-between tw-items-center tw-pb-2">
+              <h3 style="font-size: 16px; line-height: 24px; font-weight: 500; color: #101828; margin-bottom: 0;">
+                Desempenho nas questões
+              </h3>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-left: 8px;">
+                <g clip-path="url(#clip0_2002_1216)">
+                  <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_2002_1216">
+                    <rect width="16" height="16" fill="white"/>
+                  </clipPath>
+                </defs>
+              </svg>
+            </div>
+            <skeleton-card v-if="questionsSummary.status == 'loading'"></skeleton-card>
+            <template v-if="questionsSummary.status == 'success'">
+              <div class="tw-flex tw-flex-col mt-2">
+                <div class="tw-flex tw-flex-col">
+                  <div class="tw-flex tw-justify-between">
+                    <p class="tw-font-normal tw-mb-0" style="font-weight: 600; font-size: 14px; line-height: 20px;">Fáceis</p>
+                  </div>
+                  <div class="d-flex justify-content-between aling-items-center">
+                    <div class="w-100 d-flex align-items-center">
+                      <div class="tw-overflow-hidden tw-rounded-sm w-100" style="background-color: #41C58810;">
+                        <div class="tw-h-2 tw-rounded-sm" :style="{ width: questionsSummary.data.easy_avg + '%', backgroundColor: '#41C588' }"></div>
+                      </div>
+                    </div>
+                    <p class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-[#001737] tw-mb-0 ml-3" style="font-size: 16px; font-weight: 500; line-height: 24px; color: #101828;">#{questionsSummary.data.easy}/#{questionsSummary.data.total}</p>
+                  </div>
+                </div>
+                <div class="tw-flex tw-flex-col">
+                  <div class="tw-flex tw-justify-between">
+                    <p class="tw-text-xs tw-font-normal tw-mb-0" style="font-weight: 400; font-size: 14px; line-height: 20px; color: #667085;">Média de acerto de #{questionsSummary.data.easy_avg.toFixed(0)}%</p>
+                  </div>
+                </div>
+              </div>
+              <hr class="my-2">
+              <div class="tw-flex tw-flex-col">
+                <div class="tw-flex tw-flex-col">
+                  <div class="tw-flex tw-justify-between">
+                    <p class="tw-font-normal tw-mb-0" style="font-weight: 600; font-size: 14px; line-height: 20px;">Moderadas</p>
+                  </div>
+                  <div class="d-flex justify-content-between aling-items-center">
+                    <div class="w-100 d-flex align-items-center">
+                      <div class="tw-overflow-hidden tw-rounded-sm w-100" style="background-color: #F1AA5910;">
+                        <div class="tw-h-2 tw-rounded-sm" :style="{ width: questionsSummary.data.medium_avg + '%', backgroundColor: '#F1AA59' }"></div>
+                      </div>
+                    </div>
+                    <p class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-[#001737] tw-mb-0 ml-3" style="font-size: 16px; font-weight: 500; line-height: 24px; color: #101828;">#{questionsSummary.data.medium}/#{questionsSummary.data.total}</p>
+                  </div>
+                </div>
+                <div class="tw-flex tw-flex-col">
+                  <div class="tw-flex tw-justify-between">
+                    <p class="tw-text-xs tw-font-normal tw-mb-0" style="font-weight: 400; font-size: 14px; line-height: 20px; color: #667085;">Média de acerto de #{questionsSummary.data.medium_avg.toFixed(0)}%</p>
+                  </div>
+                </div>
+              </div>
+              <hr class="my-2">
+              <div class="tw-flex tw-flex-col mb-2">
+                <div class="tw-flex tw-flex-col">
+                  <div class="tw-flex tw-justify-between">
+                    <p class="tw-font-normal tw-mb-0" style="font-weight: 600; font-size: 14px; line-height: 20px;">Difíceis</p>
+                  </div>
+                  <div class="d-flex justify-content-between aling-items-center">
+                    <div class="w-100 d-flex align-items-center">
+                      <div class="tw-overflow-hidden tw-rounded-sm w-100" style="background-color: #D92D2010;">
+                        <div class="tw-h-2 tw-rounded-sm" :style="{ width: questionsSummary.data.hard_avg + '%', backgroundColor: '#D92D20' }"></div>
+                      </div>
+                    </div>
+                    <p class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-[#001737] tw-mb-0 ml-3" style="font-size: 16px; font-weight: 500; line-height: 24px; color: #101828;">#{questionsSummary.data.hard}/#{questionsSummary.data.total}</p>
+                  </div>
+                </div>
+                <div class="tw-flex tw-flex-col">
+                  <div class="tw-flex tw-justify-between">
+                    <p class="tw-text-xs tw-font-normal tw-mb-0" style="font-weight: 400; font-size: 14px; line-height: 20px; color: #667085;">Média de acerto de #{questionsSummary.data.hard_avg.toFixed(0)}%</p>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+  
+        </div>
+      </div>
+        
+      {% comment %}
+        <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" style="padding-top: 24px;">
+          <div class="tw-grid tw-grid-cols-1 tw-gap-x-8 tw-gap-y-16 sm:tw-grid-cols-1" ref="distribution">
+            <div style="display: flex; flex-direction: column; border: 1px solid #E5E7EA; border-radius: 12px; padding: 24px;">
+              <div class="tw-flex tw-justify-between tw-items-center tw-pb-2">
+                <h3 style="font-size: 16px; line-height: 24px; font-weight: 500; color: #101828; margin-bottom: 0;">
+                  Mapa de calor de acerto e erros
+                </h3>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-left: 8px;">
+                  <g clip-path="url(#clip0_2002_1216)">
+                    <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </g>
+                  <defs>
+                    <clipPath id="clip0_2002_1216">
+                      <rect width="16" height="16" fill="white"/>
+                    </clipPath>
+                  </defs>
+                </svg>
+              </div>
+              <div style="flex: 1;">
+                <skeleton-card v-if="['loading', 'idle'].includes(distribution.status)"></skeleton-card>
+                <div id="distributionChart" style="min-height: 360px; height: 100%;" :style="{ 'visibility': ['loading', 'idle'].includes(distribution.status) ? 'hidden':''  }"></div>
+              </div>
+              <div class="d-flex align-items-center w-100" style="color: #667085;">
+                <div>Acertos</div>
+                <div class="mx-2" style="width: 80px; height: 8px; background: linear-gradient(90deg, #FF8F3D 0%, #FFE9D8 100%);"></div>
+                <div>Erros</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endcomment %}
+  
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" id="challengesID" ref="challenges">
+        <skeleton-card v-if="['loading', 'idle'].includes(challenges.status)"></skeleton-card>
+        <span class="tw-flex tw-items-center tw-justify-between tw-pb-6" style="margin-top: 20p; padding-top: 72px;" v-if="challenges.data.length > 1">
+          <div class="tw-flex tw-items-center">
+            <h3 class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">
+              Histórico de desafios
+            </h3>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="tw-ml-2">
+              <g clip-path="url(#clip0_2002_1216)">
+                <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </g>
+              <defs>
+                <clipPath id="clip0_2002_1216">
+                  <rect width="16" height="16" fill="white" />
+                </clipPath>
+              </defs>
+            </svg>
+          </div>
+        </span>
+        <div id="chartChallenges" style="width: 100%;" :style="['loading', 'idle'].includes(challenges.status) || challenges.data.length < 2 ? 'visibility: hidden; height: 0px;':'height: 100px;'"></div>
+        <div class="tw-flex tw-justify-center tw-pt-2" :class="{ 'd-none': challenges.data.length < 2 }">
+          <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">Últimos 20 instrumentos avaliativos do período selecionado</p>
+        </div>
+      </div>
+  
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" style="padding-top: 32px; padding-bottom: 32px;">
+        <hr class="tw-m-0" style="border-color: #E5E7EA;" />
+      </div>
+  
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem] mb-5">
+        <div class="tw-flex tw-justify-between">
+          <ul id="tab-header" role="tablist" class="tw-list-none tw-w-full tw-flex tw-mb-0">
+            <li
+              class="tw-w-full tw-text-center tw-px-4 sm:tw-px-6 lg:tw-px-8 tw-py-[1.625rem] tw-cursor-pointer tw-border tw-border-[#E5E7EA] tw-rounded-tl-xl tw-border-b-0"
+              :class="[activeTab === 'tab-1' ? 'tw-bg-white tw--mb-px' : 'tw-bg-[#F9FAFB]']"
+              @click="changeTab('tab-1')"
+            >
+              <span
+                role="tab"
+                aria-controls="tab-1"
+                aria-selected="true"
+                class="d-flex align-items-center justify-content-center tw-text-base tw-px-12 tw-font-medium tw-text-[#001737]"
+              >
+                Assuntos <div class="d-flex align-items-center justify-content-center tw-bg-primary-600 text-white mx-3 rounded-circle" style="width: 30px; height: 30px;">#{topics.status == 'success' ? topics.data.length : '-'}</div>
+              </span>
+            </li>
+            <li
+              class="tw-w-full tw-text-center tw-px-4 sm:tw-px-6 lg:tw-px-8 tw-py-[1.625rem] tw-cursor-pointer tw-border tw-border-[#E5E7EA] tw-border-b-0 tw-border-l-0"
+              :class="[activeTab === 'tab-2' ? 'tw-bg-white tw--mb-px' : 'tw-bg-[#F9FAFB]']"
+              @click="changeTab('tab-2')"
+            >
+              <span
+                role="tab"
+                aria-controls="tab-1"
+                aria-selected="true"
+                class="d-flex align-items-center justify-content-center tw-text-base tw-px-12 tw-font-medium tw-text-[#001737]"
+              >
+                Habilidades <div class="d-flex align-items-center justify-content-center tw-bg-primary-600 text-white mx-3 rounded-circle" style="width: 30px; height: 30px;">#{abilities.status == 'success' ? abilities.data.length : '-'}</div>
+              </span>
+            </li>
+            <li
+              class="tw-w-full tw-border tw-border-[#E5E7EA] tw-text-center tw-px-4 sm:tw-px-6 lg:tw-px-8 tw-py-[1.625rem] tw-cursor-pointer tw-rounded-tr-xl tw-border-b-0 tw-border-l-0"
+              :class="[activeTab === 'tab-3' ? 'tw-bg-white tw--mb-px' : 'tw-bg-[#F9FAFB]']"
+              @click="changeTab('tab-3')"
+            >
+              <span
+                role="tab"
+                aria-controls="tab-1"
+                aria-selected="true"
+                class="d-flex align-items-center justify-content-center tw-text-base tw-px-12 tw-font-medium tw-text-[#001737]"
+              >
+                Competências <div class="d-flex align-items-center justify-content-center tw-bg-primary-600 text-white mx-3 rounded-circle" style="width: 30px; height: 30px;">#{abilities.status == 'success' ? competences.data.length : '-'}</div>
+              </span>
+            </li>
+          </ul>
+        </div>
+        <div id="tab-content" style="max-height: 480px; overflow-y: auto;">
+          <div
+            id="tab-1"
+            role="tabpanel"
+            aria-labelledby="tab-1-content"
+            :style="{ display: activeTab === 'tab-1' ? 'block' : 'none' }"
+          >
+            <div class="tw-bg-white sm:tw-rounded-b-xl tw-pt-8 tw-border tw-border-[#E5E7EA]">
+              <div class="px-5" style="padding-bottom: 60px;" ref="topics">
+                <span class="tw-flex justify-content-between tw-pb-6">
+                  <div class="tw-flex tw-items-center">
+                    <h3 class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">
+                      Grau de domínio nos assuntos
+                    </h3>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="tw-ml-2">
+                      <g clip-path="url(#clip0_2002_1216)">
+                        <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                      </g>
+                      <defs>
+                        <clipPath id="clip0_2002_1216">
+                          <rect width="16" height="16" fill="white" />
+                        </clipPath>
+                      </defs>
+                    </svg>
+                  </div>
+                  <div class="d-flex justify-content-end">
+                    <div class="row">
+                      <div class="col">
+                        <select id="inputFilterTopicsSubjects" v-model="subjectsBNCCs.selectedTopics" multiple data-live-search="true" class="tw-text-[#667085] tw-text-sm tw-font-normal tw-border-0 mr-3">
+                          <option :value="subject.id" v-for="subject in subjectsBNCCs.topics">#{subject.name}</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </span>
+                <div>
+                  <skeleton-card v-if="['loading', 'idle'].includes(topics.status)"></skeleton-card>
+                  <ul role="list" class="tw-grid tw-gap-6 sm:tw-grid-cols-4">
+                    <li class="tw-list-none tw-flex tw-flex-col tw-gap-6 tw-rounded-xl tw-bg-white tw-border tw-border-[#E5E7EA] tw-p-6" v-for="bncc in topics.data.filter(b => subjectsBNCCs.selectedTopics.length ? subjectsBNCCs.selectedTopics.includes(b.subject_id) : true)">
+                      <h3 data-toggle="tooltip" :title="bncc.text" class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-gray-900 text-truncate mb-0">
+                        #{bncc.text}
+                        <br>
+                        <span style="font-size: 0.7rem;">#{bncc.subject_name}</span>
+                      </h3>
+                      <div class="tw-flex tw-flex-col tw-gap-2">
+                        <div class="tw-flex tw-justify-between">
+                          <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">Grau de domínio</p>
+                          <p class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-[#001737] tw-mb-0">#{bncc.performance.toFixed(2)}%</p>
+                        </div>
+                        <div class="tw-overflow-hidden tw-rounded-[0.25rem]" :style="{ backgroundColor: bncc.performance < 25 ? '#D92D2010' : bncc.performance >= 25 && bncc.performance < 50 ? '#F3B36410' : bncc.performance >= 50 && bncc.performance < 75 ? '#0C7BDB10' : '#41C58810' }">
+                          <div class="tw-h-2 tw-rounded-sm" :style="{ width: bncc.performance +'%', backgroundColor: bncc.performance < 25 ? '#D92D20': bncc.performance >= 25 && bncc.performance < 50 ? '#F3B364' : bncc.performance >= 50 && bncc.performance < 75 ? '#0C7BDB' : '#41C588' }"></div>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                  <template v-if="topics.status == 'success' && !topics.data.filter(b => subjectsBNCCs.selectedTopics.length ? subjectsBNCCs.selectedTopics.includes(b.subject_id) : true).length">
+                    <h5>Nenhuma questão foi qualificada com assunto</h5>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            id="tab-2"
+            role="tabpanel"
+            aria-labelledby="tab-2-content"
+            :style="{ display: activeTab === 'tab-2' ? 'block' : 'none' }"
+          >
+            <div class="tw-bg-white sm:tw-rounded-b-xl tw-pt-8 tw-border tw-border-[#E5E7EA]">
+              <div class="px-5" style="padding-bottom: 60px;" ref="abilities">
+                <span class="tw-flex justify-content-between tw-pb-6">
+                  <div class="tw-flex tw-items-center">
+                    <h3 class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">
+                      Grau de domínio nas habilidades
+                    </h3>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="tw-ml-2">
+                      <g clip-path="url(#clip0_2002_1216)">
+                        <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                      </g>
+                      <defs>
+                        <clipPath id="clip0_2002_1216">
+                          <rect width="16" height="16" fill="white" />
+                        </clipPath>
+                      </defs>
+                    </svg>
+                  </div>
+                  <div class="d-flex justify-content-end">
+                    <div class="row">
+                      <div class="col">
+                        <select id="inputFilterAbilitiesSubjects" v-model="subjectsBNCCs.selectedAbilities" data-live-search="true" class="tw-text-[#667085] tw-text-sm tw-font-normal tw-border-0 mr-3">
+                          <option :value="subject.id" v-for="subject in subjectsBNCCs.abilities">#{subject.name}</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </span>
+                <div>
+                  <skeleton-card v-if="['loading', 'idle'].includes(abilities.status)"></skeleton-card>
+                  <ul role="list" class="tw-grid tw-gap-6 sm:tw-grid-cols-4">
+                    <li class="tw-list-none tw-flex tw-flex-col tw-gap-6 tw-rounded-xl tw-bg-white tw-border tw-border-[#E5E7EA] tw-p-6" v-for="bncc in abilities.data.filter(b => subjectsBNCCs.selectedAbilities.length ? subjectsBNCCs.selectedAbilities.includes(b.subject_id) : true)">
+                      <h3 data-toggle="tooltip" :title="bncc.text" class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-gray-900 text-truncate mb-0">
+                        #{bncc.code ? bncc.code+ '-':'' } #{bncc.text}
+                        <br>
+                        <span style="font-size: 0.7rem;">#{bncc.subject_name}</span>
+                      </h3>
+                      <div class="tw-flex tw-flex-col tw-gap-2">
+                        <div class="tw-flex tw-justify-between">
+                          <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">Grau de domínio</p>
+                          <p class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-[#001737] tw-mb-0">#{bncc.performance.toFixed(2)}%</p>
+                        </div>
+                        <div class="tw-overflow-hidden tw-rounded-[0.25rem]" :style="{ backgroundColor: bncc.performance < 25 ? '#D92D2010' : bncc.performance >= 25 && bncc.performance < 50 ? '#F3B36410' : bncc.performance >= 50 && bncc.performance < 75 ? '#0C7BDB10' : '#41C58810' }">
+                          <div class="tw-h-2 tw-rounded-sm" :style="{ width: bncc.performance +'%', backgroundColor: bncc.performance < 25 ? '#D92D20': bncc.performance >= 25 && bncc.performance < 50 ? '#F3B364' : bncc.performance >= 50 && bncc.performance < 75 ? '#0C7BDB' : '#41C588' }"></div>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                  <template v-if="abilities.status == 'success' && !abilities.data.filter(b => subjectsBNCCs.selectedAbilities.length ? subjectsBNCCs.selectedAbilities.includes(b.subject_id) : true).length">
+                    <h5>Nenhuma questão foi qualificada com habilidade</h5>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            id="tab-3"
+            role="tabpanel"
+            aria-labelledby="tab-3-content"
+            :style="{ display: activeTab === 'tab-3' ? 'block' : 'none' }"
+          >
+            <div class="tw-bg-white sm:tw-rounded-b-xl tw-pt-8 tw-border tw-border-[#E5E7EA]">
+              <div class="px-5" style="padding-bottom: 60px;" ref="competences">
+                <span class="tw-flex justify-content-between tw-pb-6">
+                  <div class="tw-flex tw-items-center">
+                    <h3 class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">
+                      Grau de domínio nas competências
+                    </h3>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="tw-ml-2">
+                      <g clip-path="url(#clip0_2002_1216)">
+                        <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                      </g>
+                      <defs>
+                        <clipPath id="clip0_2002_1216">
+                          <rect width="16" height="16" fill="white" />
+                        </clipPath>
+                      </defs>
+                    </svg>
+                  </div>
+                  <div class="d-flex justify-content-end">
+                    <div class="row">
+                      <div class="col">
+                        <select id="inputFilterCompetencesSubjects" v-model="subjectsBNCCs.selectedCompetences" data-live-search="true" class="tw-text-[#667085] tw-text-sm tw-font-normal tw-border-0 mr-3">
+                          <option :value="subject.id" v-for="subject in subjectsBNCCs.competences">#{subject.name}</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </span>
+                <div>
+                  <skeleton-card v-if="['loading', 'idle'].includes(competences.status)"></skeleton-card>
+                  <ul role="list" class="tw-grid tw-gap-6 sm:tw-grid-cols-4">
+                    <li class="tw-list-none tw-flex tw-flex-col tw-gap-6 tw-rounded-xl tw-bg-white tw-border tw-border-[#E5E7EA] tw-p-6" v-for="bncc in competences.data.filter(b => subjectsBNCCs.selectedCompetences.length ? subjectsBNCCs.selectedCompetences.includes(b.subject_id) : true)">
+                      <h3 data-toggle="tooltip" :title="bncc.text" class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-gray-900 text-truncate mb-0">
+                        #{bncc.code ? bncc.code+ '-':'' } #{bncc.text}
+                        <br>
+                        <span style="font-size: 0.7rem;">#{bncc.subject_name}</span>
+                      </h3>
+                      <div class="tw-flex tw-flex-col tw-gap-2">
+                        <div class="tw-flex tw-justify-between">
+                          <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">Grau de domínio</p>
+                          <p class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-[#001737] tw-mb-0">#{bncc.performance.toFixed(2)}%</p>
+                        </div>
+                        <div class="tw-overflow-hidden tw-rounded-[0.25rem]" :style="{ backgroundColor: bncc.performance < 25 ? '#D92D2010' : bncc.performance >= 25 && bncc.performance < 50 ? '#F3B36410' : bncc.performance >= 50 && bncc.performance < 75 ? '#0C7BDB10' : '#41C58810' }">
+                          <div class="tw-h-2 tw-rounded-sm" :style="{ width: bncc.performance +'%', backgroundColor: bncc.performance < 25 ? '#D92D20': bncc.performance >= 25 && bncc.performance < 50 ? '#F3B364' : bncc.performance >= 50 && bncc.performance < 75 ? '#0C7BDB' : '#41C588' }"></div>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                  <template v-if="competences.status == 'success' && !competences.data.filter(b => subjectsBNCCs.selectedCompetences.length ? subjectsBNCCs.selectedCompetences.includes(b.subject_id) : true).length">
+                    <h5>Nenhuma questão foi qualificada com competências</h5>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div :style="['classe', 'teacher'].includes(who) && controls.selectedTab == 'student' ? '':'display: none;'">
+      <template v-if="average.status == 'loading' || generalHistogram.status == 'loading'">
+        <skeleton-card></skeleton-card>
+      </template>
+      <tempate v-else>
+        <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem] tw-pt-12" ref="generalHistogram">
+          <span class="tw-flex tw-items-center mb-5">
+            <h3 class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">
+              Nível de aprendizado dos alunos
+            </h3>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="tw-ml-2">
+              <g clip-path="url(#clip0_2002_1216)">
+                <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </g>
+              <defs>
+                <clipPath id="clip0_2002_1216">
+                  <rect width="16" height="16" fill="white" />
+                </clipPath>
+              </defs>
+            </svg>
+          </span>
+          <div style="position: relative;" v-if="generalHistogram.data">
+            <div :style="{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'absolute', top: '-52px', left: `calc(${getMarkPositionAndColor().position}% - 27px)` }">
+              <svg width="54" height="40" viewBox="0 0 54 40" fill="none" style="margin-bottom: 4px;">
+                <path d="M27 37.5279L36.0615 30.9443L32.6003 20.2918L21.3997 20.2918L17.9385 30.9443L27 37.5279Z" :fill="getMarkPositionAndColor().color" :stroke="getMarkPositionAndColor().color" stroke-width="4"/>
+                <rect x="2" y="2" width="50" height="32" rx="6" :fill="getMarkPositionAndColor().color"/>
+                <rect x="2" y="2" width="50" height="32" rx="6" :stroke="getMarkPositionAndColor().color" stroke-width="4"/>
+                <text x="50%" y="50%" text-anchor="middle" alignment-baseline="middle" fill="#FFFFFF" font-size="16px" font-family="Roboto" style="line-height: 20px; font-weight: 500;">#{generalHistogram.performance.toFixed(0)}%</text>
+              </svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M12 24C18.6274 24 24 18.6274 24 12C24 5.37256 18.6274 0 12 0C5.37256 0 0 5.37256 0 12C0 18.6274 5.37256 24 12 24ZM12 16C14.2091 16 16 14.2092 16 12C16 9.79083 14.2091 8 12 8C9.79089 8 8 9.79083 8 12C8 14.2092 9.79089 16 12 16Z" fill="#E5E7EA"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22ZM12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z" fill="white"/>
+              </svg>
+            </div>
+            <div class="tw-flex tw-gap-1">
+              <div :style="{ 'min-width': '1px', 'width': getHistogramProportion(generalHistogram.data['0-40'])+'%' }" v-if="generalHistogram.data['0-40']" class="tw-h-2 tw-bg-[#D92D20] tw-rounded-tl tw-rounded-bl"></div>
+              <div :style="{ 'min-width': '1px', 'width': getHistogramProportion(generalHistogram.data['40-60'])+'%' }" v-if="generalHistogram.data['40-60']" class="tw-h-2 tw-bg-[#F3B364]"></div>
+              <div :style="{ 'min-width': '1px', 'width': getHistogramProportion(generalHistogram.data['60-75'])+'%' }" v-if="generalHistogram.data['60-75']" class="tw-h-2 tw-bg-[#0C7BDB]"></div>
+              <div :style="{ 'min-width': '1px', 'width': getHistogramProportion(generalHistogram.data['75-100'])+'%' }" v-if="generalHistogram.data['75-100']" class="tw-h-2 tw-bg-[#41C588] tw-rounded-tr tw-rounded-br"></div>
+            </div>
+            <div class="tw-flex tw-gap-1 tw-pt-4" v-if="generalHistogram.status == 'success'">
+              <div :style="{ 'min-width': '100px', 'width': getHistogramProportion(generalHistogram.data['0-40'])+'%' }" v-if="generalHistogram.data['0-40']">
+                <p class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">#{generalHistogram.data['0-40']}</p>
+                <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-text-nowrap tw-mb-0">Crítico</p>
+              </div>
+              <div :style="{ 'min-width': '100px', 'width': getHistogramProportion(generalHistogram.data['40-60'])+'%' }" v-if="generalHistogram.data['40-60']">
+                <p class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">#{generalHistogram.data['40-60']}</p>
+                <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-text-nowrap tw-mb-0">Atenção</p>
+              </div>
+              <div :style="{ 'min-width': '100px', 'width': getHistogramProportion(generalHistogram.data['60-75'])+'%' }" v-if="generalHistogram.data['60-75']">
+                <p class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">#{generalHistogram.data['60-75']}</p>
+                <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">Esperado</p>
+              </div>
+              <div :style="{ 'min-width': '100px', 'width': getHistogramProportion(generalHistogram.data['75-100'])+'%' }" v-if="generalHistogram.data['75-100']">
+                <p class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">#{generalHistogram.data['75-100']}</p>
+                <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">Excepcional</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </tempate>
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" style="margin-top: 30px;">
+        <span class="tw-flex tw-items-center tw-justify-between tw-pb-6">
+          <div class="tw-flex tw-items-center">
+            <h3 class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">
+              Alunos em destaque
+            </h3>
+          </div>
+        </span>
+      </div>
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" style="margin-top: 10px;" ref="classeRanking">
+        <div class="row">
+          <div class="col-12">
+            <skeleton-card v-if="['loading', 'idle'].includes(classeRanking.status)"></skeleton-card>
+            <table class="table" v-if="!['loading', 'idle'].includes(classeRanking.status)">
+              <tr v-for="student in classeRanking.data">
+                <td class="align-middle" style="border-left: 4px solid;" :style="{ borderLeftColor: student.performance < 40 ? '#D92D20': student.performance >= 40 && student.performance <= 60 ? '#F3B364' : student.performance > 60 && student.performance <= 75 ? '#0C7BDB' : '#41C588' }">
+                  <div class="d-flex align-items-center">
+                    <span style="color: #101828; font-size: 16px; font-weight: 500;">#{String(student.ranking).padStart(2, '0')}º</span>
+                    <div class="text-uppercase d-flex align-items-center justify-content-center rounded-circle mx-3" style="width: 40px; height: 40px; background-color: #F9FAFB;">
+                      <strong>#{getInitials(student.name)}</strong>
+                    </div>
+                    <span>#{student.name}</span>
+                  </div>
+                </td>
+                <td class="align-middle">
+                  <div class="align-middle d-flex align-items-center justify-content-end">
+                    <span style="color: #101828; font-size: 16px; font-weight: 500;">#{student.performance.toFixed(0)}%</span>
+                    {% comment %}
+                      <a class="ml-2" style="color: #667085;" target="_blank" :href="'{% url 'dashboards:dashboards' %}?who=student&who_id='+student.id">
+                        <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                          <path d="M17.5 17.5H3.83333C3.36662 17.5 3.13327 17.5 2.95501 17.4092C2.79821 17.3293 2.67072 17.2018 2.59083 17.045C2.5 16.8667 2.5 16.6334 2.5 16.1667V2.5M17.5 5.83333L12.9714 10.3619C12.8064 10.5269 12.7239 10.6094 12.6288 10.6404C12.5451 10.6675 12.4549 10.6675 12.3712 10.6404C12.2761 10.6094 12.1936 10.5269 12.0286 10.3619L10.4714 8.80474C10.3064 8.63973 10.2239 8.55723 10.1288 8.52632C10.0451 8.49912 9.95493 8.49912 9.87124 8.52632C9.77611 8.55723 9.6936 8.63973 9.5286 8.80474L5.83333 12.5M17.5 5.83333H14.1667M17.5 5.83333V9.16667" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                      </a>
+                    {% endcomment %}
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div :style="['classe', 'teacher'].includes(who) && controls.selectedTab == 'teacher' ? '':'display: none;'">
+
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem] tw-pt-12">
+        <span class="tw-flex tw-items-center mb-5">
+          <h3 class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">
+            Seu trabalho nas questões
+          </h3>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="tw-ml-2">
+            <g clip-path="url(#clip0_2002_1216)">
+              <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </g>
+            <defs>
+              <clipPath id="clip0_2002_1216">
+                <rect width="16" height="16" fill="white" />
+              </clipPath>
+            </defs>
+          </svg>
+        </span>
+        <div class="row m-0" style="min-height: 232px; border-radius: 12px; border: 1px solid #E5E7EA;" ref="questionsElaborationSummary">
+          <template v-if="questionsElaborationSummary.status == 'success'">
+            <div class="col d-flex align-items-center justify-content-center">
+              <div style="border-right: 1px solid #E5E7EA;" class="w-100 text-center">
+                <h1 style="font-size: 80px; font-weight: 500; line-height: 80px; color: #101828;">
+                  #{questionsElaborationSummary.data.total}
+                </h1>
+                <p style="font-size: 16px; font-weight: 500; line-height: 24px; color: #101828;">
+                  questões enviadas
+                </p>
+              </div>
+            </div>
+            <div class="col d-flex align-items-center justify-content-center">
+              <div style="border-right: 1px solid #E5E7EA;" class="w-100 text-center">
+                <h1 style="font-size: 80px; font-weight: 500; line-height: 80px; color: #101828;">
+                  #{questionsElaborationSummary.data.approveds + questionsElaborationSummary.data.openeds + questionsElaborationSummary.data.use_later}
+                </h1>
+                <p style="font-size: 16px; font-weight: 500; line-height: 24px; color: #101828;">
+                  questões aceitas para a prova
+                </p>
+              </div>
+            </div>
+            <div class="col d-flex align-items-center justify-content-center">
+              <div class="w-100 text-center">
+                <h1 style="font-size: 80px; font-weight: 500; line-height: 80px; color: #101828;">
+                  #{questionsElaborationSummary.data.annulleds}
+                </h1>
+                <p style="font-size: 16px; font-weight: 500; line-height: 24px; color: #101828;">
+                  questões anuladas
+                </p>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem] tw-pt-12 mb-5" ref="questions">
+        <span class="tw-flex tw-items-center mb-5">
+          <h3 class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">
+            Resumo das questões
+          </h3>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="tw-ml-2">
+            <g clip-path="url(#clip0_2002_1216)">
+              <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </g>
+            <defs>
+              <clipPath id="clip0_2002_1216">
+                <rect width="16" height="16" fill="white" />
+              </clipPath>
+            </defs>
+          </svg>
+        </span>
+        
+        <div class="tw-flex tw-justify-between">
+          <ul id="tab-header" role="tablist" class="tw-list-none tw-w-full tw-flex tw-mb-0">
+            <li
+              class="tw-w-full tw-text-center tw-px-4 sm:tw-px-6 lg:tw-px-8 tw-py-[1.625rem] tw-cursor-pointer tw-border tw-border-[#E5E7EA] tw-rounded-tl-xl tw-border-b-0"
+              :class="[activeQuestionsTab === 'tab-1' ? 'tw-bg-white tw--mb-px' : 'tw-bg-[#F9FAFB]']"
+              @click="changeQuestionsTab('tab-1')"
+            >
+              <span
+                role="tab"
+                aria-controls="tab-1"
+                aria-selected="true"
+                class="d-flex align-items-center justify-content-center tw-text-base tw-px-12 tw-font-medium tw-text-[#001737]"
+              >
+                Questões enviadas
+              </span>
+            </li>
+            <li
+              class="tw-w-full tw-text-center tw-px-4 sm:tw-px-6 lg:tw-px-8 tw-py-[1.625rem] tw-cursor-pointer tw-border tw-border-[#E5E7EA] tw-border-b-0 tw-border-l-0"
+              :class="[activeQuestionsTab === 'tab-2' ? 'tw-bg-white tw--mb-px' : 'tw-bg-[#F9FAFB]']"
+              @click="changeQuestionsTab('tab-2')"
+            >
+              <span
+                role="tab"
+                aria-controls="tab-1"
+                aria-selected="true"
+                class="d-flex align-items-center justify-content-center tw-text-base tw-px-12 tw-font-medium tw-text-[#001737]"
+              >
+                Questões Aceitas
+              </span>
+            </li>
+            <li
+              class="tw-w-full tw-border tw-border-[#E5E7EA] tw-text-center tw-px-4 sm:tw-px-6 lg:tw-px-8 tw-py-[1.625rem] tw-cursor-pointer tw-rounded-tr-xl tw-border-b-0 tw-border-l-0"
+              :class="[activeQuestionsTab === 'tab-3' ? 'tw-bg-white tw--mb-px' : 'tw-bg-[#F9FAFB]']"
+              @click="changeQuestionsTab('tab-3')"
+            >
+              <span
+                role="tab"
+                aria-controls="tab-1"
+                aria-selected="true"
+                class="d-flex align-items-center justify-content-center tw-text-base tw-px-12 tw-font-medium tw-text-[#001737]"
+              >
+                Questões Anuladas
+              </span>
+            </li>
+          </ul>
+        </div>
+        <div id="tab-questions-content" style="max-height: 480px; overflow-y: auto;">
+          <div
+            id="tab-1"
+            role="tabpanel"
+            aria-labelledby="tab-1-content"
+          >
+            <div class="tw-bg-white sm:tw-rounded-b-xl tw-pt-8 tw-mb-8" v-if="questions.status == 'success'">
+              <div class="row m-0 mb-3">
+                <div class="col-1 pl-4" style="font-size: 14px; color: #667085; line-height: 20px; font-weight: 500;">Status</div>
+                <div class="col-5" style="font-size: 14px; color: #667085; line-height: 20px; font-weight: 500;">Questão</div>
+                <div class="col-2" style="font-size: 14px; color: #667085; line-height: 20px; font-weight: 500;">Tipo</div>
+                <div class="col-2" style="font-size: 14px; color: #667085; line-height: 20px; font-weight: 500;">Acertos</div>
+                <div class="col-2" style="font-size: 14px; color: #667085; line-height: 20px; font-weight: 500;">&nbsp;</div>
+              </div>
+              <template v-for="(question, index) in questions.paginatedData.filter(q => activeQuestionsTab == 'tab-3' ? q.status == 6 : activeQuestionsTab == 'tab-2' ? [0, 2, 4, 5].includes(q.status) : true)">
+                <div class="row m-0 d-flex align-items-center" style="min-height: 88px; border: 1px solid #E5E7EA;">
+                  <div class="col-12">
+                    <div class="row m-0">
+                      <div class="col-1 d-flex align-items-center">
+                        <span v-html="getExamQuestionStatus(question.status ? question.status : 5).icon"></span>
+                        <span class="mx-2" style="color: #374151; font-size: 14px; font-weight: 600;">
+                          #{String(index + 1).padStart(2, '0')}
+                        </span>
+                      </div>
+                      <div class="col-5 d-flex align-items-center">
+                        <p class="text-truncate mb-0" style="color: #374151; font-size: 14px; font-weight: 600;">
+                          #{question.enunciation}
+                          <!-- As cordas e de uma circunferência de centro O são, <br>respectivamente, lados de polígonos regulares de 6 e 10 lados inscritos nessa circunferência. Na mesma circunferência, as cordas e se intersectam no ponto P, conforme indica a figura a seguir| -->
+                        </p>
+                      </div>
+                      <div class="col-2 d-flex align-items-center">
+                        <span style="border: 1px solid #FFE0C9; color: #667085; font-size: 12px; line-height: 16px; font-weight: 500; padding: 2px 4px; border-radius: 4px; min-height: 20px; background-color: #FFF2E9;">
+                          <template v-if="question.question_category == 1">
+                            Múltipla Escolha
+                          </template>
+                          <template v-else-if="question.question_category == 3">
+                            Somatório
+                          </template>
+                          <template v-else>
+                            Discursiva
+                          </template>
+                        </span>
+                      </div>
+                      <div class="col-2">
+                        <div class="d-flex justify-content-between aling-items-center">
+                          <div class="w-100 d-flex align-items-center">
+                            <template v-if="question.hits_percent < 30">
+                              <div class="tw-overflow-hidden tw-rounded-sm w-100" style="background-color: #D92D2010;">
+                                <div class="tw-h-2 tw-rounded-sm" :style="{ width: question.hits_percent + '%', backgroundColor: '#D92D20' }"></div>
+                              </div>
+                            </template>
+                            <template v-if="question.hits_percent >= 30 && question.hits_percent < 60">
+                              <div class="tw-overflow-hidden tw-rounded-sm w-100" style="background-color: #F1AA5910;">
+                                <div class="tw-h-2 tw-rounded-sm" :style="{ width: question.hits_percent + '%', backgroundColor: '#F1AA59' }"></div>
+                              </div>
+                            </template>
+                            <template v-if="question.hits_percent >= 60">
+                              <div class="tw-overflow-hidden tw-rounded-sm w-100" style="background-color: #41C58810;">
+                                <div class="tw-h-2 tw-rounded-sm" :style="{ width: question.hits_percent + '%', backgroundColor: '#41C588' }"></div>
+                              </div>
+                            </template>
+                          </div>
+                          <span style="font-weight: 500; line-height: 20px; font-size: 14px; color: #9BA3AF;" class="mx-2">#{question.hits_percent.toFixed(0)}%</span>
+                        </div>
+                      </div>
+                      <div class="col-2 d-flex justify-content-end align-items-center">
+                        <button class="btn btn-white p-0 px-2" @click="showQuestionDetail(index, question.question_id)" style="border: 1px solid #10182833; height: 32px; border-radius: 8px; padding: 12px; gap: 12px; color: #FF8F3D; font-size: 14px; font-weight: 600; line-height: 20px;">Visualizar</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+              <div class="row m-0" v-if="!questions.paginatedData.filter(q => activeQuestionsTab == 'tab-3' ? q.status == 6 : activeQuestionsTab == 'tab-2' ? [0, 2, 4, 5].includes(q.status) : true).length">
+                <div class="col-12 p-3">
+                  <h5>Você não inseriu ou teve uma questão anulada para o filtro aplicado.</h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalQuestion" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered mx-wd-sm-650" role="document">
+    <div class="modal-content">
+      <div class="modal-body pd-x-25 pd-sm-x-30 pd-t-40 pd-sm-t-20 pd-b-15 pd-sm-b-20">
+        <a href="" role="button" class="close pos-absolute t-15 r-15 z-index-10" data-dismiss="modal" aria-label="Fechar">
+          <span aria-hidden="true">&times;</span>
+        </a>
+
+        <div
+          class="d-flex justify-content-center align-items-center"
+          :style="{
+            visibility: modalQuestion.status === 'loading' ? 'visible' : 'hidden',
+            minHeight: modalQuestion.status === 'loading' ? '150px' : '0px',
+            height: modalQuestion.status === 'loading' ? 'unset' : '0px',
+            marginTop: modalQuestion.status === 'loading' ? '20px' : '0px',
+          }"
+        >
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Carregando...</span>
+          </div>
+        </div>
+
+        <div :style="{visibility: modalQuestion.status === 'loading' ? 'hidden' : 'visible'}">
+          <div>
+            <h4>#{ modalQuestion.index ? modalQuestion.index + '&#170; Questão':'A questão não possui numeração.' }</h4>
+          </div>
+          <div class="nav-wrapper mg-b-5 tx-13">
+            <div>
+              <nav class="nav nav-line tx-medium">
+                <a href="#question" class="nav-link active" data-toggle="tab">Questão</a>
+                <a href="#question-answer" class="nav-link" data-toggle="tab">Resposta comentada</a>
+                <a href="#info-topics" class="nav-link" data-toggle="tab">Assuntos abordados</a>
+                <a href="#info-abilities" class="nav-link" data-toggle="tab">Habilidades</a>
+                <a href="#info-competences" class="nav-link" data-toggle="tab">Competências</a>
+              </nav>
+            </div>
+          </div>
+
+          <div class="tab-content">
+            <div id="question" class="tab-pane fade active show">
+              <div class="row no-gutters">
+                <div class="col-12 bg-white rounded-right">
+                  <div class="ht-100p d-flex flex-column justify-content-center">
+                    <div
+                      class="tx-14 tx-md-16 tx-color-02 clean-v-html"
+                      v-html="modalQuestion.data.enunciation"
+                      style="display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;"
+                      :style="{
+                        '-webkit-line-clamp': modalQuestion.showFullEnunciation ? 'unset' : '3'
+                      }"
+                    ></div>
+                    <button
+                      v-if="modalQuestion.data.enunciation"
+                      type="button"
+                      class="btn btn-link d-inline-flex align-items-center justify-content-center p-0 my-2"
+                      @click="toggleShowFullEnunciation()"
+                    >
+                      <template v-if="modalQuestion.showFullEnunciation">
+                        Fechar enunciado
+                      </template>
+                      <template v-else>
+                        Mostrar enunciado completo
+                      </template>
+                      <i class="icon mg-l-5 mg-t-3 tx-12" :class="modalQuestion.showFullEnunciation ? 'ion-ios-arrow-up' : 'ion-ios-arrow-down'"></i>
+                    </button>
+                    <template v-if="!modalQuestion.data.enunciation">
+                      <div class="tx-14 tx-md-16 tx-color-02">
+                        <p>Esta questão não possui enunciado</p>
+                      </div>
+                    </template>
+              
+                    <div v-if="modalQuestion.data.category == 'Discursiva' || modalQuestion.data.category == 'Arquivo anexado'"><hr /></div>
+              
+                    <template v-if="modalQuestion.data.category == 'Arquivo anexado'">
+                      <template v-if="modalQuestion.data.fileAnswer && checkAnswerType(modalQuestion.data.fileAnswer)">
+                        <a
+                          href="javascript:void(0)"
+                          class="btn btn-primary btn-sm"
+                          data-animation="effect-scale"
+                          @click="showAnnotorious(false, true, modalQuestion.data.fileAnswer, 'modalQuestion')"
+                        >
+                          <i class="fas fa-image"></i> Ver arquivo enviado
+                        </a>
+                      </template>
+                      <template v-else>
+                          <a
+                            v-if="modalQuestion.data.fileAnswer"
+                            :href="modalQuestion.data.fileAnswer"
+                            class="btn btn-primary btn-sm"
+                            target="_blank"
+                          >
+                            Ver arquivo enviado
+                          </a>
+                      </template>
+                      <span v-else class="text-danger">Sem arquivo anexado</span>
+                    </template>
+              
+                    <template v-if="modalQuestion.data.category == 'Discursiva'">
+                      <span class="font-weight-bold">Sua resposta:</span>
+                      <p v-if="modalQuestion.data.textualAnswer" class="mb-0">#{ modalQuestion.data.textualAnswer }</p>
+                      <span v-else class="text-danger">Sem resposta</span>
+                    </template>
+              
+                    <table
+                      v-if="modalQuestion.data.alternatives.length > 0"
+                      class="table table-sm tx-13 my-4 mg-b-0"
+                    >
+                      <tbody v-if="!modalQuestion.data.annuled">
+                        <tr v-for="(alternative, index) in modalQuestion.data.alternatives">
+                          
+                          <td
+                            :class="{ 'tx-medium bg-success': alternative.is_correct }"
+                            style="border-radius: 0.375rem;"
+                            :style="{
+                              borderBottom: modalQuestion.data.alternatives.length - 1 === index ? '1px solid rgba(72, 94, 144, 0.16)' : 'unset',
+                            }"
+                          >
+                            <div class="d-flex align-items-center">
+                              <div 
+                                v-if="['Objetiva', 'Somatório'].includes(modalQuestion.data.category)"
+                                class="wd-15 ht-15 rounded-circle bd bd-3 mr-2"
+                                :class="{
+                                  'bd-white': alternative.is_correct
+                                }"
+                              >
+                              </div>
+                              <div class="w-100 clean-v-html" v-html="alternative.text"></div>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <button role="button" class="btn btn-secondary btn-block btn-uppercase" data-dismiss="modal" aria-label="Fechar">Fechar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="question-answer" class="tab-pane fade">
+              <h6 v-if="modalQuestion.data.embbededAnswerVideo" class="mt-3 tx-uppercase tx-spacing-1 tx-semibold tx-10 tx-color-02 mg-b-5">Resposta em vídeo</h6>
+              <div style="position: relative; overflow: hidden; width: 100%; padding-top: 56.25%;" v-if="modalQuestion.data.embbededAnswerVideo" v-html="modalQuestion.data.embbededAnswerVideo"></div>
+              
+              <h6 v-if="modalQuestion.data.commented_awnser" class="tx-uppercase tx-spacing-1 tx-semibold mt-3 tx-10 tx-color-02 mg-b-5">Resposta comentada</h6>
+              <div v-if="modalQuestion.data.commented_awnser" class="tx-12 tx-md-13 tx-color-03 mg-b-15 clean-v-html" v-html="modalQuestion.data.commented_awnser"></div>
+        
+              <h6 v-if="modalQuestion.data.feedback" class="tx-uppercase tx-spacing-1 tx-semibold mt-3 tx-10 tx-color-02 mg-b-5">Feedback do professor</h6>
+              <div v-if="modalQuestion.data.feedback" class="tx-12 tx-md-13 tx-color-03 mg-b-15 clean-v-html" v-html="modalQuestion.data.feedback"></div>
+              
+            </div>
+            <div id="info-topics" class="tab-pane fade">
+              <div v-if="modalQuestion.data.topics.length == 0">
+                <p class="mg-t-10 mb-0">Esta questão não tem assuntos definidos.</p>
+              </div>
+              <div v-if="modalQuestion.data.topics.length > 0">
+                <table class="table table-sm tx-13 mg-b-0">
+                  <tbody>
+                    <tr v-for="(topic, index) in modalQuestion.data.topics">
+                      <td
+                        class="tx-medium pl-0"
+                        :class="index === 0 ? 'border-top-0' : ''"
+                      >
+                        #{ topic.name }
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div id="info-abilities" class="tab-pane fade">
+              <div v-if="modalQuestion.data.abilities.length == 0">
+                <p class="mg-t-10 mb-0">Esta questão não tem habilidades definidas.</p>
+              </div>
+              <div v-if="modalQuestion.data.abilities.length > 0">
+                <table class="table table-sm tx-13 mg-b-0">
+                  <tbody>
+                    <tr v-for="(ability, index) in modalQuestion.data.abilities">
+                      <td
+                        class="tx-medium pl-0"
+                        :class="index === 0 ? 'border-top-0' : ''"
+                      >
+                        #{ ability.text }
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div id="info-competences" class="tab-pane fade">
+              <div v-if="modalQuestion.data.competences.length == 0">
+                <p class="mg-t-10 mb-0">Esta questão não tem competências definidas.</p>
+              </div>
+              <div v-if="modalQuestion.data.competences.length > 0">
+                <table class="table table-sm tx-13 mg-b-0">
+                  <tbody>
+                    <tr v-for="(competence, index) in modalQuestion.data.competences">
+                      <td
+                        class="tx-medium pl-0"
+                        :class="index === 0 ? 'border-top-0' : ''"
+                      >
+                        #{ competence.text }
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/momentjs/latest/moment-with-locales.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
+<script>
+  moment.locale('pt-br')
+  var app = new Vue({
+    delimiters: ['#{', '}'],
+    el: '#app',
+    components: {
+      'skeleton-card': Vue.component('skeleton-card', {
+          template: `
+              <div class="lize-card mb-3" style="border: none;">
+                  <div class="lize-card-body p-4">
+                      <div class="row p-3">
+                          <div class="col-3 skeleton-loader"></div>
+                          <div class="offset-6"></div>
+                          <div class="col-3 skeleton-loader"></div>
+                      </div>
+                      <div class="row">
+                          <div class="col-8">
+                              <div class="skeleton-loader"></div>
+                          </div>
+                      </div>
+                      <div class="row">
+                          <div class="col-4">
+                              <div class="skeleton-loader"></div>
+                          </div>
+                      </div>
+                      <div class="row p-3 mt-3 mb-0">
+                          <div class="col-3 skeleton-loader"></div>
+                          <div class="offset-6"></div>
+                          <div class="col-3 skeleton-loader"></div>
+                      </div>
+                  </div>
+              </div>
+          `,
+      }),
+      'select-component': Vue.component('select-component', {
+        props: [],
+        delimiters: ["#{", "}"],
+        data: function() {
+            return {
+              controls: {
+                show: false,
+                loading: false,
+              },
+              search: {
+                term: '',
+                foundedSubjects: [],
+                foundedExams: [],
+                foundedStages: [],
+              },
+              groups: {
+                subjects: {
+                  expanded: false,
+                  selecteds: [],
+                },
+                exams: {
+                  expanded: false,
+                  selecteds: [],
+                },
+                stages: {
+                  expanded: false,
+                  selecteds: [],
+                },
+                topics: {
+                  expanded: false,
+                  selecteds: [],
+                },
+                abilities: {
+                  expanded: false,
+                  selecteds: [],
+                },
+                competences: {
+                  expanded: false,
+                  selecteds: [],
+                },
+              },
+              what: '',
+              whatIDS: [],
+              availablesWhats: {
+                exams: ['exams', 'subjects', 'topics'],
+                classes: ['exams', 'subjects', 'topics'],
+              },
+            }
+        },
+        methods: {
+          resetArrays(exclude) {
+            if(!exclude == 'exams') {
+              this.groups.exams.selecteds = []
+            } 
+            if(!exclude == 'subjects') {
+              this.groups.subjects.selecteds = []
+            }
+            if(!exclude == 'stages') {
+              this.groups.stages.selecteds = []
+            }
+            if(!exclude == 'topics') {
+              this.groups.topics.selecteds = []
+            }
+            if(!exclude == 'abilities') {
+              this.groups.abilities.selecteds = []
+            }
+            if(!exclude == 'competences') {
+              this.groups.competences.selecteds = []
+            }
+          },
+          selectItem(item, itemType) {
+            let id = item.id ? item.id : item
+            this.what = itemType
+            this.resetArrays(itemType)
+            this.groups[itemType].selecteds.includes(id) ? this.groups[itemType].selecteds.splice(id, 1):this.groups[itemType].selecteds.push(id)
+          },
+          applySelection() {
+            this.whatIDS = []
+            if(this.what) {
+              this.groups[this.what].selecteds.forEach((id) => this.whatIDS.push(id))
+            }
+          },
+          getNames() {
+            let names = []
+            if(this.what == 'subjects') {
+              names = this.$parent.availablesSubjects.filter(s => this.groups.subjects.selecteds.includes(s.id)).map((s) => s.name.split(' - ')[0]).join(', ')
+            } else if(this.what == 'exams') {
+              names = this.$parent.availablesExams.filter(s => this.groups.exams.selecteds.includes(s.id)).map((s) => s.name.split(' - ')[0]).join(', ')
+            } else if(this.what == 'stages') {
+              names = this.$parent.availablesStages.filter(s => this.groups.stages.selecteds.includes(s.id)).map((s) => s.name.split(' - ')[0]).join(', ')
+            } else if(this.what == 'topics') {
+              names = this.$parent.availablesTopics.filter(s => this.groups.topics.selecteds.includes(s.id)).map((s) => s.name.split(' - ')[0]).join(', ')
+            } else if(this.what == 'abilities') {
+              names = this.$parent.availablesAbilities.filter(s => this.groups.abilities.selecteds.includes(s.id)).map((s) => s.name.split(' - ')[0]).join(', ')
+            } else if(this.what == 'competences') {
+              names = this.$parent.availablesCompetences.filter(s => this.groups.competences.selecteds.includes(s.id)).map((s) => s.name.split(' - ')[0]).join(', ')
+            }
+            return names.length ? names : 'Todas'
+          },
+          onClickOutside() {
+            this.controls.show = false
+          }
+        },
+        watch: {
+          what: function(val) {
+            this.$parent.what = val
+          },
+          'controls.show': function(val) {
+            if(val === false) {
+              this.applySelection()
+              this.$parent.resetLoadings()
+            }
+          },
+          'whatIDS.length': function(val) {
+            if(this.what == 'subjects') {
+              this.$parent.whatIDS = this.groups.subjects.selecteds
+            }
+            if(this.what == 'exams') {
+              this.$parent.whatIDS = this.groups.exams.selecteds
+            }
+            if(this.what == 'stages') {
+              this.$parent.whatIDS = this.groups.stages.selecteds
+            }
+            if(this.what == 'topics') {
+              this.$parent.whatIDS = this.groups.topics.selecteds
+            }
+            if(this.what == 'abilities') {
+              this.$parent.whatIDS = this.groups.abilities.selecteds
+            }
+            if(this.what == 'competences') {
+              this.$parent.whatIDS = this.groups.competences.selecteds
+            }
+          },
+          'search.term': function(val) {
+            if(val.length) {
+
+              this.search.foundedSubjects = this.$parent.availablesSubjects.filter(s => s.name.toLowerCase().includes(val.toLowerCase()))
+              this.search.foundedExams = this.$parent.availablesExams.filter(s => s.name.toLowerCase().includes(val))
+              this.search.foundedStages = this.$parent.availablesStages.filter(s => s.name.toLowerCase().includes(val))
+              this.search.foundedTopics = this.$parent.availablesTopics.filter(s => s.name.toLowerCase().includes(val))
+              this.search.foundedAbilities = this.$parent.availablesAbilities.filter(s => s.name.toLowerCase().includes(val))
+              this.search.foundedCompetences = this.$parent.availablesCompetences.filter(s => s.name.toLowerCase().includes(val))
+
+              this.groups.subjects.expanded = true
+              this.groups.exams.expanded = true
+              this.groups.stages.expanded = true
+              this.groups.topics.expanded = true
+              this.groups.abilities.expanded = true
+              this.groups.competences.expanded = true
+
+              this.groups.subjects.selecteds = []
+              this.groups.exams.selecteds = []
+              this.groups.stages.selecteds = []
+              this.groups.topics.selecteds = []
+              this.groups.abilities.selecteds = []
+              this.groups.competences.selecteds = []
+
+            } else {
+
+              this.groups.subjects.expanded = false
+              this.groups.exams.expanded = false
+              this.groups.stages.expanded = false
+              this.groups.topics.expanded = false
+              this.groups.abilities.expanded = false
+              this.groups.competences.expanded = false
+              
+            }
+          },
+        },
+        directives: {
+          'click-outside': {
+            bind: function(el, binding, vNode) {
+              // Provided expression must evaluate to a function.
+              if (typeof binding.value !== 'function') {
+                const compName = vNode.context.name
+                let warn = `[Vue-click-outside:] provided expression '${binding.expression}' is not a function, but has to be`
+                if (compName) { warn += `Found in component '${compName}'` }
+    
+                console.warn(warn)
+              }
+              // Define Handler and cache it on the element
+              const bubble = binding.modifiers.bubble
+              const handler = (e) => {
+                if (bubble || (!el.contains(e.target) && el !== e.target)) {
+                  binding.value(e)
+                }
+              }
+              el.__vueClickOutside__ = handler
+    
+              // add Event Listeners
+              document.addEventListener('click', handler)
+            },
+    
+            unbind: function(el, binding) {
+              // Remove Event Listeners
+              document.removeEventListener('click', el.__vueClickOutside__)
+              el.__vueClickOutside__ = null
+            }
+          },
+        },
+        template: `
+          <div style="border: 1px solid #D0D5DD; border-radius: .375rem;" v-click-outside="onClickOutside" @click="controls.show = true">
+            <div class="dropdown">
+              <div :disabled="controls.loading" data-toggle="dropdown" aria-expanded="false" class="text-truncate tw-block tw-w-full tw-border-0 tw-p-6 tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" style="font-size: 16px; font-weight: 500; line-height: 24px;">
+                <div class="d-flex align-items-center justify-content-between">
+                  <span>#{getNames()}</span>
+                  <span>
+                    <svg width="14" height="8" viewBox="0 0 14 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M1 1L7 7L13 1" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                  </span>
+                </div>
+              </div>
+              <div class="dropdown-menu mt-0" style="background border-radius: 0 0 .375rem .375rem; border-top: none; width: 100%;">
+                <div class="row m-0">
+                  <div class="col-12 px-0" style="border-bottom: 1px solid #F5F6F7;">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text bg-white border-0">
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14 14L11.1 11.1M12.6667 7.33333C12.6667 10.2789 10.2789 12.6667 7.33333 12.6667C4.38781 12.6667 2 10.2789 2 7.33333C2 4.38781 4.38781 2 7.33333 2C10.2789 2 12.6667 4.38781 12.6667 7.33333Z" stroke="#E5E7EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                        </span>
+                      </div>
+                      <input type="text" v-model="search.term" style="color: #D0D5DD; font-size: 14px;" class="form-control border-0 py-4" placeholder="Pesquisar" aria-label="Pesquisar">
+                    </div>
+                  </div>
+                </div>
+                <div style="overflow-y: scroll; max-height: 260px;">
+                  <div class="row m-0" style="border-top: 1px solid #F5F6F7;" :class="{ 'd-none': search.term.length && !search.foundedSubjects.length }">
+                    <div class="col-12">
+                      <p class="d-flex justify-content-between mb-0 py-3 cp" @click="groups.subjects.expanded = !groups.subjects.expanded" style="font-size: 12px; color: #6C727F; font-weight: 400; line-height: 18px;">
+                        Disciplinas 
+                        <svg v-if="groups.subjects.expanded" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M18 15L12 9L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </p>
+                      <div class="row" v-if="groups.subjects.expanded">
+                        <div @click="selectItem(item, 'subjects')" v-for="item in search.term.length ? search.foundedSubjects : $parent.availablesSubjects" :style="groups.subjects.selecteds.includes(item.id) ? 'background-color: #FAFBFC;font-weight: 600 !important;':''" class="col-12 my-1 cp hover-gray d-flex flex-column mb-0 d-flex justify-content-center" style="height: 44px; color: #384250; font-size: 14px; font-weight: 400; line-height: 20px;">
+                          <p class="text-truncate mb-0">#{item.name.split(' - ')[0]}</p>
+                          <p class="text-muted text-truncate mb-0" style="font-size: 12px;">#{item.name.split(' - ')[1]}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row m-0" style="border-top: 1px solid #F5F6F7;" :class="{ 'd-none': search.term.length && !search.foundedExams.length }">
+                    <div class="col-12">
+                      <p class="d-flex justify-content-between mb-0 py-3 cp" @click="groups.exams.expanded = !groups.exams.expanded" style="font-size: 12px; color: #6C727F; font-weight: 400; line-height: 18px;">
+                        Instrumentos avaliativos 
+                        <svg v-if="groups.exams.expanded" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M18 15L12 9L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </p>
+                      <div class="row" v-if="groups.exams.expanded">
+                        <div @click="selectItem(item, 'exams')" v-for="item in search.term.length ? search.foundedExams : $parent.availablesExams" :style="groups.exams.selecteds.includes(item.id) ? 'background-color: #FAFBFC;font-weight: 600 !important;':''" class="col-12 my-1 cp hover-gray d-flex flex-column mb-0 d-flex justify-content-center" style="height: 44px; color: #384250; font-size: 14px; font-weight: 400; line-height: 20px;">
+                          <p class="mb-0 text-truncate" :title="item.name">#{item.name}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row m-0" style="border-top: 1px solid #F5F6F7;" :class="{ 'd-none': search.term.length && !search.foundedStages.length }">
+                    <div class="col-12">
+                      <p class="d-flex justify-content-between mb-0 py-3 cp" @click="groups.stages.expanded = !groups.stages.expanded" style="font-size: 12px; color: #6C727F; font-weight: 400; line-height: 18px;">
+                        Etapa de ensino 
+                        <svg v-if="groups.stages.expanded" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M18 15L12 9L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </p>
+                      <div class="row" v-if="groups.stages.expanded">
+                        <div @click="selectItem(item, 'stages')" v-for="item in search.term.length ? search.foundedStages : $parent.availablesStages" :style="groups.stages.selecteds.includes(item.id) ? 'background-color: #FAFBFC;font-weight: 600 !important;':''" class="col-12 my-1 cp hover-gray d-flex flex-column mb-0 d-flex justify-content-center" style="height: 44px; color: #384250; font-size: 14px; font-weight: 400; line-height: 20px;">
+                          <p class="mb-0 text-truncate" :title="item.name">#{item.name}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row m-0" style="border-top: 1px solid #F5F6F7;" :class="{ 'd-none': search.term.length && !search.foundedTopics.length }">
+                    <div class="col-12">
+                      <p class="d-flex justify-content-between mb-0 py-3 cp" @click="groups.topics.expanded = !groups.topics.expanded" style="font-size: 12px; color: #6C727F; font-weight: 400; line-height: 18px;">
+                        Assuntos 
+                        <svg v-if="groups.topics.expanded" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M18 15L12 9L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </p>
+                      <div class="row" v-if="groups.topics.expanded">
+                        <div @click="selectItem(item, 'topics')" v-for="item in search.term.length ? search.foundedTopics : $parent.availablesTopics" :style="groups.topics.selecteds.includes(item.id) ? 'background-color: #FAFBFC;font-weight: 600 !important;':''" class="col-12 my-1 cp hover-gray d-flex flex-column mb-0 d-flex justify-content-center" style="height: 44px; color: #384250; font-size: 14px; font-weight: 400; line-height: 20px;">
+                          <p class="mb-0 text-truncate" :title="item.name">#{item.name}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row m-0" style="border-top: 1px solid #F5F6F7;" :class="{ 'd-none': search.term.length && !search.foundedAbilities.length }">
+                    <div class="col-12">
+                      <p class="d-flex justify-content-between mb-0 py-3 cp" @click="groups.abilities.expanded = !groups.abilities.expanded" style="font-size: 12px; color: #6C727F; font-weight: 400; line-height: 18px;">
+                        Habilidades 
+                        <svg v-if="groups.abilities.expanded" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M18 15L12 9L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </p>
+                      <div class="row" v-if="groups.abilities.expanded">
+                        <div @click="selectItem(item, 'abilities')" v-for="item in search.term.length ? search.foundedAbilities : $parent.availablesAbilities" :style="groups.abilities.selecteds.includes(item.id) ? 'background-color: #FAFBFC;font-weight: 600 !important;':''" class="col-12 my-1 cp hover-gray d-flex flex-column mb-0 d-flex justify-content-center" style="height: 44px; color: #384250; font-size: 14px; font-weight: 400; line-height: 20px;">
+                          <p class="mb-0 text-truncate" :title="item.name">#{item.name}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row m-0" style="border-top: 1px solid #F5F6F7;" :class="{ 'd-none': search.term.length && !search.foundedCompetences.length }">
+                    <div class="col-12">
+                      <p class="d-flex justify-content-between mb-0 py-3 cp" @click="groups.competences.expanded = !groups.competences.expanded" style="font-size: 12px; color: #6C727F; font-weight: 400; line-height: 18px;">
+                        Competências 
+                        <svg v-if="groups.competences.expanded" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M18 15L12 9L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </p>
+                      <div class="row" v-if="groups.competences.expanded">
+                        <div @click="selectItem(item, 'competences')" v-for="item in search.term.length ? search.foundedCompetences : $parent.availablesCompetences" :style="groups.competences.selecteds.includes(item.id) ? 'background-color: #FAFBFC;font-weight: 600 !important;':''" class="col-12 my-1 cp hover-gray d-flex flex-column mb-0 d-flex justify-content-center" style="height: 44px; color: #384250; font-size: 14px; font-weight: 400; line-height: 20px;">
+                          <p class="mb-0 text-truncate" :title="item.name">#{item.name}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `,
+      }),
+      {% include 'dashboards/includes/search-component.html' %},
+    },
+    data: {
+      controls: {
+        urlsParams: {},
+        interval: null,
+        selectedTab: 'classe',
+        activeRequests: 0,
+      },
+      topics: {
+        status: 'idle',
+        data: []
+      },
+      abilities: {
+        status: 'idle',
+        data: []
+      },
+      competences: {
+        status: 'idle',
+        data: []
+      },
+      availablesSubjects: [],
+      availablesExams: [],
+      availablesStages: [],
+      availablesTopics: [],
+      availablesAbilities: [],
+      availablesCompetences: [],
+      availablesPeriod: [],
+      subjectsBNCCs: {
+        topics: [],
+        abilities: [],
+        competences: [],
+        selectedTopics: [],
+        selectedAbilities: [],
+        selectedCompetences: [],
+      },
+      performanceBySubjects: {
+        status: 'idle',
+        data: null,
+        error: null,
+      },
+      questionsSummary: {
+        status: 'idle',
+        data: [],
+        error: null,
+      },
+      questionsElaborationSummary: {
+        status: 'idle',
+        data: [],
+        error: null,
+      },
+      questions: {
+        status: 'idle',
+        paginatedData: [],
+        pageSize: 20,
+        total: 0,
+        data: [],
+        error: null,
+      },
+      challenges: {
+        status: 'idle',
+        data: [],
+        error: null,
+      },
+      distribution: {
+        status: 'idle',
+        data: null,
+        error: null,
+      },
+      progressByMonth: {
+        status: 'idle',
+        data: [],
+        error: null,
+      },
+      frequency: {
+        status: 'idle',
+        data: [],
+        error: null,
+      },
+      objectivesHitsAndMisses: {
+        status: 'idle',
+        data: [],
+        error: null,
+      },
+      discursivesHitsAndMisses: {
+        status: 'idle',
+        data: [],
+        error: null,
+      },
+      generalHistogram: {
+        status: 'idle',
+        data: null,
+        performance: 0,
+        error: null,
+        getColor: () => {
+          let color = '#D92D20' 
+          value = app.generalHistogram.performance
+          if(value <= 40) {
+            color = '#D92D20'
+          } else if(value > 40 && value <= 60) {
+            color = '#F3B364'
+          } else if(value > 60 && value <= 75) {
+            color = '#0C7BDB'
+          } else if (value > 75) {
+            color = '#41C588'
+          }
+          return color
+        }
+      },
+      schoolAverage: 0,
+      average: {
+        status: 'idle',
+        data: 0,
+        error: null,
+      },
+      classeRanking: {
+        status: 'idle',
+        data: [],
+        error: {}
+      },
+      activeTab: 'tab-1',
+      activeQuestionsTab: 'tab-1',
+      who: '{{who}}',
+      what: '',
+      whatIDS: [],
+      period: {
+        start: moment(),
+        end: moment(),
+      },
+      loading: true,
+      unities: [
+        {% for unity in unities %}
+          {
+            id: "{{unity.id}}",
+            name: "{{unity.name}}"
+          },
+        {% endfor %}
+      ],
+      classes: {{classes|safe}},
+      subjects: {{subjects|safe}},
+      modalQuestion: {
+        open: false,
+        status: 'idle',
+        index: 0,
+        data: {
+          category: '',
+          feedback: '',
+          topics: [],
+          abilities: [],
+          competences: [],
+          alternatives: [],
+          haveCompetence: false,
+        },
+        viewer: '',
+        showFullEnunciation: false,
+      },
+      chartChallenges: null,
+    },
+    computed: {
+      loadingRequest: function() {
+        return this.controls.activeRequests > 0
+      }
+    },
+    watch: {
+      'controls.selectedTab': function(val) {
+        if(val == 'teacher') {
+          this.startInfinityScroll()
+        }
+      },
+    },
+    methods: {
+      toggleShowFullEnunciation() {
+        this.modalQuestion.showFullEnunciation = !this.modalQuestion.showFullEnunciation;
+      },
+      async showQuestionDetail(index, question_id) {
+        let url = ''
+        if (question_id) {
+          url = `{% url 'questions:questions_api_detail' pk='00000000-0000-0000-0000-000000000000' %}`
+          url = url.replace('00000000-0000-0000-0000-000000000000', question_id)
+        }
+        $('#modalQuestion a[href="#question"]').tab('show');
+        $('#modalQuestion').modal('show');
+        $('#icon-add-remove').addClass('ion-md-add');
+        $('#icon-add-remove').removeClass('ion-md-remove');
+
+        this.modalQuestion.open = true;
+        this.modalQuestion.index = index;
+        this.modalQuestion.status = 'loading';
+
+        const res = await fetch(url);   
+
+        const data = await res.json();
+
+        this.modalQuestion.status = 'success';
+        this.modalQuestion.data = data;
+      },
+      getExamQuestionStatus(status, iconSize = 22) {
+        let statusObject = {
+          0: {
+            "label": "Aprovada",
+            "bgColor": "#41C58810",
+            "icon": `
+              <svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill="#41C588" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05"/>
+              </svg>
+            `
+          },
+          1: {
+            "label": "Reprovada",
+            "bgColor": "#FF000010",
+            "icon": `
+              <svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill="#FF0000" class="bi bi-x-circle" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            `
+          },
+          2: {
+            "label": "Em aberto",
+            "bgColor": "#0C7BDB10",
+            "icon": `
+              <svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill="#0C7BDB" class="bi bi-eye" viewBox="0 0 16 16">
+                <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+              </svg>
+            `
+          },
+          3: {
+            "label": "Aguardando correção",
+            "bgColor": "#FF8F3D10",
+            "icon": `
+              <svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill="#FF8F3D" class="bi bi-stopwatch" viewBox="0 0 16 16">
+                <path d="M8.5 5.6a.5.5 0 1 0-1 0v2.9h-3a.5.5 0 0 0 0 1H8a.5.5 0 0 0 .5-.5V5.6z"/>
+                <path d="M6.5 1A.5.5 0 0 1 7 .5h2a.5.5 0 0 1 0 1v.57c1.36.196 2.594.78 3.584 1.64a.715.715 0 0 1 .012-.013l.354-.354-.354-.353a.5.5 0 0 1 .707-.708l1.414 1.415a.5.5 0 1 1-.707.707l-.353-.354-.354.354a.512.512 0 0 1-.013.012A7 7 0 1 1 7 2.071V1.5a.5.5 0 0 1-.5-.5zM8 3a6 6 0 1 0 .001 12A6 6 0 0 0 8 3z"/>
+              </svg>
+            `
+          },
+          4: {
+            "label": "Corrigido",
+            "bgColor": "#ffc10710",
+            "icon": `
+              <svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill="#ffc107" class="bi bi-check" viewBox="0 0 16 16">
+                <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+              </svg>
+            `
+          },
+          5: {
+            "label": "Em aberto",
+            "bgColor": "#0C7BDB10",
+            "icon": `
+              <svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill="#0C7BDB" class="bi bi-eye" viewBox="0 0 16 16">
+                <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+              </svg>
+            `
+          },
+          6: {
+            "label": "Anulada",
+            "bgColor": "#FF000010",
+            "icon": `
+              <svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill="#FF0000" class="bi bi-x-circle" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            `
+          },
+          7: {
+            "label": "Usar depois",
+            "bgColor": "#00b8d410",
+            "icon": `
+              <svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill="#00b8d4" class="bi bi-clock-history" viewBox="0 0 16 16">
+                <path d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022l-.074.997zm2.004.45a7.003 7.003 0 0 0-.985-.299l.219-.976c.383.086.76.2 1.126.342l-.36.933zm1.37.71a7.01 7.01 0 0 0-.439-.27l.493-.87a8.025 8.025 0 0 1 .979.654l-.615.789a6.996 6.996 0 0 0-.418-.302zm1.834 1.79a6.99 6.99 0 0 0-.653-.796l.724-.69c.27.285.52.59.747.91l-.818.576zm.744 1.352a7.08 7.08 0 0 0-.214-.468l.893-.45a7.976 7.976 0 0 1 .45 1.088l-.95.313a7.023 7.023 0 0 0-.179-.483zm.53 2.507a6.991 6.991 0 0 0-.1-1.025l.985-.17c.067.386.106.778.116 1.17l-1 .025zm-.131 1.538c.033-.17.06-.339.081-.51l.993.123a7.957 7.957 0 0 1-.23 1.155l-.964-.267c.046-.165.086-.332.12-.501zm-.952 2.379c.184-.29.346-.594.486-.908l.914.405c-.16.36-.345.706-.555 1.038l-.845-.535zm-.964 1.205c.122-.122.239-.248.35-.378l.758.653a8.073 8.073 0 0 1-.401.432l-.707-.707z"/>
+                <path d="M8 1a7 7 0 1 0 4.95 11.95l.707.707A8.001 8.001 0 1 1 8 0v1z"/>
+                <path d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5z"/>
+              </svg>
+            `
+          },
+          8: {
+            "label": "Rascunho",
+            "bgColor": "#00b8d410",
+            "icon": `
+              <svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
+                <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+              </svg>
+            `
+          },
+          9: {
+            "label": "Questão incompleta",
+            "bgColor": "#FF000010",
+            "icon": `
+              <svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill="#FF0000" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
+              </svg>
+            `
+          },
+        }
+        return statusObject[status]
+      },
+      getHistogramProportion(value) {
+        let total = this.generalHistogram.data['0-40'] + this.generalHistogram.data['40-60'] + this.generalHistogram.data['60-75'] + this.generalHistogram.data['75-100']
+        return value / total * 100
+      },
+      getMarkerPosition(value) {
+        if (value >= 0 && value < 40) {
+          return { index: 0, proportion: value / 40, color: '#D92D20' };
+        } else if (value >= 40 && value < 60) {
+          return { index: 1, proportion: (value - 40) / 20, color: '#F3B364' };
+        } else if (value >= 60 && value < 75) {
+          return { index: 2, proportion: (value - 60) / 15, color: '#0C7BDB' };
+        } else if (value >= 75 && value <= 100) {
+          return { index: 3, proportion: (value - 75) / 25, color: '#41C588' };
+        }
+      },
+      getMarkPositionAndColor(value) {
+        if (!value) {
+          value = this.generalHistogram.performance
+        }
+        let numbers = [this.generalHistogram.data['0-40'], this.generalHistogram.data['40-60'], this.generalHistogram.data['60-75'], this.generalHistogram.data['75-100']]
+        let positionAndColor = this.getMarkerPosition(value)
+        let width = 0
+        let positionWidth = this.getHistogramProportion(numbers[positionAndColor.index])
+        numbers.filter((n, i) => i < positionAndColor.index).forEach((value, index) => {
+          width += this.getHistogramProportion(numbers[index])
+        })        
+        return { position: width + (positionWidth * positionAndColor.proportion), color: positionAndColor.color }
+      },
+      moment(date) {
+        return moment(date)
+      },
+      changeTab(tab) {
+        this.activeTab = tab
+      },
+      changeQuestionsTab(tab) {
+        this.activeQuestionsTab = tab
+      },
+      async fetchGeneralHistogramData() {
+        if(this.generalHistogram.status == 'idle' && this.isVisible(this.$refs.generalHistogram)) {
+          this.generalHistogram.status = 'loading'
+          return await axios({
+            method: 'POST',
+            url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+            data: {
+              "who": "{{who}}",
+              "who_ids": ["{{who_id|default:''}}"],
+              "what": this.what,
+              "what_ids": this.whatIDS.length ? this.whatIDS: null,
+              "operation": "get_histogram",
+              "filters": {
+                "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+                "user_unities": this.unities.map((u) => u.id),
+                "classes": this.classes,
+                // "subjects": this.subjects,
+                // "teacher": "{{user.inspector.id}}",
+              }
+            }
+          }).then((response) => {
+            if(this.average.status == 'idle') {
+              this.fetchClasseAvgXSchoolData(forceLoading = true)
+            }
+            this.generalHistogram.status = 'success'
+            this.generalHistogram.data = response.data[0]
+          }).catch(() => {
+            this.generalHistogram.status = 'error'
+          })
+        }
+      },
+      async fetchClasseAvgXSchoolData(forceLoading = false) {
+        if(forceLoading || this.average.status == 'idle' && this.isVisible(this.$refs.average)) {
+          this.average.status = 'loading'
+          return await axios({
+            method: 'POST',
+            url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+            data: {
+              "who": "{{who}}",
+              "who_ids": ["{{who_id|default:''}}"],
+              "operation": "get_avg_x_school",
+              "what": this.what,
+              "what_ids": this.whatIDS.length ? this.whatIDS: null,
+              "filters": {
+                "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+                "user_unities": this.unities.map((u) => u.id),
+                "subjects": this.subjects,
+                "classes": this.classes,
+                "teacher": "{{user.inspector.id}}",
+              }
+            }
+          }).then((response) => {
+            this.average.status = 'success'
+            let data = response.data[0]
+            this.average.data = data.grade_avg
+            this.generalHistogram.performance = this.average.data
+            this.fetchSchoolAverageData()
+            let myChart = echarts.init(document.getElementById('chartAvg'))
+            myChart.setOption({
+                grid: {
+                  top: '15%',
+                  right: 0,
+                  bottom: '10%',
+                  left: 0,
+                },
+                xAxis: {
+                  type: 'category',
+                  data: [
+                    {
+                      value: '{{object.name|truncatewords:2}}',
+                      textStyle: {
+                        color: '#001737',
+                        fontWeight: 500
+                      }
+                    },
+                    {
+                      value: 'Escola',
+                      textStyle: {
+                        color: '#667085'
+                      }
+                    }
+                  ],
+                  axisLine: {
+                    lineStyle: {
+                      color: '#E5E7EA'
+                    }
+                  },
+                  axisTick: {
+                    show: false
+                  },
+                  axisLabel: {
+                    fontFamily: 'Inter',
+                    margin: 8,
+                    fontSize: 14,
+                  }
+                },
+                yAxis: {
+                  max: 'dataMax',
+                  show: false,
+                },
+                series: [
+                  {
+                    type: 'bar',
+                    barCategoryGap: 32,
+                    label: {
+                      show: true,
+                      formatter: '{@score}%',
+                      position: 'insideTop',
+                      padding: [24, 0, 0, 0],
+                      fontFamily: 'Roboto',
+                      fontSize: 30,
+                      fontWeight: 500,
+                    },
+                    itemStyle: {
+                      barBorderRadius: [8, 8, 0, 0]
+                    },
+                    data: [
+                      {
+                        value: data.grade_avg.toFixed(0),
+                        label: {
+                          color: '#FFFFFF',
+                        },
+                        itemStyle: {
+                          color: '#FF8F3D'
+                        }
+                      },
+                      {
+                        value: data.school_grade_avg.toFixed(0),
+                        label: {
+                          color: '#282F3E',
+                        },
+                        itemStyle: {
+                          color: '#FFF4EC'
+                        }
+                      }
+                    ]
+                  }
+                ]
+              })
+          }).catch(() => {
+            this.average.status = 'error'
+          })
+        }
+      },
+      async fetchProgressByMonthData() {
+        if(this.progressByMonth.status == 'idle' && this.isVisible(this.$refs.progressByMonth)) {
+          this.progressByMonth.status = 'loading'
+          return await axios({
+            method: 'POST',
+            url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+            data: {
+              "who": "{{who}}",
+              "who_ids": ["{{who_id|default:''}}"],
+              "what": this.what,
+              "what_ids": this.whatIDS.length ? this.whatIDS: null,
+              "operation": "get_avg_group_by_month",
+              "filters": {
+                "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+                "user_unities": this.unities.map((u) => u.id),
+                "subjects": this.subjects,
+                "classes": this.classes,
+                "teacher": "{{user.inspector.id}}",
+              }
+            }
+          }).then((response) => {
+            this.progressByMonth.status = 'success'
+            let data = response.data[0]
+            this.progressByMonth.data = data
+            let myChart2 = echarts.init(document.getElementById('chartProgressByMonth'))
+            
+            myChart2.setOption({
+              grid: {
+                top: '30%',
+                right: 0,
+                bottom: 30,
+                left: 0,
+                backgroundColor: new echarts.graphic.LinearGradient(0, 1, 0, 0, [
+                  {
+                    offset: 0,
+                    color: 'rgba(255,244,236,1)'
+                  },
+                  {
+                    offset: 1,
+                    color: 'rgba(255,244,236,0)'
+                  }
+                ]),
+                borderWidth: 0,
+                show: true,
+              },
+              tooltip: {
+                trigger: 'item',
+                formatter: '{c0}%',
+                backgroundColor: '#FF8F3D',
+                textStyle: {
+                  fontFamily: 'Roboto',
+                  fontSize: 16,
+                  lineHeight: 20,
+                  fontWeight: 500,
+                  color: '#FFFFFF',
+                },
+              },
+              xAxis: {
+                type: 'category',
+                data: data.map((m, i) => {
+                  month = m.month.slice(0, 3)
+                  if (i == data.length - 1) {
+                    return {
+                      value: month,
+                      textStyle: {
+                        color: '#001737',
+                        fontWeight: 500,
+                        fontFamily: 'Roboto',
+                        fontSize: 14,
+                        lineHeight: 20,
+                      },
+                    }
+                  }
+                  return month
+                }),
+                axisTick: {
+                  show: false,
+                },
+                axisLine: {
+                  lineStyle: {
+                    color: '#E5E7EA'
+                  }
+                },
+                axisLabel: {
+                  margin: 8,
+                  color: '#667085',
+                  fontWeight: 400,
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  lineHeight: 20,
+                },
+              },
+              yAxis: {
+                show: false,
+                min: 0,
+              },
+              series: [
+                {
+                  type: 'line',
+                  lineStyle: {
+                    color: '#FF8F3D',
+                    width: 2,
+                  },
+                  label: {
+                    show: true,  // Exibir o rótulo
+                    position: 'top',  // Posição do rótulo em relação ao ponto
+                    formatter: '{c}',  // Formato do rótulo (neste caso, o valor do ponto)
+                    padding: [12, 0, 0, 0],
+                    fontFamily: 'Roboto',
+                    fontSize: 16,
+                    fontWeight: 500,
+                  },
+                  itemStyle: {
+                    color: '#FF8F3D',
+                  },
+                  symbolSize: 12,
+                  data: data.map(m => m.performance.toFixed(0)),
+                }
+              ]
+            })
+          }).catch((e) => {
+            this.progressByMonth.status = 'error'
+          })
+        }
+      },
+      async fetchObjectivesHitsAndMissesData() {
+        if(this.objectivesHitsAndMisses.status == 'idle' && this.isVisible(this.$refs.objectivesHitsAndMisses)) {
+          this.objectivesHitsAndMisses.status = 'loading'
+          return await axios({
+            method: 'POST',
+            url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+            data: {
+              "who": "{{who}}",
+              "who_ids": ["{{who_id|default:''}}"],
+              "operation": "get_objectives_hits_and_misses",
+              "what": this.what,
+              "what_ids": this.whatIDS.length ? this.whatIDS: null,
+              "filters": {
+                "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+                "user_unities": this.unities.map((u) => u.id),
+                "subjects": this.subjects,
+                "classes": this.classes,
+                "teacher": "{{user.inspector.id}}",
+              }
+            }
+          }).then((response) => {
+            this.objectivesHitsAndMisses.status = 'success'
+            let data = response.data[0]
+            this.objectivesHitsAndMisses.data = data
+            let hits = data.hits
+            let misses = data.misses
+            let total = data.questions_count
+
+            let myChart3 = echarts.init(document.getElementById('chartObjectivesHitsAndMisses'))
+            myChart3.setOption({
+              tooltip: {
+                trigger: 'item'
+              },
+              legend: {
+                bottom: 0,
+                left: 'center',
+                data: ['Acertos', 'Erros']
+              },
+              series: [
+                {
+                  name: 'Acertos e erros',
+                  type: 'pie',
+                  radius: ['40%', '70%'],
+                  label: {
+                    show: false,
+                  },
+                  markPoint: {
+                    tooltip: { show: false },
+                    label: {
+                      show: true,
+                      formatter: '{b}',
+                      color: '#282F3E',
+                      fontFamily: 'Inter',
+                      fontSize: 24,
+                      lineHeight: 20,
+                      fontWeight: 500,
+                      letterSpacing: '-0.01em',
+                    },
+                    data: [{
+                      name: `${total ? (hits / total * 100).toFixed(0) : 0}%`,
+                      symbol: 'circle',
+                      itemStyle: { color: 'transparent' },
+                      x: '50%',
+                      y: '50%',
+                    }],
+                  },
+                  data: [
+                    {
+                      name: 'Acertos',
+                      value: (hits / total * 100).toFixed(2),
+                      itemStyle: { color: '#FF8F3D' },
+                      emphasis: { itemStyle: { color: '#FF8024' } }
+                    },
+                    {
+                      name: 'Erros',
+                      value: (100 - (hits / total * 100)).toFixed(2),
+                      itemStyle: { color: '#FFF4EC' },
+                      emphasis: { itemStyle: { color: '#FFE5D3' } }
+                    }
+                  ]
+                }
+              ],
+            })
+          }).catch((e) => {
+            this.objectivesHitsAndMisses.status = 'error'
+          })
+        }
+      },
+      async fetchFrequency() {
+        if(this.frequency.status == 'idle' && this.isVisible(this.$refs.frequency)) {
+          this.frequency.status = 'loading'
+          return await axios({
+            method: 'POST',
+            url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+            data: {
+              "who": "{{who}}",
+              "who_ids": ["{{who_id|default:''}}"],
+              "operation": "get_frequency",
+              "what": this.what,
+              "what_ids": this.whatIDS.length ? this.whatIDS: null,
+              "filters": {
+                "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+                "user_unities": this.unities.map((u) => u.id),
+                "subjects": this.subjects,
+                "classes": this.classes,
+                "teacher": "{{user.inspector.id}}",
+              }
+            }
+          }).then((response) => {
+            this.frequency.status = 'success'
+            let data = response.data[0]
+
+            let myChart3 = echarts.init(document.getElementById('chartFrequency'))
+            myChart3.setOption({
+              tooltip: {
+                trigger: 'item'
+              },
+              legend: {
+                bottom: 0,
+                left: 'center',
+                data: ['Realizaram', 'Faltaram']
+              },
+              series: [
+                {
+                  name: 'Participações',
+                  type: 'pie',
+                  radius: ['40%', '70%'],
+                  label: {
+                    show: false,
+                  },
+                  markPoint: {
+                    tooltip: { show: false },
+                    label: {
+                      show: true,
+                      formatter: '{b}',
+                      color: '#282F3E',
+                      fontFamily: 'Inter',
+                      fontSize: 24,
+                      lineHeight: 20,
+                      fontWeight: 500,
+                      letterSpacing: '-0.01em',
+                    },
+                    data: [{
+                      name: `${data ? data.toFixed(0) : 0}%`,
+                      symbol: 'circle',
+                      itemStyle: { color: 'transparent' },
+                      x: '50%',
+                      y: '50%',
+                    }],
+                  },
+                  data: [
+                    {
+                      name: 'Realizaram',
+                      value: data.toFixed(2),
+                      itemStyle: { color: '#FF8F3D' },
+                      emphasis: { itemStyle: { color: '#FF8024' } }
+                    },
+                    {
+                      name: 'Faltaram',
+                      value: (100 - data).toFixed(2),
+                      itemStyle: { color: '#FFF4EC' },
+                      emphasis: { itemStyle: { color: '#FFE5D3' } }
+                    }
+                  ]
+                }
+              ],
+            })
+          }).catch((e) => {
+            this.frequency.status = 'error'
+          })
+        }
+      },
+      async fetchDiscursivesHitsAndMissesData() {
+        if(this.discursivesHitsAndMisses.status == 'idle' && this.isVisible(this.$refs.discursivesHitsAndMisses)) {
+          this.discursivesHitsAndMisses.status = 'loading'
+          return await axios({
+            method: 'POST',
+            url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+            data: {
+              "who": "{{who}}",
+              "who_ids": ["{{who_id|default:''}}"],
+              "operation": "get_discursives_hits_and_misses",
+              "what": this.what,
+              "what_ids": this.whatIDS.length ? this.whatIDS: null,
+              "filters": {
+                "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+                "user_unities": this.unities.map((u) => u.id),
+                "subjects": this.subjects,
+                "classes": this.classes,
+                "teacher": "{{user.inspector.id}}",
+              }
+            }
+          }).then((response) => {
+            this.discursivesHitsAndMisses.status = 'success'
+            let data = response.data[0]
+            this.discursivesHitsAndMisses.data = data
+            let hits = data.hits
+            let misses = data.misses
+            let total = data.questions_count
+
+            let myChart3 = echarts.init(document.getElementById('chartDiscursivesHitsAndMisses'))
+            myChart3.setOption({
+              tooltip: {
+                trigger: 'item'
+              },
+              legend: {
+                bottom: 0,
+                left: 'center',
+                data: ['Acertos', 'Erros']
+              },
+              series: [
+                {
+                  name: 'Acertos e erros',
+                  type: 'pie',
+                  radius: ['40%', '70%'],
+                  label: {
+                    show: false,
+                  },
+                  markPoint: {
+                    tooltip: { show: false },
+                    label: {
+                      show: true,
+                      formatter: '{b}',
+                      color: '#282F3E',
+                      fontFamily: 'Inter',
+                      fontSize: 24,
+                      lineHeight: 20,
+                      fontWeight: 500,
+                      letterSpacing: '-0.01em',
+                    },
+                    data: [{
+                      name: `${total ? (hits / total * 100).toFixed(0) : 0}%`,
+                      symbol: 'circle',
+                      itemStyle: { color: 'transparent' },
+                      x: '50%',
+                      y: '50%',
+                    }],
+                  },
+                  data: [
+                    {
+                      name: 'Acertos',
+                      value: (hits / total * 100).toFixed(2),
+                      itemStyle: { color: '#FF8F3D' },
+                      emphasis: { itemStyle: { color: '#FF8024' } }
+                    },
+                    {
+                      name: 'Erros',
+                      value: (100 - (hits / total * 100)).toFixed(2),
+                      itemStyle: { color: '#FFF4EC' },
+                      emphasis: { itemStyle: { color: '#FFE5D3' } }
+                    }
+                  ]
+                }
+              ],
+            })
+          }).catch((e) => {
+            this.discursivesHitsAndMisses.status = 'error'
+          })
+        }
+      },
+      startSelectInputsAndTooltips(selector = 'select') {
+        if ($(selector).length && $(selector).data('selectpicker')) {
+          // Se já foram inicializados, apenas atualize as options
+          $(selector).each(function() {
+            var $this = $(this);
+            var options = $this.find('option');
+            $this.selectpicker('destroy');
+            $this.empty().append(options);
+            $this.selectpicker({
+              style: 'btn-white',
+              placeholder: "Selecione as disciplinas",
+              noneSelectedText: 'Nenhuma seleção',
+              noneResultsText: 'Nenhum resultado encontrado',
+            })
+          });
+        } else {
+          $(selector).selectpicker({
+            style: 'btn-white',
+            placeholder: "Selecione as disciplinas",
+            noneSelectedText: 'Nenhuma seleção',
+            noneResultsText: 'Nenhum resultado encontrado',
+          })
+        }
+        $('[data-toggle="tooltip"]').tooltip()
+      },
+      async fetchTopicsData() {
+        if(this.topics.status == 'idle' && this.isVisible(this.$refs.topics)) {
+          this.topics.status = 'loading'
+          return await axios({
+            method: 'POST',
+            url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+            data: {
+              "who": "{{who}}",
+              "who_ids": ["{{who_id|default:''}}"],
+              "what": this.what,
+              "what_ids": this.whatIDS.length ? this.whatIDS: null,
+              "operation": "get_topics_avg",
+              "filters": {
+                "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+                "user_unities": this.unities.map((u) => u.id),
+                "subjects": this.subjects,
+                "classes": this.classes,
+                "teacher": "{{user.inspector.id}}",
+              }
+            }
+          }).then((response) => {
+            this.topics.status = 'success'
+            this.topics.data = response.data[0]
+            this.subjectsBNCCs.topics = []
+            this.topics.data.forEach((t) => {
+              if(!this.subjectsBNCCs.topics.find((_t) => t.subject_name && t.subject_id == _t.id)) {
+                this.subjectsBNCCs.topics.push({
+                  id: t.subject_id,
+                  name: t.subject_name,
+                })
+              }
+            })
+          }).catch(() => {
+            this.topics.status = 'error'
+          }).finally(() => {
+            this.startSelectInputsAndTooltips()
+            this.fetchAbilitiesData()
+            this.fetchCompetencesData()
+          })
+        }
+      },
+      async fetchAbilitiesData() {
+        this.abilities.status = 'loading'
+        return await axios({
+          method: 'POST',
+          url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+          data: {
+            "who": "{{who}}",
+            "who_ids": ["{{who_id|default:''}}"],
+            "what": this.what,
+            "what_ids": this.whatIDS.length ? this.whatIDS: null,
+            "operation": "get_abilities_avg",
+            "filters": {
+              "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+              "user_unities": this.unities.map((u) => u.id),
+              "classes": this.classes,
+              "teacher": "{{user.inspector.id}}",
+            }
+          }
+        }).then((response) => {
+          this.abilities.status = 'success'
+          this.abilities.data = response.data[0]
+          this.subjectsBNCCs.abilities = []
+          this.abilities.data.forEach((t) => {
+            if(!this.subjectsBNCCs.abilities.find((_t) => t.subject_name && t.subject_id == _t.id)) {
+              this.subjectsBNCCs.abilities.push({
+                id: t.subject_id,
+                name: t.subject_name,
+              })
+            }
+          })
+        }).catch(() => {
+          this.abilities.status = 'error'
+        }).finally(() => {
+          this.startSelectInputsAndTooltips()
+        })
+      },
+      async fetchCompetencesData() {
+        this.competences.status = 'loading'
+        return await axios({
+          method: 'POST',
+          url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+          data: {
+            "who": "{{who}}",
+            "who_ids": ["{{who_id|default:''}}"],
+            "what": this.what,
+            "what_ids": this.whatIDS.length ? this.whatIDS: null,
+            "operation": "get_competences_avg",
+            "filters": {
+              "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+              "user_unities": this.unities.map((u) => u.id),
+              "classes": this.classes,
+              "teacher": "{{user.inspector.id}}",
+            }
+          }
+        }).then((response) => {
+          this.competences.status = 'success'
+          this.competences.data = response.data[0]
+          this.subjectsBNCCs.competences = []
+          this.competences.data.forEach((t) => {
+            if(!this.subjectsBNCCs.competences.find((_t) => t.subject_name && t.subject_id == _t.id)) {
+              this.subjectsBNCCs.competences.push({
+                id: t.subject_id,
+                name: t.subject_name,
+              })
+            }
+          })
+        }).catch(() => {
+          this.competences.status = 'error'
+        }).finally(() => {
+          this.startSelectInputsAndTooltips()
+        })
+      },
+      async fetchSchoolAverageData(schoolAverage) {
+        if(schoolAverage) {
+          this.schoolAverage = schoolAverage
+          return
+        }
+        return await axios({
+          method: 'POST',
+          url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+          data: {
+            "who": "school",
+            "who_ids": ["{{user.client.id}}"],
+            "what": this.what,
+            "what_ids": this.whatIDS.length ? this.whatIDS: null,
+            "operation": "get_avg",
+            "filters": {
+              "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+            }
+          }
+        }).then((response) => {
+          this.schoolAverage = response.data[0]
+        })
+      },
+      async fetchRankingData() {
+        if(this.classeRanking.status == 'idle' && this.isVisible(this.$refs.classeRanking)) {
+          this.classeRanking.status = 'loading'
+          return await axios({
+            method: 'POST',
+            url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+            data: {
+              "who": "{{who}}",
+              "who_ids": ["{{who_id|default:''}}"],
+              "what": this.what,
+              "what_ids": this.whatIDS.length ? this.whatIDS: null,
+              "operation": "get_ranking",
+              "filters": {
+                "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+                "user_unities": this.unities.map((u) => u.id),
+                "classes": this.classes,
+                // "subjects": this.subjects,
+                // "teacher": "{{user.inspector.id}}",
+              }
+            }
+          }).then((response) => {
+            this.classeRanking.status = 'success'
+            this.classeRanking.data = response.data[0]
+          }).catch(() => {
+            this.classeRanking.status = 'error'
+          })
+        }
+      },
+      async fetchChallengesData() {
+        if(this.challenges.status == 'idle' && this.isVisible(this.$refs.challenges)) {
+          this.challenges.status = 'loading'
+          return await axios({
+            method: 'POST',
+            url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+            data: {
+              "who": '{{who}}',
+              "who_ids": ["{{object.id}}"],
+              "what": this.what,
+              "what_ids": this.whatIDS.length ? this.whatIDS: null,
+              "operation": "get_challenges",
+              "filters": {
+                "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+                "user_unities": this.unities.map((u) => u.id),
+                "subjects": this.subjects,
+                "classes": this.classes,
+                "teacher": "{{user.inspector.id}}",
+              }
+            }
+          }).then((response) => {
+            this.challenges.status = 'success'
+            // let data = response.data[0]
+            this.challenges.data = response.data[0]
+
+            this.chartChallenges = echarts.init(document.getElementById('chartChallenges'))
+            this.chartChallenges.setOption({
+              grid: {
+                // show: true,
+                // backgroundColor: 'rgb(255, 0, 0)',
+                top: 0,
+                right: -4,
+                bottom: 0,
+                left: -4,
+                height: '100px',
+              },
+              xAxis: {
+                show: false,
+                type: 'category',
+                data: this.challenges.data,
+                axisTick: {
+                  show: false
+                },
+              },
+              yAxis: {
+                show: false,
+              },
+              tooltip: {
+                trigger: 'item',
+                className: 'reset-echarts-tooltip',
+                position: 'top', // Posiciona o tooltip na parte superior
+                enterable: true, // Permite que o usuário entre no tooltip
+                formatter: (params) => {
+                  const { id, name, performance, hits, misses, partials, questions, date } = params.data;
+                  return `
+                    <div class="tw-w-fit tw-flex tw-flex-col tw-bg-white tw-border tw-border-[#E6E8EC] tw-rounded-lg">
+                      <div class="tw-border-b tw-border-[#F3F3F3]">
+                        <div class="tw-flex tw-items-center tw-justify-between tw-px-4 tw-pt-2 tw-pb-[0.563rem]">
+                          <div>
+                            <p class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">${name.toUpperCase().slice(0,10)}</p>
+                          </div>
+                          <div>
+                            <p class="tw-text-xs tw-font-medium tw-text-[#667085] tw-mb-0">${moment(date).format('D, MMM')}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="tw-flex tw-gap-8 tw-p-4">
+                        <div>
+                          <div class="tw-flex tw-items-center tw-gap-1">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                              <path d="M6 12L10 8L6 4" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">${questions} respostas</p>
+                          </div>
+                          <div class="tw-flex tw-items-center tw-gap-1">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                              <path d="M6 12L10 8L6 4" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">${hits} acertos</p>
+                          </div>
+                          <div class="tw-flex tw-items-center tw-gap-1">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                              <path d="M6 12L10 8L6 4" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">${misses} erros</p>
+                          </div>
+                          <div class="tw-flex tw-items-center tw-gap-1">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                              <path d="M6 12L10 8L6 4" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">${partials} parciais</p>
+                          </div>
+                        </div>
+                        <div class="tw-flex tw-items-center tw-justify-center">
+                          <p class="tw-text-3xl tw-leading-[2.125rem] tw-font-medium tw-text-[#FF8F3D] tw-tracking-[0.01em] tw-mb-0">${performance}%</p>
+                        </div>
+                      </div>
+                      <div class="tw-px-4 tw-pb-4">
+                        <a href="${'{% url 'exams:exams_detail_v2' pk='00000000-0000-0000-0000-000000000000' %}'.replace('00000000-0000-0000-0000-000000000000', id)}" target="_blank" class="btn-block text-center tw-w-full tw-rounded-lg tw-bg-primary-600 tw-px-3 tw-py-3 tw-text-sm tw-font-semibold tw-text-white hover:tw-bg-primary-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600">Visualizar</a>
+                      </div>
+                    </div>
+                  `
+                },
+              },
+              series: [
+                {
+                  itemStyle: {
+                    barBorderRadius: 2,
+                    color: '#FFF8F2',
+                  },
+                  data: this.challenges.data.map((d) => {
+                    if (true) {
+                      return { ...d, value: d.performance, itemStyle: { color: '#FF8F3D' } }
+                    }
+                    return d.performance
+                  }),
+                  barCategoryGap: 8,
+                  type: 'bar'
+                }
+              ]
+            })
+          }).catch((e) => {
+            this.challenges.status = 'error'
+          }).finally(() => {
+            this.chartChallenges.resize()
+          })
+        }
+      },
+      callbackDateRangePicker(start, end) {
+        this.period.start = start
+        this.period.end = end
+        
+        let text = start.format('D [de] MMMM YYYY') + ' - ' + end.format('D [de] MMMM YYYY');
+        let ranges = $('#id-date').data('daterangepicker').ranges;
+        for (let key in ranges) {
+          if (key === 'Customizado') continue;
+          if (ranges[key][0].isSame(start) && ranges[key][1].isSame(end)) {
+            text = key;
+            break;
+          }
+        }
+        $('#id-date span').html(`${text}`);
+      },
+      startDataPicker() {
+        ///////////////////////////////////////////////////////////////////////////////
+        // DATERANGEPICKER
+        ///////////////////////////////////////////////////////////////////////////////
+
+        $('#id-date').daterangepicker({
+          'locale': {
+            "format": "DD/MM/YYYY",
+            "separator": " - ",
+            "applyLabel": "Aplicar",
+            "cancelLabel": "Cancelar",
+            "fromLabel": "De",
+            "toLabel": "Para",
+            "customRangeLabel": "Customizado",
+            "weekLabel": "W",
+            "daysOfWeek": ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"],
+            "monthNames": ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"],
+            "firstDay": 1
+          },
+          startDate: this.period.start,
+          endDate: this.period.end,
+          ranges: {
+            'Hoje': [moment(), moment()],
+            'Ontem': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+            'Últimos 7 dias': [moment().subtract(6, 'days'), moment()],
+            'Últimos 30 dias': [moment().subtract(29, 'days'), moment()],
+            'Este mês': [moment().startOf('month'), moment().endOf('month')],
+            'Último mês': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+          }
+        }, this.callbackDateRangePicker);
+        this.callbackDateRangePicker(this.period.start, this.period.end);
+      },
+      startSearch() {
+        ///////////////////////////////////////////////////////////////////////////////
+        // SELECT2
+        ///////////////////////////////////////////////////////////////////////////////
+        let studentsSelect2Object = $('#id-students').select2({
+          ajax: {
+            url: 'https://api.github.com/search/repositories',
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+              return {
+                q: params.term,
+                page: params.page
+              };
+            },
+            processResults: function (data, params) {
+              params.page = params.page || 1;
+
+              return {
+                results: data.items,
+                pagination: {
+                  more: (params.page * 30) < data.total_count
+                }
+              };
+            },
+            cache: true
+          },
+          placeholder: 'Search...',
+          minimumInputLength: 1,
+          templateResult: formatRepo,
+          templateSelection: formatRepoSelection
+        });
+
+        studentsSelect2Object.data('select2').$container.attr('id', 'id-students-select2');
+        studentsSelect2Object.data('select2').$dropdown.attr('id', 'id-students-select2-dropdown');
+
+        $('#id-students').on('select2:open', function () {
+          $('.select2-search--dropdown .select2-search__field').attr('placeholder', 'Pesquisar aluno');
+        });
+
+        $('#id-students').on('select2:close', function () {
+          $('.select2-search--dropdown .select2-search__field').attr('placeholder', null);
+        });
+
+        function formatRepo(repo) {
+          if (repo.loading) return repo.text;
+
+          let $container = $(
+            "<div class='select2-result-content clearfix' style='display: flex; gap: 0.5rem;'>" +
+              "<div class='select2-result-content__avatar'><img src='" + repo.owner.avatar_url + "' style='max-width: 50px; height: 50px;' /></div>" +
+              "<div class='select2-result-content__meta'>" +
+                "<div class='select2-result-content__title' style='font-size: 0.875rem; line-height: 1.25rem;'></div>" +
+                "<div class='select2-result-content__description' style='font-size: 0.75rem; line-height: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;'></div>" +
+              "</div>" +
+            "</div>"
+          );
+
+          $container.find(".select2-result-content__title").text(repo.full_name);
+          $container.find(".select2-result-content__description").text(repo.description);
+
+          return $container;
+        }
+
+        function formatRepoSelection(repo) {
+
+          if (!repo.id) return ''
+
+          let $state = $(`
+            <div>
+              <div class="tw-flex tw-items-center tw-gap-3 tw-p-3">
+                <img src="${repo.owner.avatar_url}" style="width: 48px; height: 48px; border-radius: 9999px;" />
+                <div class="tw-flex tw-flex-col">
+                  <span class="tw-text-base tw-font-medium tw-text-[#101828]">${repo.full_name || repo.text}</span>
+                  <span class="tw-text-sm tw-font-normal tw-text-[#667085]">Ensino Fundamental - Nível 2</span>
+                </div>
+              </div>
+            </div>
+          `);
+          return $state;
+        }
+      },
+      async fetchAvailablesFilters() {
+        return await axios({
+          method: 'POST',
+          url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+          data: {
+            "who": "{{who}}",
+            "who_ids": ["{{who_id|default:''}}"],
+            "operation": "get_availables_filters",
+            "filters": {
+              "user_unities": this.unities.map((u) => u.id),
+              "classes": this.classes,
+              "subjects": this.subjects,
+            }
+          }
+        })
+      },
+      async fetchQuestionsSummary() {
+        if(this.questionsSummary.status == 'idle' && this.isVisible(this.$refs.questionsSummary)) {
+          this.questionsSummary.status = 'loading'
+          return await axios({
+            method: 'post',
+            url: `{% url 'dashboards:get-data-from-service' user.client.id %}`, 
+            data: {
+              "who": "{{who}}",
+              "who_ids": ["{{who_id|default:''}}"],
+              "what": this.what,
+              "what_ids": this.whatIDS.length ? this.whatIDS: null,
+              "operation": "get_questions_summary_hits",
+              "filters": {
+                "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+                "user_unities": this.unities.map((u) => u.id),
+                "classes": this.classes,
+                "subjects": this.subjects,
+                "teacher": "{{user.inspector.id}}",
+              }
+            }
+          }).then((response) => {
+            this.questionsSummary.status = 'success'
+            this.questionsSummary.data = response.data[0]
+          }).catch((e) => {
+            this.questionsSummary.status = 'error'
+          })
+        }
+      },
+      async fetchElaborationQuestionsSummary() {
+        if(this.questionsElaborationSummary.status == 'idle' && this.isVisible(this.$refs.questionsElaborationSummary)) {
+          this.questionsElaborationSummary.status = 'loading'
+          return await axios({
+            method: 'post',
+            url: `{% url 'dashboards:get-data-from-service' user.client.id %}`, 
+            data: {
+              "who": "{{who}}",
+              "who_ids": ["{{who_id|default:''}}"],
+              "what": this.what,
+              "what_ids": this.whatIDS.length ? this.whatIDS: null,
+              "operation": "get_questions_summary",
+              "filters": {
+                "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+                "user_unities": this.unities.map((u) => u.id),
+                "classes": this.classes,
+                "subjects": this.subjects,
+                "teacher": "{{user.inspector.id}}",
+              }
+            }
+          }).then((response) => {
+            this.questionsElaborationSummary.status = 'success'
+            this.questionsElaborationSummary.data = response.data[0]
+          }).catch((e) => {
+            this.questionsElaborationSummary.status = 'error'
+          })
+        }
+      },
+      async fetchQuestions() {
+        if(this.questions.status == 'idle' && this.isVisible(this.$refs.questions)) {
+          this.questions.status = 'loading'
+          return await axios({
+            method: 'post',
+            url: `{% url 'dashboards:get-data-from-service' user.client.id %}`, 
+            data: {
+              "who": "teacher",
+              "who_ids": ["{{user.inspector.id|default:''}}"],
+              "what": this.what,
+              "what_ids": this.whatIDS.length ? this.whatIDS: null,
+              "operation": "get_questions",
+              "filters": {
+                "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+                "user_unities": this.unities.map((u) => u.id),
+                "classes": this.classes,
+                "subjects": this.subjects,
+                "teacher": "{{user.inspector.id}}",
+              }
+            }
+          }).then((response) => {
+            this.questions.status = 'success'
+            this.questions.data = response.data[0]
+            this.questions.paginatedData = this.questions.data.slice(this.questions.total, this.questions.pageSize)
+            this.questions.total += this.questions.paginatedData.length
+            let ids = this.questions.paginatedData.map((q) => q.question_id)
+            this.getQuestionsEnunciation(ids)
+          }).catch((e) => {
+            this.questions.status = 'error'
+          })
+        }
+      },
+      pushNewQuestionsPage() {
+        let newQuestions = this.questions.data.slice(this.questions.total, this.questions.total + this.questions.pageSize)
+        let ids = newQuestions.map((q) => q.question_id)
+        newQuestions.forEach((q) => this.questions.paginatedData.push(q))
+        this.questions.total += this.questions.paginatedData.length
+        this.getQuestionsEnunciation(ids)
+      },
+      getQuestionsEnunciation(IDS) {
+        axios.post(`{% url 'api:questions:simple-questions-list' %}`, IDS).then((response) => {
+          response.data.forEach((q) => {
+            let foundedQuestion = this.questions.paginatedData.find((_q) => _q.question_id == q.id)
+            foundedQuestion.enunciation = q.enunciationText
+          })
+        })
+      },
+      async fetchDistribution() {
+        if(this.distribution.status == 'idle' && this.isVisible(this.$refs.distribution)) {
+          this.distribution.status = 'loading'
+          return await axios({
+            method: 'post',
+            url: `{% url 'dashboards:get-data-from-service' user.client.id %}`, 
+            data: {
+              "who": "{{who}}",
+              "who_ids": ["{{who_id|default:''}}"],
+              "what": this.what,
+              "what_ids": this.whatIDS.length ? this.whatIDS: null,
+              "operation": "get_hits_and_misses_questions",
+              "filters": {
+                "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+                "user_unities": this.unities.map((u) => u.id),
+                "subjects": this.subjects,
+                "classes": this.classes,
+                "teacher": "{{user.inspector.id}}",
+              }
+            }
+          }).then((response) => { 
+            this.distribution.status = 'success'
+            this.distribution.data = response.data[0]
+            
+            let distributionChartElement = document.getElementById('distributionChart')
+            let distributionChart = echarts.init(distributionChartElement)
+
+            {% comment %} const x = this.distribution.data.map((e) => e.id) {% endcomment %}
+            {% comment %} const y = this.distribution.data.map((e) => e.id) {% endcomment %}
+            
+            let questions = this.distribution.data;
+
+            let numRows = Math.ceil(questions.length / 20);  // Número de linhas necessárias
+            let data = [];
+
+            questions.forEach((question, idx) => {
+              let x = idx % 20;
+              let y = numRows - 1 - Math.floor(idx / 20);
+              let normalizedHits = question.total > 0 ? question.hits / question.total : 0  // Normalizar os acertos
+              data.push({ question: question, value: [x, y, normalizedHits]});
+            });
+
+            distributionChart.setOption({
+              tooltip: {
+                position: 'top'
+              },
+              animation: false,
+              grid: {
+                top: 26,
+                right: 0,
+                bottom: 20,
+                left: 0,
+              },
+              xAxis: {
+                type: 'category',
+                {% comment %} data: x, {% endcomment %}
+                {% comment %} data: ['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8', 'Q9', 'Q10', 'Q11', 'Q12', 'Q13', 'Q14', 'Q15', 'Q16', 'Q17', 'Q18', 'Q19', 'Q20'], {% endcomment %}
+                splitArea: {
+                  show: false
+                },
+                axisLabel: {
+                  show: false
+                },
+                splitLine: { show: false } // desativa linhas de divisão
+              },
+              yAxis: {
+                type: 'category',
+                {% comment %} data: y, {% endcomment %}
+                splitArea: {
+                  show: false
+                },
+                axisLabel: {
+                  show: false
+                },
+                splitLine: { show: false } // desativa linhas de divisão
+              },
+              visualMap: {
+                show: false,
+                min: 0,
+                max: 1,
+                calculable: true,
+                orient: 'horizontal',
+                left: 'center',
+                bottom: '15%',
+                inRange: {
+                  color: ['#FFE9D8', '#FF8F3D']
+                },
+              },
+              series: [
+                {
+                  name: 'Acertos e erros',
+                  type: 'heatmap',
+                  data: data,
+                  label: {
+                    show: false
+                  },
+                  itemStyle: {
+                    borderColor: '#fff',  // Cor da borda dos quadrados
+                    borderWidth: 5,      // Largura da borda dos quadrados
+                    borderRadius: 4,
+                    // maxWidth: 1, // Define a largura máxima de cada célula
+                    // maxHeight: 1, // Define a largura máxima de cada célula
+                  },
+                  emphasis: {
+                    itemStyle: {
+                      shadowBlur: 10,
+                      shadowColor: 'rgba(0, 0, 0, 0.5)'
+                    }
+                  },
+                  symbolSize: [5, 5],
+                }
+              ],
+              tooltip: {
+                trigger: 'item',
+                className: 'reset-echarts-tooltip',
+                position: 'top', // Posiciona o tooltip na parte superior
+                enterable: true, // Permite que o usuário entre no tooltip
+                formatter: (params) => {
+                  const question = params.data.question
+                  return `
+                    <div class="tw-w-fit tw-flex tw-flex-col tw-bg-white tw-border tw-border-[#E6E8EC] tw-rounded-lg">
+                      <div class="tw-border-b tw-border-[#F3F3F3]">
+                        <div class="tw-flex tw-items-center tw-justify-between tw-px-4 tw-pt-2 tw-pb-[0.563rem]">
+                          <div>
+                            <p class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">${question.exam_name}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="tw-flex tw-gap-8 tw-p-4">
+                        <div>
+                          <div class="tw-flex tw-items-center tw-gap-1">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                              <path d="M6 12L10 8L6 4" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">${question.hits} Total de acertos</p>
+                          </div>
+                          <div class="tw-flex tw-items-center tw-gap-1">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                              <path d="M6 12L10 8L6 4" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">${question.total} Total de respostas</p>
+                          </div>
+                        </div>
+                        <div class="tw-flex tw-items-center tw-justify-center">
+                          <p class="tw-text-3xl tw-leading-[2.125rem] tw-font-medium tw-text-[#FF8F3D] tw-tracking-[0.01em] tw-mb-0">${(question.hits / question.total * 100).toFixed(2)}%</p>
+                        </div>
+                      </div>
+                      <div class="tw-px-4 tw-pb-4">
+                        <a href="${'{% url 'exams:exams_detail_v2' pk='00000000-0000-0000-0000-000000000000' %}'.replace('00000000-0000-0000-0000-000000000000', question.exam_id)}?turma={{who_id|default:''}}" target="_blank" class="btn-block text-center tw-w-full tw-rounded-lg tw-bg-primary-600 tw-px-3 tw-py-3 tw-text-sm tw-font-semibold tw-text-white hover:tw-bg-primary-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600">Visualizar</a>
+                      </div>
+                    </div>
+                  `
+                },
+              },
+            })
+            const resizeObserver = new ResizeObserver(entries => {
+              distributionChart.resize()
+            })
+            resizeObserver.observe(distributionChartElement)
+          }).catch((error) => {
+            this.distribution.status = 'error'
+            this.distribution.error = error
+            console.error(error)
+          }) 
+        }
+      },
+      resetLoadings() {
+        this.average.status = 'idle'
+        this.frequency.status = 'idle'
+        this.progressByMonth.status = 'idle'
+        this.challenges.status = 'idle'
+        this.performanceBySubjects.status = 'idle'
+        this.questionsSummary.status = 'idle'
+        this.questionsElaborationSummary.status = 'idle'
+        this.questions.status = 'idle'
+        this.distribution.status = 'idle'
+        this.topics.status = 'idle'
+        this.abilities.status = 'idle'
+        this.competences.status = 'idle'
+        this.classeRanking.status = 'idle'
+        this.generalHistogram.status = 'idle'
+        this.objectivesHitsAndMisses.status = 'idle'
+        this.discursivesHitsAndMisses.status = 'idle'
+      },
+      async fetchData(who = 'all') {
+        this.loading = true
+        this.fetchClasseAvgXSchoolData()
+        this.fetchRankingData()
+        
+        this.fetchGeneralHistogramData()     
+        this.fetchQuestionsSummary()
+        this.fetchElaborationQuestionsSummary()
+        this.fetchQuestions()
+        
+        this.fetchProgressByMonthData()
+
+        this.fetchFrequency()
+        this.fetchObjectivesHitsAndMissesData()
+        this.fetchDiscursivesHitsAndMissesData()
+
+        this.fetchTopicsData()
+        this.fetchChallengesData()
+
+        this.loading = false
+      },
+      getInitials(text) {
+        let textSplited = text.split(' ')
+        try {
+          if (textSplited.length > 1) {
+            return `${textSplited[0][0]}${textSplited[textSplited.length - 1][0]}`
+          } else {
+            return textSplited.slice(0, 2)
+          }
+        } catch {
+          return text[0].slice(0, 2)
+        }
+      },
+      isVisible(element) {
+        const rect = element.getBoundingClientRect();
+        const viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
+        
+        // Verifica se o elemento está acima ou abaixo da janela de visualização
+        const above = rect.bottom < 0;
+        const below = rect.top > viewHeight;
+
+        // Calcula a porcentagem do elemento visível na tela
+        const visibleHeight = Math.min(viewHeight, rect.bottom) - Math.max(0, rect.top);
+        const percentVisible = (visibleHeight / rect.height) * 100;
+
+        const minPercentViewed = 50
+
+        // Retorna true se pelo menos 20% do elemento estiver visível
+        return !(above || below) && percentVisible >= minPercentViewed;
+      },
+      buildURL(params = {}) {
+        const url = new URL(window.location.href);
+        const searchParams = new URLSearchParams(url.search);
+
+        // Adiciona os novos parâmetros
+        for (const [key, value] of Object.entries(params)) {
+          searchParams.set(key, value);
+        }
+
+        // Atualiza a URL com os novos parâmetros
+        url.search = searchParams.toString();
+
+        // Salva os parâmetros no localStorage
+        localStorage.setItem('urlParams', url.search);
+        return url.toString();
+      },
+      getURLParams() {
+        const urlParams = new URLSearchParams(localStorage.getItem('urlParams'));
+        const params = {};
+        for (const [key, value] of urlParams.entries()) {
+          params[key] = value;
+        }
+        return params;
+      },
+      handleOnLoadCharts() {
+        this.controls.interval = setInterval(() => {
+          this.fetchData()
+        }, 250)
+      },
+      handleUrlsParamsOnInit() {
+        const urlsParams = this.controls.urlsParams
+        if(urlsParams.period) {
+          let period = urlsParams.period.split(',')
+          let start = period[0]
+          let end = period[1]
+          this.period.start = moment(start)
+          this.period.end = moment(end)
+        }
+        if(urlsParams.what) {
+          this.what = urlsParams.what
+          this.whatIDS = [urlsParams.what_ids]
+          this.whatIDS.forEach((id) =>{
+            this.$refs.selectComponent.selectItem(id, this.what)
+          })
+        }
+      },
+      printPage() {
+        window.print()
+      },
+      startInfinityScroll() {
+        const div = document.querySelector('#tab-questions-content');
+        div.addEventListener('scroll', () => {
+          if (div.scrollTop + div.clientHeight >= div.scrollHeight - 50) {
+            this.pushNewQuestionsPage();
+          }
+        });
+      }
+    },
+    async mounted() {
+      await this.fetchAvailablesFilters().then((response) => {
+          let data = response.data[0]
+          this.availablesExams = data.exams
+          this.availablesSubjects = data.subjects
+          this.availablesStages = data.stages
+          this.availablesTopics = data.topics
+          this.availablesAbilities = data.abilities
+          this.availablesCompetences = data.competences
+          this.availablesPeriod = data.period
+          this.period.start = moment(this.availablesPeriod[0])
+          this.period.end = moment(this.availablesPeriod[1])
+        }).then(() => {
+        this.$nextTick().then(() => {
+          this.buildURL()
+        }).then(() => {
+          this.controls.urlsParams = this.getURLParams()
+        }).then(() => {
+          this.handleUrlsParamsOnInit()
+        }).then(() => {
+          this.startDataPicker()
+        }).then(() => {
+          this.fetchData()
+          this.handleOnLoadCharts()
+        })
+      })
+      $(document).on('click', '.dropdown-menu', function (e) {
+        e.stopPropagation();
+      });
+    }
+  })
+</script>
+{% endblock js-additional %}

@@ -1,0 +1,737 @@
+{% extends 'dashboard/base_fixed.html' %}
+{% load static %}
+{% load proportion %}
+{% load round_to %}
+{% load cache %}
+
+
+{% block blockname %}
+  Lize - Painel do aluno
+{% endblock blockname %}
+
+
+{% block breadcrumb-fixed %}
+<div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+  <div>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+        <li class="breadcrumb-item"><a href="#">ALUNOS</a></li>
+        <li class="breadcrumb-item active" aria-current="page">PAINEL PRINCIPAL</li>
+      </ol>
+    </nav>
+    <h4>Olá, {{ user.get_user_first_name }}!</h4>
+  </div>
+</div>
+{% endblock breadcrumb-fixed %}
+
+{% block content-fixed %}
+<div id="sidebarMenu" class="sidebar sidebar-fixed sidebar-components ps ps--active-y">
+
+  <div class="sidebar-body p-0">
+    <ul class="sidebar-nav">
+      <li class="nav-label mg-b-15 text-center pt-3">Aplicações de hoje</li>
+      <li>
+        {% for application_student in applications_today %}
+          {% with application=application_student.application %}
+            {% include 'includes/card_application_student.html' with application=application %}
+          {% endwith  %}
+          {% empty %}
+          <div class="col-12">
+            <div class="card card-event bd-l bd-success">
+              <div class="card-body tx-13">
+                <h6 class="event-title">Não há provas disponíveis para você hoje.</h6>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </li>
+      <li class="nav-label text-center pt-3">
+        <span class="align-self-center"> Aplicações agendadas </span>
+        <hr />
+      </li>
+      <li>
+        {% for application_student in applications_future %}
+          {% with application=application_student.application %}
+            <div class="col-12">
+              <div class="card card-event bd-l bd-primary my-2">
+                <div class="card-body tx-13">
+                  <h4 class="mb-0 tx-16 pb-2 user-select-none text-truncate" style="max-width: 8rem;" title="{{application.subject|default_if_none:'Aplicação'}}">
+                    {{application.subject|default_if_none:"Aplicação"}}
+                  </h4>
+                  <p class="mg-b-0"><i class="far fa-calendar-alt"></i> {{application.date}}</p>
+                  <span class="tx-12 tx-color-03">de {{application.start}} até às {{application.end}}</span>
+                </div>
+              </div>
+            </div>
+          {% endwith %}
+        {% empty %}
+        <div class="col-12">
+          <div class="card card-event bd-l bd-warning">
+            <div class="card-body tx-13">
+              <h6 class="event-title">Não há provas agendadas para você.</h6>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </li>
+    </ul>
+  </div>
+</div>
+
+  {% if student.get_finished_exams_current_year.count|default:0 > 0 %}
+    <div class="row">
+      <div class="col-12">
+        <h4>Seu desempenho geral</h4>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-6 col-lg-3 px-3 pb-1" style="cursor: pointer;" onclick="window.location='{% url 'applications:application_student_list' %}'">
+          <div class="card card-body">
+              <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Provas</h6>
+              <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                  <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">{{ student.get_finished_exams_current_year.count|default:0 }}</h3>
+              </div>
+          </div>
+      </div>
+      <div class="col-sm-6 col-lg-3 px-3 pb-1">
+          <div class="card card-body">
+              <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Questões</h6>
+              <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                  <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">{{ student.get_option_answers_current_year.count }}</h3>
+              </div>
+          </div>
+      </div>
+      <div class="col-sm-6 col-lg-3 px-3 pb-1">
+          <div class="card card-body">
+              <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Acertos</h6>
+              <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                  <h3 class="tx-success tx-rubik mg-b-0 mg-r-5 lh-1">{{ student.get_correct_option_answers.count|default:0 }}</h3>
+              </div>
+          </div>
+      </div>
+      <div class="col-sm-6 col-lg-3 px-3 pb-1">
+          <div class="card card-body">
+              <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Aproveitamento</h6>
+              <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                  <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">
+                      {{ student.get_correct_option_answers.count|default:0|proportion:student.get_option_answers_current_year.count|floatformat:2 }}%
+                  </h3>
+              </div>
+          </div>
+      </div>
+    </div>
+
+
+    <div class="row">
+      <div class="col-12 col-lg-8 col-xl-9">
+          <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+              <div>
+                  <h6 class="mg-b-5">Áreas de conhecimento</h6>
+                  <p class="tx-13 tx-color-03 mg-b-0">Seu aproveitamento geral</p>
+              </div>
+              <!-- <div class="d-flex flex-column text-center mg-t-20 mg-sm-t-0">
+                <span class="tx-10 tx-color-03 pb-1">Tipo de gráfico</span>
+                <div class="btn-group flex-fill">
+                  <button class="btn btn-white btn-xs active" @click="changeChartType('chartSubjects', 'horizontal')"><i class="far fa-chart-bar"></i> Barras horizontais</button>
+                  <button class="btn btn-white btn-xs" @click="changeChartType('chartSubjects', 'linhas')"><i class="fas fa-chart-line"></i></i> Linhas</button>
+                </div>
+              </div> -->
+            </div>
+
+            <div class="card-body pd-y-40">
+              <div class="col-12">
+                <canvas id="chartSubjects"></canvas>
+              </div>
+            </div>
+
+            <!-- <div class="table-responsive">
+                <table class="table table-dashboard mg-b-0">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th class="text-right">Questões</th>
+                            <th class="text-right">Acertos</th>
+                            <th class="text-right">Tempo total</th>
+                            <th class="text-right">Aproveitamento</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for knowledge_area in knowledge_areas %}
+                        <tr>
+                            <td class="tx-color-03 tx-normal">{{ knowledge_area }}</td>
+                            <td class="tx-medium text-right">{{ knowledge_area.answered_questions }}</td>
+                            <td class="tx-medium text-right">{{ knowledge_area.correct_answered_questions }}</td>
+                            <td class="text-right">{{ knowledge_area.total_time }}</td>
+                            <td class="text-left pl-5">
+                                {% with percentage=knowledge_area.correct_answered_questions|proportion:knowledge_area.answered_questions %}
+                                <div class="progress ht-20">
+                                    <div class="progress-bar wd-{{ percentage|round_to:5 }}p" role="progressbar" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">{{ percentage|floatformat:1 }}%</div>
+                                </div>
+                                {% endwith %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div> -->
+
+          </div>
+      </div>
+      <div class="col-12 col-lg-4 col-xl-3 mg-t-10 mg-lg-t-0">
+        <div class="card">
+          <div class="card-header text-center">
+            <h6 class="lh-5 mg-b-0">
+              Resumo Geral
+            </h6>
+          </div>
+          <div class="card-body p-4">
+
+            <canvas id="chartSummary"></canvas>
+
+          </div><!-- card-body -->
+          <div class="card-footer">
+            <div class="row">
+              <div class="col-6">
+                <p class="tx-10 tx-uppercase tx-medium tx-color-03 tx-spacing-1 tx-nowrap mg-b-5">Presença</p>
+                <div class="d-flex align-items-center">
+                  <div class="wd-10 ht-10 rounded-circle bg-success mg-r-5"></div>
+                  <h5 class="tx-normal tx-rubik mg-b-0">${student.finish_exam_percent} %<small class="tx-color-04"></small></h5>
+                </div>
+              </div><!-- col -->
+              <div class="col-6">
+                <p class="tx-10 tx-uppercase tx-medium tx-color-03 tx-spacing-1 mg-b-5">Ausência</p>
+                <div class="d-flex align-items-center">
+                  <div class="wd-10 ht-10 rounded-circle bg-pink mg-r-5"></div>
+                  <h5 class="tx-normal tx-rubik mg-b-0">${100 - student.finish_exam_percent} %<small class="tx-color-04"></small></h5>
+                </div>
+              </div><!-- col -->
+              <div class="col-12 mg-t-20">
+                <p class="tx-10 tx-uppercase tx-medium tx-color-03 tx-spacing-1 mg-b-5">Tempo médio das aplicações</p>
+                <div class="d-flex align-items-center">
+                  <div class="wd-10 ht-10 rounded-circle bg-teal mg-r-5"></div>
+                  <h5 class="tx-normal tx-rubik mg-b-0">${Math.floor(2 * Math.random()) + 1} h<small class="tx-color-04"></small></h5>
+                </div>
+              </div><!-- col -->
+              <div class="col-12 mg-t-20">
+                <p class="tx-10 tx-uppercase tx-medium tx-color-03 tx-spacing-1 mg-b-5">Média de Pausas</p>
+                <div class="d-flex align-items-center">
+                  <div class="wd-10 ht-10 rounded-circle bg-teal mg-r-5"></div>
+                  <h5 class="tx-normal tx-rubik mg-b-0">${Math.floor(100 * Math.random())} min<small class="tx-color-04"></small></h5>
+                </div>
+              </div><!-- col -->
+            </div><!-- row -->
+          </div><!-- card-footer -->
+        </div><!-- card -->
+      </div>
+    </div>
+
+
+    <!-- <div class="col-md-6 col-lg-4 col-xl-3 mg-t-10 mg-lg-t-0">
+      <div class="card">
+        <div class="card-header text-center">
+          <h6 class="lh-5 mg-b-0">
+            Detalhes
+          </h6>
+        </div>
+        <div class="card-body pd-lg-25">
+          <canvas id="chartApplications"></canvas>
+        </div>
+        <div class="card-footer">
+          <div class="row">
+            <div class="col-6">
+              <p class="tx-10 tx-uppercase tx-medium tx-color-03 tx-spacing-1 tx-nowrap mg-b-5">Presença</p>
+              <div class="d-flex align-items-center">
+                <div class="wd-10 ht-10 rounded-circle bg-success mg-r-5"></div>
+                <h5 class="tx-normal tx-rubik mg-b-0">80 %<small class="tx-color-04"></small></h5>
+              </div>
+            </div>
+            <div class="col-6">
+              <p class="tx-10 tx-uppercase tx-medium tx-color-03 tx-spacing-1 mg-b-5">Ausência</p>
+              <div class="d-flex align-items-center">
+                <div class="wd-10 ht-10 rounded-circle bg-pink mg-r-5"></div>
+                <h5 class="tx-normal tx-rubik mg-b-0">20 %<small class="tx-color-04"></small></h5>
+              </div>
+            </div>
+            <div class="col-12 mg-t-20">
+              <p class="tx-10 tx-uppercase tx-medium tx-color-03 tx-spacing-1 mg-b-5">Tempo médio em provas</p>
+              <div class="d-flex align-items-center">
+                <div class="wd-10 ht-10 rounded-circle bg-teal mg-r-5"></div>
+                <h5 class="tx-normal tx-rubik mg-b-0">${Math.floor(2 * Math.random()) + 1} h<small class="tx-color-04"></small></h5>
+              </div>
+            </div>
+            <div class="col-12 mg-t-20">
+              <p class="tx-10 tx-uppercase tx-medium tx-color-03 tx-spacing-1 mg-b-5">Média de Pausas</p>
+              <div class="d-flex align-items-center">
+                <div class="wd-10 ht-10 rounded-circle bg-teal mg-r-5"></div>
+                <h5 class="tx-normal tx-rubik mg-b-0">${Math.floor(3 * Math.random())}<small class="tx-color-04"></small></h5>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div> -->
+
+
+    <h4>Resumo das suas ultimas provas</h4>
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header pd-t-20 pd-lg-t-25 pd-l-20 pd-lg-l-25 d-flex flex-column flex-sm-row align-items-sm-start justify-content-sm-between">
+            <div>
+              <h6 class="mg-b-5">Você pode detalhar melhor a aplicação clicando no ícone <i class="fas fa-chart-line"></i></h6>
+              <p class="tx-12 tx-color-03 mg-b-0">O gráfico mostra as aplicações de acordo com o período selecionado.</p>
+            </div>
+          </div><!-- card-header -->
+          <div class="card-body p-0">
+            <div class="divScrollab">
+              <div class="accordion" id="accordionExams">
+                <div class="card" v-for="(exam, objectIndex) in student.exams.slice(0, numberOfApplicationsShow)">
+                  <div class="card-header p-2 border-bottom-0" data-toggle="collapse" :data-target="'#exam'+objectIndex" style="cursor: pointer;">
+                    <div class="profile-update-option bg-white ht-40 bd d-flex justify-content-between">
+                      <div class="d-flex align-items-center mg-r-auto">
+                        <p class="d-none d-sm-inline link-03 px-3 mb-0">
+                          <span class="tx-semibold">${objectIndex + 1}ª</span>
+                          <span class="px-2">${exam.name}</span>
+                        </p>
+                      </div>
+                      <div class="bd-l px-3 d-flex align-items-center">
+                        <span class="tx-color-03 tx-normal"><i class="far fa-calendar-alt"></i> ${exam.date}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div :id="'exam'+objectIndex" :class="objectIndex == 0 ? 'collapse show':'collapse'" aria-labelledby="headingOne" data-parent="#accordionExams">
+                    <div class="card-body">
+                      <div class="row">
+
+                        <div class="col-sm-6 col-lg-3 py-2">
+                          <div class="card">
+                            <div class="card-body py-2 d-flex justify-content-between align-items-center">
+                              <div>
+                                <i class="fas fa-list-ol fa-2x tx-primary"></i>
+                              </div>
+                              <div class="text-right">
+                                <h3 class="tx-normal tx-primary">${exam.questions_count}</h3>
+                                <h6 class="tx-uppercase tx-10 tx-spacing-1 tx-color-03">Questões</h6>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="col-sm-6 col-lg-3 py-2">
+                          <div class="card">
+                            <div class="card-body py-2 d-flex justify-content-between align-items-center">
+                              <div>
+                                <i class="fas fa-check fa-2x tx-success"></i>
+                              </div>
+                              <div class="text-right">
+                                <h3 class="tx-normal tx-success">${exam.corrects}</h3>
+                                <h6 class="tx-uppercase tx-10 tx-spacing-1 tx-color-03">Acertos</h6>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="col-sm-6 col-lg-3 py-2">
+                          <div class="card">
+                            <div class="card-body py-2 d-flex justify-content-between align-items-center">
+                              <div>
+                                <i class="fas fa-times fa-2x tx-danger"></i>
+                              </div>
+                              <div class="text-right">
+                                <h3 class="tx-normal tx-danger">${exam.questions_count - exam.corrects}</h3>
+                                <h6 class="tx-uppercase tx-10 tx-spacing-1 tx-color-03">Erros</h6>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="col-sm-6 col-lg-3 py-2">
+                          <div class="card">
+                            <div class="card-body py-2 d-flex justify-content-between align-items-center">
+                              <div>
+                                <i class="fas fa-award fa-2x tx-primary"></i>
+                              </div>
+                              <div class="text-right">
+                                <h3 class="tx-normal tx-primary">${Math.floor(10 * Math.random())}</h3>
+                                <h6 class="tx-uppercase tx-10 tx-spacing-1 tx-color-03">Nota</h6>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row" v-if="exam.teachers.length > 0">
+                        <p class="w-100 text-center tx-color-03">Resumo por disciplinas e áreas do conhecimento nesta prova</p>
+
+                        <div class="col-sm-6 col-lg-6 py-2">
+                          <div class="card">
+                            <div class="card-header border-bottom-0">
+                              <h6 class="lh-5 mg-b-0">
+                                Disciplinas
+                              </h6>
+                            </div>
+                            <div v-for="teacher in exam.teachers">
+                              <div class="card-body d-flex justify-content-between align-items-center pt-1 pb-0 shadow-none">
+                                  <div>
+                                    <h6 class="tx-uppercase tx-14 tx-spacing-1 tx-color-03 mb-0">${teacher.subject}</h6>
+                                    <h6 class="tx-uppercase tx-10 tx-spacing-1 tx-color-03">Acertos <span class="tx-success">${teacher.hits}</span> / <span class="tx-pink">${100 - teacher.hits}</span></h6>
+                                  </div>
+                                  <div class="text-right">
+                                    <h3 class="tx-normal tx-primary"><span :class="teacher.hitsPercent >= 40 ? 'tx-success':'tx-danger'">${teacher.hitsPercent} %</span></h3>
+                                  </div>
+                              </div>
+                              <div class="card-footer border-top-0 pt-0">
+                                <div class="progress">
+                                  <div :class="teacher.hitsPercent >= 40 ? 'progress-bar bg-success':'progress-bar bg-danger'" role="progressbar" :style="'width: '+teacher.hitsPercent+'%;'" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">${teacher.hitsPercent} %</div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-6 py-2">
+                          <div class="card">
+                            <div class="card-header border-bottom-0">
+                              <h6 class="lh-5 mg-b-0">
+                                Áreas
+                              </h6>
+                            </div>
+                            <div v-for="teacher in exam.teachers">
+                              <div class="card-body d-flex justify-content-between align-items-center pt-1 pb-0">
+                                  <div>
+                                    <h6 class="tx-uppercase tx-10 tx-spacing-1 tx-color-03">${teacher.area}</h6>
+                                  </div>
+                                  <div class="text-right">
+                                    <h3 class="tx-normal tx-primary">${Math.floor(100 * Math.random())} %</h3>
+                                  </div>
+                              </div>
+                              <div class="card-footer border-top-0 pt-0">
+                                <div class="progress">
+                                  <div class="progress-bar" role="progressbar" :style="'width: '+Math.floor(100 * Math.random())+'%;'" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">${Math.floor(100 * Math.random())} %</div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- <div class="row">
+                        <p class="w-100 text-center tx-color-03">Resumo por área do conhecimento</p>
+                        <div class="col-sm-6 col-lg-6 py-2" v-for="area in exam.teachers">
+                          <div class="card">
+                            <div class="card-body py-2 d-flex justify-content-between align-items-center">
+                              <div>
+                                <i class="fas fa-award fa-2x tx-primary"></i>
+                              </div>
+                              <div class="text-right">
+                                <h3 class="tx-normal tx-primary">${Math.floor(100 * Math.random())} %</h3>
+                                <h6 class="tx-uppercase tx-10 tx-spacing-1 tx-color-03">${area.area}</h6>
+                                <h6 class="tx-uppercase tx-10 tx-spacing-1 tx-color-03">Disciplina: ${area.subject}</h6>
+                              </div>
+                            </div>
+                            <div class="card-footer border-top-0">
+                              <div class="progress">
+                                <div class="progress-bar" role="progressbar" :style="'width: '+Math.floor(100 * Math.random())+'%;'" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">25%</div>
+                              </div>
+                            </div>
+
+                          </div>
+                        </div>
+                      </div> -->
+
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div><!-- card-body -->
+          <div class="card-footer text-center tx-13" style="cursor: pointer;" v-on:click="addMoreApplications()">
+            <span class="link-03">Mostrar mais provas <i class="icon ion-md-arrow-down mg-l-5"></i></span>
+          </div>
+        </div><!-- card -->
+        <template>
+          <v-skeleton-loader v-if="student.exams.length > 0"
+            max-width="300"
+            type="card"
+          ></v-skeleton-loader>
+        </template>
+      </div>
+
+    </div>
+
+
+  {% endif %}
+
+{% endblock content-fixed %}
+
+{% block js-additional %}
+
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+    var app = new Vue({
+
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+            chartSubjects: document.getElementById('chartSubjects'),
+            chartSummary: document.getElementById('chartSummary'),
+
+            mediaSchool: Math.floor(3 * Math.random() + 5),
+            student: {
+              exams: [
+                {% for exam in student.get_finished_exams_current_year %}
+                  {
+                    pk: '{{exam.application.pk}}',
+                    name: '{{exam.application.exam}}',
+                    date: moment('{{exam.application.date|safe}}').format('DD/MM/YYYY'),
+                    duration: moment('{{exam.application.end|safe}}').format('H') - moment('{{exam.application.start|safe}}').format('H'),
+                    questions_count: '{{exam.application.exam.questions.count}}',
+                    corrects: '{{exam.get_correct_optionanswers.count}}',
+                    teachers: [
+                      {% for teacher in exam.application.exam.teacher_subjects.all %}
+                        {
+                          area: '{{teacher.subject.knowledge_area}}',
+                          subject: '{{teacher.subject.name}}',
+                          hitsPercent: Math.floor(100 * Math.random()),
+                          hits: Math.floor(100 * Math.random()),
+                        },
+                      {% endfor %}
+                    ],
+                  },
+                {% endfor %}
+              ],
+              knowledge_areas: [
+                {% for knowledge_area in knowledge_areas %}
+                  {
+                    name: '{{knowledge_area}}',
+                    questions: '{{knowledge_area.answered_questions}}',
+                    correctQuestions: '{{knowledge_area.correct_answered_questions}}',
+                    totalTime: '{{knowledge_area.total_time}}',
+                  },
+                {% endfor %}
+              ],
+              finish_exam_percent: Math.floor(100 * Math.random()),
+            },
+            numberOfApplicationsShow: 5,
+
+            // Variáveis de controle Chart Subjects
+            knowledge_areas_labels: [],
+            knowledge_area_values: [],
+            knowledge_area_hits: [],
+            knowledge_area_mistakes: [],
+
+            applications_students_hits_geral: 0,
+
+        },
+        methods: {
+          addMoreApplications() {
+            if(this.numberOfApplicationsShow <= this.student.exams.length) {
+              this.numberOfApplicationsShow += 5
+            }
+          },
+          getKnowledgeAreaData() {
+            this.student.knowledge_areas.forEach((area) => {
+              this.knowledge_areas_labels.push(area.name)
+              this.knowledge_area_values.push((area.questions / 100) * area.correctQuestions)
+              this.knowledge_area_hits.push(area.correctQuestions)
+              this.knowledge_area_mistakes.push(area.questions  - area.correctQuestions)
+            })
+          },
+        },
+
+        mounted: function() {
+
+            this.getKnowledgeAreaData()
+            this.student.exams.sort((a, b) => b - a)
+
+
+            //Subjects
+            new Chart(chartSubjects, {
+                type: 'bar',
+                data: {
+                    labels: this.knowledge_areas_labels,
+                    datasets: [
+                        {
+                          maxBarThickness: 20,
+                          label: '(%) Porcentagem',
+                          data: this.knowledge_area_values,
+                          lineWidth: 2,
+                          backgroundColor: [
+                              'rgba(54, 162, 235, 0.6)',
+                          ],
+                        },
+                        {
+                          maxBarThickness: 20,
+                          label: 'Acertos',
+                          data: this.knowledge_area_hits,
+                          lineWidth: 2,
+                          backgroundColor: [
+                              'rgba(107, 200, 80, 0.6)',
+                          ],
+                      },
+                      {
+                        maxBarThickness: 20,
+                        label: 'Erros',
+                        data: this.knowledge_area_mistakes,
+                        lineWidth: 2,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.6)',
+                        ],
+                    },
+                    ],
+                },
+                options: {
+
+                  scales: {
+                    y: {
+                      beginAtZero: true
+                    },
+                    x: {
+                      borderWidth: 2,
+                      lineHeight: 0.1,
+                    }
+                  },
+                  plugins: {
+                    legend: {
+                        labels: {
+                            // This more specific font property overrides the global property
+                            font: {
+                                size: 10
+                            }
+                        }
+                    },
+                    elements: {
+                      bar: {
+                        borderWidth: 5
+                      }
+                    }
+                  }
+
+                }
+            })
+
+            //Applications
+            let num = Math.floor(100 * Math.random())
+            new Chart(chartSummary, {
+              type: 'doughnut',
+              data: {
+                datasets: [{
+                    label: '%',
+                    data: [num, 100 - num],
+                    backgroundColor: [
+                      'rgba(97,185,90, 0.5)',
+                      'rgba(237,93,115, 0.5)',
+                    ],
+                  }]
+              },
+              options: {
+                plugins: {
+                  legend: {
+                      labels: {
+                          // This more specific font property overrides the global property
+                          font: {
+                              size: 10
+                          }
+                      }
+                  }
+                }
+              }
+          })
+        },
+        updated: function() {
+
+        },
+    })
+
+
+
+    $('#area_id').select2({
+      placeholder: "Selecione uma opção",
+      closeOnSelect: false,
+    }).on('select2:selecting', function(e) {
+      let cur = e.params.args.data.id;
+      let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+      $(e.target).val(old).trigger('change');
+      $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+      return false;
+    });
+    $('#subject_id').select2({
+      placeholder: "Selecione uma opção",
+      closeOnSelect: false,
+      templateResult: function (data, container) {
+        let subject_name = data.text.split('>')[0]
+        let knowledge_area_name = data.text.split('>')[1]
+        return $(
+          `<strong class="select2-results__custom_option">${subject_name}</strong> <br> <span class="select2-results__custom_option">${knowledge_area_name}</span>`
+        );
+      },
+    }).on('select2:selecting', function(e) {
+      let cur = e.params.args.data.id;
+      let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+      $(e.target).val(old).trigger('change');
+      $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+      return false;
+    });
+
+    $('.table-responsive').on('show.bs.dropdown', function () {
+      $('.table-responsive').css( "overflow", "inherit" );
+    });
+
+    $('.table-responsive').on('hide.bs.dropdown', function () {
+      $('.table-responsive').css( "overflow", "auto" );
+    })
+
+    $(function () {
+      'use strict'
+
+      $('.off-canvas-menu').on('click', function (e) {
+        e.preventDefault();
+        var target = $(this).attr('data-toggle-off-canvas');
+        $(target).addClass('show');
+      });
+
+      $('.off-canvas .close').on('click', function (e) {
+        e.preventDefault();
+        $(this).closest('.off-canvas').removeClass('show');
+      })
+
+      $(document).on('click touchstart', function (e) {
+        if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+          return
+        }
+        e.stopPropagation();
+
+        if (!$(e.target).closest('.off-canvas-menu').length) {
+          var offCanvas = $(e.target).closest('.off-canvas').length;
+          if (!offCanvas) {
+            $('.off-canvas.show').removeClass('show');
+          }
+        }
+      });
+    });
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- <script>
+  $(window).focus(function() {
+    window.location.reload()
+  });
+</script> -->
+
+{% endblock %}

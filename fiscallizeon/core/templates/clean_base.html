@@ -1,0 +1,91 @@
+{% load static %}
+{% load compress %}
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    
+    {% comment %} 
+    esse template é usado em páginas de impressão, então não deve contar no google analytics
+    {% if not DEBUG %}
+    <!-- Google Tag Manager -->
+      <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','GTM-KWRQHDS');</script>
+      <!-- End Google Tag Manager -->
+  {% endif %} {% endcomment %}
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <meta name="twitter:site" content="https://app.lizeedu.com.br">
+    <meta name="twitter:creator" content="Fiscallize">
+    <meta name="twitter:card" content="Monitoramento e aplicações de provas online">
+    <meta name="twitter:title" content="Fiscallize Remote">
+    <meta name="twitter:description" content="Monitoramento e aplicações de provas online">
+
+    <meta property="og:url" content="https://app.lizeedu.com.br">
+    <meta property="og:title" content="Fiscallize Remote">
+    <meta property="og:description" content="Monitoramento e aplicações de provas online">
+
+    <meta name="description" content="Monitoramento e aplicações de provas online">
+    <meta name="author" content="Fiscallize Remote">
+    
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}" />
+    <title>{% block title %}LizeEdu - Aplicações de prova online{% endblock title %}</title>
+
+    <link rel="stylesheet" href="{% static 'administration/assets/css/app.css' %}">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.3.2/build/styles/default.min.css">
+    
+    {% block css-additional %}{% endblock css-additional %}
+
+    {% if not DEBUG %}
+      <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "cl4r2phsyu");
+      </script>
+    {% endif %}
+
+    {% block js-header-additional %}{% endblock js-header-additional %}
+    
+    <script src="{% static 'js/vue.min.js' %}"></script>
+    
+    {% compress js %}
+    <script src="{% static 'administration/lib/jquery/jquery.min.js' %}"></script>
+    {% endcompress %}
+
+
+  </head>
+  <body>    
+    {% if not DEBUG %}
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWRQHDS"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    {% endif %}
+  
+      <div id="app">
+
+        {% block off-canvas %}{% endblock off-canvas %}
+        {% block content %}{% endblock content %}
+
+        
+        {% block extra-modal %}{% endblock extra-modal %}
+        
+      </div>
+
+      {% compress js %}
+      <script src="{% static 'administration/lib/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+      {% endcompress %}
+      
+      {% block js-additional %}{% endblock js-additional %}
+
+
+  </body>
+</html>

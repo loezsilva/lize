@@ -1,0 +1,1493 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+
+
+{% block title %}Dashboard de análise administrativa - Lize{% endblock title %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10 performance-content">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">DASHBOARD</a></li>
+          <li class="breadcrumb-item active" aria-current="page">ADMINISTRATIVO</li>
+        </ol>
+      </nav> 
+    </div>    
+  </div>
+  <div class="row mb-2">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+      <h4 class="mb-0">Dashboard Administrativo</h4>
+      <div class="text-right justify-content-end">
+          <template v-if="filters.showAppliedFilters.length > 0">
+            <a @click="changeFilters('removeFilters')" class="btn btn-xs btn-secondary text-white btn-icon rounded-pill">
+              <i class="fas fa-eraser"></i> Apagar filtro(s)
+            </a>
+          </template>
+          <button class="btn btn-xs btn-primary rounded-pill" id="dfSettingsShow"><i class="fas fa-filter"></i> Filtros <span class="badge badge-danger rounded-circle">${filters.showAppliedFilters.length}</span></button>
+      </div>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block css-additional %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'dashboard/lib/apexcharts/apexcharts.css' %}">
+  <style>
+    .applied-blur {
+      filter: blur(5px);
+      -webkit-filter: blur(5px);
+    }
+
+    .df-settings-body{
+      width: 380px !important;
+    }
+
+    .df-settings-link{
+          left: -50px !important;
+          width: 50px !important;
+    }
+
+    .select2-selection__choice__remove {
+      display: none !important;
+    }
+
+    .df-settings.show{
+      right: 332px;
+    }
+
+    .select2-container{
+      width: 100% !important;
+    }
+
+    .subject-list:hover {
+      background-color: #EEEFF4;
+      cursor: pointer;
+      opacity: 0.6;
+    }
+    .card {
+      animation: fadeIn; /* referring directly to the animation's @keyframe declaration */
+      animation-duration: 1s; /* don't forget to set a duration! */
+    }
+    .marker {
+      animation: fadeInRight; /* referring directly to the animation's @keyframe declaration */
+      animation-duration: 0.5s; /* don't forget to set a duration! */
+    }
+    .divScrollab {
+      max-height: 360px; 
+      overflow-y: scroll;
+      border-top: 1px solid #EEEFF4;
+    }
+    .bg-success {
+      background-color: rgba(97,185,90, 0.5) !important;
+    }
+    .bg-danger {
+      background-color: rgba(237,93,115, 0.5) !important;
+    }
+    .marker {
+      cursor: pointer;
+    }
+    @media only screen and (max-width: 850px) {
+      .df-settings-body{
+        width: 290px;
+      }
+      .df-settings.show{
+        right: 244px;
+      }
+      .question img {
+        max-width: 250px !important;
+      /* min-width: 100% !important; */
+      }
+    }
+    .c-help {
+      cursor: help;
+    }
+  </style>
+{% endblock css-additional %}
+    
+
+{% block content-fixed %}
+<main id="app">
+  <div class="ard cer dcv tw-mb-16">
+
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+      <nav class="ls" aria-label="Breadcrumb">
+        <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+          <li>
+            <div>
+              <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                  <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+              </a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="data:text/plain," class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Dashboards</a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Administrativo</a>
+            </div>
+          </li>
+        </ol>
+      </nav>
+      <div>
+        <template v-if="filters.showAppliedFilters.length > 0">
+          <a @click="changeFilters('removeFilters')" class="btn btn-xs btn-secondary text-white btn-icon rounded-pill">
+            <i class="fas fa-eraser"></i> Apagar filtro(s)
+          </a>
+        </template>
+        <button class="btn btn-xs btn-primary rounded-pill" id="dfSettingsShow"><i class="fas fa-filter"></i> Filtros <span class="badge badge-danger rounded-circle">${filters.showAppliedFilters.length}</span></button>
+      </div>
+    </div>
+
+<div class="performance-content" :class="{'applied-blur' : load.widgets }">
+
+  {% include "dashboard/breadcrumb-year.html" with year=year|force_escape %}
+
+  <div class="row mb-1">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+      <div>
+        <template v-if="filters.showAppliedFilters.length">
+          <span class="tx-color-03">Filtros aplicados</span>
+          <div class="align-middle">
+            <span class="badge badge-primary rounded-pill p-1 m-1" v-for="filter in filters.showAppliedFilters">
+              <template v-if="Number(filter.split(' ')[0]) > 0">
+                ${filter.split(' ')[1]} <span class="badge badge-danger rounded-circle">${filter.split(' ')[0]}</span>
+              </template>
+              <template v-else>
+                ${filter} <span class="badge badge-danger rounded-circle">1</span>
+              </template>
+            </span>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <div v-show="widgetsViewType == 'cards'">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h4 class="mb-0">Estatísticas de questões</h4>
+      </div>
+      <div>
+        <button type="button" class="btn btn-xs btn-primary m-1">
+          <i class="fas fa-th"></i>
+        </button>
+        <button type="button" class="btn btn-xs btn-outline-primary m-1" @click="widgetsViewType = 'pie'">
+          <i class="fas fa-chart-pie"></i>
+        </button>
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-xs btn-outline-primary m-1" 
+          @click="exportDashboardData()" 
+          :disabled="loadingExport"
+        >
+          <template v-if="loadingExport"><i class="fas fa-spinner fa-spin"></i> Exportando</template>
+          <template v-else>Exportar</template>
+        </button>
+        {% csrf_token %}
+      </div>
+    </div>
+    <div class="row">
+      <template v-if="!load.widgets">
+        <card-component :cols="'col-lg-4 col-6'" :value="widgets.questions.opened" :total="widgets.questions.count" :text="'Em aberto'" :color="'tx-teal'" :tippycontent="'Total de questões que estão em aberto'" :percenttippycontent="`Esta porcentagem é calculada através das questões que <strong>não possiu nenhum status associado</strong> ou que o status atual é <span class='badge badge-primary'>visto</span>`"></card-component>
+        <card-component :cols="'col-lg-4 col-6'" :value="widgets.questions.approved" :total="widgets.questions.count" :text="'Aprovadas'" :color="'tx-success'" :tippycontent="'Total de questões que foram aprovadas'"></card-component>
+        <card-component :cols="'col-lg-4 col-6'" :value="widgets.questions.reproved" :total="widgets.questions.count" :text="'Reprovadas'" :color="'tx-pink'" :tippycontent="'Total de questões que foram reprovadas'"></card-component>
+        <card-component :cols="'col-lg-4 col-6'" :value="widgets.questions.annuled" :total="widgets.questions.count" :text="'Anuladas'" :color="'tx-pink'" :tippycontent="'Total de questões que foram anuladas'"></card-component>
+        <card-component :cols="'col-lg-4 col-6'" :value="widgets.questions.lates" :total="widgets.questions.count" :text="'Atrasadas'" :color="'tx-orange'" :tippycontent="'Total de questões adicionadas em solicitações atrasadas'"></card-component>
+        <card-component :cols="'col-lg-4 col-6'" :value="widgets.questions.correction_pending" :total="widgets.questions.count" :text="'Correção Sugerida'" :color="'tx-warning'" :tippycontent="'Total de questões que foi sugerida correção'"></card-component>
+        <card-component :cols="'col-lg-4 col-6'" :value="widgets.questions.use_later" :total="widgets.questions.count" :text="'Usar depois'" :color="'tx-info'" :tippycontent="'Total de questões marcada como usar depois'"></card-component>
+        <card-component :cols="'col-lg-4 col-6'" :value="widgets.questions.count" :text="'Total de Questões'" hidepercent="true"></card-component>
+      </template>
+    </div>
+    <h4 class="mb-0">Estatísticas de cadernos</h4>
+    <div class="row">
+      <template v-if="!load.widgets">
+        <card-component :cols="'col-lg-4 col-6'" :value="widgets.exams.elaborating" :total="widgets.exams.count" :text="'Elaborando'" :color="'tx-success'" :tippycontent="'Total de cadernos estão sendo elaborados'" :percenttippycontent="`Esta porcentagem é calculada através dos cadernos que tem o status atual como  <span class='badge badge-primary'>Elaborando</span> ou que <strong>já foi aplicado pelo menos uma vez</strong>`"></card-component>
+        <card-component :cols="'col-lg-4 col-6'" :value="widgets.exams.opened" :total="widgets.exams.count" :text="'Revisão de itens'" :color="'tx-success'" :tippycontent="'Total de cadernos estão Revisão de itens'"></card-component>
+        <card-component :cols="'col-lg-4 col-6'" :value="widgets.exams.closed" :total="widgets.exams.count" :text="'Fechados'" :color="'tx-pink'" :tippycontent="'Total de cadernos estão foram fechados'"></card-component>
+        <card-component :cols="'col-lg-4 col-6'" :value="widgets.exams.send_review" :total="widgets.exams.count" :text="'Em Revisão'" :color="'tx-teal'" :tippycontent="'Total de cadernos estão em revisão'"></card-component>
+        <card-component :cols="'col-lg-4 col-6'" :value="widgets.exams.text_review" :total="widgets.exams.count" :text="'Revisão de Texto'" :color="'tx-teal'" :tippycontent="'Total de cadernos estão em revisão de texto'"></card-component>
+        <card-component :cols="'col-lg-4 col-6'" :value="widgets.exams.late" :total="widgets.exams.count" :text="'Entrega Atrasada'" :color="'tx-pink'" :percenttippycontent="`Esta porcentagem é calculada através dos <strong>cadernos que contém pelo menos uma questão</strong> que foi <strong>adicionada após a data limite de entrega do caderno</strong>`" :showtotal="true"></card-component>
+        <card-component :cols="'col-lg-4 col-6'" :value="widgets.exams.count" :text="'Total de Cadernos'" :color="'tx-teal'" hidepercent="true"></card-component>
+        <card-component :cols="'col-lg-4 col-6'" :value="widgets.exams.is_printed_count" :total="widgets.exams.count" :text="'Cadernos impressos'" :color="'tx-success'" :tippycontent="'Total de Cadernos que já foram impressos'" :percenttippycontent="`Total de cadernos que foram marcados como impresso`"></card-component>
+      </template>
+      <div class="col-6 col-md-6 col-lg-4 mg-t-10">
+          <div class="card">
+            <div class="card-body pd-y-20">
+              <div class="row row-sm">
+                <div class="col-12">
+                  <template v-if="!load.tme">
+                    <h3 class="tx-normal tx-rubik tx-spacing--1 mg-b-5">
+                      <template v-if="tme > 0">
+                        ${momentRef().seconds(tme).toNow(true)}
+                      </template>
+                      <template v-else>-</template>
+                      <span class="tx-color-03 tooltips c-help" data-tippy-content="O tempo médio de elaboração é calculado através da <strong>diferença</strong> entre a inserção da <strong>primeira</strong> e a <strong>ultima</strong> questão de cada professor">(TME)</span>
+                    </h3>
+                    <h6 class="tx-12 tx-semibold tx-uppercase tx-spacing-1 text-teal mg-b-5">Tempo médio de elaboração</h6>
+                  </template>
+                  <div class="placeholder-paragraph" v-else>
+                    <div class="line"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+      </div>
+      <div class="col-6 col-md-6 col-lg-4 mg-t-10">
+        <div class="card">
+          <div class="card-body pd-y-20">
+            <div class="row row-sm">
+              <div class="col-12">
+                <template v-if="!load.tme">
+                  <h3 class="tx-normal tx-rubik tx-spacing--1 mg-b-5">
+                    <template v-if="tmt > 0">
+                      ${momentRef().seconds(tmt).toNow(true)} 
+                    </template>
+                    <template v-else>-</template>
+                    <span class="tx-color-03 tooltips c-help" data-tippy-content="O tempo médio de entrega é calculado através da <strong>diferença</strong> entre a data de liberação do caderno para os professores e a inserção da ultima questão no caderno">(TMT)</span>
+                  </h3>
+                  <h6 class="tx-12 tx-semibold tx-uppercase tx-spacing-1 text-teal mg-b-5">Tempo médio de entrega</h6>
+                </template>
+                <div class="placeholder-paragraph" v-else>
+                  <div class="line"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div v-show="widgetsViewType == 'pie'">
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex justify-content-end align-items-center">
+          <div>
+            <button type="button" class="btn btn-xs btn-outline-primary m-1" @click="widgetsViewType = 'cards'">
+              <i class="fas fa-th"></i>
+            </button>
+            <button type="button" class="btn btn-xs btn-primary m-1">
+              <i class="fas fa-chart-pie"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12 col-lg-6">
+        <div class="row">
+          <div class="col-12">
+            <h4>Estatísticas de questões</h4>
+          </div>
+          <div class="col-12">
+            <div class="row">
+              <card-component v-if="!load.widgets" :cols="'col-6'" :value="widgets.questions.opened" :total="widgets.questions.count" :text="'Em aberto'" :color="'tx-warning'" :tippycontent="'Total de questões que estão em aberto'" :percenttippycontent="`Esta porcentagem é calculada através das questões que <strong>não possiu nenhum status associado</strong> ou que o status atual é <span class='badge badge-primary'>visto</span>`"></card-component>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="card">
+              <div class="card-body">
+                <div id="chartQuestions"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-lg-6">
+        <div class="row">
+          <div class="col-12">
+            <h4>Estatísticas de cadernos</h4>
+          </div>
+          <div class="col-12">
+            <div class="row">
+              <div class="col-6">
+                <div class="card">
+                  <div class="card-body pd-y-20">
+                    <div class="row row-sm">
+                      <div class="col-12">
+                        <template v-if="!load.tme">
+                          <h3 class="tx-normal tx-rubik tx-spacing--1 mg-b-5">
+                            <template v-if="tme > 0">
+                              ${momentRef().seconds(tme).toNow(true)}
+                            </template>
+                            <template v-else>-</template>
+                            <span class="tx-color-03 tooltips c-help" data-tippy-content="O tempo médio de elaboração é calculado através da <strong>diferença</strong> entre a inserção da <strong>primeira</strong> e a <strong>ultima</strong> questão de cada professor">(TME)</span>
+                          </h3>
+                          <h6 class="tx-12 tx-semibold tx-uppercase tx-spacing-1 text-teal mg-b-5">Tempo médio de elaboração</h6>
+                        </template>
+                        <div class="placeholder-paragraph" v-else>
+                          <div class="line"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="card">
+                  <div class="card-body pd-y-20">
+                    <div class="row row-sm">
+                      <div class="col-12">
+                        <template v-if="!load.tme">
+                          <h3 class="tx-normal tx-rubik tx-spacing--1 mg-b-5">
+                            <template v-if="tmt > 0">
+                              ${momentRef().seconds(tmt).toNow(true)} 
+                            </template>
+                            <template v-else>-</template>
+                            <span class="tx-color-03 tooltips c-help" data-tippy-content="O tempo médio de entrega é calculado através da <strong>diferença</strong> entre a data de liberação do caderno para os professores e a inserção da ultima questão no caderno">(TMT)</span>
+                          </h3>
+                          <h6 class="tx-12 tx-semibold tx-uppercase tx-spacing-1 text-teal mg-b-5">Tempo médio de entrega</h6>
+                        </template>
+                        <div class="placeholder-paragraph" v-else>
+                          <div class="line"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="card">
+              <div class="card-body">
+                <div id="chartExams"></div>
+                <p v-if="!load.widgets" class="tx-normal text-right tx-rubik tx-spacing--2">${widgets.exams.count} cadernos</p>
+                <div class="placeholder-paragraph" v-else>
+                  <div class="line"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <h4>Estatísticas por professor</h4>
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-12">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <button class="btn btn-xs pd-x-15 btn-uppercase mg-l-5" :class="teacherTableView == 'questions' ? 'btn-primary':'btn-white'" @click="teacherTableView = 'questions', getTeachersData()"><i class="fas fa-list"></i> QUESTÕES</button>
+                  <button class="btn btn-xs pd-x-15 btn-uppercase mg-l-5" :class="teacherTableView == 'exams' ? 'btn-primary':'btn-white'" @click="teacherTableView = 'exams', getTeachersData()"><i class="fas fa-book"></i> CADERNOS </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12">
+              <template v-if="teacherTableView == 'questions'">
+                <template v-if="!load.teachersQuestions">
+                  <div class="table-responsive">
+                    <table class="table table-dashboard mg-b-0">
+                      <thead>
+                        <tr>
+                          <th class="align-middle tx-14">Professor <i class="fas fa-address-card"></i></th>
+                          <th class="align-middle tx-14 text-right cp" :class="{ 'bg-light': ordering.by == 'teacher_questions_seens' }" @click="orderingFilters('teacher_questions_seens', 'questions', 'teachers')">Vistos <i class="fas fa-check"></i> <span class="ml-2" v-if="ordering.by == 'teacher_questions_seens'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-right cp" :class="{ 'bg-light': ordering.by == 'teacher_questions_approveds' }" @click="orderingFilters('teacher_questions_approveds', 'questions', 'teachers')">Aprovadas <i class="fas fa-check-double"></i> <span class="ml-2" v-if="ordering.by == 'teacher_questions_approveds'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-right cp" :class="{ 'bg-light': ordering.by == 'teacher_questions_reproveds' }" @click="orderingFilters('teacher_questions_reproveds', 'questions', 'teachers')">Reprovadas <i class="fas fa-times"></i> <span class="ml-2" v-if="ordering.by == 'teacher_questions_reproveds'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-right cp" :class="{ 'bg-light': ordering.by == 'teacher_questions_lates' }" @click="orderingFilters('teacher_questions_lates', 'questions', 'teachers')"><span class="tooltips c-help" data-tippy-content="A questão é <strong>considerada atrasada</strong> quando ela foi adicionada <strong>após a data limite de entrega do caderno</strong>">Entrega Atrasada</span> <i class="fas fa-clock"></i> <span class="ml-2" v-if="ordering.by == 'teacher_questions_lates'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-right cp" :class="{ 'bg-light': ordering.by == 'teacher_questions_annuleds' }" @click="orderingFilters('teacher_questions_annuleds', 'questions', 'teachers')">Anulada <i class="fas fa-times-circle"></i> <span class="ml-2" v-if="ordering.by == 'teacher_questions_annuleds'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-right cp" :class="{ 'bg-light': ordering.by == 'teacher_questions_correction_pending' }" @click="orderingFilters('teacher_questions_correction_pending', 'questions', 'teachers')">Correção Sugerida <i class="fas fa-pen-square"></i> <span class="ml-2" v-if="ordering.by == 'teacher_questions_correction_pending'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-right cp" :class="{ 'bg-light': ordering.by == 'teacher_questions_use_later' }" @click="orderingFilters('teacher_questions_use_later', 'questions', 'teachers')">Usar depois <i class="fas fa-clock"></i> <span class="ml-2" v-if="ordering.by == 'teacher_questions_use_later'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="teacher in teachersQuestions.results">
+                          <td class="tx-normal">
+                            ${teacher.name}
+                            <div class="progress ht-10 bg-transparent mg-b-5" style="max-width: 260px; height: 15px;" v-if="getPercentOrRepresentation(teacher.questions.approved, teacher.questions.count) > 0">
+                              <div class="progress-bar bg-success bd-l bd-white" :style="{'width': getPercentOrRepresentation(teacher.questions.approved, teacher.questions.count) + 'px'}" role="progressbar" :aria-valuenow="getPercentOrRepresentation(teacher.questions.approved, teacher.questions.count)" aria-valuemin="0"></div>
+                              <div class="progress-bar bg-secondary op-2 bd-l bd-white" :style="{'width': (100 - getPercentOrRepresentation(teacher.questions.approved, teacher.questions.count)) + 'px'}" role="progressbar" :aria-valuenow="100 - getPercentOrRepresentation(teacher.questions.approved, teacher.questions.count)" aria-valuemin="0"></div>
+                            </div>
+                          </td>
+                          <td class="align-middle text-right tx-success tx-bold" :class="{ 'bg-light': ordering.by == 'teacher_questions_seens' }">${teacher.questions.seen}<span class="tx-10">/${teacher.questions.count}</span> <br/><span class="tx-color-03">(${getPercentOrRepresentation(teacher.questions.seen, teacher.questions.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle text-right tx-success tx-bold" :class="{ 'bg-light': ordering.by == 'teacher_questions_approveds' }">${teacher.questions.approved}<span class="tx-10">/${teacher.questions.count}</span> <br/><span class="tx-color-03">(${getPercentOrRepresentation(teacher.questions.approved, teacher.questions.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle text-right tx-pink" :class="{ 'bg-light': ordering.by == 'teacher_questions_reproveds' }">${teacher.questions.reproved}<span class="tx-10">/${teacher.questions.count}</span><i @click="toggleTags(teacher.id, teacher.name, 1, teacher.questions.reproved)" class="cp text-primary ml-1 fas fa-external-link-alt"></i> <br/><span class="tx-color-03">(${getPercentOrRepresentation(teacher.questions.reproved, teacher.questions.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle text-right tx-pink" :class="{ 'bg-light': ordering.by == 'teacher_questions_lates' }">${teacher.questions.lates}<span class="tx-10">/${teacher.questions.count}</span> <br/><span class="tx-color-03">(${getPercentOrRepresentation(teacher.questions.lates, teacher.questions.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle text-right tx-pink" :class="{ 'bg-light': ordering.by == 'teacher_questions_annuleds' }">${teacher.questions.annuled}<span class="tx-10">/${teacher.questions.count}</span> <i @click="toggleTags(teacher.id, teacher.name, 6, teacher.questions.annuled)" class="cp text-primary ml-1 fas fa-external-link-alt"></i><br/><span class="tx-color-03">(${getPercentOrRepresentation(teacher.questions.annuled, teacher.questions.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle tx-medium text-right tx-warning" :class="{ 'bg-light': ordering.by == 'teacher_questions_correction_pending' }">${teacher.questions.correction_pending}<span class="tx-10">/${teacher.questions.count}</span> <i @click="toggleTags(teacher.id, teacher.name, 3, teacher.questions.correction_pending)" class="cp text-primary ml-1 fas fa-external-link-alt"></i><br/><span class="tx-color-03">(${getPercentOrRepresentation(teacher.questions.correction_pending, teacher.questions.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle tx-medium text-right tx-info" :class="{ 'bg-light': ordering.by == 'teacher_questions_use_later' }">${teacher.questions.use_later}<span class="tx-10">/${teacher.questions.count}</span> <i @click="toggleTags(teacher.id, teacher.name, 3, teacher.questions.use_later)" class="cp text-primary ml-1 fas fa-external-link-alt"></i><br/><span class="tx-color-03">(${getPercentOrRepresentation(teacher.questions.use_later, teacher.questions.count).toFixed(2)} %)</span></td>
+                        </tr>
+                        <tr v-if="!teachersQuestions.results.length">
+                          <td colspan="4">Nenhum resulado encontrado.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <pagination-component :vue="app" :data="'teachersQuestions'"></pagination-component>
+                </template>
+                <template v-else>
+                  <div class="placeholder-paragraph mt-5">
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                  </div>
+                </template>
+              </template>
+              <template v-if="teacherTableView == 'exams'">
+                <template v-if="!load.teachersExams">
+                  <div class="table-responsive">
+                    <table class="table table-dashboard mg-b-0">
+                      <thead>
+                        <tr>
+                          <th class="align-middle tx-14">Professor <i class="fas fa-address-card"></i></th>
+                          <th class="align-middle tx-14 text-right cp" :class="{ 'bg-light': ordering.by == 'teacher_exams_elaborating' }" @click="orderingFilters('teacher_exams_elaborating', 'exams', 'teachers')">Elaborando <i class="fas fa-clock"></i> <span class="ml-2" v-if="ordering.by == 'teacher_exams_elaborating'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-right cp" :class="{ 'bg-light': ordering.by == 'teacher_exams_opened' }" @click="orderingFilters('teacher_exams_opened', 'exams', 'teachers')">Revisão de itens <i class="fas fa-clock"></i> <span class="ml-2" v-if="ordering.by == 'teacher_exams_opened'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-right cp" :class="{ 'bg-light': ordering.by == 'teacher_exams_send_review' }" @click="orderingFilters('teacher_exams_send_review', 'exams', 'teachers')">Em Revisão <i class="fas fa-user"></i> <span class="ml-2" v-if="ordering.by == 'teacher_exams_send_review'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-right cp" :class="{ 'bg-light': ordering.by == 'teacher_exams_closed' }" @click="orderingFilters('teacher_exams_closed', 'exams', 'teachers')">Fechados <i class="fas fa-check-double"></i> <span class="ml-2" v-if="ordering.by == 'teacher_exams_closed'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-right cp" :class="{ 'bg-light': ordering.by == 'teacher_exams_lates' }" @click="orderingFilters('teacher_exams_lates', 'exams', 'teachers')"><span class="tooltips c-help" data-tippy-content="O caderno é <strong>considerado atrasado</strong> quando ele contém pelo menos uma questão que foi adicionada <strong>após a data limite de entrega do caderno</strong>">Entrega Atrasada</span> <i class="fas fa-clock"></i> <span class="ml-2" v-if="ordering.by == 'teacher_exams_lates'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-right cp" :class="{ 'bg-light': ordering.by == 'teacher_exams_is_printed' }" @click="orderingFilters('teacher_exams_is_printed', 'exams', 'teachers')">Já impresso <i class="fas fa-check-double"></i> <span class="ml-2" v-if="ordering.by == 'teacher_exams_is_printed'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-right cp">
+                            <span title="Tempo médio de elaboração dos cadernos">TME <i class="fas fa-clock"></i></span>
+                          </th>
+                          <th class="align-middle tx-14 text-right cp">
+                            <span title="Tempo médio de entrega dos cadernos">TMT <i class="fas fa-clock"></i></span>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="teacher in teachersExams.results">
+                          <td class="tx-normal">
+                            ${teacher.name}
+                            <div class="progress ht-10 bg-transparent mg-b-5" style="max-width: 260px; height: 15px;" v-if="getPercentOrRepresentation(teacher.exams.closed, teacher.exams.count) > 0">
+                              <div class="progress-bar bg-success bd-l bd-white" :style="{'width': getPercentOrRepresentation(teacher.exams.closed, teacher.exams.count) + 'px'}" role="progressbar" :aria-valuenow="getPercentOrRepresentation(teacher.exams.closed, teacher.exams.count)" aria-valuemin="0"></div>
+                              <div class="progress-bar bg-secondary op-2 bd-l bd-white" :style="{'width': (100 - getPercentOrRepresentation(teacher.exams.closed, teacher.exams.count)) + 'px'}" role="progressbar" :aria-valuenow="100 - getPercentOrRepresentation(teacher.exams.closed, teacher.exams.count)" aria-valuemin="0"></div>
+                            </div>
+                          </td>
+                          <td class="align-middle text-right tx-teal tx-bold" :class="{ 'bg-light': ordering.by == 'teacher_exams_elaborating' }">${teacher.exams.elaborating}<span class="tx-10">/${teacher.exams.count}</span><br/> <span class="tx-color-03">(${getPercentOrRepresentation(teacher.exams.elaborating, teacher.exams.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle text-right tx-teal" :class="{ 'bg-light': ordering.by == 'teacher_exams_opened' }">${teacher.exams.opened}<span class="tx-10">/${teacher.exams.count}</span><br/> <span class="tx-color-03">(${getPercentOrRepresentation(teacher.exams.opened, teacher.exams.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle tx-medium text-right" :class="{ 'bg-light': ordering.by == 'teacher_exams_send_review' }">${teacher.exams.send_review}<span class="tx-10">/${teacher.exams.count}</span><br/> <span class="tx-color-03">(${getPercentOrRepresentation(teacher.exams.send_review, teacher.exams.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle tx-medium text-right text-success" :class="{ 'bg-light': ordering.by == 'teacher_exams_closed' }">${teacher.exams.closed}<span class="tx-10">/${teacher.exams.count}</span><br/> <span class="tx-color-03">(${getPercentOrRepresentation(teacher.exams.closed, teacher.exams.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle tx-medium text-right text-danger" :class="{ 'bg-light': ordering.by == 'teacher_exams_lates' }">${teacher.exams.lates}<span class="tx-10">/${teacher.exams.count}</span><br/> <span class="tx-color-03">(${getPercentOrRepresentation(teacher.exams.lates, teacher.exams.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle tx-medium text-right text-success" :class="{ 'bg-light': ordering.by == 'teacher_exams_is_printed' }">${teacher.exams.is_printed}<span class="tx-10">/${teacher.exams.count}</span><br/> <span class="tx-color-03">(${getPercentOrRepresentation(teacher.exams.is_printed, teacher.exams.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle tx-medium text-right" :class="{ 'bg-light': ordering.by == 'teacher_exams_tme' }">
+                            <template v-if="teacher.exams.tme > 0">
+                              ${momentRef().seconds(teacher.exams.tme).fromNow(true)}
+                            </template>
+                            <template v-else>-</template>
+                          </td>
+                          <td class="align-middle tx-medium text-right" :class="{ 'bg-light': ordering.by == 'teacher_exams_tmt' }">
+                            <template v-if="teacher.exams.tmt > 0">
+                              ${momentRef().seconds(teacher.exams.tmt).fromNow(true)}
+                            </template>
+                            <template v-else>-</template>
+                          </td>
+                        </tr>
+                        <tr v-if="!teachersExams.results.length">
+                          <td colspan="4">Nenhum resulado encontrado.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <pagination-component :vue="app" :data="'teachersExams'"></pagination-component>
+                </template>
+                <template v-else>
+                  <div class="placeholder-paragraph mt-5">
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                  </div>
+                </template>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <h4>Estatísticas por disciplina</h4>
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-12">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <button class="btn btn-xs pd-x-15 btn-uppercase mg-l-5" :class="subjectsTableView == 'questions' ? 'btn-primary':'btn-white'" @click="subjectsTableView = 'questions', getSubjectsData()"><i class="fas fa-list"></i> QUESTÕES</button>
+                  <button class="btn btn-xs pd-x-15 btn-uppercase mg-l-5" :class="subjectsTableView == 'exams' ? 'btn-primary':'btn-white'" @click="subjectsTableView = 'exams', getSubjectsData()"><i class="fas fa-book"></i> CADERNOS </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12">
+              <template v-if="subjectsTableView == 'questions'">
+                <template v-if="!load.subjectsQuestions">
+                  <div class="table-responsive">
+                    <table class="table table-dashboard mg-b-0">
+                      <thead>
+                        <tr>
+                          <th class="align-middle tx-14">Disciplina <i class="fas fa-address-card"></i></th>
+                          <th class="align-middle tx-14 text-right cp" :class="{ 'bg-light': ordering.by == 'subject_teacher_questions_approveds' }" @click="orderingFilters('subject_teacher_questions_approveds', 'questions', 'subjects')">Aprovadas <i class="fas fa-check-double"></i> <span class="ml-2" v-if="ordering.by == 'subject_teacher_questions_approveds'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-right cp" :class="{ 'bg-light': ordering.by == 'subject_teacher_questions_reproveds' }" @click="orderingFilters('subject_teacher_questions_reproveds', 'questions', 'subjects')">Reprovadas <i class="fas fa-times"></i> <span class="ml-2" v-if="ordering.by == 'subject_teacher_questions_reproveds'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-right cp" :class="{ 'bg-light': ordering.by == 'subject_teacher_questions_lates' }" @click="orderingFilters('subject_teacher_questions_lates', 'questions', 'subjects')"><span class="tooltips c-help" data-tippy-content="A questão é <strong>considerada atrasada</strong> quando ela foi adicionada <strong>após a data limite de entrega do caderno</strong>">Entrega Atrasada</span> <i class="fas fa-clock"></i> <span class="ml-2" v-if="ordering.by == 'subject_teacher_questions_lates'"></span><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-right cp" :class="{ 'bg-light': ordering.by == 'subject_teacher_questions_annuleds' }" @click="orderingFilters('subject_teacher_questions_annuleds', 'questions', 'subjects')">Anulada <i class="fas fa-times-circle"></i> <span class="ml-2" v-if="ordering.by == 'subject_teacher_questions_annuleds'"></span><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-right cp" :class="{ 'bg-light': ordering.by == 'subject_teacher_questions_correction_pending' }" @click="orderingFilters('subject_teacher_questions_correction_pending', 'questions', 'subjects')">Correção Sugerida  <i class="fas fa-pen-square"></i> <span class="ml-2" v-if="ordering.by == 'subject_teacher_questions_correction_pending'"></span><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="subject in subjectsQuestions.results">
+                          <td class="tx-normal" style="max-width: 10rem;" :title="subject.name">
+                            ${subject.name}
+                            <div class="progress ht-10 bg-transparent mg-b-5" style="max-width: 260px; height: 15px;" v-if="getPercentOrRepresentation(subject.questions.approved, subject.questions.count) > 0">
+                              <div class="progress-bar bg-success bd-l bd-white" :style="{'width': getPercentOrRepresentation(subject.questions.approved, subject.questions.count) + 'px'}" role="progressbar" :aria-valuenow="getPercentOrRepresentation(subject.questions.approved, subject.questions.count)" aria-valuemin="0"></div>
+                              <div class="progress-bar bg-secondary op-2 bd-l bd-white" :style="{'width': (100 - getPercentOrRepresentation(subject.questions.approved, subject.questions.count)) + 'px'}" role="progressbar" :aria-valuenow="100 - getPercentOrRepresentation(subject.questions.approved, subject.questions.count)" aria-valuemin="0"></div>
+                            </div>
+                          </td>
+                          <td class="align-middle text-right tx-success tx-bold" :class="{ 'bg-light': ordering.by == 'subject_teacher_questions_approveds' }">${subject.questions.approved}<span class="tx-10">/${subject.questions.count}</span><br/> <span class="tx-color-03">(${getPercentOrRepresentation(subject.questions.approved, subject.questions.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle text-right tx-pink" :class="{ 'bg-light': ordering.by == 'subject_teacher_questions_reproveds' }">${subject.questions.reproved}<span class="tx-10">/${subject.questions.count}</span><br/> <span class="tx-color-03">(${getPercentOrRepresentation(subject.questions.reproved, subject.questions.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle text-right tx-pink" :class="{ 'bg-light': ordering.by == 'subject_teacher_questions_lates' }">${subject.questions.lates}<span class="tx-10">/${subject.questions.count}</span><br/> <span class="tx-color-03">(${getPercentOrRepresentation(subject.questions.lates, subject.questions.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle text-right tx-pink" :class="{ 'bg-light': ordering.by == 'subject_teacher_questions_annuleds' }">${subject.questions.annuled}<span class="tx-10">/${subject.questions.count}</span><br/> <span class="tx-color-03">(${getPercentOrRepresentation(subject.questions.annuled, subject.questions.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle tx-medium text-right tx-warning" :class="{ 'bg-light': ordering.by == 'subject_teacher_questions_correction_pending' }">${subject.questions.correction_pending}<span class="tx-10">/${subject.questions.count}</span><br/> <span class="tx-color-03">(${getPercentOrRepresentation(subject.questions.correction_pending, subject.questions.count).toFixed(2)} %)</span></td>
+                        </tr>
+                        <tr v-if="!subjectsQuestions.results.length">
+                          <td colspan="4">Nenhum resultado encontrado</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <pagination-component :vue="app" :data="'subjectsQuestions'"></pagination-component>
+                </template>
+                <template v-else>
+                  <div class="placeholder-paragraph mt-5">
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                  </div>
+                </template>
+              </template>
+              <template v-if="subjectsTableView == 'exams'">
+                <template v-if="!load.subjectsExams">
+                  <div class="table-responsive">
+                    <table class="table table-dashboard mg-b-0">
+                      <thead>
+                        <tr>
+                          <th class="align-middle tx-14">Disciplina <i class="fas fa-address-card"></i></th>
+                          <th class="align-middle tx-14 text-center cp" :class="{ 'bg-light': ordering.by == 'subject_exams_elaborating' }" @click="orderingFilters('subject_exams_elaborating', 'exams', 'subjects')">Elaborando <i class="fas fa-clock"></i> <span class="ml-2" v-if="ordering.by == 'subject_exams_elaborating'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-center cp" :class="{ 'bg-light': ordering.by == 'subject_exams_opened' }" @click="orderingFilters('subject_exams_opened', 'exams', 'subjects')">Revisão de itens <i class="fas fa-clock"></i> <span class="ml-2" v-if="ordering.by == 'subject_exams_opened'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-center cp" :class="{ 'bg-light': ordering.by == 'subject_exams_send_review' }" @click="orderingFilters('subject_exams_send_review', 'exams', 'subjects')">Em Revisão <i class="fas fa-clock"></i> <span class="ml-2" v-if="ordering.by == 'subject_exams_send_review'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-center cp" :class="{ 'bg-light': ordering.by == 'subject_exams_closed' }" @click="orderingFilters('subject_exams_closed', 'exams', 'subjects')">Fechados <i class="fas fa-clock"></i> <span class="ml-2" v-if="ordering.by == 'subject_exams_closed'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-center cp" :class="{ 'bg-light': ordering.by == 'subject_exams_lates' }" @click="orderingFilters('subject_exams_lates', 'exams', 'subjects')"><span class="tooltips c-help" data-tippy-content="O caderno é <strong>considerado atrasado</strong> quando ele contém pelo menos uma questão que foi adicionada <strong>após a data limite de entrega do caderno</strong>">Entrega Atrasada</span> <i class="fas fa-clock"></i> <span class="ml-2" v-if="ordering.by == 'subject_exams_lates'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-center cp" :class="{ 'bg-light': ordering.by == 'subject_exams_is_printed' }" @click="orderingFilters('subject_exams_is_printed', 'exams', 'subjects')">Já impresso <i class="fas fa-check-double"></i> <span class="ml-2" v-if="ordering.by == 'subject_exams_is_printed'"><i class="fa" :class="ordering.desc ? 'fa-chevron-down':'fa-chevron-up'"></i></span></th>
+                          <th class="align-middle tx-14 text-center cp"><span title="Tempo médio de entrega dos cadernos">TMT <i class="fas fa-clock"></i></span></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="subject in subjectsExams.results">
+                          <td class="tx-normal" style="max-width: 10rem;" :title="subject.name">
+                            ${subject.name}
+                            <div class="progress ht-10 bg-transparent mg-b-5" style="max-width: 260px; height: 15px;" v-if="getPercentOrRepresentation(subject.exams.closed, subject.exams.count) > 0">
+                              <div class="progress-bar bg-success bd-l bd-white" :style="{'width': getPercentOrRepresentation(subject.exams.closed, subject.exams.count) + 'px'}" role="progressbar" :aria-valuenow="getPercentOrRepresentation(subject.exams.closed, subject.exams.count)" aria-valuemin="0"></div>
+                              <div class="progress-bar bg-secondary op-2 bd-l bd-white" :style="{'width': (100 - getPercentOrRepresentation(subject.exams.closed, subject.exams.count)) + 'px'}" role="progressbar" :aria-valuenow="100 - getPercentOrRepresentation(subject.exams.closed, subject.exams.count)" aria-valuemin="0"></div>
+                            </div>
+                          </td>
+                          <td class="align-middle text-right tx-teal tx-bold" :class="{ 'bg-light': ordering.by == 'subject_exams_elaborating' }">${subject.exams.elaborating}<span class="tx-10">/${subject.exams.count}</span><br> <span class="tx-color-03">(${getPercentOrRepresentation(subject.exams.elaborating, subject.exams.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle text-right tx-teal" :class="{ 'bg-light': ordering.by == 'subject_exams_opened' }">${subject.exams.opened}<span class="tx-10">/${subject.exams.count}</span><br> <span class="tx-color-03">(${getPercentOrRepresentation(subject.exams.opened, subject.exams.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle tx-medium text-right" :class="{ 'bg-light': ordering.by == 'subject_exams_send_review' }">${subject.exams.send_review}<span class="tx-10">/${subject.exams.count}</span><br> <span class="tx-color-03">(${getPercentOrRepresentation(subject.exams.send_review, subject.exams.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle tx-medium text-right text-success" :class="{ 'bg-light': ordering.by == 'subject_exams_closed' }">${subject.exams.closed}<span class="tx-10">/${subject.exams.count}</span><br> <span class="tx-color-03">(${getPercentOrRepresentation(subject.exams.closed, subject.exams.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle tx-medium text-right text-danger" :class="{ 'bg-light': ordering.by == 'subject_exams_lates' }">
+                            <template v-if="!subject.load.lates">
+                              <div class="placeholder-paragraph">
+                                <div class="line"></div>
+                              </div>
+                            </template>
+                            <template v-else>
+                              ${subject.exams.lates}
+                              <span class="tx-10">/${subject.exams.count}</span> <br>
+                              <span class="tx-color-03">(${getPercentOrRepresentation(subject.exams.lates, subject.exams.count).toFixed(2)} %)</span>
+                            </template>
+                          </td>
+                          <td class="align-middle tx-medium text-right text-success" :class="{ 'bg-light': ordering.by == 'subject_exams_is_printed' }">${subject.exams.is_printed}<span class="tx-10">/${subject.exams.count}</span><br> <span class="tx-color-03">(${getPercentOrRepresentation(subject.exams.is_printed, subject.exams.count).toFixed(2)} %)</span></td>
+                          <td class="align-middle tx-medium text-center">
+                            <template v-if="subject.exams.tmt > 0">
+                              ${momentRef().seconds(subject.exams.tmt).fromNow(true)}
+                            </template>
+                            <template v-else>
+                              -
+                            </template>
+                          </td>
+                        </tr>
+                        <tr v-if="!subjectsExams.results.length">
+                          <td colspan="4">Nenhum resultado encontrado</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <pagination-component :vue="app" :data="'subjectsExams'"></pagination-component>
+                </template>
+                <template v-else>
+                  <div class="placeholder-paragraph mt-5">
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                  </div>
+                </template>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="df-settings" style="z-index: 998;">
+  <div class="df-settings-body p-1" style="overflow-x: hidden;">
+    <form method="GET" v-model="form" ref="formFilter" style=" padding-right: 45px;">
+      <div class="row p-3">
+        <div class="col-12">
+          <h5>Filtrar Aplicações</h5>
+          <hr />
+        </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="teacher_id" class="mb-1">Professores</label>
+            <select name="q_teachers" id="teacher_id" class="form-control" multiple>
+              {% for teacher in teachers %}
+              <option value="{{teacher.pk}}" {% if teacher.pk|stringformat:'s' in q_teachers %}selected="selected" {% endif %}>
+                {{teacher}}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3" id="el">
+            <label for="subject_id" class="mb-1">Disciplinas</label>
+            <select name="q_subjects" id="subject_id" class="form-control" multiple>
+              {% for subject in subjects %}
+              <option value="{{subject.pk}}" {% if subject.pk|stringformat:'s' in q_subjects %}selected="selected"{% endif %}>
+                {{subject.name}} > {{subject.knowledge_area.name}}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        {% comment %} 
+          <div class="col-12">
+            <div class="form-group mb-3">
+              <label for="unity_id" class="mb-1">Unidades</label>
+              <select name="q_unitys" id="unity_id" class="form-control" multiple>
+                {% for unity in unitys %}
+                <option value="{{unity.pk}}" {% if unity.pk|stringformat:'s' in q_unitys %}selected="selected"
+                  {% endif %}>
+                  {{unity}}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="form-group mb-3">
+              <label for="grade_id" class="mb-1">Séries</label>
+              <select name="q_grades" id="grade_id" class="form-control" multiple>
+                {% for grade in grades %}
+                <option value="{{grade.pk}}" {% if grade.pk|stringformat:'s' in q_grades %}selected="selected"
+                  {% endif %}>
+                  {{grade}}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="form-group mb-3">
+              <label for="classe_id" class="mb-1">Turmas</label>
+              <select name="q_classes" id="classe_id" class="form-control" multiple>
+                {% for classe in classes %}
+                <option value="{{classe.pk}}" {% if classe.pk|stringformat:'s' in q_classes %}selected="selected"
+                  {% endif %}>
+                  {{classe}}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        {% endcomment %}
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="segment_id" class="mb-1">Segmento</label>
+            <select name="q_segments" id="segment_id" class="form-control" multiple>
+              <option value="0">Ensino médio</option>
+              <option value="1">Ensino fundamental 1</option>
+              <option value="2">Ensino fundamental 2</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="teaching_stages_id" class="mb-1">Etapa de ensino</label>
+            <select name="q_teaching_stages" id="teaching_stages_id" class="form-control" multiple>
+              {% for stage in teaching_stages %}
+              <option value="{{stage.pk}}" {% if stage.pk|stringformat:'s' in q_teaching_stages %}selected="selected"
+                {% endif %}>
+                {{stage}}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="education_systems_id" class="mb-1">Sistema de ensino</label>
+            <select name="q_education_systems" id="education_systems_id" class="form-control" multiple>
+              {% for system in education_systems %}
+              <option value="{{system.pk}}" {% if system.pk|stringformat:'s' in q_education_systems %}selected="selected"
+                {% endif %}>
+                {{system}}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="form-group mb-3">
+            <label for="initial_date" class="mb-1">Data inicial</label>
+            <input name="q_initial_date" id="initial_date" type="date" class="form-control"/>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="form-group mb-3">
+            <label for="final_date" class="mb-1">Data final</label>
+            <input name="q_final_date" id="final_date" type="date" class="form-control"/>
+          </div>
+        </div>
+        <div class="col-12 mt-3">
+          <button type="button" class="btn btn-success btn-block" @click="changeFilters('submit')">
+            <i class="fas fa-search"></i>
+            Aplicar filtro
+          </button>
+        </div>
+      </div>
+    </form>
+
+
+
+  </div>
+</div>
+</div>
+</main>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+<div aria-hidden="true" class="modal  fade" id="tagsModal" role="dialog" tabindex="-1">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-truncate">Dados de tags</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button> 
+      </div>
+      <div class="modal-body" style="max-height: fit-content; height: fit-content;">
+        <div id="cabecalho">
+          <h6>${this.modalData.name}</h6>
+          <p>Questões com status: <span class="" :class="getStatusClass(statusMapping[modalData.status])">${this.statusMapping[this.modalData.status]}</span></p>
+          <div v-if="!this.modalData.tagsCount">
+            <p>${this.modalData.chartLoading ? "Carregando..." : "Sem informações"}</p>
+          </div>
+        </div>
+        <div id="tagsChart"></div>
+
+      </div>
+      <div class="modal-footer justify-content-center"></div>
+    </div>
+  </div>
+</div>
+{% endblock extra-modal %}
+
+{% block js-additional %}
+
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'dashboard/lib/apexcharts/apexcharts.min.js' %}"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+
+<script src="{% static 'js/tippy/popper.min.js' %}"></script>
+<script src="{% static 'js/tippy/tippy.min.js' %}"></script>
+
+<script>
+    moment.locale('pt-br')
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        components: {
+          {% include 'includes/components/vue-pagination.html' %},
+          'card-component': Vue.component('card-component', {
+            props: ['value', 'total', 'text', 'color', 'tippycontent', 'percenttippycontent', 'hidepercent', 'showtotal', 'cols'],
+            delimiters: ["#{", "}"],
+            data: function() {
+                return {
+                  
+                }
+            },
+            template: `
+              <div class="mg-t-10" :class="cols ? cols: 'col-6 col-md-6 col-lg-3'">
+                <div class="card">
+                  <div class="card-body pd-y-20">
+                    <div class="row row-sm">
+                      <div class="col-12">
+                        <h3 class="tx-normal tx-rubik tx-spacing--1 mg-b-5">#{value}<span v-if="showtotal" class="tx-14">/#{total} </span> <span class="tx-color-03" v-if="!hidepercent" :class="percenttippycontent ? 'tooltips c-help': ''" :data-tippy-content="percenttippycontent">(#{getPercentOrRepresentation(value, total).toFixed(2)} %)</span></h3>
+                        <h6 class="d-flex align-items-center tx-12 tx-semibold tx-uppercase tx-spacing-1 mg-b-5" :class="color"><span :class="tippycontent && tippycontent.length ? 'c-help tooltips':''" :data-tippy-content="tippycontent">#{text}</span></h6>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `,
+            methods: {
+              getPercentOrRepresentation(value, total, return_representation = true) {
+                variation = total - value 
+                percent = (variation / total)
+                representation = 100 - (percent * 100)
+                if(return_representation) {
+                  return representation > 0 ? representation : 0 
+                }
+                return percent > 0 ? percent : 0
+              },    
+            },
+          })
+        },
+        el: '#app',
+        data: {
+            //Models 
+            form: {
+              initialDate: '{{q_initial_date|safe}}',
+              finalDate: '{{q_final_date|safe}}',
+              selectedTeachers: {% if q_teachers %}{{q_teachers|safe}}{% else %}[]{% endif %},
+              selectedUnitys: {% if q_unitys %}{{q_unitys|safe}}{% else %}[]{% endif %},
+              selectedTeachingStages: {% if q_teaching_stages %}{{q_teaching_stages|safe}}{% else %}[]{% endif %},
+              selectedSegments: {% if q_segments %}{{q_segments|safe}}{% else %}[]{% endif %},
+              selectedEducationSystems: {% if q_education_systems %}{{q_education_systems|safe}}{% else %}[]{% endif %},
+              selectedGrades: {% if q_grades %}{{q_grades|safe}}{% else %}[]{% endif %},
+              selectedSubjects: {% if q_subjects %}{{q_subjects|safe}}{% else %}[]{% endif %},
+              selectedClasses: {% if q_classes %}{{q_classes|safe}}{% else %}[]{% endif %},
+            },
+            filters: {
+              showAppliedFilters: []
+            },
+            params: '{{params}}'.replace(/&amp;/gi, '&'),
+            newUrl: '',
+            widgets: null,
+            widgetsViewType: 'cards',
+            nextApplicationsPage: "",
+            applications: [],
+            subjects: [
+              {% for subject in subjects %}
+                {
+                  name: '{{subject.name}}',
+                  area: '{{subject.knowledge_area}}',
+                  client: '{{subject.client}}',
+                  teachers_count: Math.floor(5 * Math.random()),
+                  students_count: 0,
+                  teachers: [],
+                  hits: Math.floor(100 * Math.random())
+                },
+              {% endfor %}
+            ],
+            teachersQuestions: [],
+            teachersExams: [],
+            subjectsQuestions: [],
+            subjectsExams: [],
+            tme: 0,
+            tmt: 0,
+            chartClasses: {
+              classesList: [],
+              classesLabels: [],
+              classesStudents_count: 0,
+              classeSelected: {
+                name: '',
+                students: [],
+                hits_geral: 0
+              },
+            },
+            //Variáveis de controle
+            classeSummary: false,
+            subjectsSummary: false,
+            
+            subjectSelected: {
+              name: '',
+              area: '',
+              teachers: [],
+              hits: Math.floor(100 * Math.random()),
+              teachers_count: 0,
+              students_count: 0
+            },
+            load: {
+              widgets: true,
+              tme: true,
+              teachersQuestions: true,
+              teachersExams: true,
+              subjectsQuestions: true,
+              subjectsExams: true,
+            },
+            teacherTableView: 'questions',
+            subjectsTableView: 'questions',
+            ordering: {
+              by: null,
+              desc: false,
+            },
+            
+            // Dados para tags
+            modalData: {
+              name: '',
+              status: 0,
+              tagsCount: undefined,
+              chartElement: undefined,
+              chartLoading: false
+            },
+            statusMapping: {
+              1: 'reprovada',
+              3: 'correção sugerida',
+              6: 'anulada'
+            },
+            loadingExport: false,
+        },
+        methods: {
+          momentRef(args) {
+            return moment(args)
+          },
+          toggleTags(teacher_id, teacher_name, status, amount){
+            const url = `{% url 'analytics:question-tags' %}${this.getUrlParams()}&teacher_id=${teacher_id}&status=${status}`
+            this.modalData.name = teacher_name
+            this.modalData.status = status
+            this.modalData.chartLoading = true
+            $('#tagsModal').modal('show');
+
+            axios.get(url).then((res) => {
+              if(res.data.length > 0){
+                this.modalData.tagsCount = res.data
+                this.modalData.chartLoading = false
+
+                this.modalData.chartElement = new ApexCharts(document.querySelector('#tagsChart'), {
+                  series: this.modalData.tagsCount.map((item) => item.count),
+                  labels: this.modalData.tagsCount.map((item) => item.name),
+                  chart: {
+                    type: 'pie',
+                  },
+                  fill: {
+                    opacity: 1
+                  },
+                  tooltip: {
+                    y: {
+                      formatter: function (val) {
+                        return val;
+                      }
+                    }
+                  },
+                })
+                this.modalData.chartElement.render()
+              }else{
+                this.modalData.chartLoading = false
+              }
+            })
+          },
+          getStatusClass(status){
+            switch(status) {
+              case 'correção sugerida':
+                return 'tx-warning'
+              case 'reprovada':
+                return 'tx-pink'
+              case 'anulada':
+                return 'tx-pink'
+            }
+          },
+          getPercentOrRepresentation(value, total, return_representation = true) {
+            variation = total - value 
+            percent = (variation / total)
+            representation = 100 - (percent * 100)
+            if(return_representation) {
+              return representation > 0 ? representation : 0 
+            }
+            return percent > 0 ? percent : 0
+          },
+          getUrlParams(){
+            let url = this.newUrl ? this.newUrl : this.generareNewUrl()
+            return url.replace("??", "?").replace("?&", "?")
+          },
+          generareNewUrl() {
+            let newUrl = '?'
+            this.form.selectedTeachers.forEach((pk) => newUrl += `&q_teachers=${pk}`)
+            this.form.selectedUnitys.forEach((pk) => newUrl += `&q_unitys=${pk}`)
+            this.form.selectedTeachingStages.forEach((pk) => newUrl += `&q_teaching_stages=${pk}`)
+            this.form.selectedSegments.forEach((pk) => newUrl += `&q_segments=${pk}`)
+            this.form.selectedEducationSystems.forEach((pk) => newUrl += `&q_education_systems=${pk}`)
+            this.form.selectedGrades.forEach((pk) => newUrl += `&q_grades=${pk}`)
+            this.form.selectedSubjects.forEach((pk) => newUrl += `&q_subjects=${pk}`)
+            this.form.selectedClasses.forEach((pk) => newUrl += `&q_classes=${pk}`)
+            if(this.form.initialDate) {
+              newUrl += `&q_initial_date=${this.form.initialDate}`
+            }
+            if(this.form.finalDate) {
+              newUrl += `&q_final_date=${this.form.finalDate}`
+            }
+            if("{{year|force_escape}}") {
+              newUrl += "&year={{year|force_escape}}"
+            }
+            return newUrl
+          },
+          getWidgetsData() {
+            this.load.widgets = true
+            this.load.tme = true
+            let widgetsUrl = `{% url 'analytics:exams-widget' %}${this.getUrlParams()}`
+            axios.get(widgetsUrl).then(response => {
+              this.widgets = response.data
+            }).finally(() => {
+              this.load.widgets = false
+              this.createWidgetsCharts()
+            })
+            axios.get(widgetsUrl + '&get_tme=true').then(response => {
+              this.tme = response.data['tme']
+              this.tmt = response.data['tmt']
+            }).finally(() => this.load.tme = false)
+          },
+          getOrderingParams() {
+            return `${this.ordering.by ? '&order_by='+this.ordering.by:''}${this.ordering.desc ? '&desc=true':''}`
+          },
+          getTeachersData() {
+            if(this.load.teachersQuestions && this.teacherTableView == 'questions') {
+              this.load.teachersQuestions = true
+              let url = `{% url 'analytics:teachers-summary' %}${this.getUrlParams()}&page_size=5&get_questions=true${this.getOrderingParams()}`
+              axios.get(url).then(response => {
+                this.teachersQuestions = response.data
+              }).finally(() => this.load.teachersQuestions = false)
+            }
+            if(this.load.teachersExams && this.teacherTableView == 'exams') {
+              this.load.teachersExams = true
+              let url = `{% url 'analytics:teachers-summary' %}${this.getUrlParams()}&page_size=5&get_exams=true${this.getOrderingParams()}`
+              axios.get(url).then(response => {
+                this.teachersExams = response.data
+              }).finally(() => this.load.teachersExams = false)
+            }
+          },
+          async getSubjectsData(subject, latesOnly) {
+            if(latesOnly) {
+              let url = `{% url 'analytics:subjects-summary' %}${this.getUrlParams()}&subject_id=${subject.id}&only_lates=true${this.getOrderingParams()}`
+              await axios.get(url).then(response => {
+                subject.load.lates = true
+                subject['exams']['lates'] = response.data
+              })
+              return
+            }
+            if(this.load.subjectsQuestions && this.subjectsTableView == 'questions') {
+              this.load.subjectsQuestions = true
+              let url = `{% url 'analytics:subjects-summary' %}${this.getUrlParams()}&page_size=5&get_questions=true${this.getOrderingParams()}`
+              axios.get(url).then(response => {
+                this.subjectsQuestions = response.data
+              }).finally(() => this.load.subjectsQuestions = false)
+            }
+            if(this.load.subjectsExams && this.subjectsTableView == 'exams') {
+              this.load.subjectsExams = true
+              let url = `{% url 'analytics:subjects-summary' %}${this.getUrlParams()}&page_size=5&get_exams=true${this.ordering.by ? '&order_by='+this.ordering.by:''}${this.ordering.desc ? '&desc=true':''}`
+              axios.get(url).then(response => {
+                this.subjectsExams = response.data
+              }).finally(() => {
+                this.load.subjectsExams = false
+              })
+            }
+          },
+          changeFilters(event) {
+            if(event == 'removeFilters') {
+              this.resetSelect2Inputs()
+              this.filters.showAppliedFilters = []
+              this.$refs.formFilter.reset()
+              
+              this.newUrl = this.generareNewUrl()
+              history.pushState(null, null, '?')
+              window.location = window.location.pathname
+            }
+            if(event == 'submit') {
+              this.newUrl = this.generareNewUrl()
+              history.pushState(null, null, this.newUrl)
+            }
+            
+            this.load.teachersQuestions = true
+            this.load.teachersExams = true
+
+            this.load.subjectsQuestions = true
+            this.load.subjectsExams = true
+            
+            this.getParams()
+            this.getWidgetsData()
+            this.getTeachersData()
+            this.getSubjectsData()
+          },
+          getParams() {
+            this.params = ''
+            const urlSearchParams = new URLSearchParams(window.location.search);
+            const params = Object.fromEntries(urlSearchParams.entries());
+            this.filters.showAppliedFilters = []
+            
+            Object.entries(params).forEach(([key, value]) => {
+              this.params += `&${key}=${value}`
+              if(key == 'year' && value != "")
+                this.filters.showAppliedFilters.push(`Ano: ${value}`)
+              if(key == 'q_initial_date' && value != "")
+                this.filters.showAppliedFilters.push('Data')
+              if(key == 'q_teachers' && value != "")
+                this.filters.showAppliedFilters.push(`${$("#teacher_id").val().length} Professor(es)`)
+              if(key == 'q_subjects' && value != "")
+                this.filters.showAppliedFilters.push(`${$("#subject_id").val().length} Disciplina(es)`)
+              if(key == 'q_segments' && value != "")
+                this.filters.showAppliedFilters.push(`${$("#segment_id").val().length} Segmento(s)`)
+              if(key == 'q_unitys' && value != "")
+                this.filters.showAppliedFilters.push(`${$("#unity_id").val().length} Unidade(s)`)
+              if(key == 'q_grades' && value != "")
+                this.filters.showAppliedFilters.push(`${$("#grade_id").val().length} Série(s)`)
+              if(key == 'q_classes' && value != "")
+                this.filters.showAppliedFilters.push(`${$("#classe_id").val().length} Turmas(s)`)
+              if(key == 'q_teaching_stages' && value != "")
+                this.filters.showAppliedFilters.push(`${$("#teaching_stages_id").val().length} Etapa(s)`)
+              if(key == 'q_education_systems' && value != "")
+                this.filters.showAppliedFilters.push(`${$("#education_systems_id").val().length} Sistema(s)`)
+            })
+          },
+          createWidgetsCharts() {
+            new ApexCharts(document.querySelector('#chartQuestions'), {
+              series: [
+                this.widgets.questions.opened, 
+                this.widgets.questions.approved, 
+                this.widgets.questions.reproved, 
+                this.widgets.questions.correction_pending, 
+                this.widgets.questions.annuled,
+              ],
+              labels: ['Em aberto', 'Aprovadas', 'Reprovadas', 'Correção Sugerida', 'Corrigidas', 'Anuladas'],
+              colors: ['#ffc107', '#10b759', '#f10075', '#00cccc', '#00ccff', '#f10075'],
+              chart: {
+                type: 'pie',
+              },
+              fill: {
+                opacity: 0.8
+              },
+              tooltip: {
+                y: {
+                  formatter: function (val) {
+                    return val;
+                  }
+                }
+              }
+            }).render()
+            new ApexCharts(document.querySelector('#chartExams'), {
+              series: [
+                this.widgets.exams.elaborating, 
+                this.widgets.exams.opened, 
+                this.widgets.exams.closed, 
+                this.widgets.exams.send_review,
+                this.widgets.exams.is_printed_count,
+              ],
+              labels: ['Elaborando', 'Revisão de itens', 'Fechados', 'Em revisão', 'Já impresso'],
+              colors: ['#ffc107', '#f10075','#10b759', '#00cccc', '#f0e075'],
+              chart: {
+                type: 'pie',
+                width: '82%'
+              },
+              fill: {
+                opacity: 1
+              },
+              tooltip: {
+                y: {
+                  formatter: function (val) {
+                    return val;
+                  }
+                }
+              }
+            }).render()
+          },
+          resetSelect2Inputs() {
+            $('#unity_id').val(null).trigger('change')
+            $('#teacher_id').val(null).trigger('change')
+            $('#grade_id').val(null).trigger('change')
+            $('#subject_id').val(null).trigger('change')
+            $('#classe_id').val(null).trigger('change')
+          },
+          orderingFilters(order, who, where = 'teachers') {
+            if(this.ordering.by == order) {
+              this.ordering.desc = !this.ordering.desc
+            } else {
+              this.ordering.desc = true
+            }
+            this.ordering.by = order
+
+            if(where == 'teachers') {
+              if(who == 'exams') {
+                this.load.teachersExams = true 
+              } else {
+                this.load.teachersQuestions = true 
+              }
+              this.getTeachersData()
+            } else {
+              if(who == 'exams') {
+                this.load.subjectsExams = true 
+              } else {
+                this.load.subjectsQuestions = true 
+              }
+              this.getSubjectsData()
+            }
+          },
+          async exportDashboardData() {
+            this.loadingExport = true
+            const csrfToken = document.querySelector('[name="csrfmiddlewaretoken"]').value;
+
+            const config = {
+              headers: {'X-CSRFToken': csrfToken},
+            }
+            const data = {...this.widgets}
+
+            axios.post(`{% url 'analytics:analytics_exams_export' %}?${this.params}`, data, config)
+            .then(response => {
+                var x = setInterval(() => {
+                  axios.get(`{% url 'core:get_generic_task_status' %}?task_id=${response.data.task_id}`).then(response => {
+                    if (response.data.status == 'SUCCESS') {
+                      const link = document.createElement('a')
+                      link.href = response.data.details
+                      link.click()
+                      clearInterval(x)
+                      this.loadingExport = false
+                    } else if (response.data.status == 'FAILURE') {
+                      this.loadingExport = false
+                      swal.fire({
+                        toast: true,
+                        icon: 'error',
+                        text: 'Ocorreu um erro ao tentar exportar os dados!',
+                        position: 'top',
+                        showConfirmButton: false,
+                        timer: 2000
+                      })
+                    }
+                  })
+                }, {% if DEBUG %} 5000 {% else %} 10000 {% endif %})
+            })
+            .catch(() => {
+              this.loadingExport = false
+              swal.fire({
+                toast: true,
+                icon: 'error',
+                text: 'Ocorreu um erro ao tentar exportar os dados!',
+                position: 'top',
+                showConfirmButton: false,
+                timer: 2000
+              })
+            })
+          },
+        },
+        watch: {
+          'subjectsExams': function(value) {
+            value.results.forEach((_subject) => {
+              if(!_subject.load.lates) {
+                this.getSubjectsData(_subject, true)
+              }
+            })
+          }
+        },
+        mounted: function() {
+          self = this
+          
+          this.getParams()
+          this.getWidgetsData()
+          this.getTeachersData()          
+          this.getSubjectsData()          
+
+          $('#tagsModal').on('hidden.bs.modal', ()=>{
+            this.modalData.name = ''
+            this.modalData.status = 0
+            this.modalData.tagsCount = undefined
+            if(this.modalData.chartElement){
+              this.modalData.chartElement.destroy()
+            }
+          });
+
+          $('#unity_id').select2({
+            placeholder: "Selecione uma opção",
+            closeOnSelect: false,
+          }).on('select2:selecting', function(e) {
+            let cur = e.params.args.data.id;
+            let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+            $(e.target).val(old).trigger('change');
+            $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+            return false;
+          });
+          $('#teacher_id').select2({
+            placeholder: "Selecione uma opção",
+            closeOnSelect: false,
+          }).on('select2:selecting', function(e) {
+            let cur = e.params.args.data.id;
+            let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+            $(e.target).val(old).trigger('change');
+            $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+            return false;
+          });
+          $('#grade_id').select2({
+            placeholder: "Selecione uma opção",
+            closeOnSelect: false,
+          }).on('select2:selecting', function(e) {
+            let cur = e.params.args.data.id;
+            let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+            $(e.target).val(old).trigger('change');
+            $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+            return false;
+          });
+          $('#subject_id').select2({
+            placeholder: "Selecione uma opção",
+            closeOnSelect: false,
+            templateResult: function (data, container) {
+              let subject_name = data.text.split('>')[0]
+              let knowledge_area_name = data.text.split('>')[1]
+              return $(
+                `<strong class="select2-results__custom_option">${subject_name}</strong> <br> <span class="select2-results__custom_option">${knowledge_area_name}</span>`
+              );
+            },
+          }).on('select2:selecting', function(e) {
+            let cur = e.params.args.data.id;
+            let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+            $(e.target).val(old).trigger('change');
+            $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+            return false;
+          });
+          $('#classe_id').select2({
+            placeholder: "Selecione uma opção",
+            closeOnSelect: false,
+          }).on('select2:selecting', function(e) {
+            let cur = e.params.args.data.id;
+            let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+            $(e.target).val(old).trigger('change');
+            $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+            return false;
+          });
+          $('#teaching_stages_id').select2({
+            placeholder: "Selecione uma opção",
+            closeOnSelect: false,
+          }).on('select2:selecting', function(e) {
+            let cur = e.params.args.data.id;
+            let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+            $(e.target).val(old).trigger('change');
+            $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+            return false;
+          });
+          $('#segment_id').select2({
+            placeholder: "Selecione uma opção",
+            closeOnSelect: false,
+          })
+          $('#education_systems_id').select2({
+            placeholder: "Selecione uma opção",
+            closeOnSelect: false,
+          }).on('select2:selecting', function(e) {
+            let cur = e.params.args.data.id;
+            let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+            $(e.target).val(old).trigger('change');
+            $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+            return false;
+          });
+          
+          $("#teacher_id").on("change", function (e) {
+            self.form.selectedTeachers = $(this).val()
+          })
+
+          $("#unity_id").on("change", function (e) {
+            self.form.selectedUnitys = $(this).val()
+          })
+          
+          $("#teaching_stages_id").on("change", function (e) {
+            self.form.selectedTeachingStages = $(this).val()
+          })
+          $("#segment_id").on("change", function (e) {
+            self.form.selectedSegments = $(this).val()
+          })
+
+          $("#education_systems_id").on("change", function (e) {
+            self.form.selectedEducationSystems = $(this).val()
+          })
+
+          $("#grade_id").on("change", function (e) {
+            self.form.selectedGrades = $(this).val()
+          })
+
+          $("#subject_id").on("change", function (e) {
+            self.form.selectedSubjects = $(this).val()
+          })
+
+          $("#classe_id").on("change", function (e) {
+            self.form.selectedClasses = $(this).val()
+          })
+
+          $("#initial_date").on("change", function (e) {
+            self.form.initialDate = $(this).val()
+          })
+
+          $("#final_date").on("change", function (e) {
+            self.form.finalDate = $(this).val()
+          })
+
+          $('.performance-content').click(function(){
+            $('.df-settings').removeClass('show');
+          })
+          
+          //Para deixar o tooltip azul
+          $('.filters').tooltip({
+            template: `
+              <div class="tooltip tooltip-primary" role="tooltip">
+                <div class="arrow"></div>
+                <div class="tooltip-inner"></div>
+              </div>`
+          });
+          
+          $('.table-responsive').on('show.bs.dropdown', function () {
+            $('.table-responsive').css( "overflow", "inherit" );
+          });
+          
+          $('.table-responsive').on('hide.bs.dropdown', function () {
+            $('.table-responsive').css( "overflow", "auto" );
+          })            
+        },
+        updated: function() {
+          tippy('.tooltips', {
+            placement: 'left',
+            allowHTML: true,
+            theme: 'custom',
+          })
+        },
+    })
+</script>
+
+{% endblock %}

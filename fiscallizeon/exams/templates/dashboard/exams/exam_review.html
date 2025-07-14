@@ -1,0 +1,2062 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+
+{% load static %}
+{% load widget_tweaks %}
+{% load insert_field %}
+{% load insert_key %}
+
+{% block title %}
+  {% if not object %}
+    Solicitação de caderno - Lize
+  {% else %}
+    Alteração no caderno - Lize
+  {% endif %}
+{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<link rel="stylesheet" href="{% static 'administration/lib/quill/quill.snow.css' %}">
+<link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+  integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+
+<link href="{% static 'administration/assets/css/boostrap5.css' %}" rel="stylesheet">
+<link rel="stylesheet" href="//unpkg.com/focus-overlay@latest/dist/focusoverlay.css" />
+<style>
+  .list-group-item .btn:hover{
+    cursor: pointer;
+  }
+  .line-through {
+    text-decoration: line-through;
+  }
+
+  .modal-body{
+    padding: 0;
+    max-height: 80vh !important;
+    height: 80vh !important;
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
+  }
+  .grid-item { width: 100%; }
+  @media (min-width: 992px){
+    .modal-lg, .modal-xl {
+      max-width: 95%;
+    }
+    .modal-content.modal-body{
+      max-height: 80vh !important;
+      height: 80vh !important;
+    }
+  }
+  #question-details img{
+    max-width: 90%;
+  }
+  .selected-row{
+    background-color: rgb(224 224 224 / 31%);
+  }
+  #teacherModal .list-group-item{
+    cursor: pointer;
+  }
+  #question-container .list-group-item {
+    cursor: move;
+  }
+
+</style>
+
+{% endblock css-additional %}
+
+{% block js-header-additional %}
+<script src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
+  integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
+  integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa" crossorigin="anonymous"></script>
+{% endblock js-header-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="{% url 'exams:exams_list' %}">CADERNO</a></li>
+          <li class="breadcrumb-item active" aria-current="page">GERENCIAR</li>
+        </ol>
+      </nav> 
+      <h4>Revisar {{ exam.name }}</h4>
+    </div>
+    {% if is_popup %}
+      <button class="btn btn-sm pd-x-15 btn-white btn-uppercase" onclick="window.close();">
+        <i class="fas fa-times" class="wd-10 mg-r-5"></i> Fechar
+      </button>
+    {% else %}
+      <div class="d-none d-md-block">
+          <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+          </a>
+      </div>
+    {% endif %}
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+
+<div class="ard cer dcv tw-mb-16">
+<div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+  <nav class="ls" aria-label="Breadcrumb">
+    <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+      <li>
+        <div>
+          <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+              <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+            </svg>
+            <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+          </a>
+        </div>
+      </li>
+      <li>
+        <div class="ls yu">
+          <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+            <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+          </svg>
+          <a href="{% url 'exams:exams_list' %}" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Cadernos</a>
+        </div>
+      </li>
+      <li>
+        <div class="ls yu">
+          <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+            <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+          </svg>
+          <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Revisar</a>
+        </div>
+      </li>
+    </ol>
+  </nav>
+  <div class="d-none d-md-block">
+    <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+      <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    <div class="card mg-b-10">
+      <div class="card-body">
+        <ul class="nav nav-tabs mb-4" id="questiontab">
+          <li class="nav-item">
+            <a class="nav-link {% if not add_materials %}active{% endif %}" data-toggle="tab" href="#exam-tab" aria-current="page">
+              <i class="fas fa-align-right mr-1"></i> Caderno </a>
+          </li> 
+          {% if not is_popup %}
+            {% if object.history.all.count %} 
+                <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#exam-history-tab">
+                    <i class="fas fa-history  mr-1"></i> Histórico de Alterações <span class="badge badge-primary ml-1">{{object.history.all.count}}</span>
+                </a>
+                </li> 
+            {% endif %} 
+          {% endif %}
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane fade {% if not add_materials %}show active{% endif %}" id="exam-tab" role="tabpanel" aria-labelledby="exam-tab">
+            <form method="POST" id="form-exam-create" onsubmit="return false"> 
+              {% csrf_token %}
+              <div class="form-row">
+                <div class="col-md-12 p-0" id="question-container">
+                  <h5 class="mb-0 mt-4">Disciplinas e professores adicionados em <b>{{ exam.name }}</b></h5>
+                  <h6 class="text-muted">Altera a ordem das disciplinas/professores ou remova-as do instrumento avaliativo na listagem abaixo!</h6>
+                  <draggable :list="selectedTeachers" class="list-group" ghost-class="ghost" @change="changeObjectsOrder(selectedTeachers)" @start="dragging = true" @end="dragging = false" :disabled="swaping">
+                    <div class="list-group-item mt-1" :class="{'bg-warning-light': teacher.is_foreign_language && exam.is_english_spanish}" v-for="(teacher, index) in selectedTeachers" :key="teacher.teacher_subject.id">
+                      <div class="w-100 d-flex justify-content-between">
+                        <span>
+                          <div class="custom-control custom-checkbox"
+                            v-if="exam.is_english_spanish && selectedTeachers.find(_teacher => _teacher.is_foreign_language) != teacher"
+                            @click="selectForeignLanguage(teacher)">
+                            <input type="checkbox" class="custom-control-input" :id="'check-'+ teacher.teacher_subject.id ? teacher.id : teacher.teacher.id">
+                            <label class="custom-control-label" :for="'check-'+ teacher.teacher_subject.id ? teacher.id : teacher.teacher.id">Primeira opção</label>
+                          </div>
+                        </span>
+                        <span>
+                          <button data-type='exam-teacher-subject' :id="'exam_teacher_subject-' + teacher.id"
+                            v-if="teacher.exam_questions.length ? teacher.exam_questions.length : teacher.exam_questions_count" type="button"
+                            class="btn btn-outline-primary p-0 pr-1 pl-1 m-0" @click="
+                                                    selectedTeacher = teacher;
+                                                    getExamQuestions(teacher); 
+                                                    selectedQuestionIndex = 0;
+                                                    openModal('teacherModal')">
+                            <span class="fas fa-eye" aria-hidden="true"></span> Revisar ${teacher.exam_questions.length ? teacher.exam_questions.length : teacher.exam_questions_count}
+                            Questões <b
+                              v-if="!teacher.subject_note">(${parseFloat(teacher.sum_weight).toFixed(4)})</b>
+                            <b v-else>(${parseFloat(teacher.subject_note).toFixed(4)})</b>
+                          </button>
+                        </span>
+                      </div>
+                        <div class="w-100 handle" v-if="teacher.teacher_subject.teacher || teacher.teacher">
+                          
+                          <h6 class="mb-1 mt-1" v-if="!teacher.teacher_subject && index == 0 || selectedTeachers.find(_teacher => _teacher.is_foreign_language) == teacher">Esta é a primeira disciplina de lingua estrangeira</h6>
+                          <h6 class="mb-1 mt-1" v-if="!teacher.teacher_subject && index == 1 || getSecondForeignLanguage(selectedTeachers.find(_teacher => _teacher.is_foreign_language)) == teacher">Esta é a segunda disciplina de lingua estrangeira</h6>
+                          <template v-if="teacher.teacher_subject && teacher.grade">
+                            <h6 class="mb-1 mt-1">
+                              <div class="d-flex">
+                                <template v-if="teacher.teacher_subject.teacher"> ${teacher.teacher_subject.teacher.name} </template>
+                                <template v-else> ${teacher.teacher.name} </template>
+                              </div>
+                            </h6>
+                            <p class="mb-1">
+                              <template v-if="teacher.teacher_subject.subject"> ${teacher.teacher_subject.subject.name} </template>
+                              <template v-else> ${teacher.subject.name} </template> - ${teacher.quantity} questões - ${teacher.grade.full_name}
+                            </p>
+                          </template>
+                          <p class="text-muted m-0" v-if="teacher.teacher_note">
+                            <i class="fas fa-comment"></i> ${teacher.teacher_note}
+                          </p>
+                          <h6 class="text-muted text-justify"> ${teacher.note} </h6>
+                          <hr class="m-0 mb-1 p-0">
+                          <template v-if="teacher.status_count">
+                            <span class="badge  mr-1" v-for="status in Object.keys(teacher.status_count)" :class="getStatusBadgeClass(status).class" v-if="status != 'Visto' && teacher.status_count[status] > 0">
+                              <i class="fas" :class="getStatusBadgeClass(status).icon"></i> ${teacher.status_count[status]} ${status} </span>
+                          </template>
+                        </div>
+                    </div>
+                  </draggable>
+                  <div v-if="loading" class="text-center text-info">
+                    <div class="spinner-border"></div>
+                    <div> Carregando... </div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="col-12 text-right mt-2">
+                  <span class="font-weight-bold">Total de pontos do caderno:</span> ${sumQuestionWeight().toFixed(4)}
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="tab-pane fade" id="exam-history-tab" role="tabpanel" aria-labelledby="contact-tab"> 
+            {% if object.history.all %} <h5>Histórico da questão</h5>
+              <section>
+                <div class="row">
+                  <div class="col-12">
+                    <div class="table-responsive">
+                      <table class="table mg-b-1">
+                        <thead>
+                          <tr>
+                            <th>Data da modificação</th>
+                            <th>Status</th>
+                            <th>Modificado por</th>
+                          </tr>
+                        </thead>
+                        <tbody> {% for history in object.history.all %} <tr>
+                            <td>
+                              {{history.history_date}}
+                            </td>
+                            <td>
+                              {{history.get_status_display}}
+                            </td>
+                            <td>
+                              {{history.history_user}}
+                            </td>
+                          </tr> {% endfor %} </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </section> 
+            {% endif %}
+          </div>
+          
+          {% if object and user_type == 'coordination' %}
+            <div class="tab-pane fade {% if add_materials %}show active{% endif %}" id="exam-materials-tab">
+              <div class="card mb-2" v-for="(material, index) in exam.materials">
+                <div class="card-body pb-1 pt-3">
+                  <h4 class="d-flex justify-content-between">Material ${index + 1} <button type="button" class="btn btn-danger btn-sm py-1" @click="deleteMaterial(material)">
+                      <i class="fas fa-times"></i> Remover </button>
+                  </h4>
+                  <div class="form-row">
+                    <div class="form-group col-md-12">
+                      <label for="">Título</label>
+                      <input type="text" v-model="material.title" class="form-control form-control-sm" placeholder="Digite o Título do Material de Estudo" required>
+                      <small class="text-danger" v-if="!material.title.length">Esse campo é obrigatório</small>
+                    </div>
+                    <div class="form-group col-md-12">
+                      <label for="">Capa do material (Imagem)</label>
+                      <input type="file" accept="image/*" @change="material.thumbnail = $event.target.files[0]" class="form-control form-control-sm">
+                      <small class="form-text text-muted mt-0" style="line-height: initial;"> Arquivo de imagem: .png, .jpg, .jpeg, .gif </small>
+                      <small class="text-danger" v-if="material.thumbnail && typeof(material.thumbnail) == 'object' && !['png', 'jpg', 'jpeg', 'gif'].includes(material.thumbnail.name.split('.').pop().toLowerCase())">Esse formato não é inválido</small>
+                    </div>
+                    <div class="form-group col-md-12">
+                      <label for="">Material</label>
+                      <input type="file" accept="image/*" @change="material.material = $event.target.files[0]" class="form-control form-control-sm" required>
+                      <small class="text-danger"></small>
+                    </div>
+                    <div class="form-group col-md-12">
+                      <label for="">Etapa de ensino</label>
+                      <select v-model="material.stage" class="form-control form-control-sm">
+                        <option value="0">1ª Etapa</option>
+                        <option value="1">2ª Etapa</option>
+                        <option value="2">3ª Etapa</option>
+                        <option value="3">4ª Etapa</option>
+                        <option value="4">5ª Etapa</option>
+                        <option value="5">6ª Etapa</option>
+                        <option value="6">Geral</option>
+                      </select>
+                      <small class="text-danger"></small>
+                    </div>
+                    <div class="form-group px-2 col-md-12">
+                      <div class="custom-control custom-switch">
+                        <input type="checkbox" v-model="material.emphasis" :id="'emphasis_'+index" class="custom-control-input">
+                        <label class="custom-control-label" :for="'emphasis_'+index">
+                          <i class="fa fa-medal"></i> Material em destaque </label>
+                        <small class="form-text text-muted mt-0" style="line-height: initial;"> Marque esta opção se deseja que o material fique em destaque para o aluno </small>
+                      </div>
+                    </div>
+                    <div class="form-group col-md-12">
+                      <button type="button" class="btn btn-primary btn-sm d-flex align-items-center" @click="updateMaterial(material)" v-if="material.id" :disabled="material.saving || !material.title.length"> ${material.saving ? 'Aguarde ': 'Confirmar alterações'} <div class="spinner-border text-info mx-2" role="status" v-if="material.saving">
+                          <span class="sr-only">Loading...</span>
+                        </div>
+                      </button> {% if object %} <button type="button" class="btn btn-success btn-sm btn-block d-flex align-items-center text-center" @click="createMaterial(material)" v-else :disabled="savingMaterial"> ${savingMaterial ? 'Aguarde ':'CLIQUE PARA SALVAR ESTE MATERIAL'} <div class="spinner-border text-secondary mx-2" role="status" v-if="savingMaterial">
+                          <span class="sr-only">Loading...</span>
+                        </div>
+                      </button> {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-row mt-4">
+                <div class="form-group col-12 p-0">
+                  <label for="">Liberação de material de estudo</label>
+                  <input v-model="release_material_study" type="date" @change="changeReleaseMaterial()" class="form-control form-control-sm">
+                  <small class="form-text text-muted"> Data para liberação dos materiais para os alunos </small>
+                  <small class="text-danger"></small>
+                </div>
+              </div>
+              <div class="form-row">
+                <button type="button" class="btn btn-primary btn-sm btn-block" @click="addMaterial()" {% if object %} v-if="!exam.materials.length || exam.materials.length && exam.materials[exam.materials.length-1].id" {% endif %}>ADICIONAR MATERIAL</button>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+
+{% block extra-modal %}
+
+<div class="modal pr-0" tabindex="-1" role="dialog" id="teacherModal">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-white">
+          <div class="d-flex flex-column ml-3">
+            <h5 class="align-middle">Revisando o instrumento avaliativo: {{ exam.name }}</h5>
+            <h5 class="modal-title">
+              <h6 class="mb-1 mt-1" v-if="selectedTeacher && selectedTeacher.exam_questions">
+                <i class="fas fa-user mr-2"></i>
+                ${selectedTeacher.teacher_subject.teacher.name} | 
+                <span class="text-muted">
+                  ${selectedTeacher.teacher_subject.subject.name} - ${selectedTeacher.quantity} questões
+                </span> |
+                <span v-if="selectedTeacher.subject_note">
+                  <b>(${parseFloat(selectedTeacher.subject_note).toFixed(4)} Pontos)</b>
+                </span>
+                <span v-else>
+                  <b >(${parseFloat(selectedTeacher.sum_weight).toFixed(4)} Pontos)</b>
+                </span>
+              </h6>
+            </h5>
+          </div>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <i class="fas fa-times-circle"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <template v-if="!loadExamQuestions">
+            <div class="row">
+              <div class="col-5 pr-0" style="overflow: auto; height: 80vh; max-height: 80vh;">
+                <draggable 
+                  :list="selectedTeacher.exam_questions" 
+                  @change="changeObjectsOrder(null, selectedTeacher.exam_questions)" 
+                  class="list-group" 
+                  ghost-class="ghost" 
+                  handle=".move-handle"
+                  @start="dragging = true" 
+                  @end="dragging = false"
+                  :disabled="swaping"
+                >
+                  <div 
+                    v-for="(exam_question, index) in selectedTeacher.exam_questions"
+                    :id="exam_question.id" 
+                    :key="exam_question.id"
+                    class="list-group-item" 
+                    v-bind:class="{'selected-row': exam_question.selected }" 
+                    {% if user.questions_configuration and user.questions_configuration.can_edit_and_change_position %}
+                      @mouseenter="exam_question['showOptions'] = true, $forceUpdate()" 
+                      @mouseleave="exam_question['showOptions'] = false, $forceUpdate()"
+                    {% endif %}
+                    @click="
+                      selectedTeacher.exam_questions[selectedQuestionIndex].selected=false; selectedQuestionIndex=index;
+                      exam_question.selected=true;
+                      fetchQuestion(exam_question.question);
+                    " 
+                  >
+                    <div class="row mb-1">
+                      <div class="col">
+                        <span class="float-right">
+                          <template v-if="getStatusBadgeClass(exam_question.last_status.annuled_give_score ? 'Anulada e pontuação dada' : (exam_question.last_status.status_display || 'Em aberto'))">
+                            <span class="badge" :class="getStatusBadgeClass(exam_question.last_status.annuled_give_score ? 'Anulada e pontuação dada' : (exam_question.last_status.status_display || 'Em aberto')).class"> <i class="fas"
+                              :class="getStatusBadgeClass(exam_question.last_status.annuled_give_score ? 'Anulada e pontuação dada' : (exam_question.last_status.status_display || 'Em aberto')).icon"></i>
+                              ${exam_question.last_status.annuled_give_score ? 'Anulada e pontuação dada' : (exam_question.last_status.status_display || 'Em aberto')}
+                            </span>
+                          </template>
+                        </span>
+                        <div class="w-100">
+                          <template>
+                              <span class="badge badge-warning" v-if="exam_question.question.used_times > 1">
+                                Utilizada ${exam_question.question.used_times-1} Vez(es)
+                              </span>
+                              <span class="badge badge-success" v-else>
+                                Inédita
+                              </span>
+                          </template>
+                          <span class="badge badge-success">
+                            ${exam_question.question.get_level_display}
+                          </span>
+                          <h6 class="mb-1 mt-2 font-weight-normal">
+                            <p v-if="exam_question.question.board" class="mb-0">
+                              (${exam_question.question.board})
+                            </p>
+                            <template v-if="exam_question.last_status.status_display == 'Anulada'">
+                              <del>
+                                ${exam_question.question.enunciation}
+                              </del>
+                            </template>
+                            <template v-else>
+                              ${exam_question.question.enunciation}
+                            </template>
+                          </h6>
+                          <h6 class="mt-1 mb-0 float-right" v-if="exam_question.question.created_by_name">
+                            <span class="text-muted"> Criado por </span><span class="font-weight-bold">
+                              ${exam_question.question.created_by_name}
+                            </span>
+                          </h6>
+                          <h6 class="mt-1 mb-0">
+                            <template v-if="exam_question.last_status.status_display != 'Anulada' || (exam_question.last_status.status_display == 'Anulada' && exam_question.last_status.annuled_give_score)">
+                              <template v-if="unavailableStatus.includes(exam_question.last_status.status_display) && !exam_question.last_status.annuled_give_score">
+                                <strike>${exam_question.weight}</strike> Pontos
+                              </template>
+                              <template v-else>
+                                <b>${exam_question.weight}</b> Pontos
+                              </template>
+                            </template>
+                            &nbsp;
+                          </h6>
+                        </div>
+                        <p class="mb-1" v-if="exam_question.question.topic_name">
+                          <span class="badge badge-primary">
+                            ${exam_question.question.topic_name}
+                          </span>
+                        </p>
+                      </div>
+                      <div v-if="exam_question['showOptions']" class="col-1 border-left d-flex flex-column justify-content-center aling-items-center">
+                        <i class="fa fa-edit mb-2" @click="openNewWindow('/questoes/'+exam_question.question.pk+'/editar/?is_popup=1&request_tags='+request_tags);"></i>
+                        <i class="fas fa-expand-arrows-alt mt-2 move-handle"></i>
+                      </div>
+                    </div>
+                  </div>
+                </draggable>
+              </div>
+              <div class="col-7 p-3 selected-row" style="overflow: auto; height: 80vh; max-height: 80vh; max-width: 57%">
+                <!-- <a target="_blank" :href="'/questoes/'+selectedQuestion.id+'/editar/'"
+                  class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Editar questão</a> -->          
+                <template v-if="selectedTeacher && selectedTeacher.exam_questions && selectedTeacher.exam_questions[selectedQuestionIndex].last_status.status_display != 'Anulada'">
+                  Nota atual: ${selectedTeacher.exam_questions[selectedQuestionIndex].weight}
+                  <div class="d-flex flex-row justify-content-between mt-2 mb-3">
+
+                    <div v-if="selectedTeacher && selectedTeacher.exam_questions">
+                      {% if user_type != 'teacher' or user.inspector.can_update_note %}
+                        <div v-if="!selectedTeacher.subject_note" class="input-group input-group-sm">
+                          <input style="width: 70px;" id="input-update-weight" type="text" class="form-control"
+                            :value="selectedTeacher.exam_questions[selectedQuestionIndex].weight">
+                          <div class="input-group-append">
+                            <button id="update-note" @click="updateWeightQuestion(selectedTeacher.exam_questions[selectedQuestionIndex])" class="btn btn-sm btn-outline-secondary" type="button">
+                              <i class="fas fa-sync-alt"></i> Atualizar Nota
+                            </button>
+                          </div>
+                        </div>
+                        <div v-if="selectedTeacher.subject_note" class="alert alert-light" role="alert">
+                          A nota da disciplina já foi definida
+                        </div>
+                      {% endif %}
+                    </div>
+                      <div class="">
+                        <template v-if="selectedTeacher && selectedTeacher.exam_questions">
+                        <template v-if="selectedTeacher.exam_questions[selectedQuestionIndex].last_status.status_display != 'Anulada'">
+                          <template v-if="!exam.application_is_finished">
+                            {% if user_type != 'teacher' or user.inspector.can_viewed %}
+
+                              <button @click="createSeenQuestion(5)"
+                                type="button" class="btn btn-primary btn-sm">
+                                <i class="fas fa-check"></i>
+                                Dar Visto
+                              </button>
+
+                            {% endif %}
+
+                            {% if user_type != 'teacher' or user.inspector.can_approve %}
+                            <button @click="createStatusQuestion(0, '')"
+                              v-if="selectedTeacher.exam_questions[selectedQuestionIndex].last_status.status_display !== 'Aprovada'"
+                              type="button" class="btn btn-success btn-sm">
+                              <i class="fas fa-check"></i>
+                              Aprovar
+                            </button>
+                            {% endif %}
+
+
+                            {% if user_type != 'teacher' or user.inspector.can_suggest_correction %}
+                              <button @click="requestStatusTags(3)" type="button" class="btn btn-warning btn-sm"><i
+                                  class="fas fa-edit"></i>
+                                Correção
+                              </button>
+                              <button @click="requestStatusTags(7)" type="button" class="btn btn-info btn-sm"><i class="fas fa-clock"></i>
+                                Usar depois
+                              </button>
+                            {% endif %}
+
+                            {% if user_type != 'teacher' or user.inspector.can_fail %}
+                              <button @click="requestStatusTags(1)"
+                                v-if="selectedTeacher.exam_questions[selectedQuestionIndex].last_status.status_display !== 'Reprovada'"
+                                type="button" class="btn btn-danger btn-sm">
+                                <i class="fas fa-times"></i>
+                                Reprovar
+                              </button>
+                            {% endif %}
+                          </template>
+                          {% if user_type != 'teacher' or user.inspector.can_annul %}
+                            <button @click="createAnullQuestion(6)"
+                              v-if="selectedTeacher.exam_questions[selectedQuestionIndex].has_answer"
+                              type="button" class="btn btn-danger btn-sm">
+                              <i class="fas fa-times-circle"></i>
+                              Anular
+                            </button>
+                          {% endif %}
+                        </template>
+                      </template>
+
+                    </div>
+                  </div>
+                  <hr/>
+                </template>      
+                {% if user_type != 'teacher' or user.inspector.can_annul %}
+                <template v-if="selectedTeacher && selectedTeacher.exam_questions && selectedTeacher.exam_questions[selectedQuestionIndex].last_status.status_display == 'Anulada'">
+                  <div class="d-flex flex-row justify-content-between mt-2 mb-3">
+                    <button @click="revertAnullQuestion(selectedTeacher.exam_questions[selectedQuestionIndex])"
+                      type="button" class="btn btn-outline-secondary btn-sm">
+                      <i class="fas fa-undo"></i>
+                      Reverter anulação
+                    </button>
+                  </div>
+                </template>
+                {% endif %}
+                <div id="question-details" class="mb-3 p-2" v-show="selectedQuestion.enunciation">
+                
+                  <ul class="nav nav-tabs mb-4" id="questiontab">
+                    <li class="nav-item">
+                      <a class="nav-link active" data-toggle="tab" href="#question-tab" aria-current="page" >
+                        <i class="fas fa-align-right mr-1"></i>
+                        Enunciado</a>
+                    </li>
+                    <li class="nav-item" v-if="selectedQuestion.base_texts && selectedQuestion.base_texts.length > 0">
+                      <a class="nav-link" data-toggle="tab" href="#baseText-tab">
+                        Textos Base
+                        <span class="badge badge-primary ml-1">
+                          ${selectedQuestion.base_texts.length}</span>
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" data-toggle="tab" href="#data-tab">
+                        <i class="fas fa-info-circle  mr-1"></i>
+                        Dados Pedagógicos</a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" data-toggle="tab" href="#history-tab">
+                        <i class="fas fa-history  mr-1"></i> Histórico 
+                        <span class="badge badge-primary ml-1"
+                          v-if="selectedTeacher && selectedTeacher.exam_questions">
+                          ${selectedTeacher.exam_questions[selectedQuestionIndex].status_list.length}</span>
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" data-toggle="tab" href="#uses-tab">
+                        <i class="fas fa-history  mr-1"></i> Utilizações 
+                        <span class="badge badge-primary ml-1"
+                          v-if="selectedQuestion && selectedQuestion.uses">
+                          ${selectedQuestion.uses.filter(_use => _use.exam_id != '{{object.id}}').length}</span>
+                      </a>
+                    </li>
+                  </ul>
+                  <div class="tab-content">
+                    <div class="tab-pane fade show active" id="question-tab" role="tabpanel" aria-labelledby="question-tab">
+                      <p v-if="selectedQuestion.board" class="mb-0">
+                        (${selectedQuestion.board})
+                      </p>
+                      <div v-html="selectedQuestion.enunciation" class="mb-2"></div>
+                      <div class="form-check" v-for="alternative in selectedQuestion.alternatives">
+                        <input class="form-check-input" type="radio" disabled="disabled" :checked="alternative.is_correct">
+                        <label v-bind:class="[alternative.is_correct ? 'text-success' : '']"
+                          v-html="alternative.text"></label>
+                      </div>
+                    </div>
+                    
+                      <div class="tab-pane fade" id="data-tab" role="tabpanel" aria-labelledby="data-tab">
+                        <div class="row">
+                          <div class="col-12">
+
+                            <div class="card">
+                              <div class="card-header p-2 font-weight-bold">
+                                Assuntos Abordados
+                              </div>
+                              <ul class="list-group list-group-flush">
+                                <template v-if="selectedQuestion.topics">
+                                    <li v-if="!selectedQuestion.topics.length" class="list-group-item  p-1">Não há assuntos cadastrados nessa questão</li>
+                                    <li v-else v-for="topic in selectedQuestion.topics" class="list-group-item  p-2">
+                                      ${topic.name}</li>
+                                </template>
+                              </ul>
+                            </div>
+                          </div>
+                          <div class="col-12">
+                            <div class="card mt-2">
+                              <div class="card-header p-2 font-weight-bold">
+                                Habilidades
+                              </div>
+                              <ul class="list-group list-group-flush">
+                                <template v-if="selectedQuestion.abilities">
+                                  <li v-if="!selectedQuestion.abilities.length" class="list-group-item  p-1">Não há habilidades cadastradas nessa questão</li>
+                                  <li v-else v-for="abilitie in selectedQuestion.abilities" class="list-group-item  p-2">
+                                    ${abilitie.text}</li>
+                                </template>
+                              </ul>
+                            </div>
+                          </div>
+                          <div class="col-12">
+                            <div class="card mt-2">
+                              <div class="card-header p-2 font-weight-bold">
+                                Competências
+                              </div>
+                              <ul class="list-group list-group-flush">
+                                <template v-if="selectedQuestion.competences">
+                                  <li v-if="!selectedQuestion.competences.length" class="list-group-item  p-1">Não há competências cadastradas nessa questão</li>
+                                  <li v-else v-for="competence in selectedQuestion.competences" class="list-group-item  p-2">
+                                    ${competence.text}</li>
+                                </template>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="tab-pane fade" id="history-tab" role="tabpanel" aria-labelledby="history-tab">
+                        <div v-if="selectedTeacher && selectedTeacher.exam_questions">
+                          <div class="row">
+                            <div class="col-12 my-2 filter-button-group">
+                              <label class="bold">Mostrar:</label>
+                              <button
+                                class="btn btn-sm btn-outline-secondary m-1 py-0 removeFilters" 
+                                style="cursor: pointer;"
+                                @click="selectedFilter = ''"
+                                v-bind:class="!selectedFilter ? 'active':''"
+                              >
+                              Todos
+                            </button>
+                              <button 
+                                v-for="status in Object.keys(statusList)"
+                                :class="`btn btn-sm m-1 py-0 ${getStatusBadgeClass(status).class.replace('badge', 'btn-outline')} ${selectedFilter == status ? 'active':''}`"
+                                v-if="status != 'Em aberto'"
+                                @click="selectedFilter = status"
+                                style="cursor: pointer;"
+                              >
+                              ${status}
+                              </button>
+                            </div>
+                          </div>
+                          <template v-for="note in selectedTeacher.exam_questions[selectedQuestionIndex].status_list">
+                              <div class="row" v-show="!selectedFilter || note.status_display == selectedFilter">
+                                <div class="col-12">
+                                  <div class="card">
+                                    <div class="card-header p-2 font-weight-bold">
+                                      <span class="float-right text-right">
+                                        <span class="badge  mr-1 " :class="getStatusBadgeClass(note.status_display).class">
+                                          <i class="fas" :class="getStatusBadgeClass(note.status_display).icon"></i>
+                                          ${note.status_display}
+                                        </span>
+                                        
+                                        <p class="text-muted m-0" v-if="note.user_name">por ${note.user_name}
+                                        </p>
+                                      </span>
+                                      
+
+                                      <span class="">
+                                        ${momentRef(note.created_at).fromNow()}<br/>
+                                        <small class="text-muted p-0">
+                                          ${momentRef(note.created_at).format('L')} às ${momentRef(note.created_at).format('LT')}
+                                        </small>
+                                      </span>
+                                      
+                                    </div>
+                                    <ul class="list-group list-group-flush">
+                                      <li class="list-group-item p-2">
+                                        <template v-if="note.note">${note.note}</template>
+                                        <template v-else>Sem anotações</template>
+                                      </li>
+                                      <li class="list-group-item p-2">
+                                        <span v-if="status_tags_history.find((status) => note.id==status.pk)">
+                                          <span v-for="status in status_tags_history">
+                                            <span v-if="status.pk == note.id" v-for="tag in status.tags" class="badge badge-primary m-2">${tag}</span>
+                                          </span>
+                                        </span>
+                                        <span v-else>
+                                          sem tags nesse status
+                                        </span>
+                                      </li>
+                                    </ul>
+                                  </div>
+                                </div>
+                              </div>
+                            </template>
+                        </div>
+                      </div>
+                      <div class="tab-pane fade" id="uses-tab" role="tabpanel" aria-labelledby="uses-tab">
+                        <div class="row" v-if="selectedQuestion && (selectedQuestion.uses && selectedQuestion.uses.filter(_use => _use.exam_id != '{{object.id}}').length)">
+                          <div class="col-12 my-2">
+                            <table class="table">
+                              <thead>
+                                <tr>
+                                  <th>Cadernos</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr v-for="use in selectedQuestion.uses.filter(_use => _use.exam_id != '{{object.id}}')">
+                                  <td>
+                                    <strong>${use.exam_name}</strong> <span class="badge badge-primary">ESTA PROVA</span>
+                                    <br>
+                                    ${use.application_date ? 'Data da aplicação: ' + use.application_date: 'Nenhuma aplicação vinculada'}
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                        <div v-else class="row">
+                          <div class="col-12">
+                            <h6>A questão não foi utilizada nenhuma vez</h6>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="tab-pane fade" id="baseText-tab" role="tabpanel" aria-labelledby="baseText-tab">
+                        <div class="row">
+                          <div class="col-12 mb-3" v-for="(baseText, index) in selectedQuestion.base_texts">
+                            <div class="card">
+                              <div class="card-body">
+                                <h4 class="text-muted text-uppercase">Texto Base ${index + 1}</h4>
+                                <div v-html="baseText.text"></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                  </div>
+                  </div>
+              </div>
+            </div>
+          </template>
+          <template v-else>
+            <div class="row h-100">
+              <div class="col-12 h-100 my-4 d-flex flex-column justify-content-center align-items-center">
+                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                  <span class="sr-only">Loading...</span>
+                </div>
+                <p class="text-center tx-rubik p-4">Aguarde enquanto carregamos os dados das questões</p>
+              </div>
+            </div>
+          </template>
+        </div> 
+    </div>
+  </div>
+</div>
+
+<div class="modal pr-0" tabindex="-1" role="dialog" id="orientations">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-white">
+        <h5 class="modal-title">
+          Lista com todas as orientações
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <i class="fas fa-times-circle"></i>
+        </button>
+      </div>
+      <div class="modal-body p-3">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Número</th>
+              <th>Título</th>
+              <th class="text-right">Opções</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template v-for="(orientation, index) in orientations">
+              <tr>
+                <td>#${index + 1}</td>
+                <td><p class="text-truncate">${orientation.title}</p></td>
+                <td class="text-right">
+                  <button class="btn btn-sm btn-success" @click="tinymce.get('id_orientations').setContent(orientation.content), $('#orientations').modal('hide')"><i class="fas fa-hand-pointer"></i> Utilizar </button>
+                  <button class="btn btn-sm btn-primary" data-toggle="collapse" :data-target="'#collapse-'+index" aria-expanded="true" :aria-controls="'#collapse-'+index"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr :id="'collapse-'+index" class="collapse" :aria-labelledby="'heading-'+index" >
+                <td colspan="3">
+                  <div class="card-body" v-html="orientation.content"></div>
+                </td>
+              </tr>
+            </template>
+            <tr v-if="!orientations.length">
+              <td colspan="3">Não há orientações cadastradas, você pode cadastrar uma nova orientação padrão no menu superior clicando em <br><strong> <a href="{% url 'exams:exam_orientations_list' %}" target="_blank">"Gerenciamento > Provas > Adiciona Orientações</a> </strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div> 
+    </div>
+  </div>
+</div>
+
+{% endblock extra-modal %}
+
+
+{% block js-additional %}
+
+
+<script src="{% static 'administration/lib/typeahead.js/typeahead.bundle.min.js' %}"></script>
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'administration/assets/vendor/jquery.mask.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+<script src="{% static 'js/numeric.js' %}"></script>
+<script src="https://unpkg.com/isotope-layout@3/dist/isotope.pkgd.min.js"></script>
+<script src="//unpkg.com/focus-overlay@latest/dist/focusoverlay.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<script type="text/javascript">
+  moment.locale('pt-br');
+  var app_question = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {
+      request_tags: {% if exam.status %}true{% else %}false{% endif %},
+      no_client_tags: {% if not client_tags %}true{% else %}false{% endif %},
+      status_tags_history: [
+        {% for tag_status in questions_status_tags %}
+        {
+          'pk': '{{tag_status.status.pk}}', 
+          'tags':
+          [
+            {% for tag in tag_status.tags.all %}
+              '{{tag.name}}',
+            {% endfor %}
+          ],
+        },
+        {% endfor %}
+      ],
+      orientations: [],
+      showOrientations: {% if object.orientations %}true{% elif form.orientations.value %}true{% else %}false{% endif %},
+      exam: {
+        coordinations: [],
+        category: 
+        {% if not object %}
+          {% if category == 'homework' %}
+            1
+          {% else %}
+            0
+          {% endif %}
+        {% else %}
+          {{ object.category }}
+        {% endif %},
+        name: '',
+        status: 0,
+        base_text_location: 0,
+        random_alternatives: false,
+        random_questions: false,
+        group_by_topic: false,
+        elaboration_deadline: '',
+        release_elaboration_teacher: '',
+        correction_by_subject: false,
+        is_english_spanish: false,
+        teacher_subjects: [],
+        materials: [],
+        group_attachments: false,
+        start_number: 1,
+        teaching_stage: null,
+        education_system: null,
+      },
+      dragging: false,
+      selectedTeachers: [],
+      subjects: [],
+      subdisciplines: [],
+      teachers: [],
+      selectedGrade: "",
+      selectedSubject: "",
+      selectedSubdiscipline: "",
+      selectedTeacher: '',
+      quantity: 1,
+      subject_note: "",
+      block_questions_quantity: false,
+      block_quantity_limit: false,
+      objective_quantity: 1,
+      discursive_quantity: 1,
+      note: "",
+      selectedQuestion: {},
+      selectedQuestionIndex: 0,
+      coordinations: [
+        {% for coordination in form.coordinations.field.queryset.all %}
+          {
+            pk: '{{coordination.pk}}',  
+            highSchool: {{coordination.high_school|lower}}, 
+            elementarySchool: {{coordination.elementary_school|lower}}, 
+            elementarySchool2: {{coordination.elementary_school2|lower}}, 
+          },
+        {% endfor %}
+      ],
+      //Controls for edit teacher subject
+      selectedTeacherToUpdate: "",
+      editing: false,
+      loading: false,
+      historicalQuestion: '',
+      statusList: {
+        "Em aberto": {class: "badge-warning", icon: "fa-eye"},
+        "Aprovada": {class: "badge-success", icon: "fa-check"},
+        "Reprovada": {class: "badge-danger", icon: "fa-times"},
+        "Aguardando correção": {class: "badge-info", icon: "fa-clock"},
+        "Corrigido": {class: "badge-warning", icon: "fa-eye"},
+        "Visto": {class: "badge-primary", icon: "fa-eye"},
+        "Anulada": {class: "badge-danger", icon: "fa-times-circle"},
+        "Anulada e pontuação dada": {class: "badge-danger", icon: "fa-times-circle", color: "tw-text-[#D92D20]"},
+        "Usar depois": {class: "badge-info", icon: "fa-clock"},
+        "Rascunho": {class: "badge-secondary", icon: "fa-pen"},
+      },
+      selectedFilter: '',
+      selectedGrades: '',
+      release_material_study: '',
+      savingMaterial: false,
+      loadExamQuestions: false,
+      unavailableStatus: ["Reprovada", "Anulada", "Usar depois", "Anulada e pontuação dada"],
+      swaping: false,
+    },
+    watch: {
+      'exam.start_number': function(value){
+        if (value < 1) {
+          this.exam.start_number = 1;
+        }
+      },
+      selectedFilter: function(value) {
+        this.selectedFilter = value
+      },
+      'exam.is_english_spanish': function(value) {
+        if(!value) {
+          this.changeForeignLanguage()
+          this.resetForeignLanguage()
+        }
+      },
+      'objective_quantity': function(value) {
+        if(value > this.quantity - this.discursive_quantity) {
+          this.objective_quantity = this.quantity - this.discursive_quantity
+        }
+      },
+      'discursive_quantity': function(value) {
+        if(value > this.quantity - this.objective_quantity) {
+          this.discursive_quantity = this.quantity - this.objective_quantity
+        }
+      },
+    },
+    methods: {
+      momentRef(args) {
+        return moment(args)
+      },
+      getExamQuestions(teacher, reload = false) {
+        {% if object %}
+          
+          if(this.exam.total_grade || teacher.subject_note) {
+            teacher.exam_questions_load = false
+          }
+
+          if(!teacher.exam_questions_load || reload) {
+            if (!reload) {
+              this.loadExamQuestions = true
+            }
+            axios.get(`{% url 'exams:api-exam-get-exam-questions' object.pk %}?exam_teacher_subject_pk=${teacher.id}`).then((response) => {
+              if(reload) {
+                response.data.forEach((exam_question) => {
+                  let examQuestiontoUpdate = teacher.exam_questions.find((e) => e.id == exam_question.id)
+                  examQuestiontoUpdate.weight = exam_question.weight
+                })
+              } else {
+                teacher.exam_questions = response.data
+                if(teacher.exam_questions.length) {
+                  teacher.exam_questions[this.selectedQuestionIndex].selected = false;
+                  teacher.exam_questions[0].selected = true;
+                  this.fetchQuestion(teacher.exam_questions[0].question, true); 
+                }
+              }
+              teacher.exam_questions_load = true
+            }).finally(() => {
+              this.loadExamQuestions = false
+              this.recalculateWeights = false
+              this.loadingBlockWeight = false
+              this.updateSelectedTeacherWeight()
+            })
+          } else {
+            if(teacher.exam_questions.length) {
+              teacher.exam_questions[this.selectedQuestionIndex].selected = false;
+              teacher.exam_questions[0].selected = true;
+              this.fetchQuestion(teacher.exam_questions[0].question, true);
+            }
+          }
+        {% endif %}
+      },
+      updateSelectedTeacherWeight(){
+        sum = 0
+        this.selectedTeacher.exam_questions.forEach(function(element) {
+          if(element.last_status.status_display != 'Reprovada' && element.last_status.status_display != 'Anulada') {
+            sum += parseFloat(element.weight)
+          }
+        })
+        this.selectedTeacher.sum_weight = sum
+      },
+      updateWeightQuestion(question){
+        self = this
+        data = {"weight": $("#input-update-weight").val()}
+
+        url = "{% url 'exams:exam_question_partial_update' pk='00000000-0000-0000-0000-000000000000'  %}"
+        axios.put(url.replace("00000000-0000-0000-0000-000000000000", question.id), data
+        ).then(function(response){
+          question.weight = response.data.weight
+          self.updateSelectedTeacherWeight()
+        })
+      },
+      sumQuestionWeight(){
+         let sum = 0;
+         this.selectedTeachers.forEach(function(element){
+           number = parseFloat(element.sum_weight || 0)
+           note = parseFloat(element.subject_note || 0)
+           if(element.subject_note){
+            sum += isNaN(note) ? 0 : note
+           } else {
+            sum += isNaN(number) ? 0 : number
+           }
+         })
+         return sum
+      },
+      requestStatusTags(status, distributeWeightToQuestions=true){
+        self = this
+        if(this.no_client_tags){
+          return self.requestNoteStatusQuestion(status, [], distributeWeightToQuestions)
+        }
+        Swal.fire({
+          title: 'Selecione os motivos para essa ação',
+          html: 
+          '{% for tag in client_tags %}<input type="checkbox" class="btn-check statusTags" id="{{tag.pk}}" autocomplete="off"><label class="btn btn-outline-primary btn-sm" for="{{tag.pk}}">{{tag.name}}</label>{% endfor %}',
+          focusConfirm: false,
+          preConfirm: () => {
+            const statusTags = document.querySelectorAll('.statusTags')
+            const selectedPks = []
+
+            statusTags.forEach((tagElement)=>{
+              if(tagElement.checked) selectedPks.push(tagElement.id)
+            })
+            return selectedPks
+          },
+          showCancelButton: true,
+          showConfirmButton: true,
+          confirmButtonText: "Continuar",
+          cancelButtonText: "Cancelar",
+        }).then((result) => {
+          if(result.isConfirmed) {
+            self.requestNoteStatusQuestion(status, result.value, distributeWeightToQuestions)
+          }
+        })
+      },
+      requestNoteStatusQuestion(status, tags, distributeWeightToQuestions=true) {
+        self = this
+        Swal.fire({
+          title: 'Deseja enviar alguma anotação para o professor?',
+          input: 'textarea',
+          inputPlaceholder: 'Adicione a anotação que deseja enviar para o professor, você pode deixar vazio caso não tenha nenhuma anotação a enviar.',
+          inputAttributes: {
+            'aria-label': 'Adicione a anotação que deseja enviar para o professor, você pode deixar vazio caso não tenha nenhuma anotação a enviar.'
+          },
+          showCancelButton: true,
+          showConfirmButton: true,
+          confirmButtonText: "Enviar anotação",
+          cancelButtonText: "Cancelar",
+        }).then((result) => {
+          if(result.isConfirmed) {
+            self.createStatusQuestion(status, result.value, tags, distributeWeightToQuestions)
+          }
+        })
+      },
+      createSeenQuestion(status) {
+        self = this
+        Swal.fire({
+          title: 'Deseja enviar alguma anotação para o professor?',
+          input: 'textarea',
+          inputPlaceholder: 'Adicione a anotação que deseja enviar para o professor, você pode deixar vazio caso não tenha nenhuma anotação a enviar.',
+          inputAttributes: {
+            'aria-label': 'Adicione a anotação que deseja enviar para o professor, você pode deixar vazio caso não tenha nenhuma anotação a enviar.'
+          },
+          showCancelButton: true,
+          showConfirmButton: true,
+          confirmButtonText: "Concluir Visto",
+          cancelButtonText: "Cancelar",
+        }).then((result) => { 
+          if(result.isConfirmed) {
+            self.createStatusQuestion(status, result.value)
+          }
+        })
+      },
+      revertAnullQuestion(exam_question) {
+        Swal.fire({
+          title: 'Confirmação',
+          text: "Ao reverter a anulação, os pesos serão recalculados. Deseja continuar?",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Confirmar',
+          cancelButtonText: 'Cancelar',
+        }).then(result => {
+          if(result.isConfirmed) {
+              axios.post("{% url 'exams:revert_status_question' %}", {
+                exam_question: exam_question.id
+              }).then((response) => {
+                console.log(response.status)
+                if(response.data.new_status){
+                  exam_question.last_status = response.data.new_status
+                  exam_question.status_list.unshift(response.data.new_status)
+                  this.recalculateWeights = true
+                  this.getExamQuestions(this.selectedTeacher, reload = true)
+                }else if(response.data.noLastStatus){
+                  exam_question.last_status = {
+                    annuled_give_score: false,
+                    note: "",
+                    status: 2,
+                    status_display: "Em aberto"
+                  }
+                  this.recalculateWeights = true
+                  this.getExamQuestions(this.selectedTeacher, reload = true)
+                }
+              }).catch(() => {
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Erro',
+                  text: 'Não foi possível reverter a anulação.',
+                })
+              })
+            }
+          }
+        )
+      },
+      createAnullQuestion(status) {
+        self = this
+        Swal.fire({
+          title: 'Como deseja anular essa questão?',
+          width: '800px',
+          html: `
+          <div>
+            <div class="btn-group btn-group-toggle py-2" data-toggle="buttons">
+              <label id="distributeWeightToQuestions" @click="selectedAnnulationType = 0" class="btn btn-outline-primary btn-sm active" v-bind:class="selectedAnnulationType == 0 ? 'active':''">
+                <input type="radio" >
+                <span>
+                  Distribuir nota entre questões
+                </span>
+              </label>
+              <label @click="selectedAnnulationType = 1" class="btn btn-outline-primary btn-sm" v-bind:class="selectedAnnulationType == 1 ? 'active':''">
+                <input type="radio" id="giveScore">
+                <span>
+                  Dar nota aos alunos
+                </span>
+              </label>
+            </div>
+            <div>
+              <small>
+                Marcar "dar nota aos alunos" irá dar a nota integral da questão para <b>todos</b> os alunos da aplicação. <br/>Certifique-se que essa é a ação desejada antes de confirmar a anulação.
+              </small>
+            </div>
+          </div>`,
+          focusConfirm: false,
+          preConfirm: () => {
+            const distributeWeightToQuestions = document.getElementById('distributeWeightToQuestions').classList.contains('active')
+            return {
+              distributeWeightToQuestions: distributeWeightToQuestions,
+            }
+          },
+          showCancelButton: true,
+          showConfirmButton: true,
+          confirmButtonColor: '#dc3545',
+          confirmButtonText: "Confirmar Anulação",
+          cancelButtonText: "Cancelar",
+        }).then((result) => { 
+          if(result.isConfirmed) {
+            self.requestStatusTags(status, result.value.distributeWeightToQuestions)
+          }
+        })
+      },
+      createStatusTags(statusPk, tags){
+        self = this
+        newStatusTagsRecord = {
+          status: statusPk,
+          tags: tags
+        }
+        let url = "{% url 'exams:exams_status_tags_api_create'  pk='00000000-0000-0000-0000-000000000000' %}"
+        url = url.replace('00000000-0000-0000-0000-000000000000', statusPk)
+
+        axios.post(url, newStatusTagsRecord).then((response)=>{
+          const newStatus = {
+            'pk': response.data.status,
+            'tags': response.data.tags_display
+          }
+          this.status_tags_history.push(newStatus)
+        })
+      },
+      createStatusQuestion(status, newStatusNote, tags, distributeWeightToQuestions=true) {
+        self = this
+        newStatusQuestion = {
+          status: status,
+          note: newStatusNote,
+          give_score: !distributeWeightToQuestions
+        }
+
+        let question = self.selectedTeacher.exam_questions[self.selectedQuestionIndex]
+
+        let url = "{% url 'exams:exams_status_question_api_create'  pk='00000000-0000-0000-0000-000000000000' %}"
+        url = url.replace('00000000-0000-0000-0000-000000000000', question.id)
+
+        let last_status = Object.assign({}, question.last_status)
+
+        let questionNotAvailable = this.unavailableStatus.includes(last_status.status_display)
+        
+        axios.post(url, newStatusQuestion).then((response) => {
+
+          this.selectedTeacher.status_count[question.last_status.status_display] -= 1
+          this.selectedTeacher.status_count[response.data.status_display] += 1
+          if(status != 0 && status != 5){
+            this.createStatusTags(response.data.id, tags)
+          }
+        
+        
+          if(status != 5 && (questionNotAvailable != this.unavailableStatus.includes(response.data.status_display))) {
+            if(this.exam.total_grade || this.selectedTeacher.subject_note) {
+              if(distributeWeightToQuestions){
+                this.recalculateWeights = true
+                this.getExamQuestions(this.selectedTeacher, reload = true)
+              }
+            }
+          }
+
+          if(status == 6) {
+            if(distributeWeightToQuestions) {
+              this.distributeWeights(question.weight)
+            }
+          }
+          if(status != 5) {
+            question.last_status = response.data
+          }
+          question.status_list.unshift(
+            response.data
+          )
+        }).finally(() => {
+          this.getStatusCount(this.selectedTeacher.id)
+        })
+        $('#update-note').click()
+        if(this.selectedTeacher.subject_note) {
+          this.distributeWeights()
+        }
+      },
+      getStatusBadgeClass(status) {
+        return this.statusList[status]
+      },
+      openModal(id){
+        $('#'+id).modal('toggle');
+      },
+      openNewWindow(url){
+        let popupWidth = screen.width / 2
+        var leftPos = screen.width - popupWidth;
+        window.open(url, "DescriptiveWindowName", "width=" + popupWidth + ", height=1040, top=0, left=" + leftPos +", resizable,scrollbars,status");
+      },
+      updateExamTeacher(teacher, option = 'select') {
+        this.editing = true
+        $("[data-type='exam-teacher-subject']").hide()
+        if(option == 'reset') {
+          $("[data-type='exam-teacher-subject']").show()
+          this.cleanInputs()
+          return this.editing = false
+        
+        }
+        
+        else if(option == 'select') {
+          
+          this.getExamQuestions(teacher)
+
+          this.selectedSubdiscipline = ''
+          this.selectedTeacherToUpdate = teacher
+
+          if(teacher.grade) {
+            this.selectedGrade = this.selectedTeacherToUpdate.grade.id
+            $('#{{form.grades.auto_id}}').val(this.selectedGrade).trigger('change')
+          }
+          
+          if(this.selectedTeacherToUpdate.teacher_subject) {
+            this.fetchSubject(this.selectedGrade, true).then((response) => {
+              this.subjects = response.data
+            }).finally(() => {
+              this.select2LoadData('#selectedSubject', false)
+              this.selectedSubject = this.selectedTeacherToUpdate.teacher_subject.subject ? this.selectedTeacherToUpdate.teacher_subject.subject.id:this.selectedTeacherToUpdate.subject.id
+              $('#selectedSubject').val(this.selectedSubject).trigger('change')
+              
+              if(this.selectedTeacherToUpdate.teacher_subject.subject && this.selectedTeacherToUpdate.teacher_subject.subject.parent_subject) {
+                this.fetchSubSubject(this.selectedTeacherToUpdate.teacher_subject.subject.parent_subject, true).then((response) => {
+                  this.subdisciplines = response.data
+                }).finally(() => {
+                  this.select2LoadData('#selectedSubdiscipline', false)
+                  this.selectedSubject = this.selectedTeacherToUpdate.teacher_subject.subject.parent_subject
+                  $('#selectedSubject').val(this.selectedSubject).trigger('change')
+  
+                  this.selectedSubdiscipline = this.selectedTeacherToUpdate.teacher_subject.subject.id
+                  $('#selectedSubdiscipline').val(this.selectedSubdiscipline).trigger('change')
+                })
+              }
+              
+              if(this.selectedTeacherToUpdate.teacher_subject) {
+                this.fetchTeacher(this.selectedSubject, true).then((response) => {
+                  this.teachers = response.data
+                }).finally(() => {
+                  this.select2LoadData('#selectedTeacher', false)
+                  this.selectedTeacher = this.selectedTeacherToUpdate.teacher_subject.id ? this.selectedTeacherToUpdate.teacher_subject.id:this.selectedTeacherToUpdate.teacher.id
+                  $('#selectedTeacher').val(this.selectedTeacher).trigger('change')
+                })
+              }
+            })
+
+          }
+          this.quantity = this.selectedTeacherToUpdate.quantity
+          this.note = this.selectedTeacherToUpdate.note
+          this.subject_note = teacher.subject_note
+          this.block_questions_quantity = teacher.block_questions_quantity
+          this.block_quantity_limit = teacher.block_quantity_limit
+          this.objective_quantity = teacher.objective_quantity
+          this.discursive_quantity = teacher.discursive_quantity
+        }
+
+        else if(option == 'update') {
+          
+          if(this.quantity < this.selectedTeacherToUpdate.exam_questions.length) {
+            
+            Swal.fire({
+              icon: 'info',
+              title: 'Informação',
+              text: 'Você escolheu um valor menor do que a quantidade de questões já selecionadas por este professor.',
+            })
+
+          } else {
+            this.selectedTeacherToUpdate.id = teacher.id
+            this.selectedTeacherToUpdate.exam_questions_load = teacher.exam_questions_load
+            this.selectedTeacherToUpdate.quantity = this.quantity
+            this.selectedTeacherToUpdate.note = this.note
+            this.selectedTeacherToUpdate.subject_note = this.subject_note
+            this.selectedTeacherToUpdate.block_questions_quantity = this.block_questions_quantity
+            this.selectedTeacherToUpdate.block_quantity_limit = this.block_quantity_limit
+            this.selectedTeacherToUpdate.objective_quantity = this.objective_quantity
+            this.selectedTeacherToUpdate.discursive_quantity = this.discursive_quantity
+            
+            {% if object %}
+
+              teacher_update = {
+                'id': teacher.id,
+                'teacher_subject': this.selectedTeacher,
+                'grade': this.selectedGrade,
+                'quantity': this.quantity,
+                'note': this.note,
+                'subject_note': this.subject_note,
+                'block_questions_quantity': this.block_questions_quantity,
+                'block_quantity_limit': this.block_quantity_limit,
+                'objective_quantity': this.objective_quantity,
+                'discursive_quantity': this.discursive_quantity,
+              }
+              this.updateExamTeacherSubject(teacher_update) 
+            
+            {% else %}
+
+              _teacher = {
+                teacher: {
+                  id: this.selectedTeacher,
+                  name: $('#selectedTeacher').find(":selected").text()
+                },
+                subject: {
+                  id: this.selectedSubject,
+                  name: $('#selectedSubject').find(":selected").text()
+                },
+                grade: {
+                  id: this.selectedGrade,
+                  full_name: $('#{{form.grades.auto_id}}').find(":selected").text()
+                },
+                quantity: this.quantity,
+                note: this.note,
+                subject_note: this.subject_note,
+                block_questions_quantity: this.block_questions_quantity,
+                block_quantity_limit: this.block_quantity_limit,
+                objective_quantity: this.objective_quantity,
+                discursive_quantity: this.discursive_quantity,
+              }
+              teacher = _teacher
+              this.editing = false
+              this.cleanInputs()
+            {% endif %}
+          }
+        }
+      },
+      confirmSubjectNote() {
+        Swal.fire({
+          title: 'Confirmação',
+          text: "Ao confirmar essa alteração os pesos que o professor deu as questões serão ignorados, você deseja continuar?",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Confirmar',
+          cancelButtonText: 'Cancelar',
+        }).then(result => {
+          if (result.isConfirmed) {
+            url  = "{% url 'exams:api-exam-distribute-weights' pk='00000000-0000-0000-0000-000000000000' %}"
+            axios.post(url.replace('00000000-0000-0000-0000-000000000000', this.selectedTeacherToUpdate.id), {weights: this.subject_note}).then((response) => {
+              this.selectedTeacherToUpdate.exam_questions.forEach((examQuestion) => examQuestion.weight = response.data.exam_questions.find(_examQuestion => examQuestion.id == _examQuestion.id).weight)
+              this.selectedTeacherToUpdate.sum_weight = response.data.sum_weight
+            })
+            this.updateExamTeacher(this.selectedTeacherToUpdate, 'update')
+          }
+        })
+      },
+      updateExamTeacherSubject(teacher_update) {
+        if(!this.selectedTeacherToUpdate.id) {
+          this.addTeacher()
+          return
+        }
+
+        url = "{% url 'exams:api-exam-update-exam-teacher-subject'  pk='00000000-0000-0000-0000-000000000000' %}"
+        
+        axios.put(url.replace('00000000-0000-0000-0000-000000000000', teacher_update.id), teacher_update).then((response) => { 
+          this.alertTop('Disciplina atualizada com sucesso!')
+          this.editing = false
+          this.cleanInputs()
+          
+          teacher = this.selectedTeachers.find(teacher => teacher.id == teacher_update.id)
+          teacher.teacher_subject = response.data.teacher_subject
+          
+          $("[data-type='exam-teacher-subject']").show()
+        
+        }).catch((error) => {
+          this.alertError('Erro ao atualizar a disciplina!')
+        })
+
+      },
+      changeObjectsOrder(teacherSubjects, examQuestions) {
+        this.swaping = true
+        object = {
+          teacher_subjects: teacherSubjects,
+          exam_questions: examQuestions,
+        }
+        axios.put("{% url 'exams:api-exam-swap-position' %}", object).then((response) => {
+          this.alertTop('As alterações foram salvas.')
+          if(teacherSubjects) {
+            this.selectForeignLanguage(teacherSubjects.find(teacher => teacher.is_foreign_language))
+          }
+        }).catch((error) => {
+            this.alertError('Erro ao tentar modificar a ordem das questões, tente novamente, caso o erro persista entre em contato com o suporte.')
+        }).finally(() => {
+          this.swaping = false
+        })
+      },
+      changeReleaseMaterial(new_date) {
+        {% if object %}
+          if(this.release_material_study && this.exam.materials.length && this.exam.materials.some(material => material.id)) {
+            axios.patch("{% url 'exams:api-exam-change-release-material-date' object.pk %}", { release_material_study: this.release_material_study}).then((response) => { 
+              this.alertTop('A data de liberação dos materiais foi alterada com sucesso!')
+            }).catch((error) => {
+              this.alertError('Erro ao tentar alterar a data dos materiais, tente novamente, caso o erro persista entre em contato com o suporte.')
+            })
+          }
+        {% endif %}
+      },
+      initializeSelect2: function() {
+        self = this
+        $("#{{form.coordinations.auto_id}}").select2({})        
+        $("#{{form.grades.auto_id}}").select2({width: '100%', placeholder: 'Selecione uma opção'})
+        $("#selectedSubject").select2({width: '100%', placeholder: 'Selecione uma opção'})
+        $("#selectedSubdiscipline").select2({width: '100%', placeholder: 'Selecione uma opção'})    
+        $("#selectedTeacher").select2({width: '100%', placeholder: 'Selecione uma opção'})    
+      },
+      select2LoadData(selector='', loading = true) {
+        $(selector).select2({
+          disabled: loading ? true:false,
+          placeholder: loading ? "Aguarde, carregando dados...":"Selecione uma opção",
+        });
+      },
+      fetchSubject: function(grade, promise) {
+        this.select2LoadData('#selectedSubject')
+        this.subjects = []
+        this.teachers = []
+        this.subdisciplines = []
+        if (grade == "")
+        return
+        let subjectListUrl = `{% url 'subjects:subject_list_api' %}?knowledge_area__grades=${grade}`
+        if(promise) {
+          return axios.get(subjectListUrl)
+        }
+        axios.get(subjectListUrl).then((response) => {
+          self.subjects = response.data
+        }).finally(() => {
+          this.select2LoadData('#selectedSubject', false)
+        })
+      },
+      fetchSubSubject: function(subject, promise) {
+        this.select2LoadData('#selectedSubdiscipline')
+        let subjectListUrl = `{% url 'subjects:subject_list_api' %}?parent_subject=${subject}`
+        if(promise) {
+          return axios.get(subjectListUrl)
+        }
+        axios.get(subjectListUrl).then(function(response) {
+          self.subdisciplines = response.data
+        }).finally(() => this.select2LoadData('#selectedSubdiscipline', false))
+      },
+      fetchTeacher: function(subject, promise){
+        this.select2LoadData('#selectedTeacher')
+        this.teachers = []
+        if(!subject) 
+          return
+        let teacherListUrl = `{% url 'inspectors:teacher_list_api' %}?subject=${subject}&teacher__can_elaborate_questions=true`
+        if(promise) {
+          return axios.get(teacherListUrl)  
+        }
+        axios.get(teacherListUrl).then((response) => {
+          this.teachers = response.data
+        }).finally(() => this.select2LoadData('#selectedTeacher', false))
+      },
+      getHistoricalQuestion(question) {
+        let questionUrl = "{% url 'questions:question_historical' pk='00000000-0000-0000-0000-000000000000' %}"
+        axios.get(questionUrl.replace('00000000-0000-0000-0000-000000000000', question.id)).then((response) => {
+          this.historicalQuestion = response.data.exam_question
+        })
+      },
+      getParams(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param)
+      },
+      fetchQuestion: function(question, automatic=false){
+        let questionUrl = "{% url 'questions:questions_api_detail' pk='00000000-0000-0000-0000-000000000000' %}"
+        questionUrl = questionUrl.replace('00000000-0000-0000-0000-000000000000', question.id)
+        axios.get(questionUrl).then(response => {
+          this.selectedQuestion = response.data
+          this.selectedQuestion.alternatives.forEach(element => {
+            element.text = element.text.replaceAll('\\\\', '\\')
+          })
+          this.selectedQuestion.answer = question.answer
+        }).finally(() => {
+          if(this.getParams('exam_question') && automatic) {
+            $('#'+this.getParams('exam_question')).click()
+         }
+        })
+        this.getHistoricalQuestion(question)
+        this.selectedFilter = ''
+      },
+      addTeacher(){
+        {% if object %}
+          let newTeacher = {
+            teacher_subject: this.selectedTeacher,
+            grade: this.selectedGrade,
+            order: this.generateObjectOrder(),
+            quantity: this.quantity,
+            note: this.note,
+            subject_note: this.subject_note,
+            block_questions_quantity: this.block_questions_quantity,
+            block_quantity_limit: this.block_quantity_limit,
+            objective_quantity: this.objective_quantity,
+            discursive_quantity: this.discursive_quantity,
+            exam_questions: [],
+          }
+          axios.post("{% url 'exams:api-exam-create-exam-teacher-subject' object.pk %}", newTeacher).then(response => {
+            this.selectedTeachers.push(response.data)
+            this.alertTop('Professor adicionado com sucesso!')
+            this.cleanInputs()
+          }).catch(error => {
+            if(error.response.status == 409) {
+              this.alertError('Erro ao adicionar o professor!', 'O professor já foi adicionado anteriormente.')
+              return
+            }
+            this.alertError('Erro ao adicionar professor!', 'Tente novamente, caso o erro persista, entre em contato com o suporte.')
+          })
+        {% else %}
+          let newTeacher = {
+            teacher_subject: this.selectedTeacher,
+            teacher: {
+              id: this.selectedTeacher,
+              name: $('#selectedTeacher').find(":selected").text()
+            },
+            subject: {
+              id: this.selectedSubject,
+              name: $('#selectedSubject').find(":selected").text()
+            },
+            grade: {
+              id: this.selectedGrade,
+              full_name: $('#{{form.grades.auto_id}}').find(":selected").text()
+            },
+            order: this.generateObjectOrder(),
+            quantity: this.quantity,
+            note: this.note,
+            subject_note: this.subject_note,
+            exam_questions: [],
+            is_foreign_language: false,
+          }
+          this.selectedTeachers.push(newTeacher)
+          this.exam.teacher_subjects.push(newTeacher)
+          this.cleanInputs()
+        {% endif %}
+      },
+      removeExamTeacherSubject(examTeacherSubject, index) {
+        Swal.fire({
+          title: 'Confirmação?',
+          text: "Você confirma que quer remover este professor do caderno?",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Sim, Confirmo!',
+          cancelButtonText: 'Cancelar'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            url  = "{% url 'exams:api-exam-delete-exam-teacher-subject' pk='00000000-0000-0000-0000-000000000000' %}"
+            if(!examTeacherSubject.id) {
+              this.selectedTeachers.splice(index, 1)
+              return
+            }
+            axios.post(url.replace('00000000-0000-0000-0000-000000000000', examTeacherSubject.id)).then((response) => {
+                this.alertTop('O professor foi removido com sucesso.')
+                this.selectedTeachers.splice(index, 1)
+            }).catch((error) => {
+                this.alertError('Ocorreu um erro ao remover o professor do caderno.')
+            })
+          }
+        })
+      },
+      generateObjectOrder(){
+        return this.selectedTeachers.length
+      },
+      cleanInputs(){
+        this.selectedTeacherToUpdate = ""
+        this.selectedGrade = ""
+        this.selectedSubject = ""
+        this.selectedSubdiscipline = ""
+        this.selectedTeacher = ""
+        this.quantity = ""
+        this.subject_note = ""
+        this.note = ""
+        this.subjects = []
+        this.subdisciplines = []
+        this.teachers = []
+        $("#{{form.grades.auto_id}}").val(null).trigger('change')
+        $("#selectedSubject").val(null).trigger('change')
+        $("#selectedSubdiscipline").val(null).trigger('change')    
+        $("#selectedTeacher").val(null).trigger('change')    
+      },
+      addCoordinationsToSelect2(type, reset = false) {
+        let coordinationsPkList = []
+        if (reset) {
+          return $('#'+"{{form.coordinations.auto_id}}").val(null).trigger('change')
+        }
+
+        this.coordinations.forEach((coordination) => {
+          if(type == 'all') {
+              coordinationsPkList.push(coordination.pk)
+          }
+          else if(type == 'high') {
+            if(coordination.highSchool) {
+              coordinationsPkList.push(coordination.pk)
+            }
+          } else if(type == 'elementarySchool') {
+            if(coordination.elementarySchool) {
+              coordinationsPkList.push(coordination.pk)
+            }
+          } else if(type == 'elementarySchool2') {
+            if(coordination.elementarySchool2) {
+              coordinationsPkList.push(coordination.pk)
+            }
+          }
+        })
+        this.exam.coordinations = coordinationsPkList
+        $('#'+"{{form.coordinations.auto_id}}").val(coordinationsPkList)
+        $('#'+"{{form.coordinations.auto_id}}").trigger('change')
+      },
+      checkSteps: async function(step) {
+        if(this.selectedGrade){
+          return step = 2
+        }
+        return step
+      },
+      verifications() {
+        if(this.selectedTeachers.some((teacher) => !teacher.teacher_subject)) {
+          return false
+        }
+        return true
+      },
+      confirmationBeforeSubmit() {
+        Swal.fire({
+          title: 'Confirmação?',
+          html: 'Você selecionou <strong>"caderno com lingua estrangeira"</strong> <br><br> Você confirma que selecionou corretamente as disciplinas?',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          cancelButtonText: 'Cancelar',
+          confirmButtonText: 'Sim, confirmo!',
+          width: '40%'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            this.saveExam()
+          } else {
+            $('button').prop('disabled', false)
+          }
+        })
+      },
+      saveExam() {
+        this.exam['orientations'] = tinymce.get('id_orientations').getContent()
+        axios({
+          {% if object %}
+            url: "{% url 'exams:api-exam-detail' object.pk %}",
+            method: 'put',
+          {% else %}
+            url: "{% url 'exams:api-exam-list' %}",
+            method: 'post',
+          {% endif %}
+          data: this.exam
+        }).then((response) => {
+          if(response.data.redirect_url) {
+            window.location.href = response.data.redirect_url
+          } else {
+            window.location.href = "{% url 'exams:exams_list' %}"
+          }
+        }).catch((error) => {
+          this.alertError('Erro ao salvar o caderno!', 'Tente novamente, caso o erro persista, entre em contato com o suporte.')
+        })
+      },
+      addMaterial() {
+        this.exam.materials.push({
+          title: '',
+          thumbnail: '',
+          material: '',
+          stage: 6,
+          emphasis: false,
+          release_material_study: this.release_material_study,
+        })
+      },
+      createMaterial(material) {
+        const formData = new FormData()
+        formData.append('title', material.title)
+        formData.append('thumbnail', material.thumbnail)
+        formData.append('material', material.material)
+        formData.append('stage', Number(material.stage))
+        formData.append('emphasis', material.emphasis)
+        formData.append('release_material_study', this.release_material_study ? this.release_material_study:moment().format('YYYY-MM-DD'))
+          
+        {% if object %}
+          this.savingMaterial = true
+          url  = "{% url 'exams:api-exam-create-update-material' pk='00000000-0000-0000-0000-000000000000' %}"
+          axios.post(url.replace('00000000-0000-0000-0000-000000000000', this.exam.id), formData, { 
+            headers: { 
+              'Content-Type': 'multipart/form-data'
+            }
+          }).then((response) => {
+            material['id'] = response.data.id
+            this.alertTop('Material criado com sucesso.')
+          }).catch((error) => {
+            if(error.response.data['title']) {
+              return this.alertError('Certifique-se que você digitou um título para o material e tente novamente.')
+            }
+            if(error.response.data['thumbnail']) {
+              return this.alertError('Certifique-se que enviou um formato de imagem válida para a capa do material e tente novamente.')
+            }
+            this.alertError('Ocorreu um erro ao criar o material, verifique se preencheu corretamente todos os campos e tente novamente.')
+
+          }).finally(() => {
+            this.savingMaterial = false
+          })
+        {% endif %}
+      },
+      updateMaterial(material) {
+        material['saving'] = true
+        this.$forceUpdate()
+        const formData = new FormData()
+        formData.append('title', material.title)
+        formData.append('thumbnail', material.thumbnail)
+        formData.append('material', material.material)
+        formData.append('stage', Number(material.stage))
+        formData.append('emphasis', material.emphasis)
+        formData.append('release_material_study', this.release_material_study ? this.release_material_study:moment().format('YYYY-MM-DD'))
+
+        url  = "{% url 'exams:api-exam-create-update-material' pk='00000000-0000-0000-0000-000000000000' %}"
+        axios.put(url.replace('00000000-0000-0000-0000-000000000000', material.id), formData, { 
+          headers: { 
+            'Content-Type': 'multipart/form-data'
+          } 
+        }).then((response) => {
+          this.alertTop('Material atualizado com sucesso.')
+        }).catch((error) => {
+          this.alertError('Ocorreu um erro ao criar o material.')
+        }).finally(() => {
+          material['saving'] = false
+          this.$forceUpdate()
+        })
+
+
+      },
+      deleteMaterial(material) {
+        if(material.id) {
+          Swal.fire({
+            title: 'Confirmação?',
+            text: 'Você deseja remover o material?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sim, Confirmo!',
+            cancelButtonText: 'Cancelar'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              url  = "{% url 'exams:api-exam-delete-material' pk='00000000-0000-0000-0000-000000000000' %}"
+              axios.post(url.replace('00000000-0000-0000-0000-000000000000', material.id)).then((response) => {
+                  this.alertTop('O material foi removido com sucesso.')
+                  this.exam.materials.splice(this.exam.materials.indexOf(material), 1)
+              }).catch((error) => {
+                  this.alertError('Ocorreu um erro ao remover o material do caderno.')
+              })
+            }
+          })
+        } else {
+          this.exam.materials.splice(this.exam.materials.indexOf(material), 1)
+        }
+      },
+      alertTop(text) {
+        Swal.fire({
+          position: 'top-end',
+          text: text,
+          icon: 'success',
+          showConfirmButton: false,
+          timer: 1500,
+          toast: true,
+          timerProgressBar: true,
+        })
+      },
+      alertError(title = "Erro", text = '') {
+        Swal.fire(
+          title,
+          text,
+          'error'
+        )
+      },
+      resetAddTeacherInputs() {
+        $('#selectedSubject').val(null).trigger('change')
+        $('#selectedSubdiscipline').val(null).trigger('change')
+        $('#selectedTeacher').val(null).trigger('change')
+        this.subjects = []
+        this.subdisciplines = []
+        this.teachers = []
+      },
+      distributeWeights(weight) {
+        self = this
+        obj = { 
+          weights: self.selectedTeacher.subject_note,
+          weight: weight 
+        }
+
+        url  = "{% url 'exams:api-exam-distribute-weights' pk='00000000-0000-0000-0000-000000000000' %}"
+        axios.post(url.replace('00000000-0000-0000-0000-000000000000', self.selectedTeacher.id), obj).then((response) => {
+          response.data.exam_questions.forEach(question => {
+            self.selectedTeacher.exam_questions.forEach(questionPoints => {
+              if(questionPoints.id == question.id) {
+                self.selectedTeacher.sum_weight = response.data.sum_weight
+                questionPoints.weight = question.weight
+              }
+            })
+          })
+          this.alertTop('Pesos atualizados com sucesso.')
+        }).catch((error) => {
+            this.alertError('Ocorreu um erro ao tentar distribuir os pontos, tente novamente e se o erro persistir entre em contato com o suporte.')
+        })
+      },
+      getOrientations() {
+        axios.get("{% url 'exams:api-exam-get-orientations' %}").then((response) => this.orientations = response.data)
+      },
+      getStatusCount(examTeacherSubjectID) {
+        url = `{% url 'exams:api-exam-get-status-count' pk='00000000-0000-0000-0000-000000000000' %}?exam_teacher_subject=${examTeacherSubjectID}`
+        axios.get(url.replace('00000000-0000-0000-0000-000000000000', '{{object.id}}')).then((response) => {
+          this.selectedTeacher.status_count = response.data
+        })
+      },
+      selectForeignLanguage(firstTeacher) {
+        new Promise((resolve, reject) => {
+          this.resetForeignLanguage()
+          resolve()
+        }).then((response) => {
+          firstTeacher.is_foreign_language = true
+          secondTeacher = this.getSecondForeignLanguage(firstTeacher)
+
+          this.changeForeignLanguage([
+            firstTeacher.id,
+            secondTeacher.id
+          ])
+        })
+      },
+      resetForeignLanguage() {
+        this.selectedTeachers.filter(teacher => {
+          if(teacher.is_foreign_language) {
+            teacher.is_foreign_language = false
+          }
+        })
+      },
+      getSecondForeignLanguage(firstTeacherIsForeignLanguage) {
+        if(firstTeacherIsForeignLanguage) {
+          secondTeacherIsForeignLanguage = this.selectedTeachers[this.selectedTeachers.indexOf(firstTeacherIsForeignLanguage) + 1]
+          if(secondTeacherIsForeignLanguage) {
+            secondTeacherIsForeignLanguage.is_foreign_language = true
+            return secondTeacherIsForeignLanguage
+          }
+        }
+        return false
+      },
+      changeForeignLanguage(teachers) {
+        {% if object %}
+          axios.post("{% url 'exams:api-exam-change-foreign-language' object.id %}", teachers).then((response) => {
+            this.alertTop('Alteração salva com sucesso.')
+          }).catch((error) => {
+            this.alertError('Ocorreu um erro ao tentar fazer a alteração, tente novamente e se o erro persistir entre em contato com o suporte.')
+          })
+        {% endif %}
+      },
+      call(result) {
+        if (result.updated) {
+          let examQuestion = this.selectedTeacher.exam_questions.find((exam_question) => exam_question.question.id == result.id || exam_question.question.pk == result.pk)
+          let question = examQuestion.question
+          this.fetchQuestion(question)
+          Swal.fire({
+            title: 'Questão atualizada',
+            icon: 'success',
+          })
+        }
+      },
+    },
+    mounted: function(){ 
+      if(this.getParams('exam_question') && this.getParams('is_popup')) {
+        $('#teacherModal').on('hide.bs.modal', function (event) {
+            if (window.opener.app_question.call()) {
+            }
+            window.close();
+        })
+      }
+      self = this
+      self.initializeSelect2()
+      {% if object %}
+        this.loading = true
+        let url = '{% url "exams:api-exam-detail" object.pk %}'
+        {% if user_type == 'teacher' and request.user.inspector.is_discipline_coordinator %}
+        url += '?is_discipline_coordinator=true'
+        {% endif %}
+        axios.get(url).then((response) => {
+          this.exam = response.data
+          if(this.exam.materials && this.exam.materials.length) {
+            this.release_material_study = moment(this.exam.materials[0].release_material_study).format("YYYY-MM-DD")
+          }
+          this.selectedTeachers = response.data.teacher_subjects
+        }).finally(() => {
+          if(this.exam.coordinations && this.exam.coordinations.length) {
+            $('#{{form.coordinations.auto_id}}').trigger('change')
+          }
+          if('{{exam_teacher_subject.id|default:""}}') {
+            $('#exam_teacher_subject-{{exam_teacher_subject.id}}').click()
+          } else {
+            if(this.getParams('exam_teacher_subject')){
+              $('#exam_teacher_subject-' + this.getParams('exam_teacher_subject')).click()
+            }
+          }
+          this.loading = false
+        })
+      {% endif %}
+      $('#id_elaboration_deadline').val('{{form.elaboration_deadline.value|safe}}')
+      $('#id_release_elaboration_teacher').val('{{form.release_elaboration_teacher.value|safe}}')
+      $.fn.modal.Constructor.prototype._enforceFocus = function() {};
+
+      $('#{{form.coordinations.auto_id}}').on('select2:select select2:unselect', (e) => {
+        self.exam.coordinations = $('#{{form.coordinations.auto_id}}').val()
+      })
+      $('#form-exam-create').on('submit', function(e) {
+        if(self.exam.is_english_spanish) {
+          self.confirmationBeforeSubmit()
+          return
+        }
+        self.saveExam()
+      })
+
+      $('#{{form.grades.auto_id}}').on('select2:select', (e) => {
+        id = e.params.data.id
+        if (id) {
+          this.selectedGrade = id
+          this.fetchSubject(id)
+        } else {
+          self.resetAddTeacherInputs()
+        }
+      })
+      $('#selectedSubject').on('select2:select', (e) => {
+        id = e.params.data.id
+        if (id) {
+          this.selectedSubject = id
+          this.fetchSubSubject(id)
+          this.fetchTeacher(id)
+        }
+      })
+      $('#selectedSubdiscipline').on('select2:select', (e) => {
+        id = e.params.data.id
+        if (id) {
+          this.selectedSubdiscipline = id
+          this.fetchTeacher(id)
+        } else {
+          this.fetchTeacher(this.selectedSubject)
+        }
+      })
+      $('#selectedTeacher').on('select2:select', (e) => {
+        id = e.params.data.id
+        if (id) {
+          this.selectedTeacher = id
+        }
+      })
+    },
+    updated: function(){
+      if(window.MathJax) {
+        MathJax.typeset();
+      }
+      $('#input-update-weight').numeric(
+        {altDecimal: ',', decimal: '.', decimalPlaces : 4, negative : false }
+      );
+    },
+  })
+
+
+</script>
+
+
+{% endblock %}

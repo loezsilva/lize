@@ -1,0 +1,118 @@
+<div aria-hidden="true" class="modal  fade" id="confirmCancelCopyModal" role="dialog" tabindex="-1">
+  <div class="modal-dialog modal-md" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Tem certeza que deseja duplicar esta prova?</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" style="max-height: fit-content; height: fit-content;">
+        <h6>Atenção:</h6>
+        <ul class="text-justify px-4">
+          <li>Todas as solicitações de prova à professores e questões já cadastradas serão duplicadas.</li>
+          <li>Todas as questões dessa prova serão duplicadas no banco de questões do professor.</li>
+          <li>Anotações, solicitações de correções e histórico de situações das questões NÃO serão copiadas.</li>
+        </ul>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <form id="confirmCancelCopyFormId" class="w-100" action="" method="POST">
+          {% csrf_token %}
+
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text" id="inputGroup-sizing-default">Quantas cópias você deseja criar?</span>
+            </div>
+            <input type="number" class="form-control" name="copy_numbers" step="1" min="1" value="1" required>
+          </div>
+
+          <label for="idNoCopyQuestions" class="alert alert-secondary w-100" role="alert">
+            <div class="custom-control custom-radio mr-sm-2">
+              <input type="radio" name="duplicate_option" class="custom-control-input" id="idNoCopyQuestions" value="no-copy-questions" v-model="duplicateMode" checked="checked">
+              <p class="custom-control-label">Duplicar apenas a estrutura da prova</p>
+              <p class="text-muted m-0 p-0">
+                Copia apenas as solicitações cadastradas
+              </p>
+            </div>
+          </label>
+
+          <label for="idRandomize" class="alert alert-secondary w-100" role="alert">
+            <div class="custom-control custom-radio mr-sm-2">
+              <input type="radio" name="duplicate_option" class="custom-control-input" id="idRandomize" v-model="duplicateMode" value="copy-questions">
+              <p class="custom-control-label">Duplicar e copiar questões</p>
+              <p class="text-muted m-0 p-0">
+                Copia as solicitações e as questões da prova
+              </p>
+              <template v-if="duplicateMode == 'copy-questions'">
+                <div class="custom-control custom-switch mt-2">
+                  <input type="checkbox" class="custom-control-input" id="customSwitch5" name="keep_questions">
+                  <label class="custom-control-label" for="customSwitch5">As questões não devem ser duplicadas no banco</label>
+                  <p class="text-muted m-0 p-0">
+                    As alterações feitas em uma questão de uma prova serão refletidas nas provas duplicadas
+                  </p>
+                </div>
+                <div class="custom-control custom-switch mt-2">
+                  <input type="checkbox" class="custom-control-input" id="customSwitch1" name="randomize_subjects">
+                  <label class="custom-control-label" for="customSwitch1">Embaralhar solicitações</label>
+                </div>
+                <div class="custom-control custom-switch mt-2">
+                  <input type="checkbox" class="custom-control-input" id="customSwitch2" name="randomize_questions">
+                  <label class="custom-control-label" for="customSwitch2">Embaralhar questões dentro da solicitação </label>
+                </div>
+                <div class="custom-control custom-switch mt-2">
+                  <input type="checkbox" class="custom-control-input" id="customSwitch3" name="randomize_alternatives">
+                  <label class="custom-control-label" for="customSwitch3">Embaralhar alternativas</label>
+                  <p class="text-muted m-0 p-0">
+                    Serão criadas cópias das questões objetivas no banco do professor
+                  </p>
+                </div>
+                <div class="custom-control custom-switch mt-2">
+                  <input type="checkbox" class="custom-control-input" id="customSwitch4" name="group_questions">
+                  <label class="custom-control-label" for="customSwitch4">Agrupar por tipo de questão</label>
+                  <p class="text-muted m-0 p-0">
+                    As questões objetivas aparecerão antes das questões discursivas dentro de cada solicitação
+                  </p>
+                </div>
+              </template>
+            </div>
+          </label>
+          {% if user.client_can_request_ai_questions or user.can_request_ai_questions %}
+          <label for="idCopyQuestionsIA" class="alert alert-secondary w-100" role="alert">
+            <div class="custom-control custom-radio mr-sm-2">
+              <input type="radio" name="duplicate_option" class="custom-control-input" id="idCopyQuestionsIA" value="ia-copy-questions" v-model="duplicateMode" checked="checked">
+              <p class="custom-control-label">Duplicar prova com IA</p>
+              <p class="text-muted m-0 p-0">
+                Crie provas adaptadas de forma automatica
+              </p>
+              <template v-if="duplicateMode == 'ia-copy-questions'">
+                <div class="custom-control custom-switch mt-2">
+                  <input type="checkbox" class="custom-control-input" id="customSwitch1" name="reduced_enunciation" v-model="reducedEnunciation">
+                  <label class="custom-control-label" for="customSwitch1">Reduzir enunciado</label>
+                </div>
+                <div class="custom-control custom-switch mt-2">
+                  <input type="checkbox" class="custom-control-input" id="customSwitch2" name="reduced_quantity_alternatives" v-model="reducedQuantityAlternatives">
+                  <label class="custom-control-label" for="customSwitch2">Diminuir uma alternativa</label>
+                </div>
+                <div class="custom-control custom-switch mt-2">
+                  <input type="checkbox" class="custom-control-input" id="customSwitch3" name="reduced_text_alternatives" v-model="reducedTextAlternatives">
+                  <label class="custom-control-label" for="customSwitch3">Reduzir textos das alternativas</label>
+                </div>
+              </template>
+            </div>
+          </label>
+          {% endif %}
+          <div class="form-buttons-w text-right m-2">
+            <button :disabled="isButtonDisabled"  @click="checkTaskStatus(examPk)" class="btn btn-primary" >
+              <i class="os-icon os-icon-check"></i>
+              <span>Sim, duplicar prova</span>
+            </button>
+            <button class="btn btn-secondary" data-dismiss="modal" type="button">
+              <i class="os-icon os-icon-cancel-circle"></i>
+              <span>Cancelar</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

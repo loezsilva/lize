@@ -1,0 +1,533 @@
+<div class="form-group">
+    <label for="id-exam-print-config-header" style="margin-top: 15px;">Selecione o cabeçalho</label>
+    <select class="form-control" id="id-exam-print-config-header" v-model="examPrintConfig.header">
+        <option value="">Não aplicar cabeçalho</option>
+        {% for header in user.get_exam_headers %}
+            <option value="{{ header.pk }}"{% if header.main_header %} selected{% endif %}>{{ header.name }}{% if header.main_header %} (Padrão){% endif %}</option>
+        {% endfor %}
+    </select>
+</div>
+<div class="form-group">
+    <label for="id-exam-background-image" style="margin-top: 15px;">Selecione uma imagem de fundo</label>
+    <select class="form-control" id="id-exam-background-image" v-model="examPrintConfig.backgroundImage">
+        <option value="">Não aplicar imagem de fundo</option>
+        {% for background in user.client.exams_backgrounds.all %}
+            <option value="{{ background.pk }}">{{ background.name }}</option>
+        {% endfor %}
+    </select>
+</div>
+<div v-show="examPrintConfig.header !== ''" class="form-group">
+    <label for="form-element-1">Formato do cabeçalho da prova</label>
+    <div>
+    <div class="custom-control custom-radio custom-control-inline">
+        <input type="radio" id="id-header-full" name="examPrintConfigHeaderFormat" class="custom-control-input" value="1" v-model.number="examPrintConfig.headerFormat" />
+        <label class="custom-control-label" for="id-header-full">Completo</label>
+    </div>
+    <div class="custom-control custom-radio custom-control-inline">
+        <input type="radio" id="id-only-student-name" name="examPrintConfigHeaderFormat" class="custom-control-input" value="0" v-model.number="examPrintConfig.headerFormat" />
+        <label class="custom-control-label" for="id-only-student-name">Apenas nome do aluno</label>
+    </div>
+    </div>
+</div>
+<div class="form-group">
+    <label for="form-element-2">Colunas</label>
+    <div>
+        <div class="custom-control custom-radio custom-control-inline">
+            <input type="radio" id="id-one-column" name="examPrintConfigColumnType" :disabled="examPrintConfig.economyMode" class="custom-control-input" value="0" v-model.number="examPrintConfig.columnType" />
+            <label class="custom-control-label" for="id-one-column">Uma</label>
+        </div>
+        <div class="custom-control custom-radio custom-control-inline">
+            <input type="radio" id="id-two-columns" name="examPrintConfigColumnType" :disabled="examPrintConfig.economyMode" class="custom-control-input" value="1" v-model.number="examPrintConfig.columnType" />
+            <label class="custom-control-label" for="id-two-columns">Duas</label>
+        </div>
+    </div>
+    <p class="tx-gray-600" v-if="examPrintConfig.economyMode">
+        O modo econômico está ativado. A alteração do layout não está disponível.
+    </p>
+</div>
+<div class="form-group">
+    <label for="form-element-3">Tipo da prova</label>
+    <div class="btn-group-toggle">
+    <label
+        class="btn btn-sm rounded-pill"
+        :class="[examPrintConfig.kind === 0 ? 'btn-primary' : 'btn-white-custom']"
+    >
+        <input type="radio" id="id-single" name="examPrintConfigKind" class="custom-control-input" value="0" v-model.number="examPrintConfig.kind" /> Única
+    </label>
+    <label
+        class="btn btn-sm rounded-pill"
+        :class="[examPrintConfig.kind === 1 ? 'btn-primary' : 'btn-white-custom']"
+    >
+        <input type="radio" id="id-per-subject" name="examPrintConfigKind" class="custom-control-input" value="1" v-model.number="examPrintConfig.kind" /> Por disciplina
+    </label>
+    <label
+        class="btn btn-sm rounded-pill"
+        :class="[examPrintConfig.kind === 2 ? 'btn-primary' : 'btn-white-custom']"
+    >
+        <input type="radio" id="id-per-type-question" name="examPrintConfigKind" class="custom-control-input" value="2" v-model.number="examPrintConfig.kind" /> Por tipo de questão
+    </label>
+    </div>
+</div>
+<div class="form-group row">
+    <div class="col-xl-8">
+        <label for="form-element-4">Imprimir espaços de resposta para questões discursivas:</label>
+        <div>
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" id="print_line_spaces" name="examPrintConfigTextQuestionFormat" class="custom-control-input" value="1" v-model.number="examPrintConfig.textQuestionFormat" />
+                <label class="custom-control-label" for="print_line_spaces">Sim, imprimir</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" id="not_print_line_spaces" name="examPrintConfigTextQuestionFormat" class="custom-control-input" value="0" v-model.number="examPrintConfig.textQuestionFormat" />
+                <label class="custom-control-label" for="not_print_line_spaces">Não Imprimir</label>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <label for="form-element-4">Espaçamento(cm)</label>
+        <input type="number" class="form-control" step="0.5" name="examPrintConfigDiscursiveLineHeight" v-model.number="examPrintConfig.discursiveLineHeight">
+    </div>
+</div>
+<div class="form-group">
+    <label for="form-element-2">Tipo de espaço para questão discursiva <span class="badge badge-primary">Novo</span></label>
+    <div>
+        <div class="custom-control custom-radio custom-control-inline">
+            <input type="radio" id="id-discursive-question-space-type-questions" name="examPrintConfigDiscursiveQuestionSpaceType" class="custom-control-input" value="0" v-model.number="examPrintConfig.discursiveQuestionSpaceType" />
+            <label class="custom-control-label" for="id-discursive-question-space-type-questions">De acordo com a questão</label>
+        </div>
+        <div class="custom-control custom-radio custom-control-inline">
+            <input type="radio" id="id-discursive-question-space-type-blank" name="examPrintConfigDiscursiveQuestionSpaceType" class="custom-control-input" value="1" v-model.number="examPrintConfig.discursiveQuestionSpaceType" />
+            <label class="custom-control-label" for="id-discursive-question-space-type-blank">Espaço em branco</label>
+        </div>
+        <div class="custom-control custom-radio custom-control-inline">
+            <input type="radio" id="id-discursive-question-space-type-lines" name="examPrintConfigDiscursiveQuestionSpaceType" class="custom-control-input" value="2" v-model.number="examPrintConfig.discursiveQuestionSpaceType" />
+            <label class="custom-control-label" for="id-discursive-question-space-type-lines">Linhas</label>
+        </div>
+    </div>
+</div>
+<div class="form-group">
+    <label for="form-element-5">Espaçamento entre linhas</label>
+    <div class="btn-group-toggle">
+    <label
+        class="btn btn-sm rounded-pill"
+        :class="[examPrintConfig.lineHeight === 0 ? 'btn-primary' : 'btn-white-custom']"
+    >
+        <input type="radio" id="id-height-normal" name="examPrintConfigLineHeight" class="custom-control-input" value="0" v-model.number="examPrintConfig.lineHeight" /> Normal
+    </label>
+    <label
+        class="btn btn-sm rounded-pill"
+        :class="[examPrintConfig.lineHeight === 1 ? 'btn-primary' : 'btn-white-custom']"
+    >
+        <input type="radio" id="id-height-medium" name="examPrintConfigLineHeight" class="custom-control-input" value="1" v-model.number="examPrintConfig.lineHeight" /> Médio
+    </label>
+    <label
+        class="btn btn-sm rounded-pill"
+        :class="[examPrintConfig.lineHeight === 2 ? 'btn-primary' : 'btn-white-custom']"
+    >
+        <input type="radio" id="id-height-large" name="examPrintConfigLineHeight" class="custom-control-input" value="2" v-model.number="examPrintConfig.lineHeight" /> Grande
+    </label>
+    <label
+        class="btn btn-sm rounded-pill"
+        :class="[examPrintConfig.lineHeight === 3 ? 'btn-primary' : 'btn-white-custom']"
+    >
+        <input type="radio" id="id-height-extra-large" name="examPrintConfigLineHeight" class="custom-control-input" value="3" v-model.number="examPrintConfig.lineHeight" /> Extra grande
+    </label>
+    </div>
+</div>
+<div class="form-group">
+    <label for="form-element-6 mb-0">Tipo da fonte</label>
+    <div class="btn-group-toggle">
+        <label
+            class="btn btn-sm"
+            :class="[examPrintConfig.fontFamily === 0 ? 'btn-primary' : 'btn-white-custom']"
+        >
+            <input type="radio" name="examPrintConfigFontType" class="custom-control-input" value="0" v-model.number="examPrintConfig.fontFamily" /> <span style="font-family: 'IBM Plex Sans', sans-serif;">Plex Sans</span>
+        </label>
+        <label
+            class="btn btn-sm"
+            :class="[examPrintConfig.fontFamily === 1 ? 'btn-primary' : 'btn-white-custom']"
+        >
+            <input type="radio" name="examPrintConfigFontType" class="custom-control-input" value="1" v-model.number="examPrintConfig.fontFamily" /> <span style="font-family: Verdana;">Verdana</span>
+        </label>
+        <label
+            class="btn btn-sm"
+            :class="[examPrintConfig.fontFamily === 2 ? 'btn-primary' : 'btn-white-custom']"
+        >
+            <input type="radio" name="examPrintConfigFontType" class="custom-control-input" value="2" v-model.number="examPrintConfig.fontFamily" /> <span style="font-family: Times;">Times</span>
+        </label>
+        <label
+            class="btn btn-sm"
+            :class="[examPrintConfig.fontFamily === 3 ? 'btn-primary' : 'btn-white-custom']"
+        >
+            <input type="radio" name="examPrintConfigFontType" class="custom-control-input" value="3" v-model.number="examPrintConfig.fontFamily" /> <span style="font-family: Arial;">Arial</span>
+        </label>
+        <label
+            class="btn btn-sm"
+            :class="[examPrintConfig.fontFamily === 4 ? 'btn-primary' : 'btn-white-custom']"
+        >
+            <input type="radio" name="examPrintConfigFontType" class="custom-control-input" value="4" v-model.number="examPrintConfig.fontFamily" /> <span style="font-family: 'Nunito Sans', sans-serif;">Nunito Sans</span>
+        </label>
+    </div>
+</div>
+<div class="form-group">
+    <label for="form-element-6 mb-0">Tamanho da fonte</label>
+    <div class="btn-group-toggle">
+    <label
+        class="btn btn-sm"
+        :class="[examPrintConfig.fontSize === 5 ? 'btn-primary' : 'btn-white-custom']"
+    >
+        <input type="radio" id="id-size-8" name="examPrintConfigFontSize" class="custom-control-input" value="5" v-model.number="examPrintConfig.fontSize" /> 8pt
+    </label>
+    <label
+        class="btn btn-sm"
+        :class="[examPrintConfig.fontSize === 6 ? 'btn-primary' : 'btn-white-custom']"
+    >
+        <input type="radio" id="id-size-10" name="examPrintConfigFontSize" class="custom-control-input" value="6" v-model.number="examPrintConfig.fontSize" /> 10pt
+    </label>
+    <label
+        class="btn btn-sm"
+        :class="[examPrintConfig.fontSize === 7 ? 'btn-primary' : 'btn-white-custom']"
+    >
+        <input type="radio" id="id-size-11" name="examPrintConfigFontSize" class="custom-control-input" value="7" v-model.number="examPrintConfig.fontSize" /> 11pt
+    </label>
+    <label
+        class="btn btn-sm"
+        :class="[examPrintConfig.fontSize === 0 ? 'btn-primary' : 'btn-white-custom']"
+    >
+        <input type="radio" id="id-size-12" name="examPrintConfigFontSize" class="custom-control-input" value="0" v-model.number="examPrintConfig.fontSize" /> 12pt
+    </label>
+    <label
+        class="btn btn-sm"
+        :class="[examPrintConfig.fontSize === 1 ? 'btn-primary' : 'btn-white-custom']"
+    >
+        <input type="radio" id="id-size-14" name="examPrintConfigFontSize" class="custom-control-input" value="1" v-model.number="examPrintConfig.fontSize" /> 14pt
+    </label>
+    <label
+        class="btn btn-sm"
+        :class="[examPrintConfig.fontSize === 2 ? 'btn-primary' : 'btn-white-custom']"
+    >
+        <input type="radio" id="id-size-18" name="examPrintConfigFontSize" class="custom-control-input" value="2" v-model.number="examPrintConfig.fontSize" /> 18pt
+    </label>
+    <label
+        class="btn btn-sm"
+        :class="[examPrintConfig.fontSize === 3 ? 'btn-primary' : 'btn-white-custom']"
+    >
+        <input type="radio" id="id-size-22" name="examPrintConfigFontSize" class="custom-control-input" value="3" v-model.number="examPrintConfig.fontSize" /> 22pt
+    </label>
+    <label
+        class="btn btn-sm"
+        :class="[examPrintConfig.fontSize === 4 ? 'btn-primary' : 'btn-white-custom']"
+    >
+        <input type="radio" id="id-size-32" name="examPrintConfigFontSize" class="custom-control-input" value="4" v-model.number="examPrintConfig.fontSize" /> 32pt
+    </label>
+    </div>
+</div>
+
+<div class="form-group">
+    <label for="form-element-6 mb-0">Margens</label>
+    <p class="tx-gray-600">
+        Valor mínimo permitido de 0.6
+    </p>
+    <div class="row mb-2">
+        <div class="col-md-6">
+            <label for="id-margin-top" class="tx-12">Margem Superior (cm)</label>
+            <input type="number" id="id-margin-top" class="form-control" step="0.1" name="examPrintConfigMarginTop" v-model.number="examPrintConfig.marginTop" value="0.6">
+        </div>
+        <div class="col-md-6">
+            <label for="id-margin-bottom"  class="tx-12">Margem Inferior (cm)</label>
+            <input type="number" id="id-margin-bottom" class="form-control" step="0.1" name="examPrintConfigMarginBottom" v-model.number="examPrintConfig.marginBottom" value="0.6">
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <label for="id-margin-left" class="tx-12">Margem Esquerda (cm)</label>
+            <input type="number" id="id-margin-left" class="form-control" step="0.1" name="examPrintConfigMarginLeft" v-model.number="examPrintConfig.marginLeft" value="0.6">
+        </div>
+        <div class="col-md-6">
+            <label for="id-margin-right" class="tx-12">Margem Direita (cm)</label>
+            <input type="number" id="id-margin-right" class="form-control" step="0.1" name="examPrintConfigMarginRight" v-model.number="examPrintConfig.marginRight" value="0.6">
+        </div>
+    </div>
+</div>    
+<div class="form-group">
+    <label for="form-element-6 mb-0">Formato do cabeçalho:</label><br>
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.headerFormat == 1 }" @click="examPrintConfig.headerFormat = 1">
+            <input type="radio" name="header_full" id="header_full_default" value="1" v-model="examPrintConfig.headerFormat" autocomplete="off" :checked="examPrintConfig.headerFormat == 1">
+            <i class="fas fa-table fa-lg"></i>
+            <span>
+            Modelo completo
+            </span>
+        </label>
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.headerFormat == 0 }" @click="examPrintConfig.headerFormat = 0">
+            <input type="radio" name="header_full" id="header_full_enem" value="0" v-model="examPrintConfig.headerFormat" autocomplete="off" :checked="examPrintConfig.headerFormat == 0">
+            <i class="far fa-square fa-lg"></i>
+            <span>
+            Apenas nome do aluno
+            </span>
+        </label>
+    </div>
+</div>
+
+<div class="form-group">
+    <label for="form-element-2">Idioma <span class="badge badge-primary">Novo</span></label>
+    <div>
+        <div class="custom-control custom-radio custom-control-inline">
+            <input type="radio" id="id-language-pt" name="examPrintConfigDiscursiveQuestionSpaceType" class="custom-control-input" value="0" v-model.number="examPrintConfig.language" />
+            <label class="custom-control-label" for="id-language-pt">Português</label>
+        </div>
+        <div class="custom-control custom-radio custom-control-inline">
+            <input type="radio" id="id-language-en" name="examPrintConfigDiscursiveQuestionSpaceType" class="custom-control-input" value="1" v-model.number="examPrintConfig.language" />
+            <label class="custom-control-label" for="id-language-en">Inglês</label>
+        </div>
+        <div class="custom-control custom-radio custom-control-inline">
+            <input type="radio" id="id-language-es" name="examPrintConfigDiscursiveQuestionSpaceType" class="custom-control-input" value="2" v-model.number="examPrintConfig.language" />
+            <label class="custom-control-label" for="id-language-es">Espanhol</label>
+        </div>
+    </div>
+</div>
+
+{% comment %}
+<div class="form-group">
+    <label for="form-element-6 mb-0">Idioma</label>
+    <div class="btn-group-toggle">
+        <label
+            class="btn btn-sm"
+            :class="[examPrintConfig.language === 0 ? 'btn-primary' : 'btn-white-custom']"
+        >
+            <input type="radio" id="language-pt" name="examPrintConfigLanguage" class="custom-control-input" value="0" /> Português
+        </label>
+        <label
+            class="btn btn-sm"
+            :class="[examPrintConfig.language === 1 ? 'btn-primary' : 'btn-white-custom']"
+        >
+            <input type="radio" id="language-en" name="examPrintConfigLanguage" class="custom-control-input" value="1" v-model.number="examPrintConfig.language" /> Inglês
+        </label>
+        <label
+            class="btn btn-sm"
+            :class="[examPrintConfig.language === 2 ? 'btn-primary' : 'btn-white-custom']"
+        >
+            <input type="radio" id="language-es" name="examPrintConfigLanguage" class="custom-control-input" value="2" v-model.number="examPrintConfig.language" /> Espanhol
+        </label>
+    </div>
+</div>
+{% endcomment %}
+
+<div class="form-group">
+    <div class="custom-control custom-switch">
+    <input type="checkbox" class="custom-control-input" id="id-uppercase-letters" v-model="examPrintConfig.uppercaseLetters">
+    <label class="custom-control-label" for="id-uppercase-letters">
+        Imprimir tudo maiúsculo 
+    </label>
+    <p class="tx-gray-600">
+        Marque esta opção se deseja imprimir caderno com todas as letras maiúsculas.
+    </p>
+    </div>
+</div>
+<div class="form-group">
+    <div class="custom-control custom-switch">
+    <input type="checkbox" class="custom-control-input" id="id-print-subjects-name" @change="changePrintSubject()">
+    <label class="custom-control-label" for="id-print-subjects-name">
+        Ocultar nome das disciplinas
+    </label>
+    <p class="tx-gray-600">
+        Marque esta opção se deseja ocultar o nome da disciplina no início de cada questão.
+    </p>
+    </div>
+</div>
+
+<div class="form-group">
+    <div class="custom-control custom-switch">
+    <input type="checkbox" class="custom-control-input" id="id-print-knowledge-area-name" v-model="examPrintConfig.hideKnowledgeAreasName">
+    <label class="custom-control-label" for="id-print-knowledge-area-name">
+        Ocultar nome das áreas de conhecimento
+    </label>
+    <p class="tx-gray-600">
+        Marque esta opção se deseja ocultar o nome da área de conhecimento no início de cada questão.
+    </p>
+    </div>
+</div>
+
+<div class="form-group">
+    <div class="custom-control custom-switch">
+    <input type="checkbox" class="custom-control-input" id="id-print-alternatives-indicator" v-model="examPrintConfig.hideAlternativesIndicator">
+    <label class="custom-control-label" for="id-print-alternatives-indicator">
+        Ocultar texto de referência das alternativas
+    </label>
+    <p class="tx-gray-600">
+        Marque esta opção se deseja ocultar o texto de referência das alternativas.
+    </p>
+    </div>
+</div>
+
+<div class="form-group">
+    <div class="custom-control custom-switch">
+    <input type="checkbox" class="custom-control-input" id="id-print-alternatives-referencies" v-model="examPrintConfig.hideQuestionsReferencies">
+    <label class="custom-control-label" for="id-print-alternatives-referencies">
+        Ocultar texto de referência das alternativas
+    </label>
+    <p class="tx-gray-600">
+        Marque esta opção se deseje ocultar os textos referências das questões.
+    </p>
+    </div>
+</div>
+
+<div class="form-group">
+    <div class="custom-control custom-switch">
+    <input type="checkbox" class="custom-control-input" id="id-print-black-and-white-images" v-model="examPrintConfig.printBlackAndWhiteImages">
+    <label class="custom-control-label" for="id-print-black-and-white-images">
+        Forçar a impressão das imagens em preto e branco
+    </label>
+    <p class="tx-gray-600">
+        Marque esta opção se deseja forçar a impressão das imagens em preto e branco.
+    </p>
+    </div>
+</div>
+
+<div class="form-group">
+    <div class="custom-control custom-switch">
+    <input type="checkbox" class="custom-control-input" id="id-hyphenate" v-model="examPrintConfig.hyphenate">
+    <label class="custom-control-label" for="id-hyphenate">
+        Hifenizar textos
+    </label>
+    <p class="tx-gray-600">
+        Marque esta opção se deseja que o texto do enunciado seja hifenizado automaticamente.
+    </p>
+    </div>
+</div>
+
+<div class="form-group">
+    <div class="custom-control custom-switch">
+    <input type="checkbox" class="custom-control-input" id="id-print-with-correct-answers" v-model="examPrintConfig.printWithCorrectAnswers">
+    <label class="custom-control-label" for="id-print-with-correct-answers">
+        Imprimir prova gabaritada <span class="badge badge-danger">Atenção</span>
+    </label>
+    <p class="tx-gray-600">
+        Marque esta opção se deseja imprimir a prova com o gabarito inserido.
+    </p>
+    </div>
+</div>
+
+<div class="form-group">
+    <div class="custom-control custom-switch">
+    <input type="checkbox" class="custom-control-input" id="id-show-question-score" v-model="examPrintConfig.showQuestionScore">
+    <label class="custom-control-label" for="id-show-question-score">
+        Mostrar a pontuação das questões?
+    </label>
+    <p class="tx-gray-600">
+        Marque esta opção se deseja mostrar a pontuação das questões.
+    </p>
+    </div>
+</div>
+
+<div class="form-group">
+    <div class="custom-control custom-switch">
+    <input type="checkbox" class="custom-control-input" id="id-show-question-board" v-model="examPrintConfig.showQuestionBoard">
+    <label class="custom-control-label" for="id-show-question-board">
+        Mostrar a banca das questões?
+    </label>
+    <p class="tx-gray-600">
+        Marque esta opção se deseja mostrar a banca das questões.
+    </p>
+    </div>
+</div>
+
+<div class="form-group">
+    <div class="custom-control custom-switch">
+    <input type="checkbox" class="custom-control-input" id="id-show-footer" v-model="examPrintConfig.showFooter">
+    <label class="custom-control-label" for="id-show-footer">
+        Adicionar nome da prova em todas as páginas?
+    </label>
+    <p class="tx-gray-600">
+        Marque esta opção se deseja adicionar o nome da prova ao rodapé de todas as páginas do caderno (apenas na impressão de malotes).
+    </p>
+    </div>
+</div>
+
+<div class="form-group">
+    <div class="custom-control custom-switch">
+    <input type="checkbox" class="custom-control-input" id="id-add-page-number" v-model="examPrintConfig.addPageNumber">
+    <label class="custom-control-label" for="id-add-page-number">
+        Adicionar numeração em todas as páginas?
+    </label>
+    <p class="tx-gray-600">
+        Marque esta opção se deseja adicionar o número das páginas no rodapé do caderno (apenas na impressão de malotes).
+    </p>
+    <div v-if="examPrintConfig.kind > 0 && examPrintConfig.addPageNumber" class="alert alert-warning" role="alert">
+        O campo de numeração não é aplicado na impressão quando o tipo de prova é diferente de "única".
+    </div>
+    </div>
+</div>
+
+<div class="divider-text">Aplicação em massa (Todas as questões de uma vez)</div>
+
+<div class="form-group">
+    <div class="custom-control custom-switch">
+        <input type="checkbox" class="custom-control-input" name="economy_mode" id="id-economy-mode" v-model="examPrintConfig.economyMode">
+        <label class="custom-control-label" for="id-economy-mode">
+            Modo econômico <span class="badge badge-primary">Novo</span>
+        </label>
+        <p class="tx-gray-600">
+            Enunciados são quebrados automaticamente e a prova é exibida em duas colunas.
+        </p>
+    </div>
+</div>
+
+<div class="form-group">
+    <div class="custom-control custom-switch">
+        <input type="checkbox" class="custom-control-input" name="force_choices_with_statement" id="id-force-choices-with-statement" v-model="examPrintConfig.forceChoicesWithStatement">
+        <label class="custom-control-label" for="id-force-choices-with-statement">
+            Forçar alternativas junto ao enunciado <span class="badge badge-primary">Novo</span>
+        </label>
+        <p class="tx-gray-600">
+            As alternativas de cada questão serão exibidas imediatamente junto ao enunciado. (Quebra de enunciado será desconsiderado.)
+        </p>
+    </div>
+</div>
+
+<div class="form-group">
+    <div class="custom-control custom-switch">
+        <input type="checkbox" class="custom-control-input" name="hide_numbering" id="id-hide-numbering" v-model="examPrintConfig.hideNumbering">
+        <label class="custom-control-label" for="id-hide-numbering">
+            Esconder numerações das questões <span class="badge badge-primary">Novo</span>
+        </label>
+        <p class="tx-gray-600">
+            Remove a numeração das questões, deixando o enunciado e as alternativas sem identificação numérica.
+        </p>
+    </div>
+</div>
+
+<div class="form-group">
+    <div class="custom-control custom-switch">
+        <input type="checkbox" class="custom-control-input" name="break_enunciation" id="id-break-enunciation" v-model="examPrintConfig.breakEnunciation">
+        <label class="custom-control-label" for="id-break-enunciation">
+            Quebra de enunciado <span class="badge badge-primary">Novo</span>
+        </label>
+        <p class="tx-gray-600">
+            Se ativado, quebra o enunciado em partes menores para facilitar a leitura e organização das questões.
+        </p>
+    </div>
+</div>
+
+<div class="form-group">
+    <div class="custom-control custom-switch">
+        <input type="checkbox" class="custom-control-input" name="break_all_questions" id="id-break-all-questions" v-model="examPrintConfig.breakAllQuestions">
+        <label class="custom-control-label" for="id-break-all-questions">
+            Quebrar página de todas as questões <span class="badge badge-primary">Novo</span>
+        </label>
+        <p class="tx-gray-600">
+            Se ativado, permite que cada página tenha apenas uma questão.
+        </p>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="custom-control custom-switch">
+        <input type="checkbox" class="custom-control-input" name="break_alternatives" id="id-break-alternatives" v-model="examPrintConfig.breakAlternatives">
+        <label class="custom-control-label" for="id-break-alternatives">
+            Quebra de alternativas
+        </label>
+        <p class="tx-gray-600">
+            Se ativado, permite quebrar as alternativas entre páginas.
+        </p>
+    </div>
+</div>

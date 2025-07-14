@@ -1,0 +1,214 @@
+{% extends 'dashboard/clean_base_without_header.html' %}
+{% load static %}
+{% load remove_line_break %}
+{% load exams_tags %}
+{% load increment %}
+{% load questions_tags %}
+
+{% block title %}
+Lize - Impressão de gabarito de prova
+{% endblock title %}
+
+{% block css-additional %}
+
+<style>
+    body {
+        font-family: "IBM Plex Sans", sans-serif !important;
+        background-color: #FFF !important;
+        font-size: 15px;
+    }
+    @page {
+        size: A4;
+        margin: 5mm;
+    }
+    img {
+        max-width: 100%;
+    }
+    mjx-container.MathJax {
+        font-size: 140% !important;
+    }
+    @media print {
+        .page-break {            
+            page-break-before: always;
+        }
+        mjx-container.MathJax {
+            font-size: 160% !important;
+        }
+        mjx-math {
+            white-space: inherit !important; 
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row header">
+    <div class="col-12">
+        <table class="table table-bordered" style="margin-top: 10mm;">
+            <tr>
+                <td class="w-25 p-4" rowspan="6">
+                    <img src="{{ object.coordinations.all.0.unity.client.logo.url }}" alt="">
+                </td>
+            </tr>
+            <tr>
+                <td colspan="5" class="font-weight-bold text-center align-middle">
+                    GABARITO DA PROVA
+                </td>
+            </tr>
+            <tr>
+                <td colspan="5" class="font-weight-bold text-center align-middle">{{object.name|upper}}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+{% if separate_subjects %}
+    <div class="row mt-3">
+        {% for subject_object in subjects %}
+            <div class="col-2">
+                <table class="table table-striped table-bordered text-center">
+                    <tbody>
+                        <tr>
+                            <td colspan="2">
+                                <div class="font-weight-bold d-flex justify-content-center align-items-center" style="height: 40px !important;">{{subject_object.subject}}</div>
+                            </td>
+                        </tr>
+                        {% for examquestion in subject_object.examquestions %}
+                            <tr>
+                                <td class="question_number">
+                                    {{examquestion.question|number_print_question:object}}
+                                </td>
+                                <td class="text-uppercase">
+                                    {% if examquestion.annuled %}
+                                        -
+                                    {% else %}
+                                        {{examquestion.question|get_correct_option_answer}}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endfor %}
+        {% if question_withou_subjects %}
+            <div class="col-2">
+                <table class="table table-striped table-bordered text-center">
+                    <tbody>
+                        <tr>
+                            <td colspan="2">
+                                <div class="font-weight-bold d-flex justify-content-center align-items-center" style="height: 40px !important;">Sem Disciplina</div>
+                            </td>
+                        </tr>
+                        {% for examquestion in question_withou_subjects %}
+                            <tr>
+                                <td class="question_number">
+                                    {{examquestion.question|number_print_question:object}}
+                                </td>
+                                <td class="text-uppercase">
+                                    {% if examquestion.annuled %}
+                                        -
+                                    {% else %}
+                                        {{examquestion.question|get_correct_option_answer}}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+{% else %}
+    <div class="row mt-3">
+        {% for group in separated_questions %}
+            <div class="col-2">
+                <table class="table table-striped table-bordered text-center">
+                    <tbody>
+                        {% for examquestion in group %}
+                            <tr>
+                                <td class="question_number">
+                                    {{examquestion.question|number_print_question:object}}
+                                </td>
+                                <td class="text-uppercase">
+                                    {% if examquestion.annuled %}
+                                        -
+                                    {% else %}
+                                        {{examquestion.question|get_correct_option_answer}}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% if object.has_commented_questions %}
+    <div class="page-break"></div>
+    <table class="table table-striped table-bordered text-center">
+        <template v-for="examquestion in comented_answers">
+            <tr>
+                <td class="align-middle" rowspan="2">${examquestion.index}</td>
+                <td class="align-middle" colspan="2">
+                    <p><strong>Resposta comentada da questão ${examquestion.index}</strong></p>
+                    <span v-html="examquestion.commented_awnser"></span>
+                </td>
+            </tr>
+            <tr>
+                <td class="align-middle" colspan="2">
+                    <p><strong>Feedback da questão ${examquestion.index}</strong></p>
+                    <span v-html="examquestion.feedback"></span>
+                </td>
+            </tr>
+        </template>
+    </table>
+{% endif %}
+
+{% endblock content %}
+
+{% block js-additional %}
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous">
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>    
+
+
+
+<script type="application/javascript">
+    Vue.config.devtools = false
+
+    var app_question = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+            comented_answers: [
+                {% for examquestion in examquestions %}
+                    {% if examquestion.question.get_commented_awnser_str or examquestion.question.get_feedback_str %}
+                        {   
+                            index: {{examquestion.question|number_print_question:object}},
+                            commented_awnser: "{% if examquestion.question.commented_awnser %}{{examquestion.question.commented_awnser_escaped|remove_line_break|safe}}{% else %}-{% endif %}",
+                            feedback: "{% if examquestion.question.feedback %}{{examquestion.question.feedback_escaped|remove_line_break|safe}}{%else%}-{% endif %}"
+                        },
+                    {% endif %}
+                {% endfor %}
+                
+            ],
+        },
+        methods: {
+        },
+        mounted: function () {
+            document.title = "{{ object.name }}"
+            setTimeout(() => {
+                window.print();
+                window.onafterprint = () => window.close();
+            }, 500) 
+        }
+    })
+</script>
+
+{% endblock js-additional %}

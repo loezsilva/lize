@@ -1,0 +1,357 @@
+{% load static %}
+{% load increment %}
+{% load truncate %}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        
+        <title>Lize - Impressão de prova discursiva</title>
+
+        <link rel="stylesheet" href="{% static 'css/exam-print-discursive.css' %}">
+        <script src="{% static 'js/vue.min.js' %}"></script>
+        <style>
+            body {
+                font-size: .875rem !important;
+                font-family: "IBM Plex Sans", sans-serif !important;
+                background-color: #FFF !important;
+                margin: 0;
+                padding: 0;
+                line-height: normal;
+                min-width: 29.7cm !important;
+            }
+            .discursive-line-height {
+                {% if discursive_line_height %}
+                    margin-top: {{discursive_line_height|safe}}cm !important;
+                {% else %}
+                    margin-top: 1cm !important;
+                {% endif %}
+            }
+            .d-none {
+                display: none !important;
+            }
+            .qrcontent {
+                letter-spacing: 0.05em;
+                font-size: 12pt;
+            }
+            .teacher-grade {
+                font-size: 9pt;
+            }
+            .teacher-area {
+                border-left: 2px dotted black; 
+            }
+            .percent-circle {
+                border-radius: 100%;
+                font-weight: bold;
+                font-size: 7pt;
+                height: 4mm;
+                width: 4mm;
+                border: 1px solid #000;
+                margin-bottom: 1mm;
+            }
+            canvas img {
+                margin: 0;
+            }
+            div.page:not(:last-child) {
+                page-break-after: always;
+            }
+            header {
+                height: 170px !important;
+            }
+            .support-content img {
+                max-width: 100%;
+
+            }
+            @page {
+                size: a4;
+                margin: 5mm;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="app">
+            <header class="d-none" data-header>
+                <div class="row m-0">
+                    <div class="col-12">
+                        <p class="text-center mb-0 qrcontent">CONTEÚDO DO QRCODE</p>
+                    </div>
+                    <div class="col-3 p-0 border d-flex justify-content-center align-items-center">
+                        <div style="height: 140px;" class="d-flex align-items-center">
+                            {% with exam.coordinations.all.0.unity.client.logo as logo %}
+                                {% if logo %}
+                                    <img src="{{ logo.url }}" class="img-fluid border-0" style="max-width: 150px !important;" alt="">
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                    <div class="col m-0 p-0 border d-flex flex-column justify-content-between">
+                        <div class="row m-0" style="height: 100%;">
+                            <div class="col-12 border d-flex align-items-center text-uppercase">
+                                {{ exam.coordinations.all.0.unity.client.name }}
+                            </div>
+                        </div> 
+                        <div class="row m-0" style="height: 100%;">
+                            <div class="col-12 border d-flex align-items-center text-uppercase">
+                                PROVA:&nbsp;
+                                <span class="font-weight-bold">
+                                    {{exam.name}}
+                                    {% if application_randomization_version %} - V{{application_randomization_version.version_number}}{% endif %}
+                                </span>
+                            </div>
+                        </div>    
+                        <div class="row m-0 d-none" style="height: 100%;" data-subject>
+                            <div class="col-12 border d-flex align-items-center">
+                                DISCIPLINA: <span class="font-weight-bold text-uppercase" data-replacesubjectname></span> 
+                            </div>
+                            <div class="d-none" data-examteachersubjectid></div>
+                        </div>
+                        <div class="row m-0" style="height: 100%;">
+                            <div class="col-12 border d-flex align-items-center">
+                                ALUNO:&nbsp;
+                                <span class="font-weight-bold text-uppercase">
+                                    {{object.student.name}}
+                                    {% if object.student.enrollment_number %}(Mat. {{object.student.enrollment_number}}){% endif %}
+                                </span>
+                            </div>
+                        </div>    
+                    </div>
+                    <div class="col-2 border border-left-0 d-flex justify-content-center align-items-center">
+                        <div class="qrcode"></div>
+                    </div>
+                </div>
+            </header>
+
+            <template v-for="(examTeacherSubject, subjectIndex) in examTeacherSubjects.filter(teacher => teacher.questions.length)">
+                <template v-for="(examQuestion, indexQuestion) in examTeacherSubject.questions">
+                    <div
+                        :id="examQuestion.id" 
+                        class=""
+                        data-question 
+                        :data-teacher="examTeacherSubject.id"
+                        :data-subjectname="examTeacherSubject.subject.name"
+                    >
+                        <div class="m-0 mb-2 d-flex justify-content-between" style="border: #000 5px solid;">
+                            <div class="w-100">
+                                <h3 class="m-1 text-uppercase">
+                                    QUESTÃO ${String(examQuestion.number_print).padStart(2, '0')} ${examTeacherSubject.subject.name ? '('+examTeacherSubject.subject.name+')':''} <span class="text-muted" v-html="examQuestion.enunciation_str"></span>
+                                <div v-if="examQuestion.supportContentQuestion && !examQuestion.textQuestionFormat"
+                                    :style="{
+                                        display: 'flex', 
+                                        justifyContent: examQuestion.supportContentPosition === 'center' ? 'center' : (examQuestion.supportContentPosition === 'right' ? 'flex-end' : 'flex-start'), 
+                                        alignItems: 'center'
+                                    }">
+                                    <div v-if="examQuestion.supportContentQuestion">
+                                        <p v-html="examQuestion.supportContentQuestion" class="support-content"></p>
+                                        <template v-for="index in (examQuestion.quantity_lines - 5 < 0) ? 0 : examQuestion.quantity_lines - 5">
+                                            <div class="row mx-2 px-0 discursive-line-height">
+                                                <div class="col-12 border-bottom border-dark" v-if="examQuestion.text_question_format"></div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                                <template v-else>
+                                    <template v-for="index in examQuestion.quantity_lines">
+                                        <div class="row mx-2 px-0 discursive-line-height">
+                                            <div class="col-12 border-bottom border-dark" v-if="examQuestion.text_question_format"></div>
+                                        </div>
+                                    </template>
+                                </template>
+                            </div>
+                            <div class="teacher-area d-flex flex-column align-items-center m-0" style="min-height: 100px;">
+                                <div class="px-2 text-center mt-1">
+                                    <span class="font-weight-bold">#${examQuestion.examQuestionShortCode}#</span>
+                                    <div :data-code="examQuestion.examQuestionShortCode" :id="'questionQR-'+examQuestion.id"></div>
+                                </div>
+                                <div class="mt-2">
+                                    {% if auto_correct_discursives %}
+                                    <table class="teacher-grade">
+                                        <tr>
+                                            <td class="pr-1">0.00</td>
+                                            <td><span class="percent-circle d-flex align-items-center justify-content-center"></span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="pr-1">0.25</td>
+                                            <td><span class="percent-circle d-flex align-items-center justify-content-center"></span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="pr-1">0.50</td>
+                                            <td><span class="percent-circle d-flex align-items-center justify-content-center"></span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="pr-1">0.75</td>
+                                            <td><span class="percent-circle d-flex align-items-center justify-content-center"></span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="pr-1">1.00</td>
+                                            <td><span class="percent-circle d-flex align-items-center justify-content-center"></span></td>
+                                        </tr>
+                                    </table>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </template>
+
+        </div>
+
+        <script src="{% static 'new/administration/lib/jquery/jquery.min.js' %}"></script>
+        <script src="{% static 'js/qrcode.js' %}"></script>
+        
+        <script type="application/javascript">
+
+            var app_question = new Vue({
+                delimiters: ['${', '}'],
+                el: '#app',
+                data: {
+                    dontIncludedIndex: [],
+                    heightPageA4: 1580,
+                    splitSubjects: {{split_subjects|default:False|lower|safe}},
+                    {% if exam.is_abstract %}
+                        {% include 'dashboard/exams/exam_preview/includes/new_exam_abstract_data.js' with object=exam iterator=iterator %}
+                    {% else %}
+                        {% include 'dashboard/exams/exam_preview/includes/new_exam_data.js' with object=exam iterator=iterator %}
+                    {% endif %}
+                    },
+                methods: {
+                    generateAlternativeOrder(index) {
+                        return "abcdefghij" [index]
+                    },
+                    generateAlternativeText(alternative, index) {
+                        return `${alternative.text}`
+                    },
+                    generateQRCode(content, element, width = 64) {
+                        var qrcode = new QRCode(element, {
+                            text: content,
+                            width: width,
+                            height: width,
+                            colorDark: "#000000",
+                            colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.H
+                        });
+                    },
+                    async createPages() {
+                        return await new Promise((resolve, reject) => {
+                            this.questions = $("[data-question]")
+                            let questionsLenght = this.questions.length
+                            
+                            let firstQuestion = this.questions[0]
+
+                            let page = this.createPage(this.splitSubjects ? $(firstQuestion).attr('data-subjectname') : null, $(firstQuestion).attr('data-teacher')) // Cria uma página nova
+
+                            if((page.height() + $(firstQuestion).height()) < this.heightPageA4) {
+                                
+                                this.questionsPerPage(0, page, this.questions.slice(0, questionsLenght))
+                            
+                            }
+                            
+                            this.questions.each((i, e) => {
+
+                                let header = $('[data-header]').first().clone()
+
+                                let question = $(e)
+                                
+                                let subjectName = question.attr('data-subjectname')
+                                
+                                let nextsQuestions = this.questions.slice(i, questionsLenght)
+
+                                if(!this.dontIncludedIndex.includes(i)) {
+                                
+                                    page = this.createPage(this.splitSubjects ? subjectName : null, $(nextsQuestions[0]).attr('data-teacher')) // Cria uma página nova
+                                    
+                                    this.questionsPerPage(i, page, nextsQuestions)
+                                
+                                }
+                                return resolve()
+                            })
+                        })
+                    },
+                    generateQRCodes() {
+
+                        let qrContent = "{{qr_code_text}}"
+
+                        // Gera QR code das questões
+                        $('[id^="questionQR"').each((i, e) => {
+                            this.generateQRCode($('#'+e.id).attr('data-code'), $('#'+e.id)[0])
+                        })
+                        
+                        // Gera QR code da application student
+                        $(".qrcontent").text(`#${qrContent}#`)
+                        $(".qrcode").each((i, e) => {
+                            let element = $(e)
+                            this.generateQRCode(qrContent, element[0], 120)
+                        })
+                    },
+                    createPage(subjectName, examTeacherSubjectID) {
+                        let header = $('[data-header]').first().clone()
+                        
+                        if(subjectName) {
+                            header.find("[data-examteachersubjectid]").text(examTeacherSubjectID)
+                            header.find("[data-subject]").toggleClass('d-none')
+                            header.find("[data-replacesubjectname]").text(subjectName)
+                        }
+                        
+                        let page = $(document.createElement('div')).addClass('page')
+                        
+                        $('#app').append(page)
+                        
+                        page.append(header.toggleClass('d-none')) // Adiciona o header à página
+                        
+                        return page
+
+                    },
+                    async questionsPerPage(questionIndex, page, nextsQuestions) {
+
+                        return new Promise((resolve) => {
+
+                            let sum = page.height()
+                            
+                            nextsQuestions.each((j, nextQuestion) => {
+                                let currentQuestion = $(nextQuestion)
+                                
+                                let index = questionIndex + j
+                                
+                                sum += currentQuestion.height()
+    
+                                if(sum < this.heightPageA4) {
+                                    if(this.splitSubjects) {
+                                        if(currentQuestion.attr('data-teacher') == $(page).find("[data-examteachersubjectid]").text()) {
+                                            page.append($(this.questions[index]))
+                                            this.dontIncludedIndex.push(index)
+                                        }
+                                    } else {
+                                        page.append($(this.questions[index]))
+                                        this.dontIncludedIndex.push(index)
+                                    }
+                                }
+
+                            })
+                            
+                            resolve()
+                        })
+                    },
+                },
+                mounted() {
+                    document.title = "{{ object.name }}"
+                    window.onload = () => {
+                        this.createPages().then((response) => {
+                            this.generateQRCodes()
+                            //$('#app>header,#app>[data-question]').remove()
+                        })
+                    }
+                }
+            })
+        </script>
+        <script defer>
+            document.addEventListener('DOMContentLoaded', function() {
+              let loadedElement = document.createElement('div')
+              loadedElement.id = 'loaded'
+              document.body.appendChild(loadedElement)
+            });
+        </script>
+    </body>
+</html>
+

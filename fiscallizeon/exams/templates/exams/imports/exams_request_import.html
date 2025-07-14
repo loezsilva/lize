@@ -1,0 +1,194 @@
+{% extends 'redesign/base.html' %}
+{% comment %}{% extends 'dashboard/base_fixed.html' %}{% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+{% load format_duration %}
+
+{% block title %}
+  Importar solicitações de elaboração - Lize
+{% endblock title %}
+
+{% block css-additional %}
+  <link rel="stylesheet" href="{% static 'administration/lib/datatables.net-responsive-dt/css/responsive.dataTables.min.css' %}">
+{% endblock %}
+
+{% block breadcrumb-fixed %}
+<div class="ard cer dcv tw-mb-16 mt-3">
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-30">
+    <div class="w-100">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="{% url 'exams:exams_list' %}">INSTRUMENTOS AVALIATIVOS</a></li>
+          <li class="breadcrumb-item active" aria-current="page">IMPORTAR</li>
+        </ol>
+      </nav>
+      <div class="row">
+        <div class="col">
+          <a href="{% static 'modelo_importacao_solicitacoes_a_professores.csv' %}" download>
+            <div class="card card-body ht-lg-100">
+              <div class="media">
+                <span class="tx-color-04"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download wd-60 ht-60"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></span>
+                <div class="media-body mg-l-20">
+                  <h6 class="mg-b-10">Modelo de solicitações de elaboração (CSV)</h6>
+                  <p class="tx-color-03 mg-b-0 text-primary">Você pode baixar o modelo de arquivo clicando nesse card</p>
+                </div>
+              </div>
+            </div>
+          </a>
+        </div>
+        <div class="col">
+          <a href="{% url 'exams:exams_request_import_auxiliary' %}" target="_blank">
+            <div class="card card-body ht-lg-100">
+              <div class="media">
+                <span class="tx-color-04"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download wd-60 ht-60"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></span>
+                <div class="media-body mg-l-20">
+                  <h6 class="mg-b-10">Documento auxiliar (CSV)</h6>
+                  <p class="tx-color-03 mg-b-0 text-primary">Você pode baixar o modelo de arquivo clicando nesse card</p>
+                </div>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock breadcrumb-fixed %}
+
+{% block content-fixed %}
+<div class="ard cer dcv tw-mb-16">
+  <div class="" style="margin-top: 1.25rem; margin-bottom: 1rem;">
+    <h4>Importação de solicitações de elaboração (CSV)</h4>
+    {% if user.last_import_elaboration_request %}
+      <template>
+        <div class="my-4 p-2 rounded-lg border border-info">
+          <div class="row m-0">
+            <div class="col d-flex align-items-center">
+              <div class="mt-2">
+                <h5 class="text-info">Última importação</h5>
+                <p>Detalhes: ${lastTask.details != '' ? lastTask.details : ''}</p>
+              </div>
+            </div>
+            <div class="col-6 col-lg-3 d-flex align-items-center justify-content-end" v-if="importationErrors.length">
+              <button class="btn btn-danger" data-toggle="modal" data-target="#modalErrors">
+                Ver erro de importação
+              </button>
+            </div>
+          </div>
+        </div>
+      </template>
+    {% endif %}
+    <form method="POST" enctype="multipart/form-data" class="mt-4">
+      {% csrf_token %}  
+      <div class="row">
+        <div class="form-group col-12">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="force_create_teacher_subject" name="force_create_teacher_subject" {% if force_create_teacher_subject %}checked{% endif %}>
+            <label class="form-check-label" for="force_create_teacher_subject">
+              Forçar criação de disciplina do professor
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="form-group col-12">
+          <label class="" for="file">Selecione o arquivo CSV...</label>
+          <input type="file" class="form-control" name="file" id="file">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12">
+          <button class="btn btn-primary" type="submit">Enviar arquivo</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+  
+  <div aria-hidden="true" class="modal fade" id="modalErrors" role="dialog" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title text-truncate" id="modal-exam-export-title">Erro de importação</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body h-100 p-5">
+          <h5 class="text-center" v-for="error in importationErrors">
+            ${error}
+            <br>
+            <br>
+            Por favor, corrija seu arquivo e envie novamente.
+          </h5>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock extra-modal %}
+  
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/datatables.net-responsive-dt/js/responsive.dataTables.min.js' %}"></script>
+<script src="{% static 'administration/lib/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+<script>
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {
+      file: null,
+      importationErrors: [],
+      lastTask: {
+        status: '',
+        details: '',
+      }
+    },
+    methods: {
+      checkTaskStatus() {
+        axios.get("{% url 'core:get_generic_task_status' %}?task_id=IMPORT_ELABORATION_REQUEST_{{user.id}}").then((response) => {
+          if(response.data.status == 'SUCCESS') {
+            this.lastTask.details = response.data.details;
+            clearInterval(this.checkTaskInterval);
+            if(this.lastTask.status == 'STARTED' && !response.data.details.includes('Importação de solicitações de elaboração finalizada com sucesso')) {
+              if(this.importationErrors.length) {
+                $('#modalErrors').modal('show')
+              }
+            }
+          } else if(response.data.status == 'FAILURE') {
+            this.lastTask.details = response.data.details;
+            clearInterval(this.checkTaskInterval);
+          } else if (response.data.status == 'PENDING') {
+            this.lastTask.details = 'Nenhuma importação iniciada';
+          } else if (response.data.status == 'STARTED') {
+            this.lastTask.status = response.data.status
+            this.lastTask.details = 'Importação em andamento, aguarde...';
+          }
+        })
+      },
+      getImportationErrors() {
+        {% if user.last_import_elaboration_request %}
+          axios.get("{% url 'exports:get-importation-errors' user.last_import_elaboration_request.id %}").then((response) => {
+            this.importationErrors = response.data
+          })
+        {% endif %}
+      }
+    },
+    mounted() {
+      this.checkTaskStatus()
+      setTimeout(() => {
+        this.getImportationErrors()
+      }, 2000)
+
+      this.checkTaskInterval = setInterval(() => {
+        this.checkTaskStatus()
+        this.getImportationErrors()
+      }, 10000)
+    }
+  })
+</script>
+{% endblock %}

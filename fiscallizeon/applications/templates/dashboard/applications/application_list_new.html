@@ -1,0 +1,2311 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load permissions %}
+{% load static %}
+{% load get_answer_sheet_link %}
+{% load getlist %}
+{% load cdn_url %}
+
+{% block title %}Listagem de aplicações - Lize{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<link rel="stylesheet" href="{% static 'css/tourjs/tour.min.css' %}">
+<!-- <link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet"> -->
+
+<style>
+  .column-300 {
+    max-width: 400px;
+  }
+  .tg-backdrop{
+    z-index: 9999 !important;
+  }
+</style>
+{% endblock %}
+
+{% block top-menu %}
+    <header>
+      <div class="tw-flex tw-justify-center">
+        <nav class="ls add afa agv arx tw-flex-1" data-tg-title="Tipos de aplicações" data-tg-order="2" data-tg-tour='Clique em "Presencial" ou "Online" para filtrar a listagem de aplicações.' data-tg-group="default-application-list" style="display: flex; overflow-x: auto; border-width: 0px; border-style: solid; border-color: rgb(229, 231, 235); border-bottom-width: 1px; border-color: #E2E5ED; padding-top: 1rem; padding-bottom: 1rem; max-width: calc(100vw - 240px);">
+          <ul role="list" class="ls tn uj aad ard avv awb awk axk cer dcv" style="list-style: none; margin: 0px; min-width: 100%; flex: 0 0 auto; column-gap: 1.5rem; font-size: 0.875rem; line-height: 1.5rem; font-weight: 500;">
+            <li>
+              <a href="{% url 'applications:applications_list' %}?category=presential" class="axz font-display" style="{% if request.resolver_match.url_name == 'applications_list' and request.GET.category == 'presential' %}color: #FEA464;{% else %}color: #9CA3AF;{% endif %}">
+                Presencial
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'applications:applications_list' %}?category=online" class="axz font-display" style="{% if request.resolver_match.url_name == 'applications_list' and request.GET.category == 'online' %}color: #FEA464;{% else %}color: #9CA3AF;{% endif %}">
+                Online
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+{% endblock top-menu %}
+
+{% block content-fixed %}
+<div class="tw-flex tw-justify-center">
+  <div class="ard cer dcv tw-pb-8 tw-flex-1" style="max-width: calc(100vw - 240px);">
+    <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1.5rem; justify-content: space-between;">
+      <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-6 sm:tw-flex-nowrap tw-w-full">
+        <h1 class="tw-text-xl tw-font-semibold tw-leading-7 tw-text-[#374151] sm:tw-truncate sm:tw-text-2xl sm:tw-tracking-tight tw-mb-0">
+          Aplicações
+        </h1>
+        <div class="tw-order-last tw-flex tw-w-full tw-gap-x-8 tw-text-sm tw-font-semibold tw-leading-6 sm:tw-order-none sm:tw-w-auto sm:tw-border-l sm:tw-border-gray-200 sm:tw-pl-6 sm:tw-leading-7">
+          <button data-tg-title="Filtros detalhados" data-tg-order="3" data-tg-tour="Agora você pode acessar a janela de filtros detalhados clicando aqui." data-tg-group="default-application-list" type="button" class="tw-flex tw-items-center tw-text-[#667085] tw-off-canvas-menu" id="headlessui-slider-over-button-1" data-toggle-off-canvas="#right-off-canvas" @click="filters.createNewFilter = false">
+            <span>Filtrar</span>
+            <span class="ml-2">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M5 10H15M2.5 5H17.5M7.5 15H12.5" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </button>
+        </div>          
+        <div class="tw-ml-auto tw-flex tw-gap-3">
+          {% include "redesign/includes/breadcrumb-year.html" with year=year|force_escape %}
+          {% if user|has_perm:'students.can_import_students_application' %}
+            <a class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold hover:tw-text-white tw-shadow-sm hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600 tw-transition-colors" href="{% url 'applications:application_students_import' %}">Importar alunos</a>
+          {% endif %}
+          {% if user|has_perm:'applications.add_application' %}
+            <div class="tw-ml-auto tw-flex tw-gap-3">
+              <a href="{% url 'applications:applications_create' %}?category={{category}}" id="createSimpleApplication" class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600 hover:tw-text-white">
+                Agendar aplicação
+              </a>
+              <a href="{% url 'applications:applications_create_multiple' %}?category={{category}}" id="createMultipleApplication" class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600 hover:tw-text-white">
+                Agendar várias aplicações
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div data-tg-title="Filtros aplicados" data-tg-order="4" data-tg-tour='Visualize os filtros já aplicados nesta listagem, remova-os individualmente clicando no "x" ou todos de uma vez clicando em "Limpar filtro".' data-tg-group="default-application-list" v-if="filters.selected || {{ count_filters|default:0|safe }}" class="tw-bg-white sm:tw-rounded-lg tw-py-5 tw-border tw-border-[#E5E7EA] tw-mb-4">
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8" >
+        <div class="tw-flex tw-justify-between">
+          <div class="tw-flex tw-items-center">
+            <p class="tw-mb-0 tw-pl-4 tw-pr-3 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900 sm:tw-pl-0">
+              Filtrando por
+            </p>
+            <div class="tw-space-x-2">
+              <span class="filter-elements tw-inline-flex tw-items-center tw-gap-x-0.5 tw-rounded tw-bg-[#F9FAFA] tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-text-[#384250]" v-for="filter in filters.labels()">
+                <button @click="removeFilter(filter)" type="button" class="tw-group tw-relative tw--ml-1 tw-h-3.5 tw-w-3.5 tw-rounded-sm hover:tw-bg-gray-500/20">
+                  <span class="tw-sr-only">Remove</span>
+                  <svg viewBox="0 0 14 14" class="tw-h-3.5 tw-w-3.5 tw-stroke-gray-700/50 group-hover:tw-stroke-gray-700/75">
+                    <path d="M4 4l6 6m0-6l-6 6" />
+                  </svg>
+                  <span class="tw-absolute tw--inset-1"></span>
+                </button>
+                ${ filter.label }<template v-if="filter.showValues">:<span v-if="!filter.showCount">${ filter.values.join(', ') }</span><span v-else>${ filter.values.length }</span></template>
+              </span>
+            </div>
+          </div>
+          <div class="tw-flex tw-items-center">
+            <button type="button" class="tw-text-left tw-text-sm tw-font-semibold tw-text-[#667085] tw-flex tw-items-center" @click="cleanFilter({{ year|force_escape }})">
+              Limpar filtro
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="tw-ml-2">
+                <path d="M15 5L5 15M5 5L15 15" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tw-bg-white sm:tw-rounded-lg tw-pt-5 tw-border tw-border-[#E5E7EA]">
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8">
+        <div class="tw-flow-root">
+          <div class="tw--mx-4 tw--my-2 tw-overflow-x-auto sm:tw--mx-6 lg:tw--mx-8" id="mousable">
+            <div class="tw-inline-block tw-min-w-full tw-py-2 tw-align-middle sm:tw-px-6 lg:tw-px-8">
+              <div class="tw-relative">
+                <div v-if="selectionList.length > 0" class="tw-absolute tw-top-0 tw-left-14 tw-flex tw-h-12 tw-items-center tw-space-x-3 tw-bg-white sm:tw-left-12">
+                  {% if user.client_has_omr %}
+                    {% if user|has_perm:'applications.can_print_bag_application' %}
+                      <button type="button" 
+                        @click="bulkMarkAndUnmarkReadyForPrinting('mark')" 
+                        :disabled="applicationsForMarking.length === 0"
+                        class="tw-inline-flex tw-items-center tw-rounded tw-bg-white tw-px-2 tw-py-1 tw-text-sm tw-font-semibold tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 disabled:tw-cursor-not-allowed disabled:tw-opacity-30 disabled:hover:tw-bg-white">
+                        Marcar para impressão
+                      </button>
+                      <button type="button" 
+                        @click="bulkMarkAndUnmarkReadyForPrinting('unmark')" 
+                        :disabled="applicationsForUnmarking.length === 0"
+                        class="tw-inline-flex tw-items-center tw-rounded tw-bg-white tw-px-2 tw-py-1 tw-text-sm tw-font-semibold tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 disabled:tw-cursor-not-allowed disabled:tw-opacity-30 disabled:hover:tw-bg-white">
+                        Desmarcar para impressão
+                      </button>
+                      <button type="button"
+                        @click="bulkBagCreate('{{csrf_token}}')" 
+                        class="tw-inline-flex tw-items-center tw-rounded tw-bg-white tw-px-2 tw-py-1 tw-text-sm tw-font-semibold tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 disabled:tw-cursor-not-allowed disabled:tw-opacity-30 disabled:hover:tw-bg-white">
+                        Gerar malote
+                      </button> 
+                      {% endif %}
+                  {% endif %}
+                  {% if user|has_perm:'applications.can_remove_generated_bag' %}
+                    <button type="button" 
+                    @click="bulkBagDelete('{{csrf_token}}')" 
+                    :disabled="applicationsForDeleteBags.length === 0"
+                    class="tw-inline-flex tw-items-center tw-rounded tw-bg-white tw-px-2 tw-py-1 tw-text-sm tw-font-semibold tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 disabled:tw-cursor-not-allowed disabled:tw-opacity-30 disabled:hover:tw-bg-white">
+                      Remover malote
+                    </button>
+                  {% endif %}
+                  {% if user|has_perm:'applications.can_disclose_application' %}
+                    <button type="button" 
+                      @click="bulkDisseminationOfResults('{{csrf_token}}')" 
+                      :disabled="applicationsForDisseminationOfResults.length === 0"
+                      class="tw-inline-flex tw-items-center tw-rounded tw-bg-white tw-px-2 tw-py-1 tw-text-sm tw-font-semibold tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 disabled:tw-cursor-not-allowed disabled:tw-opacity-30 disabled:hover:tw-bg-white">
+                      Divulgar resultado
+                    </button>
+                  {% endif %}
+                  {% if user|has_perm:'applications.delete_application' %}
+                    <button type="button"  
+                      @click="bulkDeleteApplications('{{csrf_token}}')" 
+                      :disabled="applicationsToDelete.length === 0 "
+                      class="tw-inline-flex tw-items-center tw-rounded tw-bg-white tw-px-2 tw-py-1 tw-text-sm tw-font-semibold tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 disabled:tw-cursor-not-allowed disabled:tw-opacity-30 disabled:hover:tw-bg-white">
+                      Apagar
+                    </button>
+                  {% endif %}
+                </div>
+                <div class="table-responsive">
+                  <table class="tw-min-w-full tw-table-fixed tw-divide-y tw-divide-gray-300" style="min-height: 350px;">
+                    <thead>
+                        <th data-tg-title="Selecione vários" data-tg-order="2" data-tg-tour="Selecione várias applicações ao mesmo tempo e aplique ações em massa." data-tg-group="default-application-list" scope="col" 
+                            class="tw-relative tw-px-7 sm:tw-w-12 sm:tw-px-6">
+                            <input type="checkbox" 
+                              class="tw-absolute tw-left-4 tw-top-1/2 tw--mt-2 tw-h-4 tw-w-4 tw-rounded tw-border-gray-300 tw-text-primary-600 focus:tw-ring-primary-600" 
+                              :checked="isIndeterminate || selectionList.length === applications.length" 
+                              :indeterminate.prop="isIndeterminate"
+                              @change="selectionList = $event.target.checked ? applications.map((e) => e.id) : []" />
+                        </th>
+                        <th scope="col" class="tw-py-3.5 tw-pr-3 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900">Datas</th>
+                        <th scope="col" v-if="selectionList.length <= 0" class="tw-px-3 tw-py-3.5 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900">Instrumento avaliativo</th>
+                        <th scope="col" v-if="selectionList.length <= 0" style="max-width: 5rem;" class="tw-px-3 tw-py-3.5 tx-center tw-text-sm tw-font-semibold tw-text-gray-900">Malote</th>
+                        <th scope="col" v-if="selectionList.length <= 0" colspan="2" class="tw-px-3 tw-py-3.5 tw-pl-3 tw-pr-4 sm:tw-pr-3 text-center">Ações</th>
+                    </thead>
+                    <tbody class="tw-divide-y tw-divide-gray-200 tw-bg-white">
+                      <template>
+                        <tr :id="'tr-'+application.id" :class="[selectionList.includes('application.id') && 'bg-gray-50']" v-for="(application, index) in applications"  :key="application.id">
+                          <td class="tw-relative tw-px-7 sm:tw-w-12 sm:tw-px-6">
+                            <div v-if="selectionList.includes(application.id)" class="tw-absolute tw-inset-y-0 tw-left-0 tw-w-0.5 tw-bg-primary-600"></div>
+                            <input type="checkbox" class="tw-absolute tw-left-4 tw-top-1/2 tw--mt-2 tw-h-4 tw-w-4 tw-rounded tw-border-gray-300 tw-text-primary-600 focus:tw-ring-primary-600"  :value="application.id" v-model="selectionList"/>
+                          </td>                              
+                          <td class="tw-py-4 tw-pr-3 tw-text-sm tw-font-medium tw-text-gray-900">
+                              <div class="tw-flex tw-items-center">
+                                <div>
+                                  <div>  
+                                    <span v-if="application.duplicate_application" class="badge badge-secondary">
+                                      <i class="fas fa-lock"></i> Aplicação Bloqueada 
+                                    </span>
+                                  </div>
+                                  <div class="tw-flex tw-mt-1 tw-font-medium tw-text-gray-900">
+                                    <span class="mr-2">
+                                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M21 10H3M16 2V6M8 2V6M9 16L11 18L15.5 13.5M7.8 22H16.2C17.8802 22 18.7202 22 19.362 21.673C19.9265 21.3854 20.3854 20.9265 20.673 20.362C21 19.7202 21 18.8802 21 17.2V8.8C21 7.11984 21 6.27976 20.673 5.63803C20.3854 5.07354 19.9265 4.6146 19.362 4.32698C18.7202 4 17.8802 4 16.2 4H7.8C6.11984 4 5.27976 4 4.63803 4.32698C4.07354 4.6146 3.6146 5.07354 3.32698 5.63803C3 6.27976 3 7.11984 3 8.8V17.2C3 18.8802 3 19.7202 3.32698 20.362C3.6146 20.9265 4.07354 21.3854 4.63803 21.673C5.27976 22 6.11984 22 7.8 22Z" stroke="#D2D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                      </svg>
+                                    </span>
+                                    <span class="">${ momentRef(application.date).format('DD/MM/YYYY') }</span>
+                                  </div>
+                                  <div class="tw-flex tw-mt-1">
+                                    <span class="mr-2">
+                                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M9 18.5H15M6.6 2H17.4C17.9601 2 18.2401 2 18.454 2.10899C18.6422 2.20487 18.7951 2.35785 18.891 2.54601C19 2.75992 19 3.03995 19 3.6V5.67452C19 6.1637 19 6.40829 18.9447 6.63846C18.8957 6.84254 18.8149 7.03763 18.7053 7.21657C18.5816 7.4184 18.4086 7.59135 18.0627 7.93726L15.1314 10.8686C14.7354 11.2646 14.5373 11.4627 14.4632 11.691C14.3979 11.8918 14.3979 12.1082 14.4632 12.309C14.5373 12.5373 14.7354 12.7354 15.1314 13.1314L18.0627 16.0627C18.4086 16.4086 18.5816 16.5816 18.7053 16.7834C18.8149 16.9624 18.8957 17.1575 18.9447 17.3615C19 17.5917 19 17.8363 19 18.3255V20.4C19 20.9601 19 21.2401 18.891 21.454C18.7951 21.6422 18.6422 21.7951 18.454 21.891C18.2401 22 17.9601 22 17.4 22H6.6C6.03995 22 5.75992 22 5.54601 21.891C5.35785 21.7951 5.20487 21.6422 5.10899 21.454C5 21.2401 5 20.9601 5 20.4V18.3255C5 17.8363 5 17.5917 5.05526 17.3615C5.10425 17.1575 5.18506 16.9624 5.29472 16.7834C5.4184 16.5816 5.59135 16.4086 5.93726 16.0627L8.86863 13.1314C9.26465 12.7354 9.46265 12.5373 9.53684 12.309C9.6021 12.1082 9.6021 11.8918 9.53684 11.691C9.46266 11.4627 9.26464 11.2646 8.86863 10.8686L5.93726 7.93726C5.59136 7.59136 5.4184 7.4184 5.29472 7.21657C5.18506 7.03763 5.10425 6.84254 5.05526 6.63846C5 6.40829 5 6.1637 5 5.67452V3.6C5 3.03995 5 2.75992 5.10899 2.54601C5.20487 2.35785 5.35785 2.20487 5.54601 2.10899C5.75992 2 6.03995 2 6.6 2Z" stroke="#D2D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </span>
+                                    <span class="tw-text-[#9BA3AF]">
+                                      ${ application.start.slice(0,5) } até ${application.end.slice(0,5) }
+                                    </span>
+                                  </div>
+                                  <div class="tw-flex tw-mt-1">
+                                    <span class="mr-2">
+                                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M4 13.9999L5.57465 20.2985C5.61893 20.4756 5.64107 20.5642 5.66727 20.6415C5.92317 21.397 6.60352 21.9282 7.39852 21.9933C7.4799 21.9999 7.5712 21.9999 7.75379 21.9999C7.98244 21.9999 8.09677 21.9999 8.19308 21.9906C9.145 21.8982 9.89834 21.1449 9.99066 20.193C10 20.0967 10 19.9823 10 19.7537V5.49991M18.5 13.4999C20.433 13.4999 22 11.9329 22 9.99991C22 8.06691 20.433 6.49991 18.5 6.49991M10.25 5.49991H6.5C4.01472 5.49991 2 7.51463 2 9.99991C2 12.4852 4.01472 14.4999 6.5 14.4999H10.25C12.0164 14.4999 14.1772 15.4468 15.8443 16.3556C16.8168 16.8857 17.3031 17.1508 17.6216 17.1118C17.9169 17.0756 18.1402 16.943 18.3133 16.701C18.5 16.4401 18.5 15.9179 18.5 14.8736V5.1262C18.5 4.08191 18.5 3.55976 18.3133 3.2988C18.1402 3.05681 17.9169 2.92421 17.6216 2.88804C17.3031 2.84903 16.8168 3.11411 15.8443 3.64427C14.1772 4.55302 12.0164 5.49991 10.25 5.49991Z" stroke="#D2D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                      </svg>
+                                    </span>
+                                    <span  class="tw-text-[#9BA3AF]" v-if="application.studentStatsPermissionDate">
+                                      <span v-if="isApplicationDisclosable(application)">
+                                        Divulgação:
+                                        <template v-if="application.releaseResultAtEnd">
+                                          Ao finalizar
+                                        </template>
+                                        <template v-else>
+                                          ${ momentRef(application.studentStatsPermissionDate).format('DD/MM/YYYY') }
+                                        </template>
+                                      </span>
+                                      <span v-else class="text-success">Resultado Divulgado</span>
+                                    </span>
+                                    <span v-else>
+                                      <span class="text-success">Sem divulgação</span>
+                                    </span>
+                                  </div>
+                                  <div class="tw-flex tw-mt-1" v-if="application.token_online">
+                                    <span class="mr-2">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="#D2D6DB" class="bi bi-shuffle" viewBox="0 0 16 16">
+                                        <path stroke="#D2D6DB" fill-rule="evenodd" d="M0 3.5A.5.5 0 0 1 .5 3H1c2.202 0 3.827 1.24 4.874 2.418.49.552.865 1.102 1.126 1.532.26-.43.636-.98 1.126-1.532C9.173 4.24 10.798 3 13 3v1c-1.798 0-3.173 1.01-4.126 2.082A9.6 9.6 0 0 0 7.556 8a9.6 9.6 0 0 0 1.317 1.918C9.828 10.99 11.204 12 13 12v1c-2.202 0-3.827-1.24-4.874-2.418A10.6 10.6 0 0 1 7 9.05c-.26.43-.636.98-1.126 1.532C4.827 11.76 3.202 13 1 13H.5a.5.5 0 0 1 0-1H1c1.798 0 3.173-1.01 4.126-2.082A9.6 9.6 0 0 0 6.444 8a9.6 9.6 0 0 0-1.317-1.918C4.172 5.01 2.796 4 1 4H.5a.5.5 0 0 1-.5-.5"/>
+                                        <path stroke="#D2D6DB" d="M13 5.466V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192m0 9v-3.932a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192"/>
+                                      </svg>
+                                    </span>
+                                    <span class="tw-text-[#9BA3AF]">
+                                      Token: ${application.token_online}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="tw-whitespace-nowrap tw-px-3 tw-py-4 tw-font-medium tw-text-gray-900">
+                              <div class="tw-flex tw-mt-1 align-items-center">
+                                {% comment %} 
+                                <span class="mr-2">
+                                  <template v-if="application.category === 3">
+                                    <i class="fas fa-chair tw-text-[#D2D6DB]" style="font-size: 16px;"></i>
+                                  </template>
+                                  <template v-else>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M2 12H22M2 12C2 17.5228 6.47715 22 12 22M2 12C2 6.47715 6.47715 2 12 2M22 12C22 17.5228 17.5228 22 12 22M22 12C22 6.47715 17.5228 2 12 2M12 2C14.5013 4.73835 15.9228 8.29203 16 12C15.9228 15.708 14.5013 19.2616 12 22M12 2C9.49872 4.73835 8.07725 8.29203 8 12C8.07725 15.708 9.49872 19.2616 12 22" stroke="#D2D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                  </template>
+                                </span> 
+                                {% endcomment %}
+                                <span class="tw-text-[#9BA3AF]">
+                                  <span class="text-muted">${application.categoryDisplay}</span>
+                                </span>
+                                <span v-if="application.application_type" class="tw-text-[#9BA3AF] tw-ml-1">
+                                  <span class="text-muted">- ${application.application_type}</span>
+                                </span>
+                              </div>
+                              <h6 class="text-truncate tooltips" style="max-width: 280px;" :data-tippy-content="application.exam">
+                                ${ application.exam }
+                              </h6>
+                              <div class="my-2">
+                                <tooltip-component :configs="{ 'objects': application.schoolClasses, showNumber: 3 }"></tooltip-component>
+                                <div v-if="!application.schoolClasses.length">
+                                  <div class="tw-flex tw-items-center tw-flex-wrap tw-gap-1">
+                                    <span class="tw-inline-flex tw-items-center tw-rounded-full tw-bg-white tw-px-3 tw-py-1 tw-text-xs tw-font-medium tw-text-gray-600 tw-ring-1 tw-ring-inset tw-ring-[#E5E7EA] tooltips" data-tippy-content="Alunos avulso">
+                                      ${ application.studentsCount } aluno(s) avulso(s)
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <!-- Malote -->
+                            <td class="tw-whitespace-nowrap tw-px-3 tw-py-4 tw-font-medium tw-text-gray-900">
+                              <template v-if="application.category == 3">
+                                <template v-if="application.sheetsExportingStatus === 1">
+                                  <span class=" tw-text-primary-600">
+                                    Gerando cartões... 
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                  </span>
+                                  <div class="progress mt-2" style="height: 8px;">
+                                    <div
+                                        class="progress-bar progress-bar-striped progress-bar-animated" 
+                                        role="progressbar"
+                                        :style="{ width: application.sheetsExportingProgress + '%' }">
+                                    </div>
+                                  </div>
+                                </template>
+                                <div v-else-if="application.sheetsExportingStatus == 2 && application.answerSheetUrl" class="text-center">
+                                  <a :href="application.answerSheetUrl" target="_blank">
+                                    <div class="d-flex justify-content-center tw-flex-wrap tw-gap-1">
+                                      <span class="tw-inline-flex tw-items-center tw-rounded-full tw-px-3 tw-py-1 tw-text-xs tw-font-medium tw-text-primary-600 hover:tw-bg-[#fff4ec] tw-ring-1 tw-ring-inset tw-ring-[#E5E7EA] tooltips" data-tippy-content="Baixar folha de respostas">
+                                        <svg width="18" height="18" class="mx-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                          <path d="M13 7L11.8845 4.76892C11.5634 4.1268 11.4029 3.80573 11.1634 3.57116C10.9516 3.36373 10.6963 3.20597 10.4161 3.10931C10.0992 3 9.74021 3 9.02229 3H5.2C4.0799 3 3.51984 3 3.09202 3.21799C2.71569 3.40973 2.40973 3.71569 2.21799 4.09202C2 4.51984 2 5.0799 2 6.2V7M2 7H17.2C18.8802 7 19.7202 7 20.362 7.32698C20.9265 7.6146 21.3854 8.07354 21.673 8.63803C22 9.27976 22 10.1198 22 11.8V16.2C22 17.8802 22 18.7202 21.673 19.362C21.3854 19.9265 20.9265 20.3854 20.362 20.673C19.7202 21 18.8802 21 17.2 21H6.8C5.11984 21 4.27976 21 3.63803 20.673C3.07354 20.3854 2.6146 19.9265 2.32698 19.362C2 18.7202 2 17.8802 2 16.2V7ZM9 14L12 17M12 17L15 14M12 17V11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        Baixar folha de respostas
+                                      </span>
+                                    </div>
+                                  </a>
+                                  <span class="text-muted">Gerado ${ application.lastAnswerSheetGeneration }</span>
+                                </div>
+                                <div v-else-if="application.sheetsExportingStatus == 3" class="tw-flex tw-items-center tw-flex-wrap tw-gap-1">
+                                  <span class="tw-inline-flex tw-items-center tw-rounded-full tw-bg-white tw-px-3 tw-py-1 tw-text-xs tw-font-medium tw-text-red-600 tw-ring-1 tw-ring-inset tw-ring-[#E5E7EA] tooltips" data-tippy-content="Ocorreu um erro ao tentar gerar o malote">
+                                    <svg width="18" height="18" class="mx-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    Erro na exportação
+                                  </span>
+                                </div>
+                              </template>
+                              <p v-if="application.print_ready" class="tw-mt-1 tw-font-medium tw-text-gray-900 text-success tx-bold text-center">
+                                <span class="d-flex justify-content-center">
+                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                  </svg>
+                                  Pronto para impressão</p>
+                                </span>
+                            </td>
+                            <!-- Atalhos -->
+                            <td class="tw-whitespace-nowrap tw-py-4 tw-pl-3 tw-pr-4 tw-text-sm tw-font-medium sm:tw-pr-3">
+                              <div class="tw-flex tw-items-center tw-justify-end tw-space-x-4">
+                                {% if user|has_perm:'applications.can_duplicate_application' %}
+                                  <template v-if="application.duplicate_application">
+                                    <a v-if="momentRef(application.date + 'T' + application.start) < momentRef()" href="javascript:;" class="tw-rounded-full tw-bg-[#F9FAFA] tw-p-2 tw-text-primary-600 tw-shadow-sm hover:tw-bg-[#fff4ec] focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:outline-offset-2 focus-visible:tw-outline-[#ffdec7]" data-toggle="tooltip" data-placement="top" title="Não é possível desbloquear aplicação com data e hora anterior">
+                                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M17 10V8C17 5.23858 14.7614 3 12 3C9.23858 3 7 5.23858 7 8V10M12 14.5V16.5M8.8 21H15.2C16.8802 21 17.7202 21 18.362 20.673C18.9265 20.3854 19.3854 19.9265 19.673 19.362C20 18.7202 20 17.8802 20 16.2V14.8C20 13.1198 20 12.2798 19.673 11.638C19.3854 11.0735 18.9265 10.6146 18.362 10.327C17.7202 10 16.8802 10 15.2 10H8.8C7.11984 10 6.27976 10 5.63803 10.327C5.07354 10.6146 4.6146 11.0735 4.32698 11.638C4 12.2798 4 13.1198 4 14.8V16.2C4 17.8802 4 18.7202 4.32698 19.362C4.6146 19.9265 5.07354 20.3854 5.63803 20.673C6.27976 21 7.11984 21 8.8 21Z" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                      </svg>
+                                    </a>
+                                    <a v-else href="javascript:;" @click="getUnlockApplication(application)" class="tw-rounded-full tw-bg-[#F9FAFA] tw-p-2 tw-text-primary-600 tw-shadow-sm hover:tw-bg-[#fff4ec] focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:outline-offset-2 focus-visible:tw-outline-[#ffdec7]" data-toggle="tooltip" data-placement="top" title="Desbloquear aplicação">
+                                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M7 11V8C7 5.23858 9.23858 3 12 3C14.419 3 16.4367 4.71776 16.9 7M7.8 21H16.2C17.8802 21 18.7202 21 19.362 20.673C19.9265 20.3854 20.3854 19.9265 20.673 19.362C21 18.7202 21 17.8802 21 16.2V15.8C21 14.1198 21 13.2798 20.673 12.638C20.3854 12.0735 19.9265 11.6146 19.362 11.327C18.7202 11 17.8802 11 16.2 11H7.8C6.11984 11 5.27976 11 4.63803 11.327C4.07354 11.6146 3.6146 12.0735 3.32698 12.638C3 13.2798 3 14.1198 3 15.8V16.2C3 17.8802 3 18.7202 3.32698 19.362C3.6146 19.9265 4.07354 20.3854 4.63803 20.673C5.27976 21 6.11984 21 7.8 21Z" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                      </svg>
+                                    </a>
+                                  </template>
+                                {% endif %}
+                                {% if user|has_perm:'applications.change_application' %}
+                                  <a v-bind="index === 0 ? {
+                                    'data-tg-title': 'Edite aplicação',
+                                    'data-tg-order': '6',
+                                    'data-tg-tour': 'Acesse facilmente a edição da aplicação clicando aqui.',
+                                    'data-tg-group': 'default-application-list'
+                                  } : {}" :href="replaceUrlId(updateApplicationUrl, application.id)" class="tw-rounded-full tw-bg-[#F9FAFA] tw-p-2 tw-text-primary-600 tw-shadow-sm hover:tw-bg-[#fff4ec] focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:outline-offset-2 focus-visible:tw-outline-[#ffdec7]" data-toggle="tooltip" data-placement="top" title="Alterar aplicação">
+                                    <svg class="tw-h-5 tw-w-5" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M11 3.99998H6.8C5.11984 3.99998 4.27976 3.99998 3.63803 4.32696C3.07354 4.61458 2.6146 5.07353 2.32698 5.63801C2 6.27975 2 7.11983 2 8.79998V17.2C2 18.8801 2 19.7202 2.32698 20.362C2.6146 20.9264 3.07354 21.3854 3.63803 21.673C4.27976 22 5.11984 22 6.8 22H15.2C16.8802 22 17.7202 22 18.362 21.673C18.9265 21.3854 19.3854 20.9264 19.673 20.362C20 19.7202 20 18.8801 20 17.2V13M7.99997 16H9.67452C10.1637 16 10.4083 16 10.6385 15.9447C10.8425 15.8957 11.0376 15.8149 11.2166 15.7053C11.4184 15.5816 11.5914 15.4086 11.9373 15.0627L21.5 5.49998C22.3284 4.67156 22.3284 3.32841 21.5 2.49998C20.6716 1.67156 19.3284 1.67155 18.5 2.49998L8.93723 12.0627C8.59133 12.4086 8.41838 12.5816 8.29469 12.7834C8.18504 12.9624 8.10423 13.1574 8.05523 13.3615C7.99997 13.5917 7.99997 13.8363 7.99997 14.3255V16Z" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                  </a>
+                                {% endif %}
+                                {% if user|has_perm:'applications.can_add_and_remove_students' %}
+                                  <template v-if="application.examNotApplicable">
+                                    <a v-bind="index === 0 ? {
+                                        'data-tg-title': 'Adicione alunos',
+                                        'data-tg-order': '7',
+                                        'data-tg-tour': 'Se necessário aperte aqui para adicionar novos alunos à sua aplicação.',
+                                        'data-tg-group': 'default-application-list'
+                                      } : {}" @click.prevent.default="alertExamNotApplicable()" href="javascript:;"  class="tw-rounded-full tw-bg-[#F9FAFA] tw-p-2 tw-text-primary-600 tw-shadow-sm hover:tw-bg-[#fff4ec] focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:outline-offset-2 focus-visible:tw-outline-[#ffdec7]" data-toggle="tooltip" data-placement="top" title="Adiciona ou remove alunos desta aplicação">
+                                      <svg class="tw-h-5 tw-w-5" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M19 21V15M16 18H22M12 15H8C6.13623 15 5.20435 15 4.46927 15.3045C3.48915 15.7105 2.71046 16.4892 2.30448 17.4693C2 18.2044 2 19.1362 2 21M15.5 3.29076C16.9659 3.88415 18 5.32131 18 7C18 8.67869 16.9659 10.1159 15.5 10.7092M13.5 7C13.5 9.20914 11.7091 11 9.5 11C7.29086 11 5.5 9.20914 5.5 7C5.5 4.79086 7.29086 3 9.5 3C11.7091 3 13.5 4.79086 13.5 7Z" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                      </svg>
+                                    </a>
+                                  </template>
+                                  <template v-else>
+                                    <template v-if="!application.is_printed && application.answerSheetUrl == ''">
+                                      <a v-bind="index === 0 ? {
+                                        'data-tg-title': 'Adicione alunos',
+                                        'data-tg-order': '7',
+                                        'data-tg-tour': 'Se necessário aperte aqui para adicionar novos alunos à sua aplicação.',
+                                        'data-tg-group': 'default-application-list'
+                                        } : {}" :href="replaceUrlId(addAndDeleteStudentUrl, application.id)" class="tw-rounded-full tw-bg-[#F9FAFA] tw-p-2 tw-text-primary-600 tw-shadow-sm hover:tw-bg-[#fff4ec] focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:outline-offset-2 focus-visible:tw-outline-[#ffdec7]" data-toggle="tooltip" data-placement="top" title="Adiciona ou remove alunos desta aplicação">
+                                        <svg class="tw-h-5 tw-w-5" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                          <path d="M19 21V15M16 18H22M12 15H8C6.13623 15 5.20435 15 4.46927 15.3045C3.48915 15.7105 2.71046 16.4892 2.30448 17.4693C2 18.2044 2 19.1362 2 21M15.5 3.29076C16.9659 3.88415 18 5.32131 18 7C18 8.67869 16.9659 10.1159 15.5 10.7092M13.5 7C13.5 9.20914 11.7091 11 9.5 11C7.29086 11 5.5 9.20914 5.5 7C5.5 4.79086 7.29086 3 9.5 3C11.7091 3 13.5 4.79086 13.5 7Z" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                      </a>
+                                    </template>
+                                    <template v-else>
+                                      <a v-bind="index === 0 ? {
+                                        'data-tg-title': 'Adicione alunos',
+                                        'data-tg-order': '7',
+                                        'data-tg-tour': 'Se necessário aperte aqui para adicionar novos alunos à sua aplicação.',
+                                        'data-tg-group': 'default-application-list'
+                                        } : {}" @click.prevent.default="alertPrintedApplicationManageStudents()" href="#" class="tw-rounded-full tw-bg-[#F9FAFA] tw-p-2 tw-text-primary-600 tw-shadow-sm hover:tw-bg-[#fff4ec] focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:outline-offset-2 focus-visible:tw-outline-[#ffdec7]" data-toggle="tooltip" data-placement="top" title="Adiciona ou remove alunos desta aplicação">
+                                        <svg class="tw-h-5 tw-w-5" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                          <path d="M19 21V15M16 18H22M12 15H8C6.13623 15 5.20435 15 4.46927 15.3045C3.48915 15.7105 2.71046 16.4892 2.30448 17.4693C2 18.2044 2 19.1362 2 21M15.5 3.29076C16.9659 3.88415 18 5.32131 18 7C18 8.67869 16.9659 10.1159 15.5 10.7092M13.5 7C13.5 9.20914 11.7091 11 9.5 11C7.29086 11 5.5 9.20914 5.5 7C5.5 4.79086 7.29086 3 9.5 3C11.7091 3 13.5 4.79086 13.5 7Z" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                      </a>
+                                    </template>
+                                  </template>
+                                {% endif %}
+                              </div>
+                            </td>
+                            <!-- Opções -->
+                            <td style="max-width: 6rem;" class="tw-whitespace-nowrap tw-py-4 tw-pl-3 tw-pr-4 tw-text-sm tw-font-medium sm:tw-pr-3">                                
+                              <div v-bind="index === 0 ? {
+                                'data-tg-title': 'Mais opções agrupadas',
+                                'data-tg-order': '8',
+                                'data-tg-tour': 'Acesse outros recursos como edição, relatórios e impressão do instrumento avaliativo.',
+                                'data-tg-group': 'default-application-list'
+                                } : {}" 
+                                class="dropdown" 
+                              >
+                                <button class="tw-inline-flex tw-w-full tw-justify-center tw-gap-x-1.5 tw-rounded-md tw-bg-white tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-[#667085] tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50" type="button" :id="'dropdownMenuButton-' + application.id" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                  Opções
+                                  <svg class="tw--mr-1 tw-h-5 tw-w-5 tw-text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                                  </svg>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-right tw-absolute tw-right-0 tw-z-10 tw-mt-2 tw-origin-top-right tw-divide-y tw-divide-gray-100 tw-rounded-md tw-bg-white tw-shadow-lg tw-ring-1 tw-ring-black tw-ring-opacity-5 focus:tw-outline-none tw-text-inherit tw-m-0 tw-p-0 tw-border-0" :aria-labelledby="'dropdownMenuButton-' + application.id" style="font-size: inherit;">
+                                  <div class="tw-flex tw-gap-1">
+                                    <div class="tw-py-1" role="none">
+                                      <p class="tw-px-4 tw-py-1" style="font-size: 10px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Inter UI', Roboto, sans-serif; letter-spacing: .7px; color: #8392a5; text-transform: uppercase;">
+                                        Geral
+                                      </p>
+                                      {% if user|has_perm:'applications.change_application' %}
+                                        <a :href="replaceUrlId(updateApplicationUrl, application.id)" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" data-toggle="tooltip" data-placement="top" title="Alterar aplicação">
+                                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                          </svg>
+                                          Editar
+                                        </a>
+                                      {% endif %}
+                                      {% if user|has_perm:'applications.can_add_and_remove_students' %}
+                                        <template v-if="application.examNotApplicable">
+                                          <a @click.prevent.default="alertExamNotApplicable()" href="#"   class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" data-toggle="tooltip" data-placement="top" title="Adiciona ou remove alunos desta aplicação">
+                                            <svg class="tw-h-5 tw-w-5" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                              <path d="M19 21V15M16 18H22M12 15H8C6.13623 15 5.20435 15 4.46927 15.3045C3.48915 15.7105 2.71046 16.4892 2.30448 17.4693C2 18.2044 2 19.1362 2 21M15.5 3.29076C16.9659 3.88415 18 5.32131 18 7C18 8.67869 16.9659 10.1159 15.5 10.7092M13.5 7C13.5 9.20914 11.7091 11 9.5 11C7.29086 11 5.5 9.20914 5.5 7C5.5 4.79086 7.29086 3 9.5 3C11.7091 3 13.5 4.79086 13.5 7Z" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                            Adicionar ou remover aluno
+                                          </a>
+                                        </template>
+                                        <template v-else>
+                                          <template v-if="!application.is_printed && application.answerSheetUrl == ''">
+                                            <a :href="replaceUrlId(addAndDeleteStudentUrl, application.id)"  class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" data-toggle="tooltip" data-placement="top" title="Adiciona ou remove alunos desta aplicação">
+                                              <svg class="tw-h-5 tw-w-5" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                                <path d="M19 21V15M16 18H22M12 15H8C6.13623 15 5.20435 15 4.46927 15.3045C3.48915 15.7105 2.71046 16.4892 2.30448 17.4693C2 18.2044 2 19.1362 2 21M15.5 3.29076C16.9659 3.88415 18 5.32131 18 7C18 8.67869 16.9659 10.1159 15.5 10.7092M13.5 7C13.5 9.20914 11.7091 11 9.5 11C7.29086 11 5.5 9.20914 5.5 7C5.5 4.79086 7.29086 3 9.5 3C11.7091 3 13.5 4.79086 13.5 7Z" stroke-linecap="round" stroke-linejoin="round"/>
+                                              </svg>
+                                              Adicionar ou remover aluno
+                                            </a>
+                                          </template>
+                                          <template v-else>
+                                            <a @click.prevent.default="alertPrintedApplicationManageStudents()" href="#"  class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" data-toggle="tooltip" data-placement="top" title="Adiciona ou remove alunos desta aplicação">
+                                              <svg class="tw-h-5 tw-w-5" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                                <path d="M19 21V15M16 18H22M12 15H8C6.13623 15 5.20435 15 4.46927 15.3045C3.48915 15.7105 2.71046 16.4892 2.30448 17.4693C2 18.2044 2 19.1362 2 21M15.5 3.29076C16.9659 3.88415 18 5.32131 18 7C18 8.67869 16.9659 10.1159 15.5 10.7092M13.5 7C13.5 9.20914 11.7091 11 9.5 11C7.29086 11 5.5 9.20914 5.5 7C5.5 4.79086 7.29086 3 9.5 3C11.7091 3 13.5 4.79086 13.5 7Z" stroke-linecap="round" stroke-linejoin="round"/>
+                                              </svg>
+                                              Adicionar ou remover aluno
+                                            </a>
+                                          </template>
+                                        </template>
+                                      {% endif %}
+                                      {% if user|has_perm:'applications.can_duplicate_application' %}
+                                        <a href="javascript:void(0)" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" @click="getDuplicateAplication(application)" data-toggle="tooltip" data-placement="top" title="Duplicar Aplicação">
+                                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                            <path d="M10.5 2.0028C9.82495 2.01194 9.4197 2.05103 9.09202 2.21799C8.71569 2.40973 8.40973 2.71569 8.21799 3.09202C8.05103 3.4197 8.01194 3.82495 8.0028 4.5M19.5 2.0028C20.1751 2.01194 20.5803 2.05103 20.908 2.21799C21.2843 2.40973 21.5903 2.71569 21.782 3.09202C21.949 3.4197 21.9881 3.82494 21.9972 4.49999M21.9972 13.5C21.9881 14.175 21.949 14.5803 21.782 14.908C21.5903 15.2843 21.2843 15.5903 20.908 15.782C20.5803 15.949 20.1751 15.9881 19.5 15.9972M22 7.99999V9.99999M14.0001 2H16M5.2 22H12.8C13.9201 22 14.4802 22 14.908 21.782C15.2843 21.5903 15.5903 21.2843 15.782 20.908C16 20.4802 16 19.9201 16 18.8V11.2C16 10.0799 16 9.51984 15.782 9.09202C15.5903 8.71569 15.2843 8.40973 14.908 8.21799C14.4802 8 13.9201 8 12.8 8H5.2C4.0799 8 3.51984 8 3.09202 8.21799C2.71569 8.40973 2.40973 8.71569 2.21799 9.09202C2 9.51984 2 10.0799 2 11.2V18.8C2 19.9201 2 20.4802 2.21799 20.908C2.40973 21.2843 2.71569 21.5903 3.09202 21.782C3.51984 22 4.07989 22 5.2 22Z" />
+                                          </svg>
+                                          Duplicar Aplicação
+                                        </a>
+                                      {% endif %}
+                                      <a :href="replaceUrlId(detailsApplicationUrl, application.id)" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" data-toggle="tooltip" data-placement="top" title="Relatório">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                          <path d="M12 16V21M18 21L14.0486 17.7072C13.3198 17.0998 12.9554 16.7962 12.5487 16.6801C12.19 16.5778 11.81 16.5778 11.4513 16.6801C11.0446 16.7962 10.6802 17.0998 9.95141 17.7072L6 21M8 11V12M12 9V12M16 7V12M22 3H2M3 3H21V11.2C21 12.8802 21 13.7202 20.673 14.362C20.3854 14.9265 19.9265 15.3854 19.362 15.673C18.7202 16 17.8802 16 16.2 16H7.8C6.11984 16 5.27976 16 4.63803 15.673C4.07354 15.3854 3.6146 14.9265 3.32698 14.362C3 13.7202 3 12.8802 3 11.2V3Z" />
+                                        </svg>
+                                        Detalhes
+                                      </a>
+                                      {% if user|has_perm:'applications.delete_application' %}
+                                        <a v-if="!application.is_printed && application.answerSheetUrl == ''" href="javascript:void(0)" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" @click="confirmCancel(replaceUrlId(deleteApplicationUrl, application.id))" data-toggle="tooltip" data-placement="top" title="Deletar">
+                                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                            <path d="M9 3H15M3 6H21M19 6L18.2987 16.5193C18.1935 18.0975 18.1409 18.8867 17.8 19.485C17.4999 20.0118 17.0472 20.4353 16.5017 20.6997C15.882 21 15.0911 21 13.5093 21H10.4907C8.90891 21 8.11803 21 7.49834 20.6997C6.95276 20.4353 6.50009 20.0118 6.19998 19.485C5.85911 18.8867 5.8065 18.0975 5.70129 16.5193L5 6M10 10.5V15.5M14 10.5V15.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                          </svg>
+                                          Apagar
+                                        </a>
+                                        <a v-else href="javascript:void(0)" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" @click="alertPrintedApplicationDelete()" data-toggle="tooltip" data-placement="top" title="Deletar">
+                                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                            <path d="M9 3H15M3 6H21M19 6L18.2987 16.5193C18.1935 18.0975 18.1409 18.8867 17.8 19.485C17.4999 20.0118 17.0472 20.4353 16.5017 20.6997C15.882 21 15.0911 21 13.5093 21H10.4907C8.90891 21 8.11803 21 7.49834 20.6997C6.95276 20.4353 6.50009 20.0118 6.19998 19.485C5.85911 18.8867 5.8065 18.0975 5.70129 16.5193L5 6M10 10.5V15.5M14 10.5V15.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                          </svg>
+                                          Apagar
+                                        </a>
+                                      {% endif %}
+                                    </div>
+                                    <div class="tw-py-1" role="none">
+                                      <p class="tw-px-4 tw-py-1" style="font-size: 10px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Inter UI', Roboto, sans-serif; letter-spacing: .7px; color: #8392a5; text-transform: uppercase;">
+                                        Impressão
+                                      </p>
+                                      {% if user|has_perm:'applications.can_remove_generated_bag' %}
+                                        <a v-if="!application.category != 3 && !application.is_printed && application.answerSheetUrl != ''" href="javascript:void(0)" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" @click="alertBagDelete(application)" data-toggle="tooltip" data-placement="top" title="Remover Malote">
+                                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                            <path d="M20.5 7.27783L12 12.0001M12 12.0001L3.49997 7.27783M12 12.0001L12 21.5001M21 12.5001L21 7.94153C21 7.59889 21 7.42757 20.9495 7.27477C20.9049 7.13959 20.8318 7.01551 20.7354 6.91082C20.6263 6.79248 20.4766 6.70928 20.177 6.54288L12.777 2.43177C12.4934 2.27421 12.3516 2.19543 12.2015 2.16454C12.0685 2.13721 11.9315 2.13721 11.7986 2.16454C11.6484 2.19543 11.5066 2.27421 11.223 2.43177L3.82297 6.54288C3.52345 6.70928 3.37368 6.79248 3.26463 6.91082C3.16816 7.01551 3.09515 7.13959 3.05048 7.27477C3 7.42757 3 7.59889 3 7.94153V16.0586C3 16.4013 3 16.5726 3.05048 16.7254C3.09515 16.8606 3.16816 16.9847 3.26463 17.0893C3.37368 17.2077 3.52346 17.2909 3.82297 17.4573L11.223 21.5684C11.5066 21.726 11.6484 21.8047 11.7986 21.8356C11.9315 21.863 12.0685 21.863 12.2015 21.8356C12.3516 21.8047 12.4934 21.726 12.777 21.5684L13 21.4445M7.5 4.50008L16.5 9.50008M16.5 16.0001L21.5 21.0001M21.5 16.0001L16.5 21.0001" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                          </svg>
+                                          Remover malote gerado
+                                        </a>  
+                                      {% endif %}
+                                      {% if user|has_perm:'applications.can_disclose_application' %}
+                                        <a v-if="isApplicationDisclosable(application)" @click.prevent.default="confirmCancel(replaceUrlId(discloseApplicationUrl, application.id))" href="javascript:void(0)" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" data-toggle="tooltip" data-placement="top" title="Divulgar resultado imediatamente">
+                                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                            <path d="M4 13.9999L5.57465 20.2985C5.61893 20.4756 5.64107 20.5642 5.66727 20.6415C5.92317 21.397 6.60352 21.9282 7.39852 21.9933C7.4799 21.9999 7.5712 21.9999 7.75379 21.9999C7.98244 21.9999 8.09677 21.9999 8.19308 21.9906C9.145 21.8982 9.89834 21.1449 9.99066 20.193C10 20.0967 10 19.9823 10 19.7537V5.49991M18.5 13.4999C20.433 13.4999 22 11.9329 22 9.99991C22 8.06691 20.433 6.49991 18.5 6.49991M10.25 5.49991H6.5C4.01472 5.49991 2 7.51463 2 9.99991C2 12.4852 4.01472 14.4999 6.5 14.4999H10.25C12.0164 14.4999 14.1772 15.4468 15.8443 16.3556C16.8168 16.8857 17.3031 17.1508 17.6216 17.1118C17.9169 17.0756 18.1402 16.943 18.3133 16.701C18.5 16.4401 18.5 15.9179 18.5 14.8736V5.1262C18.5 4.08191 18.5 3.55976 18.3133 3.2988C18.1402 3.05681 17.9169 2.92421 17.6216 2.88804C17.3031 2.84903 16.8168 3.11411 15.8443 3.64427C14.1772 4.55302 12.0164 5.49991 10.25 5.49991Z" />
+                                          </svg>
+                                          Divulgar Resultado
+                                        </a>  
+                                      {% endif %}
+    
+                                      {% if user.client_has_omr %}
+                                        {% if user|has_perm:'applications.can_print_bag_application' %}
+                                          <h6 class="dropdown-header tx-uppercase tx-11 tx-bold tx-inverse tx-spacing-1">GERAÇÃO DE MALOTE DE PROVAS</h6>
+                                          <template v-if="application.examNotApplicable">
+                                            O caderno dessa aplicação está marcado como não aplicável.
+                                          </template>
+                                          <template v-else>
+                                            <a  href="javascript:void(0)" @click="changePrintReady(application)" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" data-toggle="tooltip" data-placement="top" title="Marque ou desmarque o caderno como pronto para impressão">
+                                              <span v-if="application.print_ready" class="d-flex">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                                  <path d="M7.5 12L10.5 15L16.5 9M7.8 21H16.2C17.8802 21 18.7202 21 19.362 20.673C19.9265 20.3854 20.3854 19.9265 20.673 19.362C21 18.7202 21 17.8802 21 16.2V7.8C21 6.11984 21 5.27976 20.673 4.63803C20.3854 4.07354 19.9265 3.6146 19.362 3.32698C18.7202 3 17.8802 3 16.2 3H7.8C6.11984 3 5.27976 3 4.63803 3.32698C4.07354 3.6146 3.6146 4.07354 3.32698 4.63803C3 5.27976 3 6.11984 3 7.8V16.2C3 17.8802 3 18.7202 3.32698 19.362C3.6146 19.9265 4.07354 20.3854 4.63803 20.673C5.27976 21 6.11984 21 7.8 21Z" />
+                                                </svg>
+                                                Desmarcar como pronto para impressão
+                                              </span>
+                                              <span v-else class="d-flex">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                                  <path d="M3 7.8C3 6.11984 3 5.27976 3.32698 4.63803C3.6146 4.07354 4.07354 3.6146 4.63803 3.32698C5.27976 3 6.11984 3 7.8 3H16.2C17.8802 3 18.7202 3 19.362 3.32698C19.9265 3.6146 20.3854 4.07354 20.673 4.63803C21 5.27976 21 6.11984 21 7.8V16.2C21 17.8802 21 18.7202 20.673 19.362C20.3854 19.9265 19.9265 20.3854 19.362 20.673C18.7202 21 17.8802 21 16.2 21H7.8C6.11984 21 5.27976 21 4.63803 20.673C4.07354 20.3854 3.6146 19.9265 3.32698 19.362C3 18.7202 3 17.8802 3 16.2V7.8Z" />
+                                                </svg>
+                                                Marcar como pronto para impressão
+                                              </span>
+                                            </a>
+                                            <template v-if="!application.print_ready">
+                                              <a class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" href="javascript:void(0)" @click="showPrintModal(application)" data-toggle="tooltip" data-placement="top" title="Imprimir malote para todos os alunos">
+                                                <svg  width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                                  <path d="M16 3.46776C17.4817 4.20411 18.5 5.73314 18.5 7.5C18.5 9.26686 17.4817 10.7959 16 11.5322M18 16.7664C19.5115 17.4503 20.8725 18.565 22 20M2 20C3.94649 17.5226 6.58918 16 9.5 16C12.4108 16 15.0535 17.5226 17 20M14 7.5C14 9.98528 11.9853 12 9.5 12C7.01472 12 5 9.98528 5 7.5C5 5.01472 7.01472 3 9.5 3C11.9853 3 14 5.01472 14 7.5Z" />
+                                                </svg>
+                                                Todos os alunos
+                                              </a>
+                                            </template>
+                                            <div class="dropdown-divider"></div>
+                                            <h6 class="dropdown-header tx-uppercase tx-11 tx-bold tx-inverse tx-spacing-1">FOLHA DE RESPOSTAS AVULSA</h6>
+                                            <a @click.prevent.default="showPrintDetachedModal(application)" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" href="javascript:void(0)" data-toggle="tooltip" data-placement="top" title="Imprimir gabarito nominal ou avulso">
+                                              <svg  width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                                <path d="M20 7V6.8C20 5.11984 20 4.27976 19.673 3.63803C19.3854 3.07354 18.9265 2.6146 18.362 2.32698C17.7202 2 16.8802 2 15.2 2H8.8C7.11984 2 6.27976 2 5.63803 2.32698C5.07354 2.6146 4.6146 3.07354 4.32698 3.63803C4 4.27976 4 5.11984 4 6.8V17.2C4 18.8802 4 19.7202 4.32698 20.362C4.6146 20.9265 5.07354 21.3854 5.63803 21.673C6.27976 22 7.11984 22 8.8 22H12.5M12.5 11H8M11.5 15H8M16 7H8M18 18V12.5C18 11.6716 18.6716 11 19.5 11C20.3284 11 21 11.6716 21 12.5V18C21 19.6569 19.6569 21 18 21C16.3431 21 15 19.6569 15 18V14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                              </svg>
+                                              Nominal ou avulso
+                                            </a>
+                                            {% if 10 in user.client_omr_categories_sequentials %}
+                                              <div class="dropdown-divider"></div>
+                                              <h6 class="dropdown-header tx-uppercase tx-11 tx-bold tx-inverse tx-spacing-1">Exportar folhas de resposta ELIT</h6>
+                                              <a @click.prevent.default="generateElitExamsBag(application)" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" href="javascript:void(0)" data-toggle="tooltip" data-placement="top" title="Imprimir gabarito nominal">
+                                                <svg  width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                                  <path d="M20 7V6.8C20 5.11984 20 4.27976 19.673 3.63803C19.3854 3.07354 18.9265 2.6146 18.362 2.32698C17.7202 2 16.8802 2 15.2 2H8.8C7.11984 2 6.27976 2 5.63803 2.32698C5.07354 2.6146 4.6146 3.07354 4.32698 3.63803C4 4.27976 4 5.11984 4 6.8V17.2C4 18.8802 4 19.7202 4.32698 20.362C4.6146 20.9265 5.07354 21.3854 5.63803 21.673C6.27976 22 7.11984 22 8.8 22H12.5M12.5 11H8M11.5 15H8M16 7H8M18 18V12.5C18 11.6716 18.6716 11 19.5 11C20.3284 11 21 11.6716 21 12.5V18C21 19.6569 19.6569 21 18 21C16.3431 21 15 19.6569 15 18V14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                                Nominais
+                                              </a>
+                                              <a @click.prevent.default="generateDetachedAnswerSheet(application, true)" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" href="javascript:void(0)" data-toggle="tooltip" data-placement="top" title="Imprimir gabarito avulso">
+                                                <svg  width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                                  <path d="M20 7V6.8C20 5.11984 20 4.27976 19.673 3.63803C19.3854 3.07354 18.9265 2.6146 18.362 2.32698C17.7202 2 16.8802 2 15.2 2H8.8C7.11984 2 6.27976 2 5.63803 2.32698C5.07354 2.6146 4.6146 3.07354 4.32698 3.63803C4 4.27976 4 5.11984 4 6.8V17.2C4 18.8802 4 19.7202 4.32698 20.362C4.6146 20.9265 5.07354 21.3854 5.63803 21.673C6.27976 22 7.11984 22 8.8 22H12.5M12.5 11H8M11.5 15H8M16 7H8M18 18V12.5C18 11.6716 18.6716 11 19.5 11C20.3284 11 21 11.6716 21 12.5V18C21 19.6569 19.6569 21 18 21C16.3431 21 15 19.6569 15 18V14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                                Avulso
+                                              </a>
+                                            {% endif %}
+                                          </template>
+                                        {% endif %}
+                                      {% endif %}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                          </td>
+                        </tr>
+                        <tr v-if="!applications.length">
+                          <td colspan="5"><p class="tw-py-3 mb-0">Não há aplicações cadastradas</p></td>
+                        </tr>
+                      </template>
+                      <tr v-if="!loaded">
+                        <td colspan="5">
+                          <h6 class="py-3 mb-0">
+                            Carregando...
+                          </h6>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% include 'redesign/includes/pagination.html' %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include 'includes/confirm_modal.html' %}
+
+<div class="modal fade" id="configureDetachedSheetModal" role="dialog" tabindex="-1">
+  <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Configure a impressão da folha de respostas avulsa</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" style="max-height: fit-content; height: fit-content;">
+        <div class="form-group">
+          <h6> Modelo da folha de resposta:</h6>
+          <div v-if="selectedApplication && selectedApplication.hasSumQuestions" class="btn-group btn-group-toggle">
+            <label class="btn btn-outline-primary btn-lg" :class="{active: answer_sheet_model == 'sum'}">
+              <input type="radio" name="sum" value="sum" v-model="answer_sheet_model">
+              <i class="fas fa-file fa-lg"></i>
+              <span>
+                Somatório
+              </span>
+            </label>
+            {% if user.client_has_discursive_omr %}
+              <label 
+                v-if="selectedApplication && selectedApplication.hasDiscursiveQuestions" 
+                class="btn btn-outline-primary btn-lg" 
+                :class="{active: answer_sheet_model == 'discursive'}"
+              >
+                <input type="radio" name="discursive" value="discursive" v-model="answer_sheet_model">
+                <i class="fas fa-file fa-lg"></i>
+                <span>
+                  Discursivo
+                </span>
+              </label>
+              {% endif %}
+          </div>
+          <div v-else class="btn-group btn-group-toggle">
+              <label class="btn btn-outline-primary btn-lg" :class="{active: answer_sheet_model == 'fiscallize'}">
+                <input type="radio" name="enem" value="fiscallize" v-model="answer_sheet_model">
+                <i class="fas fa-file fa-lg"></i>
+                <span>
+                  Lize
+                </span>
+              </label>
+              <label class="btn btn-outline-primary btn-lg" :class="{active: answer_sheet_model == 'enem'}">
+                <input type="radio" name="enem" value="enem" v-model="answer_sheet_model">
+                <i class="fas fa-file fa-lg"></i>
+                <span>
+                  ENEM
+                </span>
+              </label>
+
+              {% if user.client_has_hybrid_omr %}
+              <label class="btn btn-outline-primary btn-lg" :class="{active: answer_sheet_model == 'hybrid'}">
+                <input type="radio" name="enem" value="hybrid" v-model="answer_sheet_model">
+                <i class="fas fa-file fa-lg"></i>
+                <span>
+                  Híbrido
+                </span>
+              </label>
+              {% endif %}
+              {% if user.client_has_reduced_model %}
+              <label class="btn btn-outline-primary btn-lg" :class="{active: answer_sheet_model == 'reduced'}">
+                <input type="radio" name="reduced" value="reduced" v-model="answer_sheet_model">
+                <i class="fas fa-file fa-lg"></i>
+                <span>
+                Reduzido
+                </span>
+              </label>
+              {% endif %}
+              {% if user.client_has_subjects_answer_sheet %}
+              <template v-if="selectedApplication && selectedApplication.canPrintSubjectsSheet ||selectionList.length != 0">
+                <label class="btn btn-outline-primary btn-lg" :class="{active: answer_sheet_model == 'subjects'}">
+                  <input type="radio" name="subjects" value="subjects" v-model="answer_sheet_model">
+                  <i class="fas fa-file fa-lg"></i>
+                  <span>
+                    EFAI
+                  </span>
+                </label>
+              </template>
+              {% endif %}
+              {% if user.client_has_discursive_omr %}
+              <label 
+                v-if="selectedApplication && selectedApplication.hasDiscursiveQuestions" 
+                class="btn btn-outline-primary btn-lg" 
+                :class="{active: answer_sheet_model == 'discursive'}"
+              >
+                <input type="radio" name="enem" value="discursive" v-model="answer_sheet_model">
+                <i class="fas fa-file fa-lg"></i>
+                <span>
+                  Discursivo
+                </span>
+              </label>
+              {% endif %}
+          </div>
+        </div>
+
+        <div class="alert alert-info" v-if="selectedApplication && selectedApplication.isExamRandomized">
+          O caderno dessa aplicação possui embaralhamento de questões e/ou alternativas. A exportação da folha avulsa acompanhará também o caderno de provas que deve ser utilizado pelo aluno.
+        </div>
+
+        <div v-if="selectedApplication" class="form-check mb-3">
+          <input 
+            type="checkbox" 
+            id="include_exam" 
+            class="form-check-input" 
+            v-model="selectedApplication.include_exam"
+            :checked="selectedApplication.isExamRandomized"
+            :disabled="selectedApplication.isExamRandomized || selectedApplication.abstractExam"
+          />
+          <label class="form-check-label" for="include_exam">Imprimir caderno de provas</label>
+        </div>
+
+        {% if user.client_has_subjects_answer_sheet %}
+        <div class="alert alert-warning" v-if="selectedApplication && !selectedApplication.canPrintSubjectsSheet">
+          O modelo EFAI não está disponível porque a prova possui alguma disciplina com mais de 15 questões, possui língua estrangeira ou possui mais de 10 disciplinas
+        </div>
+        {% endif %}
+      
+        <div class="form-group">
+          <h6>Selecione um aluno caso deseje que a folha de respostas gerada seja nominal:</h6> 
+          <div class="d-flex align-items-center">
+            <select
+                id="student-detached"
+                class="form-control"
+            >
+            </select>
+          </div>
+        </div>
+        
+      </div>
+      <div class="modal-footer">
+          <div class="form-buttons-w text-right">
+            <button v-if="loadingDetached" class="btn btn-primary disable" disabled="disabled">
+              <i class="os-icon os-icon-check"></i>
+              <span><i class="fas fa-spinner fa-spin"></i> Imprimindo folha de respostas</span>
+            </button>
+            <button v-else class="btn btn-primary not-disable" @click="generateDetachedAnswerSheet(selectedApplication)">
+              <i class="os-icon os-icon-check"></i>
+              <span>Imprimir folha de respostas</span>
+            </button>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="configurePrintModal" role="dialog" tabindex="-1">
+  <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 v-if= "selectedOneBag"class="modal-title">Configure a impressão do malote nesta exportação</h5>
+        <h5 v-else class="modal-title">Configure a impressão dos malotes</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body" style="max-height: fit-content; height: fit-content;">
+        <div class="form-group">
+          <h6>Modelo da folhas de resposta objetivas:</h6>
+          <template v-if="selectedApplication"> 
+            <div class="btn-group btn-group-toggle">
+              <template v-if="selectedApplication.hasSumQuestions || selectedToManyBags" >
+                <label class="btn btn-outline-primary btn-lg" :class="{active: answer_sheet_model == 'sum'}">
+                  <input type="radio" name="sum" value="sum" v-model="answer_sheet_model">
+                  <i class="fas fa-file fa-lg"></i>
+                  <span>
+                      Somatório
+                  </span>
+                </label>
+              </template>  
+              <template v-if="!selectedApplication.hasSumQuestions || selectedToManyBags" >
+                <label class="btn btn-outline-primary btn-lg" :class="{active: answer_sheet_model == 'fiscallize'}">
+                    <input type="radio" name="enem" value="fiscallize" v-model="answer_sheet_model">
+                    <i class="fas fa-file fa-lg"></i>
+                    <span>
+                      Lize
+                    </span>
+                </label>
+                <label class="btn btn-outline-primary btn-lg" :class="{active: answer_sheet_model == 'enem'}">
+                    <input type="radio" name="enem" value="enem" v-model="answer_sheet_model">
+                    <i class="fas fa-file fa-lg"></i>
+                    <span>
+                    ENEM
+                    </span>
+                </label>
+                {% if user.client_has_hybrid_omr %}
+                <label class="btn btn-outline-primary btn-lg" :class="{active: answer_sheet_model == 'hybrid'}">
+                  <input type="radio" name="hybrid" value="hybrid" v-model="answer_sheet_model">
+                  <i class="fas fa-file fa-lg"></i>
+                  <span>
+                  Híbrido
+                  </span>
+                </label>
+                {% endif %}
+                {% if user.client_has_reduced_model %}
+                  <template v-if="selectedApplication.canPrintReducedAllowedMaxQuestions">
+                    <label class="btn btn-outline-primary btn-lg" :class="{active: answer_sheet_model == 'reduced'}">
+                      <input type="radio" name="reduced" value="reduced" v-model="answer_sheet_model">
+                      <i class="fas fa-file fa-lg"></i>
+                      <span>
+                      Reduzido
+                      </span>
+                    </label>
+                  </template>
+                {% endif %}
+                {% if user.client_has_subjects_answer_sheet %}
+                <template v-if="selectedApplication.canPrintSubjectsSheet">
+                  <label class="btn btn-outline-primary btn-lg" :class="{active: answer_sheet_model == 'subjects'}">
+                    <input type="radio" name="subjects" value="subjects" v-model="answer_sheet_model">
+                    <i class="fas fa-file fa-lg"></i>
+                    <span>
+                    EFAI
+                    </span>
+                  </label>
+                </template>
+                {% endif %}
+              </template>
+            </div>
+          </template>
+        </div>
+      
+        {% if user.client_has_subjects_answer_sheet %}
+        <div class="alert alert-warning" v-if="selectedApplication && !selectedApplication.canPrintSubjectsSheet">
+          O modelo EFAI não está disponível porque a prova possui alguma disciplina com mais de 15 questões, possui língua estrangeira ou possui mais de 10 disciplinas
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+          <input type="checkbox" name="blank-pages" v-model="blank_pages" :checked="!blank_pages" id="blank-pages">
+          <label class="mb-0" for="blank-pages">Impressão frente e verso</label>
+          <small class="form-text text-muted mt-0 mb-2" style="line-height: initial;">
+            Marque esta opção caso deseje exportar o arquivo do malote para ser impresso em modo frente e verso (folha em branco após as folhas de respostas e listas).
+          </small>
+        </div>
+        {% if has_discursives %}
+          <div class="form-group">
+            <input type="checkbox" name="print-discursives" v-model="includeDiscursives" :checked="!includeDiscursives" id="print-discursives">
+            <label class="mb-0" for="print-discursives">Incluir folhas de respostas discursivas</label>
+            <small class="form-text text-muted mt-0 mb-2" style="line-height: initial;">
+              Marque esta opção caso deseje exportar as folhas de resposta discursivas.
+            </small>
+          </div>
+
+          <template v-if="includeDiscursives || selectedToManyBags">
+            <h6 class="mt-3">Separar disciplinas:</h6>
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+              <label class="btn btn-outline-primary btn-lg" :class="{'active': !discursiveOptions.split_subjects }" @click="discursiveOptions.split_subjects = false">
+                <input type="radio" name="split_subjects" id="split_subjects_false" value="0" autocomplete="off" :checked="!discursiveOptions.split_subjects">
+                  <i class="fas fa-times fa-lg"></i>
+                Não
+              </label>
+              <label class="btn btn-outline-primary btn-lg" :class="{'active': discursiveOptions.split_subjects }" @click="discursiveOptions.split_subjects = true">
+                <input type="radio" name="split_subjects" id="split_subjects_true" value="1" autocomplete="off" :checked="discursiveOptions.split_subjects">
+                <i class="fas fa-check fa-lg"></i>
+                Sim, separar!
+              </label>
+            </div>
+            <small class="form-text text-muted mt-0 mb-3">
+              Marque esta opção se deseja separar as folhas de respostas discursivas por disciplina
+            </small>
+          </template>
+        {% endif %}
+        {% if exam_custom_pages %}
+          <h6>Página customizada:</h6>
+          <select name="custom_page" id="id_custom_page" class="form-control" multiple>
+              {% for custom_page in exam_custom_pages %}
+                  <option value="{{custom_page.id}}">{{custom_page.name}} - {{custom_page.get_location_display}}</option>
+              {% endfor %}
+          </select>
+        {% endif %}
+        {% if user.client_has_exam_elaboration %}
+        <template v-if="selectedApplication && !selectedApplication.abstractExam || selectedToManyBags">
+          <div class="form-group mt-3">
+            <input type="checkbox" name="print-exam" v-model="includeExams" :checked="!includeExams" id="print-exam">
+            <label class="mb-0" for="print-exam">Incluir cadernos de prova</label>
+            <small class="form-text text-muted mt-0 mb-2" style="line-height: initial;">
+              Marque esta opção caso deseje exportar os cadernos de prova além das folhas de resposta.
+            </small>
+          </div>
+          <div v-if="includeExams">
+            {% include 'dashboard/applications/includes/show_diagramming_options.html' %}
+          </div>
+          <div v-show="showDiagrammingOptions == '1'">
+            <template v-if="includeExams">
+              <div class="alert alert-warning">
+                <span class="font-weight-bold">Atenção!</span> Caso a prova esteja marcada com parâmetros de randomização de questões ou alternativas, os alunos terão cadernos de prova distintos entre si. 
+              </div>
+              <div class="form-group" v-if="printDefaults.length">
+                  <label for="id-exam-print-config-header">Selecione o padrão de impressão</label>
+                  <select class="form-control" id="id-exam-print-config-header" ref="inputPrintDefault" @change="selectPrintDefault()">
+                      <option value="">Não aplicar nenhum padrão de prova</option>
+                      <option :id="printDefault.id" v-for="printDefault in printDefaults">${printDefault.name}</option>
+                  </select>
+              </div>
+              <template v-if="!loadedPrintDefaults">
+                  <h6>Carregando padrões de impressão <i class="fas fa-spin fa-spinner"></i></h6>
+              </template>
+              {% include "dashboard/exams/v2/exam_configs_form.html" %}
+              {% comment %} {% include 'dashboard/exams/includes/exam/print/modal_print.html' %} {% endcomment %}
+            </template>
+          </div>
+        </template>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+          <div v-if="!selectedToManyBags" class="form-buttons-w text-right">
+            <button class="btn btn-primary not-disable" @click="generateExamsBag(selectedApplication, 'one_bag')">
+              <i class="os-icon os-icon-check"></i>
+              <span>Imprimir malote</span>
+            </button>
+          </div>
+          <div v-else class="form-buttons-w text-right">
+            <button class="btn btn-primary not-disable" @click="processApplications()">
+              <i class="os-icon os-icon-check"></i>
+              <span>Imprimir malotes</span>
+            </button>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content-fixed %}
+
+{% block slide-over %}
+  <div class="tw-relative tw-z-[1000] tw-off-canvas tw-off-canvas-right tw-invisible" aria-labelledby="slide-over-title" role="dialog" aria-modal="true" id="right-off-canvas">
+    <div class="tw-fixed tw-inset-0 tw-bg-[#9BA3AF] tw-bg-opacity-60 tw-transition-opacity"></div>
+    <div class="tw-fixed tw-inset-0 tw-overflow-hidden">
+      <div class="tw-absolute tw-inset-0 tw-overflow-hidden">
+        <div class="tw-pointer-events-none tw-fixed tw-inset-y-0 tw-right-0 tw-flex tw-max-w-full tw-pl-10" v-click-outside="onClickOutsideFilters">
+          <div class="tw-pointer-events-auto tw-w-screen tw-max-w-md">
+            <div class="tw-flex tw-h-full tw-flex-col tw-divide-y tw-divide-gray-200 tw-bg-white tw-border-l">
+              <div class="tw-h-0 tw-flex-1 tw-overflow-y-auto">
+                <div class="tw-px-4 tw-pt-6 sm:tw-px-6">
+                  <div class="tw-flex tw-items-center tw-justify-between">
+                    <h2 class="tw-text-base tw-font-semibold tw-leading-6 tw-text-gray-900" id="slide-over-title">
+                      Filtrar aplicações
+                    </h2>
+                    <div class="tw-ml-3 tw-flex tw-h-7 tw-items-center">
+                      <button type="button" class="tw-relative tw-rounded-md tw-bg-white tw-text-gray-400 hover:tw-text-gray-500 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-primary-500 focus:tw-ring-offset-2 tw-off-canvas-close" id="headlessui-slider-over-close-button-1">
+                        <span class="tw-absolute tw--inset-2.5"></span>
+                        <span class="tw-sr-only">Close panel</span>
+                        <svg class="tw-h-6 tw-w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="tw-mt-1">
+                    <p class="tw-text-sm tw-text-gray-500">
+                      Adiciona abaixo os filtros que você deseja aplicar na listagem abaixo.
+                    </p>
+                  </div>
+                </div>
+                <form id="filterForm" method="GET" class="tw-flex tw-flex-1 tw-flex-col tw-justify-between">
+                  <input type="hidden" value="{{ year|force_escape }}" name="year" />
+                  <div class="tw-divide-y tw-divide-gray-200 tw-px-4 sm:tw-px-6">
+                    <div class="tw-space-y-6 tw-pb-5 tw-pt-6">
+                      <div>
+                        <label for="application_name_id" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Nome do caderno</label>
+                        <div class="tw-mt-2">
+                          <input type="text" id="application_name_id" name="q_name" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" value="{{ q_name }}" placeholder="Digite o nome do caderno aqui" />
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-6">
+                          <label for="initial_date_id" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Data Inicial</label>
+                          <div class="tw-mt-2">
+                            <input type="date" id="initial_date_id" name="q_initial_date" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" value="{{ q_initial_date }}" />
+                          </div>
+                        </div>
+                        <div class="col-6">
+                          <label for="final_date_id" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Data Final</label>
+                          <div class="tw-mt-2">
+                            <input type="date" id="final_date_id" name="q_final_date" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" value="{{ q_final_date }}" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {% if user.client_has_exam_elaboration %}
+                        <div>
+                          <label for="id_category" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Categoria</label>
+                          <div class="tw-mt-2">
+                            <select id="id_category" name="category" class="tw-mt-2 tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pl-3 tw-pr-10 tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6">
+                              <option value=""></option>
+                              <option value="online" {% if category == 'online' %} selected="selected" {% endif %}>Online</option>
+                              <option value="presential" {% if category == 'presential' %} selected="selected" {% endif %}>Presencial</option>
+                              <option value="homework" {% if category == 'homework' %} selected="selected" {% endif %}>Lista de Exercício</option>
+                            </select>
+                          </div>
+                        </div>
+                      {% endif %}
+
+                      {% if user.client_has_customize_application and application_type_options %}
+                        <div>
+                          <label for="q_application_type" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Tipos de aplicação</label>
+                          <div class="tw-mt-2">
+                            <select 
+                            id="q_application_type" 
+                            name="q_application_type"
+                            class="w-100 tw-rounded-md tw-border-0 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6"
+                            multiple>
+                              {% for application_type in application_type_options %}
+                              <option {% if application_type.pk|stringformat:'s' in q_application_type %}selected{% endif %} value="{{ application_type.pk }}">{{ application_type.name }}</option>
+                              {% endfor %}
+                            </select>
+                          </div>
+                        </div>
+                      {% endif %}
+
+                      <div>
+                        <label for="subject_id" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Disciplinas do caderno</label>
+                        <div class="tw-mt-2">
+                          <select id="subject_id" name="q_subjects" class="tw-mt-2 tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pl-3 tw-pr-10 tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" multiple="multiple">
+                            {% for subject in subjects %}
+                              <option value="{{ subject.pk }}" {% if subject.pk|stringformat:'s' in q_subjects %}selected="selected"{% endif %}>
+                                {{ subject.name }} > {{ subject.knowledge_area__name }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label for="classe_id" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Turmas</label>
+                        <div class="tw-mt-2">
+                          <select id="classe_id" name="q_classes" class="tw-mt-2 tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pl-3 tw-pr-10 tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" multiple="multiple">
+                            {% for classe in classes %}
+                              <option value="{{classe.pk}}" {% if classe.pk|stringformat:'s' in q_classes %}selected="selected" {% endif %}>
+                                {{classe.name}} - {{ classe.coordination__unity__name }} - {{ classe.school_year|force_escape }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label for="grade_id" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Séries</label>
+                        <div class="tw-mt-2">
+                          <select id="grade_id" name="q_grades" class="tw-mt-2 tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pl-3 tw-pr-10 tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" multiple="multiple">
+                            {% for grade in grades %}
+                              <option value="{{ grade.pk }}" {% if grade.pk|stringformat:'s' in q_grades %}selected="selected"{% endif %}>
+                                {{ grade }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label for="unit_id" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Unidades</label>
+                        <div class="tw-mt-2">
+                          <select id="unit_id" name="q_units" class="tw-mt-2 tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pl-3 tw-pr-10 tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" multiple="multiple">
+                            {% for unit in units %}
+                              <option value="{{ unit.pk }}" {% if unit.pk|stringformat:'s' in q_units %}selected="selected"{% endif %}>
+                                {{ unit }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div class="custom-control custom-switch mt-3">
+                        <input {% if q_has_answer_sheet %}checked="checked"{% endif %} type="checkbox" id="q_has_answer_sheet_id" name="q_has_answer_sheet" class="custom-control-input" />
+                        <label class="custom-control-label" for="q_has_answer_sheet_id">Tem malote gerado</label>
+                        <small class="form-text text-muted mt-0">Selecine caso queira ver apenas aplicações que já possuem malotes gerados.</small>
+                      </div>
+
+                      <div class="custom-control custom-switch mt-3">
+                        <input {% if q_is_print_ready %}checked="checked"{% endif %} type="checkbox" id="q_is_print_ready_id" name="q_is_print_ready" class="custom-control-input" />
+                        <label class="custom-control-label" for="q_is_print_ready_id">Pronto para impressão</label>
+                        <small class="form-text text-muted mt-0">Selecine caso queira ver apenas aplicações que já estão marcadas como pronto para impressão.</small>
+                      </div>
+
+                      <div class="custom-control custom-switch mt-3">
+                        <input {% if q_already_disclosed %}checked="checked"{% endif %} type="checkbox" id="q_already_disclosed_id" name="q_already_disclosed" class="custom-control-input" />
+                        <label class="custom-control-label" for="q_already_disclosed_id">Resultado divulgado</label>
+                        <small class="form-text text-muted mt-0">Selecine caso queira ver apenas aplicações que o resultado já foi divulgado.</small>
+                      </div>
+
+                      <div class="custom-control custom-switch mt-2">
+                        <input {% if q_no_disclosed %}checked="checked"{% endif %} type="checkbox" id="q_no_disclosed_id" name="q_no_disclosed" class="custom-control-input" />
+                        <label class="custom-control-label" for="q_no_disclosed_id">Resultado não divulgado</label>
+                        <small class="form-text text-muted mt-0">Selecione caso queira ver apenas aplicações que o resultado ainda não foi divulgado.</small>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+              <div class="tw-flex tw-flex-wrap tw-space-y-3 sm:tw-space-x-3 sm:tw-space-y-0 tw-px-4 tw-py-4">
+                <button type="submit" class="tw-inline-flex tw-w-full tw-flex-shrink-0 tw-items-center tw-justify-center tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600 sm:tw-flex-1" v-if="!filters.createNewFilter" form="filterForm">
+                  Aplicar filtro
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock slide-over %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'js/moment/moment-with-locales.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'js/sweetalert/sweetalert2.min.js' %}"></script>
+<script src="{% static 'js/tippy/popper.min.js' %}"></script>
+<script src="{% static 'js/tippy/tippy.min.js' %}"></script>
+<script src="{% static 'js/tourjs/tour.min.js' %}"></script>
+<script>
+
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    components: {
+      {% include 'includes/vue-tooltip.html' %},
+    },
+    data: {
+      today: moment("{% now 'Y-m-d\\TH:i' %}"), 
+      selectedApplication: null,
+      selectedDetachedStudent: '',
+      selectedToManyBags: false,
+      selectedOneBag: false,
+      loadingDetached: false,
+      answer_sheet_model: "fiscallize",
+      blank_pages: false,
+      includeDiscursives: false,
+      includeExams: false,
+      discursiveOptions: {
+        split_subjects: 0,
+      },
+      selectionList: [],
+      examPrintConfigObject: {
+        header: '',
+        backgroundImage: '',
+        customPages: [],
+        headerFormat: 1,
+        columnType: 0,
+        kind: 0,
+        textQuestionFormat: 1,
+        lineHeight: 0,
+        fontSize: 0,
+        fontFamily: 0,
+        printSubjectsName: false,
+        printWithCorrectAnswers: false,
+        hideAlternativesIndicator: false,
+        hideQuestionsReferencies: false,
+        hideKnowledgeAreasName: false,
+        printBlackAndWhiteImages: false,
+        hyphenate: false,
+        discursiveLineHeight: 1,
+        showFooter: false,
+        addPageNumber: false,
+        economyMode: false,
+        forceChoicesWithStatement: false,
+        hideNumbering: false,
+        breakEnunciation: false,
+        discursiveQuestionSpaceType: 0,
+        breakAlternatives: false,
+      },
+      examPrintConfig: {},
+      printDefaults: [],
+      addAndDeleteStudentUrl: "{% url "applications:applications_add_del_student" '00000000-0000-0000-0000-000000000000' %}",
+      deleteApplicationUrl: "{% url "applications:applications_delete" '00000000-0000-0000-0000-000000000000' %}",
+      detailsApplicationUrl: "{% url "applications:applications_detail" '00000000-0000-0000-0000-000000000000' %}",
+      updateApplicationUrl: "{% url "applications:applications_update" '00000000-0000-0000-0000-000000000000' %}",
+      discloseApplicationUrl: "{% url "applications:applications_disclose" '00000000-0000-0000-0000-000000000000' %}",
+      exportExamsBag: "{% url "applications:export_application_exams_bag" pk="00000000-0000-0000-0000-000000000000" %}",
+      exportDetachedAnswerSheetUrl: "{% url "omr:export_answer_sheet_application_detached" '00000000-0000-0000-0000-000000000000' %}",
+      exportDetachedElitAnswerSheetUrl: "{% url "omr:export_elit_answer_sheet_detached" '00000000-0000-0000-0000-000000000000' %}",
+      exportElitExamsBag: "{% url "applications:export_application_elit_exams_bag" pk="00000000-0000-0000-0000-000000000000" %}",
+      {% if has_discursives %}
+        exportDetachedDiscursiveAnswerSheetUrl: "{% url "omr:export_answer_sheet_discursive_detached" '00000000-0000-0000-0000-000000000000' %}",
+      {% endif %}
+      applications: [],
+      filters: {
+        selected: false,
+        list: [],
+        createNewFilter: false,
+        selectedParams: '',
+        parseParamsInLabels(params) {
+          let query = {}, labels = [];
+          let pairs = (params[0] === '?' ? params.substr(1) : params).split('&');
+          for (var i = 0; i < pairs.length; i++) {
+            var pair = pairs[i].split('=');
+            query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+          }
+          for(key in query) {
+            if(query[key]) {
+              const count = params.match(new RegExp(`\\b(${key})\\b`, 'g')).length;
+              let input = $(`[name="${key}"]`), inputId = input.attr('id'), label = `${$(`[for="${inputId}"]`).text()}`
+              if(input.prop('type') == 'select-multiple') {
+                label += `: <span class="badge badge-dark rounded-circle">${count}</span>`
+              } else {
+                if(input.prop('type') == 'select-one') {
+                  label += `: ${input.find(`option[value=${query[key]}]`).text()}`
+                }
+                if(input.prop('type') == 'text') {
+                  label += `: ${query[key]}`
+                }
+              }
+              labels.push(label)
+            }
+          }
+          return labels
+        },
+        labels() {
+          let labels = []
+          
+          $('#filterForm').find('select, input').each((index, input) => {
+            let values = [], showValues = true, showCount = false
+            if(input.id) {
+              if(input.type.includes('select')  ) {
+                if(input.type == 'select-multiple') {
+                  showCount = true
+                }
+                values = $(`#${input.id} option:selected`).toArray().map(item => item.text)
+              }
+              else if(input.type == 'checkbox' || input.type == 'radio') {
+                value = $(`#${input.id}:checked`).val()
+                if(value == 'on' || value === true) {
+                  showValues = false
+                  values.push(true)
+                }
+              } else {
+                values.push($(`#${input.id}`).val())
+              }
+              if(values.filter(value => value).length) {
+                labels.push({
+                  name: $(`#${input.id}`).attr('name'),
+                  label: $(`[for=${input.id}]`).text(),
+                  showValues: showValues,
+                  showCount: showCount,
+                  values: values,
+                })
+              }
+            }
+          })
+          return labels
+        },
+      },
+      loadedPrintDefaults: false,
+      loaded: false,
+      showDiagrammingOptions: 0,
+    },
+    methods: {
+      loadApplications() {
+        this.applications = [
+          {% for application in object_list %}
+            {
+              "id": "{{ application.pk }}",
+              "date": "{{ application.date|safe }}",
+              "start": "{{ application.start|safe }}",
+              "end": "{{ application.end|safe }}",
+              "category": {{ application.category }},
+              "categoryDisplay": "{{ application.get_category_display }}",
+              "subject": "{{ application.subject }}",
+              "studentStatsPermissionDate": "{{ application.student_stats_permission_date|date:'Y-m-d\\TH:i' }}",
+              "exam": "{{ application.exam.name|safe }}",
+              "statusExam":   {{ application.exam.status|default:0 }},
+              "isExamRandomized": {{ application.exam.is_randomized|yesno:'true,false' }},
+              "hasSumQuestions": {{ application.exam.has_sum_questions|yesno:'true,false' }},
+              "hasDiscursiveQuestions": {{ application.exam.has_discursive_questions|yesno:'true,false' }},
+              "canPrintSubjectsSheet": {{ application.exam.is_subject_sheet_allowed|yesno:'true,false' }},
+              "canPrintReducedAllowedMaxQuestions": {{ application.exam.is_reduced_allowed_max_questions|yesno:'true,false' }},
+              "examNotApplicable": {{ application.exam.not_applicable|lower }},
+              "abstractExam": {{ application.exam.is_abstract|default:False|lower }},
+              "exam_urls": {{ application.exam.urls|safe }},
+              "studentsCount": {{ application.students.count|floatformat:0 }},
+              "answerSheetUrl": "{{ application|default_if_none:''|get_answer_sheet_link|cdn_url|safe }}",
+              "lastAnswerSheetGeneration": moment("{{ application.last_answer_sheet_generation|safe }}").locale('pt-br').fromNow(),
+              "schoolClasses": [
+                {% for school_class in application.get_classes %}
+                  "{{ school_class.name }} - {{ school_class.coordination__unity__name }} - {{ school_class.school_year|force_escape }}",
+                {% endfor %}
+              ],
+              "inspectors": [
+                {% for inspector in application.inspectors.all %}
+                  "{{ inspector.name }}",
+                {% endfor %}
+              ],
+              "sheetsExportingStatus": {{ application.sheet_exporting_status }},
+              "sheetsExportingCount": {{ application.sheet_exporting_count }},
+              "sheetsExportingProgress": 0,
+              "duplicate_application": "{{application.duplicate_application|default:''}}",
+              "is_printed": {{ application.is_printed|default:False|lower }},
+              "print_ready": {{ application.print_ready|default:False|lower }},
+              "urls": {{ application.urls|safe }},
+              "releaseResultAtEnd": {{ application.release_result_at_end|default:False|lower }},
+              "token_online": "{{ application.token_online|default:'' }}",
+              "application_type": "{{ application.application_type.name|default_if_none:''}}",
+            },
+          {% endfor %}
+        ]
+        this.loaded = true
+        setTimeout(() => {
+          {% include 'help/includes/tour_guide.js' with group_guide_name='default-application-list' %}
+        }, 1000)
+      },
+      handleModalClose(){
+        this.selectedOneBag = false;
+        this.selectedToManyBags = false;
+      },
+      getActionDetails(actionType) {
+        let itemsToProcess = [];
+        let textConfirm = "";
+        let confirmButton = "";
+        let plural = 'aplicações como prontas para impressão.';
+        let singular = 'aplicação como pronta para impressão';
+
+        if (actionType === 'unmark') {
+            itemsToProcess = this.applicationsForUnmarking
+            const message = itemsToProcess.length === 1 ? singular: plural
+            textConfirm = `Confirme que deseja desmarcar ${itemsToProcess.length} ${message}`;
+            confirmButton = "Sim, desmarcar";
+        } else if (actionType === 'mark') {
+            itemsToProcess = this.applicationsForMarking
+            const message = itemsToProcess.length === 1 ? singular: plural
+            textConfirm = `Confirme que deseja marcar ${itemsToProcess.length} ${message}`;
+            confirmButton = "Sim, marcar";
+        }
+        return { itemsToProcess, textConfirm, confirmButton };
+      },
+      showConfirmationDialog(textConfirm, confirmButton, onConfirm) {
+        Swal.fire({
+            title:  "Tem certeza?",
+            text: textConfirm,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: confirmButton,
+        }).then((result) => {
+            if (result.isConfirmed) {
+                onConfirm();
+            }
+        });
+      },
+      showConfirmationHtml(html, confirmButton, tilte, onConfirm) {
+        Swal.fire({
+            title: tilte,
+            html: `<div style="text-align: justify;">${html}</div>`, // Estilo inline para justificar o texto
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: confirmButton,
+            width: '45em',
+            }).then((result) => {
+            if (result.isConfirmed) {
+                onConfirm();
+            }
+        });
+      },
+      bulkMarkAndUnmarkReadyForPrinting(actionType)  {
+          const { itemsToProcess, textConfirm, confirmButton } = this.getActionDetails(actionType);
+          
+          if (itemsToProcess.length > 0) {
+              this.showConfirmationDialog(textConfirm, confirmButton, () => {
+                itemsToProcess.forEach((item) => {
+                  this.changePrintReady(item);
+                });
+              });
+          } else {
+              if (actionType === 'mark') {
+                  message = 'Não há aplicações selecionadas para marcar como prontas para impressão.';
+              } else if (actionType === 'unmark') {
+                  message = 'Não há aplicações selecionadas para desmarcar como prontas para impressão.';
+              }
+              this.showAlerBulkActions(message)
+          }
+      },
+      bulkDisseminationOfResults(csrfToken) {
+          let itemsToProcess = this.applicationsForDisseminationOfResults
+          let lengthItemsToProcess =  itemsToProcess.length
+          let singular = `Confirme que deseja divulgar o resultado de ${lengthItemsToProcess} aplicação selecionada.`;
+          let plural = `Confirme que deseja divulgar o resultado de ${lengthItemsToProcess} aplicações selecionadas.`;
+          
+          textConfirm = lengthItemsToProcess === 1 ? singular : plural;
+          confirmButton = "Sim, divulgar";
+          
+          if (lengthItemsToProcess > 0) {
+            this.showConfirmationDialog(textConfirm, confirmButton, () => {
+              itemsToProcess.forEach((item, index) => {
+                const url = `{% url 'applications:applications_disclose' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', item.id);
+                axios.post(url, {}, {
+                  headers: {
+                    'X-CSRFToken': csrfToken
+                  }
+                })
+                .then(response => {
+                  $(`#tr-${item.id}`).remove()
+                  $(".selectbox").prop("checked", false)
+                  this.selectionList = [];
+                })
+              });
+            });
+        } else {
+          this.showAlerBulkActions('Não há aplicações selecionadas que possam  ter resultados divulgados.')
+        }
+      },
+      showLoadingAlert() {
+        Swal.fire({
+          title: 'Aguarde...',
+          html: 'Deletando aplicações...',
+          allowOutsideClick: false,
+          onBeforeOpen: () => {
+            Swal.showLoading();
+          }
+        });
+      },    
+      hideLoadingAlert() {
+        Swal.close();
+      },
+      buildDeleteConfirmationMessage(applicationsToDelete, ) {
+        const lengthAppToDelete = applicationsToDelete.length;
+        let confirmMessage = '';
+      
+        if (lengthAppToDelete !== this.selectionList.length) {
+          confirmMessage = `Não é permitida a exclusão de 1 ou mais aplicações com malote gerado.<br>Deseja continuar a exclusão das outras <b>${lengthAppToDelete}</b> aplicações?<br><br>Aplicações que serão excluídas:<br><br>`;
+        } else {
+          confirmMessage = `Serão excluídas <b>${lengthAppToDelete}</b> aplicações, deseja confirmar a exclusão?<br><br>Aplicações que serão excluídas:<br>`;
+          if (lengthAppToDelete === 1)
+            confirmMessage = `Será excluída <b>${lengthAppToDelete}</b> aplicação, deseja confirmar a exclusão?<br><br>Aplicação que será excluída:<br>`;
+        }
+      
+        applicationsToDelete.forEach((app, index) => {
+          confirmMessage += `${index + 1}. ${app.exam}<br>`;
+        });
+      
+        return confirmMessage;
+      },
+      bulkDeleteApplications(csrfToken) {
+        const applicationsToDelete = this.applicationsToDelete;
+        const lengthAppToDelete = applicationsToDelete.length;
+        const confirmMessage = this.buildDeleteConfirmationMessage(applicationsToDelete);
+  
+        this.showConfirmationHtml(confirmMessage, 'Sim, apagar', 'ATENÇÃO!', () => {
+          this.showLoadingAlert(); 
+          applicationsToDelete.forEach((item, index) => {
+            const url = `{% url 'applications:application_delete_api' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', item.id);
+            axios.defaults.xsrfCookieName = 'csrftoken';
+            axios.defaults.xsrfHeaderName = 'X-CSRFToken';
+      
+            axios.delete(url)
+              .then(response => {
+                $(`#tr-${item.id}`).remove(); 
+                $(".selectbox").prop("checked", false);
+                this.selectionList = [];
+      
+                if (index === applicationsToDelete.length - 1) {
+                  this.hideLoadingAlert();
+                }
+              })
+              .catch(error => {
+                this.hideLoadingAlert(); 
+                location.reload(); 
+              });
+          });
+        });
+      },
+      {% comment %} bulkDeleteApplications(csrfToken) {
+          const applicationsToDelete = this.applicationsToDelete
+          let lengthAppToDelete =  applicationsToDelete.length
+          let confirmMessage =  ""
+          
+          if (lengthAppToDelete != this.selectionList.length){
+            confirmMessage = `Não é permitida a exclusão de 1 ou mais aplicações com malote gerado.<br>Deseja continuar a exclusão das outras <b>${lengthAppToDelete}</b> aplicações?<br><br>Aplicações que serão excluídas:<br><br>`;
+            applicationsToDelete.forEach((app, index) => {
+              confirmMessage += `${index + 1}. ${app.exam}<br>`;
+            });
+          } else {
+            confirmMessage = `Serão excluidas <b>${lengthAppToDelete}</b> aplicações, deseja confirmar a exclusão?<br><br>Aplicações que serão excluídas:<br>`;
+            if (lengthAppToDelete== 1)
+              confirmMessage = `Será excluída <b>${lengthAppToDelete}</b> aplicação, deseja confirmar a exclusão?<br><br>Aplicação que será excluída:<br>`;
+            applicationsToDelete.forEach((app, index) => {
+              confirmMessage += `${index + 1}. ${app.exam}<br>`;
+            });
+          }
+          confirmButton =  "Sim, apagar"
+          if (lengthAppToDelete > 0) {
+            this.showConfirmationHtml(confirmMessage, confirmButton, "ATENÇÃO!", () => {
+              applicationsToDelete.forEach((item, index) => {
+                const url = `{% url 'applications:application_delete_api' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', item.id);
+                axios.defaults.xsrfCookieName = 'csrftoken';
+                axios.defaults.xsrfHeaderName = 'X-CSRFToken';
+                axios.delete(url)
+                .then(response => {
+                  $(`#tr-${item.id}`).remove()
+                  $(".selectbox").prop("checked", false)
+                  this.selectionList = [];
+                })
+                .catch(error => {
+                  location.reload();
+                });
+              });
+            });
+        } else {
+          this.showAlerBulkActions('Não há aplicações selecionadas que possam ser apagadas.')
+        }
+      }, {% endcomment %}
+      bulkBagDelete(csrfToken){
+          let bagsToDelete = this.applicationsForDeleteBags
+          let lengthBagsToDelete = bagsToDelete.length
+          let singular = `Dos malotes selecioandos apenas ${lengthBagsToDelete} poderá ser removido.`;
+          let plural = `Dos malotes selecioandos ${lengthBagsToDelete} poderão ser removidos.`;
+
+          textConfirm = lengthBagsToDelete === 1 ? singular: plural;
+          confirmButton = "Sim, remover";
+        
+          if (lengthBagsToDelete > 0) {
+            this.showConfirmationDialog(textConfirm, confirmButton, () => {
+              bagsToDelete.forEach((item, index) => {
+                axios.post(item.urls.remove_application_exam_bag).then((res) => {
+                  window.location.reload()
+                })
+              });
+            });
+        } else {
+          this.showAlerBulkActions('Não há aplicações selecionadas que possam ser removidas.')
+        }
+      },
+      bulkBagCreate(){
+        this.selectedToManyBags = true,
+        this.selectedApplication = this.applications.find(application => application.id === this.selectionList[0]);
+        $('#configurePrintModal').modal('show');
+      },
+      async processApplications() {
+        selectedApplications = this.selectionList;
+
+        if (this.answer_sheet_model === "sum") {
+            selectedApplications = this.filterAnswerSheelModelSum
+        }
+        else if (this.answer_sheet_model === "subjects") {
+          selectedApplications = this.filterAnswerSheelModelSubjects
+        }
+        else if (this.answer_sheet_model === "reduced") {
+          selectedApplications = this.filterAnswerSheelModelReduced
+        } 
+        
+        let lengthSelectedApplications = selectedApplications.length 
+        if (selectedApplications && lengthSelectedApplications !== 0) {
+          let singular = `As configurações definidas serão aplicadas para o malote de ${lengthSelectedApplications} aplicação. `
+          let plural =  `As configurações definidas serão aplicadas para os malotes de ${lengthSelectedApplications} aplicações. `
+          let message = lengthSelectedApplications === 1 ? singular: plural
+
+          textConfirm = message;
+          confirmButton = "Sim, gerar";
+          await this.showConfirmationDialog(textConfirm, confirmButton, () => {
+            for (let applicationId of selectedApplications) {
+                  let selectedApplication = this.applications.find(app => app.id === applicationId);
+                  this.generateExamsBag(selectedApplication);
+              }
+              this.deselectAll()
+          });
+        } else {
+          this.showAlerBulkActions('Não há aplicações selecionadas que possam utilizar o modelo escolhido.')
+        }
+      },
+      showAlerBulkActions(message) {
+        Swal.fire('Atenção!', message, 'warning');
+      },
+      deselectAll() {
+        this.selectionList = [];
+      },
+      removeFilter(filter) {
+        const url = new URL(window.location.href);
+        const urlParams = url.searchParams;
+        urlParams.delete(filter.name);
+        url.search = urlParams.toString();
+        window.location.href = url.href;
+      },
+      changePrintSubject() {
+        this.examPrintConfig.printSubjectsName = !$("#id-print-subjects-name").prop('checked')
+      },
+      getPrintDefaults() {
+        axios.get("{% url 'api:clients:print-configs-list' %}").then((response) => {
+          this.printDefaults = response.data
+        }).finally(() => {
+          this.loadedPrintDefaults = true
+        })
+      },
+      momentRef(args) {
+        return moment(args)
+      },
+      confirmCancel(url) {
+        document.getElementById('id_confirm_cancel_form').action = url;
+        $("#confirmCancelModal").modal("show");
+      },
+      alertBagDelete(application){
+        Swal.fire({
+          title: 'Deseja realmente remover o malote?',
+          text: 'Certifique-se de que ele não foi impresso e não será aplicado aos alunos.',
+          icon: 'error',
+          showCancelButton: true,
+          confirmButtonText: 'Confirmar',
+          cancelButtonText: 'Cancelar',
+        }).then((result) => {
+          if (result.isConfirmed) {
+            axios.post(application.urls.remove_application_exam_bag).then((res) => {
+              window.location.reload()
+            })
+          }
+        })
+      },
+      alertPrintedApplicationDelete(){
+        Swal.fire({
+          title: 'Não é possível remover essa aplicação',
+          text: 'Aplicação com malote gerado ou caderno marcado como impresso!',
+          icon: 'error',
+          confirmButtonText: 'Voltar',
+        })
+      },
+      alertPrintedApplicationManageStudents(){
+        Swal.fire({
+          title: 'Não é possível modificar os alunos dessa aplicação',
+          text: 'Aplicação com malote gerado ou caderno marcado como impresso!',
+          icon: 'error',
+          confirmButtonText: 'Voltar',
+        })
+      },
+      alertExamNotApplicable() {
+        Swal.fire({
+          title: 'Não é possível modificar os alunos dessa aplicação',
+          text: 'O caderno dessa aplicação está marcado como não aplicável.',
+          icon: 'warning',
+          confirmButtonText: 'Voltar',
+        })
+      },
+      alertGenerateBagExamNotApplicable() {
+        Swal.fire({
+          title: 'Não é possível gerar malote',
+          text: 'O caderno dessa aplicação está marcado como não aplicável.',
+          icon: 'warning',
+          confirmButtonText: 'Voltar',
+        })
+      },
+      changePrintReady(application) {
+        let url = application.urls.api_change_print_ready
+        axios.post(url, {}).then((response) => {
+          this.alertTop('Prova marcada como pronta para impressão.')
+          window.location.reload()
+        }).catch((e) => {
+          this.alertTop('Ocorreu um erro ao tentar alterar a prova, tente novamente, caso o erro persista entre em contato com o suporte.', 'error')
+        })
+      },
+      selectPrintDefault() {
+        const id = $(this.$refs['inputPrintDefault']).children(":selected").attr("id")
+        const printDefault = this.printDefaults.find(_default => _default.id == id)
+        
+        if(printDefault) {
+          this.examPrintConfig = printDefault
+          this.selectedPrintDefault = printDefault
+          if(this.examPrintConfig.customPages.length) {
+            $("#id_custom_page").val(this.examPrintConfig.customPages).trigger('change')
+           // $("#id-print-subjects-name").prop( "checked", true )
+          }
+          console.log(printDefault)
+        } else { 
+          if(this.examPrintConfig.customPages.length) {
+            $("#id_custom_page").val([]).trigger('change')
+          }
+          this.selectedPrintDefault = null
+          this.examPrintConfig = Object.assign({}, this.examPrintConfigObject)
+        }
+      },
+      replaceUrlId(url, applicationId) {
+        return url.replace('00000000-0000-0000-0000-000000000000', applicationId)+'?{{ request.GET.urlencode|safe }}'
+      },
+      isApplicationDisclosable(application) {     
+        return moment(application.studentStatsPermissionDate) > this.today
+      },
+      showPrintModal(application) {
+          if (application.statusExam == 6) {
+              Swal.fire({
+                title:  "Atenção",
+                text:  "O malote não pode ser gerado no momento, pois está na fase de REVISÃO DE PDF!",
+                icon: 'warning',
+                confirmButtonColor: '#3085d6',
+                confirmButtonText:  "ok",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    onConfirm();
+                }
+            });
+            return 
+          }
+          this.selectedOneBag = true;
+          this.includeExams = false;
+          this.selectedApplication = application
+          $('#configurePrintModal').modal('show');
+      },
+      showPrintDetachedModal(application) {
+          this.selectedApplication = application
+          if (application.isExamRandomized) {
+            this.selectedApplication.include_exam = true
+          }
+          if(application.hasSumQuestions) {
+            this.answer_sheet_model = 'sum'
+          }
+          $('#configureDetachedSheetModal').modal('show');
+      },
+      generateDetachedAnswerSheet(application, isElit=false) {
+        const self = this
+        let url = this.replaceUrlId(this.exportDetachedAnswerSheetUrl, application.id)
+
+        if (isElit) {
+          url = this.replaceUrlId(this.exportDetachedElitAnswerSheetUrl, application.id)
+        }
+
+        // if (application.hasSumQuestions) {
+        //   self.answer_sheet_model = 'sum'
+        // }
+        let formData = new FormData()
+        formData.append('student_id', self.selectedDetachedStudent)
+        formData.append('answer_sheet_model', self.answer_sheet_model)
+        formData.append('include_exam', self.selectedApplication.include_exam ? 1 : 0)
+
+        self.loadingDetached = true
+        const oldApplicationStatus = application.sheetsExportingStatus
+        application.sheetsExportingStatus = 1
+
+        fetch(url, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+          },
+          body: formData
+        }).then(response => {
+          const contentDisposition = response.headers.get('Content-Disposition')
+          if (contentDisposition) {
+              const match = contentDisposition.match(/filename="(.+)"/)
+              if (match) {
+                  fileName = match[1]
+              }
+          }
+          return response.blob()
+          .then(blob => {
+              const blobUrl = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.style.display = 'none'
+              a.href = blobUrl
+              a.download = fileName
+
+              document.body.appendChild(a)
+              a.click()
+              
+              document.body.removeChild(a)
+              URL.revokeObjectURL(blobUrl)
+              self.loadingDetached = false
+              application.sheetsExportingStatus = oldApplicationStatus
+              $('#configureDetachedSheetModal').modal('hide')
+          })
+        })
+      },
+      generateExamsBag(application, type) {
+        if (application) {
+          let url = this.replaceUrlId(this.exportExamsBag, application.id)
+  
+          if (application.hasSumQuestions) {
+            this.answer_sheet_model = 'sum'
+          }
+          axios.post(url, {
+            sheet_model: this.answer_sheet_model,
+            discursive_params: this.discursiveOptions,
+            exam_params: this.examPrintConfig,
+            include_exams: this.includeExams,
+            include_discursives: this.includeDiscursives,
+            blank_pages: this.blank_pages,
+          }).then((response) => {
+            application.sheetsExportingStatus = 1
+            application.sheetsExportingCount += 1
+            $('#configurePrintModal').modal('hide');
+            this.fetchStatus(application)
+          }).catch((error) => {
+            console.log(error)
+            Swal.fire({
+              position: 'top-end',
+              icon: 'error',
+              text: error.response.data,
+              showConfirmButton: false,
+              timer: 3000,
+              backdrop: false,
+              allowOutsideClick: false,
+              timerProgressBar: true,
+            })
+          })
+
+        } else {
+          this.showAlerBulkActions('Não há aplicações selecionadas que possam utilizar o modelo escolhido.')
+        }
+      },
+      generateElitExamsBag(application) {
+        let url = this.replaceUrlId(this.exportElitExamsBag, application.id)
+        
+        axios.post(url, {})
+        .then((response) => {
+          application.sheetsExportingStatus = 1
+          application.sheetsExportingCount += 1
+          this.fetchStatus(application)
+        }).catch((error) => {
+          console.log(error)
+          Swal.fire({
+            position: 'top-end',
+            icon: 'error',
+            text: error.response.data,
+            showConfirmButton: false,
+            timer: 3000,
+            backdrop: false,
+            allowOutsideClick: false,
+            timerProgressBar: true,
+          })
+        })
+      },
+      fetchStatus(application){
+          let url = "{% url 'omr:omr_export_task_status' '00000000-0000-0000-0000-000000000000' 9999 %}"
+          url = url.replace('9999', application.sheetsExportingCount)
+          url = url.replace('00000000-0000-0000-0000-000000000000', application.id)
+          fetch(url)
+          .then(response => response.json())
+          .then(data => {
+            switch (data.status) {
+              case 'PENDING':
+                setTimeout(() => this.fetchStatus(application), 10000)
+                break
+              case 'STARTED':
+                application.sheetsExportingProgress = Math.round(data.percent * 100)
+                setTimeout(() => this.fetchStatus(application), 10000)
+                break
+              case 'SUCCESS':
+                application.sheetsExportingStatus = 2
+                application.answerSheetUrl = data.application.answer_sheet
+                application.lastAnswerSheetGeneration = moment().fromNow()
+                break
+              case 'FAILURE':
+                application.sheetsExportingStatus = 3
+                break;
+            }
+          })
+        },
+      getUnlockApplication(application) {
+          Swal.fire({
+            title: 'Deseja desbloquear a aplicação?',
+            showCancelButton: true,
+            confirmButtonText: 'Confirmar',
+            cancelButtonText: 'Cancelar',
+          }).then((result) => {
+            if (result.isConfirmed) {
+              url = '{% url 'applications:application_duplicate' pk='00000000-0000-0000-0000-000000000000'  %}'
+              axios.patch(url.replace("00000000-0000-0000-0000-000000000000", application.id), {duplicate_application: false})
+              .then((response) => {
+                Swal.fire({
+                  position: 'top-end',
+                  text: 'Aplicação desbloqueada com sucesso!',
+                  showConfirmButton: false,
+                  timer: 1500,
+                  backdrop: false,
+                  allowOutsideClick: false,
+                  timerProgressBar: true,
+                })
+                application.duplicate_application = false
+              })
+            } else if (result.isDenied) {
+              Swal.fire('Changes are not saved', '', 'info')
+            }
+          })
+        }, 
+      getDuplicateAplication(application) {
+        Swal.fire({
+          title: `Aplicação ${moment(application.date).format('DD/MM/YYYY')}`,
+          text: `Deseja realmente duplicar?`,
+          showCancelButton: true,
+          cancelButtonText: 'Cancelar',
+          confirmButtonText: 'Confirmar',
+          animation: "slide-from-top",
+          {% comment %}
+          inputAttributes: {
+            min: 1,
+            max: 50
+          },
+          inputValue: 1,
+          input: 'number'
+          {% endcomment %}
+        }).then((result) => {
+          if (result.value) {
+            let amountDuplicate = 1
+            url = `{% url 'applications:application_duplicate' pk='00000000-0000-0000-0000-000000000000'  %}?amount=${amountDuplicate}`
+            axios.get(url.replace("00000000-0000-0000-0000-000000000000", application.id)
+            ).then((response) => {
+              response.data.map((application) => this.applications.unshift(application))
+              
+              Swal.fire({
+                position: 'top-end',
+                text: 'Aplicação duplicada com sucesso!',
+                showConfirmButton: false,
+                timer: 1500,
+                backdrop: false,
+                allowOutsideClick: false,
+                timerProgressBar: true,
+              })
+            })
+            
+          }
+        })
+      },
+      alertTop(text, icon = 'success') {
+        Swal.fire({
+          position: 'top-end',
+          text: text,
+          icon: icon,
+          showConfirmButton: false,
+          timer: 1500,
+          toast: true,
+          timerProgressBar: true,
+        })
+      },
+      getExamPrintConfigs(url) {
+        return axios.get(url).then((response) => {
+          this.examPrintConfig = response.data
+          console.log(">>>>", response.data)
+          $("#id-print-subjects-name").prop( "checked", response.data['printSubjectsName'] )
+          if($("#id_custom_page").val().length) {
+            this.examPrintConfig.customPages = $("#id_custom_page").val()
+          }
+        })
+      },
+      exportDetachedAnswerSheet(url, type) {
+        return url.includes('?') ? `${url}&${type}=1`:`${url}?${type}=1`
+      },
+      cleanFilter(year) {
+        window.location.href = "{% url 'applications:applications_list' %}?year=" + year;
+      },
+      onClickOutsideFilters(event) {
+        const target = event.target
+        const button = document.getElementById('headlessui-slider-over-button-1')
+
+        const select2DropdownAbove = document.getElementsByClassName('select2-dropdown--above')[0]
+        const select2DropdownBelow = document.getElementsByClassName('select2-dropdown--below')[0]
+        if (select2DropdownAbove || select2DropdownBelow) {
+          return
+        }
+
+        if (!(target === button || button.contains(target))) {
+          const rightOffCanvasContent = document.getElementById('right-off-canvas')
+          if (rightOffCanvasContent.classList.contains('tw-show')) {
+            rightOffCanvasContent.classList.remove('tw-show')
+          }
+        }
+      },
+      filterFormChanged() {
+        let params = ''
+        $('#filterForm').find('select, input').each((index, input) => {
+          if(input.id) {
+            if(input.type.includes('select')  ) {
+              let name = $(`#${input.id}`).attr('name')
+              let values = $(`#${input.id} option:selected`).toArray().map(item => item.value)
+              if(values.length){
+                values.forEach((value, index) => {
+                  params += `${name}=${value}&`
+                })
+              }
+            }else if(input.type == 'checkbox' || input.type == 'radio') {
+              name = $(`#${input.id}`).attr('name')
+              value = $(`#${input.id}:checked`).val()
+              if(value == 'on' || value === true) {
+                params += `${name}=true&`
+              }
+            } else {
+              name = $(`#${input.id}`).attr('name')
+              value = $(`#${input.id}`).val()
+              if(value) {
+                params += `${name}=${value}&`
+              }
+            }
+            
+          }
+        })
+        this.filters.selectedParams = params
+      },
+    },
+    computed: {
+      applicationsForMarking() {
+        return this.selectionList
+          .map(id => this.applications.find(app => app.id === id))
+          .filter(application => !application.print_ready);
+      },
+      applicationsForUnmarking() {
+        return this.selectionList
+          .map(id => this.applications.find(app => app.id === id))
+          .filter(application => application.print_ready);
+      },
+      applicationsForDisseminationOfResults() {
+        return this.selectionList
+          .map(id => this.applications.find(app => app.id === id))
+          .filter(application => this.isApplicationDisclosable(application));
+      },
+      applicationsForDeleteBags() {
+        return this.selectionList
+          .map(id => this.applications.find(app => app.id === id))
+          .filter(app => !app.category !== 3 && !app.is_printed && app.answerSheetUrl !== '');
+      },
+      applicationsToDelete() {
+        return this.selectionList
+          .map(id => this.applications.find(app => app.id === id))
+          .filter(app => !app.is_printed && app.answerSheetUrl === '');
+      },
+      applicationsToKeep() {
+        return this.selectionList
+          .map(id => this.applications.find(app => app.id === id))
+          .filter(app => app.is_printed || app.answerSheetUrl !== '');
+      },
+      filterAnswerSheelModelSum() {
+        return this.selectionList.filter(appId => {
+          const app = this.applications.find(app => app.id === appId);
+          return app && app.hasSumQuestions === true;
+          });
+      },
+      filterAnswerSheelModelSubjects() {
+        return this.selectionList.filter(appId => {
+        const app = this.applications.find(app => app.id === appId);
+        return app && app.canPrintSubjectsSheet === true;
+        });
+      },
+      filterAnswerSheelModelReduced() {
+        return this.selectionList.filter(appId => {
+          const app = this.applications.find(app => app.id === appId);
+          return app && app.canPrintReducedAllowedMaxQuestions === true;
+        });
+      },
+      
+      filteredList() {
+        return this.filters.list.filter(item =>
+          item.name.toLowerCase().includes(this.searchFilter.toLowerCase())
+        );
+      },
+      isIndeterminate() {
+        return this.selectionList.length > 0 && this.selectionList.length < this.applications.length
+      },
+    },
+    directives: {
+      'click-outside': {
+        bind: function(el, binding, vNode) {
+          // Provided expression must evaluate to a function.
+          if (typeof binding.value !== 'function') {
+            const compName = vNode.context.name
+            let warn = `[Vue-click-outside:] provided expression '${binding.expression}' is not a function, but has to be`
+            if (compName) { warn += `Found in component '${compName}'` }
+
+            console.warn(warn)
+          }
+          // Define Handler and cache it on the element
+          const bubble = binding.modifiers.bubble
+          const handler = (e) => {
+            if (bubble || (!el.contains(e.target) && el !== e.target)) {
+              binding.value(e)
+            }
+          }
+          el.__vueClickOutside__ = handler
+
+          // add Event Listeners
+          document.addEventListener('click', handler)
+        },
+
+        unbind: function(el, binding) {
+          // Remove Event Listeners
+          document.removeEventListener('click', el.__vueClickOutside__)
+          el.__vueClickOutside__ = null
+        }
+      },
+    },
+    watch: {
+      includeExams: function(val) {
+        if(val) {
+          if(!this.loadedPrintDefaults) {
+            this.getPrintDefaults()
+          }
+          this.getExamPrintConfigs(this.selectedApplication.exam_urls.print_configs)
+        }
+      },
+      showDiagrammingOptions: function(val) {
+        if(val == 0) {
+          if(!this.loadedPrintDefaults) {
+            this.getPrintDefaults()
+          }
+          this.getExamPrintConfigs(this.selectedApplication.exam_urls.print_configs)
+        }
+      },
+    },
+    mounted() {   
+      this.loadApplications()
+      $('[data-toggle="tooltip"]').tooltip()
+      $("#headlessui-slider-over-button-1").click()
+      $('#filterForm').find('input,select').change(this.filterFormChanged)
+      
+ 
+      $('#configurePrintModal').on('hidden.bs.modal', () => {
+        this.handleModalClose();
+      });
+
+      axios.get("{% url 'api:clients:print-configs-list' %}").then((response) => {
+        this.printDefaults = response.data
+        this.examPrintConfig = Object.assign({}, this.examPrintConfigObject)
+      })
+
+      
+      const pendingExports = this.applications.filter(
+        application => application.sheetsExportingStatus == 1
+      )
+
+      if(pendingExports) {
+        pendingExports.map((application) => {
+          this.fetchStatus(application)
+        })
+      }
+
+      $('#q_application_type').select2({
+        placeholder: "Selecione uma opção",
+        closeOnSelect: false,
+      })
+
+      $('#status_id').select2({
+        placeholder: "Selecione uma opção",
+        closeOnSelect: false,
+      });
+
+      $('#id_custom_page').select2({
+        placeholder: "Selecione uma opção",
+        closeOnSelect: false,
+        width: '100%',
+      }).on('change', () => {
+        this.examPrintConfig.customPages = $("#id_custom_page").val()
+      })
+    
+      $('#classe_id').select2({
+        placeholder: "Selecione uma opção",
+        closeOnSelect: false,
+      }).on('select2:selecting', function(e) {
+        let cur = e.params.args.data.id;
+        let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+        $(e.target).val(old).trigger('change');
+        $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+        return false;
+      });
+    
+      $('#subject_id').select2({
+        placeholder: "Selecione uma opção",
+        closeOnSelect: false,
+        templateResult: function (data, container) {
+          let subject_name = data.text.split('>')[0]
+          let knowledge_area_name = data.text.split('>')[1]
+          return $(
+            `<strong class="select2-results__custom_option">${subject_name}</strong> <br> <span class="select2-results__custom_option">${knowledge_area_name}</span>`
+          );
+        },
+      }).on('select2:selecting', function(e) {
+        let cur = e.params.args.data.id;
+        let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+        $(e.target).val(old).trigger('change');
+        $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+        return false;
+      });
+    
+      $('#grade_id').select2({
+        placeholder: "Selecione uma opção",
+        closeOnSelect: false,
+      }).on('select2:selecting', function(e) {
+        let cur = e.params.args.data.id;
+        let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+        $(e.target).val(old).trigger('change');
+        $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+        return false;
+      });
+
+      $('#unit_id').select2({
+        placeholder: "Selecione uma opção",
+        closeOnSelect: false,
+      }).on('select2:selecting', function(e) {
+        let cur = e.params.args.data.id;
+        let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+        $(e.target).val(old).trigger('change');
+        $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+        return false;
+      });
+    
+      $('.table-responsive').on('show.bs.dropdown', function () {
+        $('.table-responsive').css( "overflow", "inherit" );
+      });
+      
+      $('.table-responsive').on('hide.bs.dropdown', function () {
+        $('.table-responsive').css( "overflow", "auto" );
+      })
+
+      $('#student-detached').select2({
+          placeholder: 'Buscar pelo nome do aluno (opcional)...',
+          minimumInputLength: 3,
+          dropdownParent: $('#configureDetachedSheetModal'),
+          allowClear: true,
+          width: '100%',
+          escapeMarkup: function (text) {
+            return text
+          },
+          ajax: {
+            url: '{% url "students:students_list_api" %}',
+            delay: 250,
+            data: function (params) {
+                return {
+                    search: params.term
+                }
+            },
+            processResults: function(results) {
+                let new_results = $.map(results, function(element) {
+                  element.text = element.name
+                  return element
+                })
+                
+                return {
+                    results: new_results,
+                }
+            }
+          },
+          templateSelection: (data) => {
+            if(data.text) {
+              result = `<span class="font-weight-bold "><span>${data.text}</span>`
+        
+                if (data.classes) {
+                    result += "<p class='m-0'>"
+                    data.classes.forEach(element => {
+                    result += `<span class="badge badge-primary font-weight-bold mr-1">${element.name}</span>`
+                    });
+                    result += "</p>"
+                }
+                result += "</span>"
+                return result
+            } else {
+                return "Buscar pelo nome do aluno..."
+            }
+          },
+          templateResult: (data) => {
+              if(data.text){
+                  result = `
+                      <span class="font-weight-bold">
+                      <span class="mr-1">${data.text}</span>
+                  `
+          
+              if (data.classes){
+                  result += "<p class='m-0'>"
+                  data.classes.forEach(element => {
+                      result += `<span class="badge mr-1 badge-primary font-weight-bold">${element.name}</span>`
+                  });
+                  result += "</p>"
+              }
+              result += "</span>"
+              return result
+              } else {
+                  return "Buscar pelo nome do aluno..."
+              }
+          }
+      })
+
+      $('#student-detached').on('change', (e) => {
+        this.selectedDetachedStudent = e.target.value
+      })
+
+      $('.tw-off-canvas-menu').on('click', function (e) {
+        e.preventDefault();
+        var target = $(this).attr('data-toggle-off-canvas');
+        $(target).addClass('tw-show');
+      });
+  
+      $('.tw-off-canvas .tw-off-canvas-close').on('click', function (e) {
+        e.preventDefault();
+        $(this).closest('.tw-off-canvas').removeClass('tw-show');
+      })
+    
+      $(document).on('click touchstart', function (e) {
+        if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+          return
+        }
+        e.stopPropagation();
+        if (!$(e.target).closest('.tw-off-canvas-menu').length) {
+          var offCanvas = $(e.target).closest('.tw-off-canvas').length;
+          if (!offCanvas) {
+            $('.tw-off-canvas.tw-show').removeClass('tw-show');
+          }
+        }
+      });
+      $(document).ready(function() {
+        $("#mousable").mousemove(function(event) {
+            let containerWidth = $(this).outerWidth();
+            let tableWidth = $("#mousable").outerWidth();
+            let mouseX = event.pageX - $(this).offset().left;
+            if (mouseX < containerWidth * 0.3) {
+              $("#mousable").scrollLeft($("#mousable").scrollLeft() - 20); // Para a esquerda
+            } else if (mouseX > containerWidth * 0.7) {
+              $("#mousable").scrollLeft($("#mousable").scrollLeft() + 20); // Para a direita
+            }
+        });
+      });
+    },
+    beforeDestroy() {
+      $('#configurePrintModal').off('hidden.bs.modal');
+    }
+  })
+
+  // $(function () {
+  //   'use strict'    
+  // });
+
+</script>
+{% endblock %}

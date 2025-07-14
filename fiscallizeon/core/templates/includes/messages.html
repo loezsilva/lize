@@ -1,0 +1,28 @@
+{% if messages %}
+  {% with messages|slice:":1" as first_message %}
+    {% for message in first_message %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3 mb-0" role="alert">
+        {% if message.tags == 'success' %}
+          <i data-feather="check-circle" class="mg-r-10" style="display: inline;"></i>
+        {% elif message.tags == 'info' %}
+          <i data-feather="alert-circle" class="mg-r-10" style="display: inline;"></i>
+        {% elif message.tags == 'danger' %}
+          <i data-feather="alert-octagon" class="mg-r-10" style="display: inline;"></i>
+        {% elif message.tags == 'warning' %}
+          <i data-feather="alert-triangle" class="mg-r-10" style="display: inline;"></i>
+        {% endif %}
+        <strong>
+          {% if message.tags == 'success' %}
+            Sucesso -
+          {% elif message.tags == 'info' %}
+            Informação -
+          {% elif message.tags == 'danger' %}
+            Erro -
+          {% elif message.tags == 'warning' %}
+            Aviso -
+          {% endif %}
+        </strong> {{ message|safe }}
+      </div>
+      {% endfor %}
+    {% endwith %}
+{% endif %}

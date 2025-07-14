@@ -1,0 +1,105 @@
+{% load getlist %}
+
+<div class="row">
+<div class="col-12 col-sm-5 mb-2 mb-sm-0 d-flex d-sm-block justify-content-center">
+  <div class="table-pagination-info" role="status" aria-live="polite">
+    Mostrando {{ page_obj.start_index }} até {{ page_obj.end_index }} de {{ page_obj.paginator.count }} registros
+  </div>
+</div>
+<div class="col-12 col-sm-7 d-flex d-sm-block justify-content-center">
+  <div class="pull-right">
+    <ul class="pagination m-0 float-right">
+      <li class="page-item previous {% if not page_obj.has_previous %}disabled{% endif %}">
+        <a class="page-link"
+          href="?page={% if page_obj.has_previous %}{{ page_obj.previous_page_number }}{% endif %}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}"
+          aria-controls="table-objects" aria-label="Anterior">
+          <i data-feather="chevron-left"></i>
+        </a>
+      </li>
+      {% if paginator.num_pages < 12 %}
+      {% for page in paginator.page_range %}
+      <li class="page-item {% if page_obj.number == page %}active{% endif %}">
+        <a class="page-link page-link-icon" href="?page={{page}}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}">{{ page }}</a>
+      </li>
+      {% endfor %}
+      {% else %}
+      {% if page_obj.number >= 1 and page_obj.number < 5 %}
+      {% for page in paginator.page_range %}
+      {% if page <= 5 %}
+      <li class="page-item {% if page_obj.number == page %}active{% endif %}">
+        <a class="page-link page-link-icon" href="?page={{ page }}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}">{{ page }}</a>
+      </li>
+      {% endif %}
+      {% endfor %}
+      <li class="page-item disabled">
+        <a class="page-link page-link-icon">...</a>
+      </li>
+      <li class="page-item 
+            {% if page_obj.number == paginator.num_pages %}
+              active
+            {% endif %}">
+        <a class="page-link page-link-icon" href="?page={{ paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}">
+          {{ paginator.num_pages }}
+        </a>
+      </li>
+      {% elif page_obj.number >= 5 and page_obj.number < paginator.num_pages|add:"-3" %}
+      <li class="page-item {% if page_obj.number == page %}active{% endif %}">
+        <a class="page-link page-link-icon"
+          href="?page=1{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}">1</a>
+      </li>
+      <li class="page-item disabled">
+        <a class="page-link page-link-icon">...</a>
+      </li>
+      {% for page in paginator.page_range %}
+      {% if page == page_obj.number %}
+      <li class="page-item {% if page_obj.number == page_obj.previous_page_number %}active{% endif %}">
+        <a class="page-link page-link-icon"
+          href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}">{{ page_obj.previous_page_number }}</a>
+      </li>
+      <li class="page-item {% if page_obj.number == page %}active{% endif %}">
+        <a class="page-link page-link-icon" href="?page={{ page }}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}">{{ page }}</a>
+      </li>
+      <li class="page-item {% if page_obj.number == page_obj.next_page_number %}active{% endif %}">
+        <a class="page-link page-link-icon" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}">{{ page_obj.next_page_number }}</a>
+      </li>
+      {% endif %}
+      {% endfor %}
+      <li class="page-item disabled">
+        <a class="page-link page-link-icon">...</a>
+      </li>
+      <li class="page-item 
+            {% if page_obj.number == paginator.num_pages %}
+              active
+            {% endif %}">
+        <a class="page-link page-link-icon" href="?page={{ paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}">
+          {{ paginator.num_pages }}
+        </a>
+      </li>
+      {% elif paginator.num_pages|add:"-3" >= 1 and page_obj.number <= paginator.num_pages %}
+      <li class="page-item {% if page_obj.number == page %}active{% endif %}">
+        <a class="page-link page-link-icon"
+          href="?page=1{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}">1</a>
+      </li>
+      <li class="page-item disabled">
+        <a class="page-link page-link-icon">...</a>
+      </li>
+      {% for page in paginator.page_range %}
+      {% if page >= paginator.num_pages|add:"-4" %}
+      <li class="page-item {% if page_obj.number == page %}active{% endif %}">
+        <a class="page-link page-link-icon" href="?page={{page}}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}">{{ page }}</a>
+      </li>
+      {% endif %}
+      {% endfor %}
+      {% endif %}
+      {% endif %}
+
+      <li class="page-item next {% if not page_obj.has_next %}disabled{% endif %}">
+        <a class="page-link page-link-icon"
+          href="{% if page_obj.has_next %}?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}{% endif %}">
+          <i data-feather="chevron-right"></i>
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
+</div>

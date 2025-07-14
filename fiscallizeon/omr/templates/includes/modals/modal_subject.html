@@ -1,0 +1,105 @@
+<div class="modal fade" id="modalSubject" aria-hidden="true" tabindex="-1" aria-labelledby="modalSubjectLabel">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalSubjectLabel">Questão ${selectedExamQuestion.order}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="height: inherit;">
+                <h5>Dados pedagógicos</h5>
+                <section>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="">Etapa do ensino</label>
+                                <select v-model="selectedLevel" class="form-control" id="selectLevel">
+                                    <option value="0">Ensino médio</option>
+                                    <option value="1">Ensino fundamental 1</option>
+                          <option value="2">Ensino fundamental 2</option>
+
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="">Ano/Série</label>
+                                <select name="grade" v-model="selectedGrade" class="form-control" id="id_grade">
+                                    <option value="">Selecione um Ano/Série</option>
+                                    ${selectedExamQuestion.selectedOptions}
+                                    <option :value="grade.id" v-for="grade in grades">${grade.full_name}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="">Área de conhecimento</label>
+                                <select class="form-control" v-model="selectedArea" id="id_knowledge_area">
+                                    <option value="">Selecione uma área de conhecimento</option>
+                                    <option :value="area.id" v-for="area in knowledgeAreas">${area.name}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="">Disciplina</label>
+                                <div class="input-group mb-3">
+                                    <select name="subject" v-model="selectedSubject" class="form-control" id="id_subject">
+                                        <option value="">Selecione uma disciplina</option>
+                                        <option :value="subject.id" v-for="subject in subjects">${subject.name}</option>
+                                    </select>
+                                    <button class="btn input-group-text" id="add-subject" data-target="#registerSubjectModal" data-toggle="modal"><i class="fa fa-plus"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Concluir edição</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="registerSubjectModal" aria-hidden="true" aria-labelledby="registerSubjectModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalSubjectLabel">Cadastrar Disciplina</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="height: inherit;">
+                <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+                    <div>
+                        <h6 class="mg-b-5">Cadastrar uma nova disciplina</h6>
+                        <p class="tx-13 tx-color-03 mg-b-5">Informe os dados abaixo e cadastre uma nova disciplina</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="">Disciplina de referência</label>
+                            <select v-model="selectedParentSubject" name="parent_subject" class="form-control" id="selectedParentSubject">
+                                <option value="">Selecione uma disciplina</option>
+                                <option v-for="subject in parentSubjects" :value="subject.id">${subject.name}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="">Nome da disciplina</label>
+                            <input v-model="newSubjectName" class="form-control" placeholder="Digite um nome" type="text" name="name" />
+                        </div>
+                    </div>
+
+                    <button @click="registerNewSubject()" class="btn btn-primary float-right" data-target="#registerSubjectModal" data-toggle="modal">Salvar disciplina</button>
+                    <button class="btn btn-danger float-right mr-1" data-target="#registerSubjectModal" data-toggle="modal">Voltar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

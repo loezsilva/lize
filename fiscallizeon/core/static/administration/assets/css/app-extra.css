@@ -1,0 +1,293 @@
+.card-crypto .nav-line {
+  border-bottom-width: 0;
+  text-transform: uppercase;
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: .5px;
+}
+
+.card-crypto .nav-line .nav-link+.nav-link {
+  margin-left: 10px;
+}
+
+.card-crypto .nav-line .nav-link.active::after {
+  height: 3px;
+  bottom: -10px;
+  border-radius: 0.25rem;
+  display: none;
+}
+
+@media (min-width: 576px) {
+  .card-crypto .nav-line .nav-link.active::after {
+    display: block;
+  }
+}
+
+.crypto {
+  position: relative;
+  padding: 20px;
+}
+
+.crypto-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 20px;
+}
+
+.crypto-icon-sm {
+  height: 35px;
+  width: 35px;
+  font-size: 16px;
+}
+
+.crypto-bitcoin-cash {
+  line-height: 0;
+  transform: rotate(-40deg);
+}
+
+.media-body {
+  flex: 1;
+}
+
+.dropdown-message .media-body,
+.dropdown-notification .media-body {
+  font-size: 13px;
+  color: rgba(27, 46, 75, 0.85);
+}
+
+.dropdown-message .media-body p,
+.dropdown-notification .media-body p {
+  margin-bottom: 2px;
+}
+
+.dropdown-message .media-body span,
+.dropdown-notification .media-body span {
+  color: #8392a5;
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter UI", Roboto, sans-serif;
+}
+
+.dropdown-message .media-body strong,
+.dropdown-notification .media-body strong {
+  font-weight: 500;
+  color: #1b2e4b;
+}
+
+.card-events .media-body {
+  margin-left: 15px;
+  padding: 13px 15px;
+  border-left: 3px solid transparent;
+}
+
+.card-events .media-body.event-panel-green {
+  background-color: rgba(16, 183, 89, 0.1);
+  border-left-color: #10b759;
+  color: #08592b;
+}
+
+.card-events .media-body.event-panel-pink {
+  background-color: rgba(241, 0, 117, 0.1);
+  border-left-color: #f10075;
+  color: #8b0043;
+}
+
+.card-events .media-body.event-panel-primary {
+  background-color: rgba(128, 128, 128, 0.096);
+  border-left-color: #009ede;
+  color: #013e94;
+}
+
+.card-events .media-body.event-panel-orange {
+  background-color: rgba(253, 126, 20, 0.1);
+  border-left-color: #fd7e14;
+  color: #aa4e01;
+}
+
+.card-events .media-body.event-panel-red {
+  background-color: rgba(220, 53, 69, 0.1);
+  border-left-color: #dc3545;
+  color: #b70012;
+}
+
+.card-events .media-body.event-panel-gray {
+  background-color: rgba(59, 72, 99, 0.1);
+  border-left-color: #3b4863;
+  color: #141926;
+}
+
+.card-events .media-body.event-panel-yellow {
+  background-color: rgba(255, 193, 7, 0.1);
+  border-left-color: #ffc107;
+  color: #b78600;
+}
+
+.card-events .event-time {
+  display: block;
+  font-size: 11px;
+  margin-bottom: 5px;
+  opacity: .6;
+}
+
+.card-events .event-title {
+  margin-bottom: 0;
+  font-size: 13px;
+}
+
+.card-events .event-desc {
+  margin-top: 2px;
+  margin-bottom: 0;
+  font-size: 11px;
+  opacity: .7;
+}
+
+.card-todo .list-group-item {
+  padding: 10px 15px 15px;
+}
+
+.card-todo .list-group-header {
+  display: flex;
+  align-items: center;
+}
+
+.card-todo .list-group-header span {
+  width: 20px;
+  height: 3px;
+}
+
+.card-todo .list-group-header span+span {
+  margin-left: 3px;
+}
+
+.card-todo .list-group-header svg {
+  width: 16px;
+  height: 16px;
+}
+
+.card-todo .todo-title {
+  margin-bottom: 3px;
+  font-size: 13px;
+}
+
+.card-todo .todo-date {
+  font-size: 12px;
+  margin-bottom: 0;
+  color: #8392a5;
+}
+
+.card-todo .card-progress {
+  padding-top: 15px;
+  padding-bottom: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.card-todo .content-label {
+  text-transform: uppercase;
+  font-size: 10px;
+  color: #8392a5;
+}
+
+.card-todo .progress {
+  flex: 1;
+  height: 5px;
+  margin: 0 10px;
+}
+
+.card-todo .badge {
+  padding-top: 4px;
+  text-transform: uppercase;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  border-radius: 1.5px;
+}
+
+.card-todo .card-footer a {
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  border: 1px dashed #b4bdce;
+  color: #1b2e4b;
+}
+
+.card-todo .card-footer a:hover,
+.card-todo .card-footer a:focus {
+  border-color: #009ede;
+  color: #009ede;
+  background-color: rgba(1, 104, 250, 0.1);
+}
+
+.card-todo .card-footer-red a:hover,
+.card-todo .card-footer-red a:focus {
+  border-color: #de0000;
+  color: #de0000;
+  background-color: rgba(250, 1, 1, 0.1);
+}
+
+.contact-content-header {
+  background-color: #fff;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 55px;
+  border-bottom: 1px solid rgba(72, 94, 144, 0.16);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+}
+
+@media (min-width: 1200px) {
+  .contact-content-header {
+    right: 290px;
+    padding: 0 25px;
+  }
+}
+
+.contact-content-header .nav-link {
+  color: #8392a5;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0;
+}
+
+.contact-content-header .nav-link:hover,
+.contact-content-header .nav-link:focus {
+  color: #525f70;
+}
+
+.contact-content-header .nav-link.active {
+  color: #009ede;
+  font-weight: 600;
+  position: relative;
+}
+
+.contact-content-header .nav-link.active::before {
+  content: "";
+  position: absolute;
+  bottom: -19px;
+  left: 0;
+  width: 100%;
+  border-bottom: 1px solid #009ede;
+}
+
+.contact-content-header .nav-link + .nav-link {
+  margin-left: 30px;
+}
+
+.contact-content-header .nav-link span {
+  display: none;
+}
+
+@media (min-width: 576px) {
+  .contact-content-header .nav-link span {
+    display: inline;
+  }
+}

@@ -1,0 +1,274 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+
+{% block title %}Listagem de código de disciplinas (ERP) - Lize{% endblock title %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+<div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                <li class="breadcrumb-item"><a href="#">CÓDIGO DE DISCIPLINA</a></li>
+                <li class="breadcrumb-item active" aria-current="page">LISTAGEM</li>
+            </ol>
+        </nav>
+        <h4>Código de disciplina (ERP)</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <!--
+            <a href="javascript(0):void" data-toggle="modal" data-target="#modalSubjectCodeCreate" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+                <i data-feather="plus" class="wd-10 mg-r-5"></i> Cadastrar código de disciplina
+            </a>
+         -->
+    </div>
+</div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+      <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1rem; justify-content: space-between;">
+        <div style="flex: 1;">
+          <!-- Empty -->
+        </div>
+        <div>
+          <!--
+          <a href="javascript(0):void" data-toggle="modal" data-target="#modalSubjectCodeCreate" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+            <i data-feather="plus" class="wd-10 mg-r-5"></i> Cadastrar código de disciplina
+          </a>
+          -->
+        </div>
+      </div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+                <div>
+                    <h6 class="mg-b-5">Códigos de Disciplina</h6>
+                    <p class="tx-13 tx-color-03 mg-b-5">Gerencie todos os códigos de disciplina listadas abaixo</p>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-dashboard mg-b-1">
+                    <thead>
+                        <tr>
+                            <th>Nome da Disciplina</th>
+                            <th>Código</th>
+                            <th class="text-wrap text-right"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="subject in subjects">
+                            <td class="tx-medium align-middle">
+                                ${subject.name} <span class="text-muted">${subject.knowledge_area.name}</span>
+                                <br>
+                                <span class="text-muted" v-if="subject.parent_subject.name">Disciplina de referência: ${subject.parent_subject.name}</span>
+                            </td>
+                            <td class="tx-medium align-middle">
+                                ${subject.code ? subject.code.code : ''}
+                            </td>
+                            <td class="text-wrap">
+                                <div class="d-flex float-right">
+                                    <div class="dropdown">
+                                        <button class="btn btn-secondary dropdown-toggle" type="button"
+                                            id="dropdownMenuButtonReport" data-toggle="dropdown"
+                                            aria-haspopup="true" aria-expanded="false">
+                                            Opções
+                                        </button>
+                                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButtonReport">
+                                            <a href="javascript:void(0)" @click="selectSubject(subject)" data-toggle="modal" data-target="#modalSubjectCodeEdit" class="dropdown-item nav-link">
+                                                <i class="fas fa-edit mr-1"></i>${subject.code ? 'Editar Código':'Cadastrar Código'}</a>
+                                            </a>
+                                            <a href="javascript:void(0)" v-if="subject.code" @click="selectSubject(subject), retrieveUpdateDestroySubjectCode('delete', getUrl(urls.retrieveUpdateDestroy, subject.code.id))" class="dropdown-item nav-link">
+                                                <i class="fas fa-times mr-1"></i>Remover Código</a>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div><!-- table-responsive -->
+        </div><!-- card -->
+        {% include 'includes/pagination.html' with objects=object_list %}
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+    {% include 'includes/confirm_modal.html' %}
+
+    <div class="modal fade" id="modalSubjectCodeEdit" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content" style="height: 270px;" v-if="selectedSubject">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalSubjectCodeEditLabel">${selectedSubject.name} - ${selectedSubject.knowledge_area.name}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12 col-lg-7">
+                            <div class="form-group">
+                                <label for="">Código da disciplina</label>
+                                <input class="form-control" v-model="subjectCode.code">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <template v-if="selectedSubject.code">
+                        <button type="button" class="btn btn-primary" @click="retrieveUpdateDestroySubjectCode('put', getUrl(urls.retrieveUpdateDestroy, subjectCode.id))">Confirmar Alterações</button>
+                    </template>
+                    <template v-else>
+                        <button type="button" class="btn btn-success" @click="listCreateSubjectCodes('post')">Cadastrar Código</button>
+                    </template>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+{% endblock extra-modal %}
+
+{% block js-additional %}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+    <script>
+
+        var app = new Vue({
+            el: '#app',
+            delimiters: ['${', '}'],
+            data: {
+                subjectsCode: [],
+                selectedSubjectCode: '',
+                selectedSubject: '',
+                subjectCode: {
+                    client: '{{user.get_clients.0.id}}',
+                    subject: '',
+                    code: '',
+                },
+                subjects: [
+                    {% for subject in object_list %}
+                        {
+                            id: '{{subject.id}}',
+                            name: '{{subject.name}}',
+                            knowledge_area: {
+                                id: '{{subject.knowledge_area.id}}',
+                                name: '{{subject.knowledge_area.name}}',
+                            },
+                            parent_subject: {
+                                id: '{{subject.parent_subject.id}}',
+                                name: '{{subject.parent_subject.name}}',
+                            },
+                        },
+                    {% endfor %}
+                ],
+                urls: {
+                    retrieveUpdateDestroy: "{% url 'integrations:api_subject_code_retrieve_update_destroy' pk='00000000-0000-0000-0000-000000000000' %}",
+                }
+            },
+            methods: {
+                selectSubject(subject) {
+                    this.selectedSubject = subject
+                    if(subject.code) {
+                        this.subjectCode = Object.assign({}, subject.code)
+                    } else {
+                        this.subjectCode.id = ''
+                        this.subjectCode.code = ''
+                        this.subjectCode.subject = ''
+                    }
+                    this.subjectCode.subject = subject.id
+                },
+                listCreateSubjectCodes(method = 'get') {
+                    axios({
+                        url: "{% url 'integrations:api_subject_code_list_create' %}",
+                        method: method,
+                        data: this.subjectCode.subject ? this.subjectCode : '',
+                    })
+                    .then(response => {
+                        if (response.statusText == "Created") {
+                            this.selectedSubject['code'] = response.data
+                            this.$forceUpdate()
+                            Swal.fire({
+                                title: 'Código cadastrado com sucesso!',
+                                icon: 'success',
+                                showConfirmButton: false,
+                                timer: 1000
+                            })
+                            $('#modalSubjectCodeEdit').modal('hide')
+                            return
+                        }
+
+                        this.subjectsCode = response.data
+                        this.subjects.forEach((subject) => {
+                            this.subjectsCode.find((subjectCode) => {
+                                if(subject.id == subjectCode.subject) {
+                                    subject['code'] = subjectCode
+                                }
+                            })
+                        })
+                        this.$forceUpdate()
+                    })
+                    .catch(error => {
+                        console.log(error);
+                    });
+                },
+                retrieveUpdateDestroySubjectCode(method, url) {
+                    if (method == 'delete') {
+                        Swal.fire({
+                            title: 'Você tem certeza que quer deletar este código?',
+                            icon: 'error',
+                            showCancelButton: true,
+                            confirmButtonText: 'Sim',
+                            confirmButtonColor: '#F07374',
+                            cancelButtonText: `Não`,
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                axios.delete(url)
+                                .then(response => {
+                                    this.selectedSubject['code'] = ''
+                                    this.$forceUpdate()
+                                })
+                                .catch(error => {
+                                    console.log(error);
+                                });
+                            } 
+                        })
+                    } else if(method == 'put') {
+                        axios.put(url, this.subjectCode)
+                        .then(response => {
+                            this.selectedSubject['code'] = response.data
+                            this.$forceUpdate()
+                            $('#modalSubjectCodeEdit').modal('hide')
+                            Swal.fire({
+                                title: 'Código alterado com sucesso!',
+                                icon: 'success',
+                                showConfirmButton: false,
+                                timer: 1000
+                            })
+                        })
+                        .catch(error => {
+                            console.log(error);
+                        });
+                    }
+                },
+                getUrl(url, id) {
+                    if(id) {
+                        return url.replace('00000000-0000-0000-0000-000000000000', id)
+                    }
+                },
+            },
+            mounted() {
+                this.listCreateSubjectCodes()
+            }
+        });
+
+    </script>
+
+
+{% endblock js-additional %}

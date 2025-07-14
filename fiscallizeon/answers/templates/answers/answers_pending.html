@@ -1,0 +1,1150 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load format_duration %}
+{% load proportion %}
+{% load l10n %}
+
+{% block title %}Correção de respostas - Lize{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<link rel="stylesheet" href="{% static 'administration/lib/datatables.net-responsive-dt/css/responsive.dataTables.min.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@recogito/annotorious-openseadragon@2.6.0/dist/annotorious.min.css">
+
+<style>
+    .modal-fullscreen{
+        width:100vw;
+        max-width:none;
+        height:100%;
+        margin:0
+    }
+    .modal-fullscreen .modal-content{
+        height:100%;
+        border:0;
+        border-radius:0
+    }
+    .modal-fullscreen .modal-footer,.modal-fullscreen .modal-header{
+        border-radius:0
+    }
+    .modal-fullscreen .modal-body{
+        overflow-y:auto
+    }
+    .card-detail{ 
+        
+        max-height: 70vh;
+        overflow: auto;
+    }
+    #question-details {
+        border-width: 1px;
+        border-style: solid;
+        border-color: #d9d7d7;
+    }
+
+    #question-details img {
+        min-width: 200px;
+        max-width: 100%;
+    }
+
+    .text-main {
+        color: #001737 !important;
+    }
+
+    table#student-responses td {
+        min-width: 53.85px;
+    }
+
+    td.bg-gray:hover {
+        background-color: #dedede !important;
+        cursor: pointer;
+    }
+
+    td.bg-success, td.bg-pink, td.bg-warning {
+        color: white !important;
+    }
+
+    td.bg-success:hover {
+        background-color: #10753c !important;
+        cursor: pointer;
+    }
+
+    td.bg-pink:hover {
+        background-color: #a80051 !important;
+        cursor: pointer;
+    }
+
+    td.bg-warning:hover {
+        cursor: pointer;
+    }
+
+    td.alternative-correct {
+        background-color: #10b75990 !important;
+    }
+
+    td.alternative-incorrect {
+        background-color: #dc354590 !important;
+    }
+
+    .containerimg {
+        position: relative;
+        border: 1px solid #000;
+        overflow: hidden;
+        width: 400px;
+        margin: 100px;
+    }
+    .containerimg img {
+        max-width: 100%;
+        -moz-transition: all 0.5s;
+        -webkit-transition: all 0.5s;
+        transition: all 0.5s;
+    }
+    .containerimg:hover img {
+        -moz-transform: scale(1.2);
+        -webkit-transform: scale(1.2);
+        transform: scale(1.2);
+    }
+
+    .overlay {
+        overflow: hidden;
+        z-index: 99999 !important;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        transition: .5s ease;
+        background: rgba(0, 0, 0, 0.8);
+    }
+    .overlay i {
+        cursor: pointer;
+    }
+    .overlay i:hover {
+        color: coral !important;
+    }
+    .competence_enem {
+        width: 90%;
+        overflow-wrap: break-word;  
+        word-wrap: break-word; 
+        word-break: break-word;
+    }
+    .table{
+        margin-left: auto;
+        margin-right: auto;
+    }  
+    .heder{
+        text-align: center
+    }
+    .remove-p-margin p {
+        margin: 0;
+    }
+    
+</style>
+
+{% endblock %}
+
+{% block js-header-additional %}
+    <script src="{% static 'js/annotorious/openseadragon.min.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@recogito/annotorious@2.6.0/dist/annotorious.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@recogito/annotorious-openseadragon@2.6.0/dist/openseadragon-annotorious.min.js"></script>
+{% endblock js-header-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">PROVAS</a></li>
+          <li class="breadcrumb-item active" aria-current="page">DETALHES</li>
+        </ol>
+      </nav>
+      <h4>{{object.name}}</h4>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+<div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+        <nav class="ls" aria-label="Breadcrumb">
+            <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+            <li>
+                <div>
+                <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                    <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+                </a>
+                </div>
+            </li>
+            <li>
+                <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                    <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="{% url 'exams:exams_list' %}?category=exam" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Cadernos</a>
+                </div>
+            </li>
+            <li>
+                <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                    <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Correção</a>
+                </div>
+            </li>
+            </ol>
+        </nav>
+        <div class="d-none d-md-block">
+            <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+{% if applications_student.exists %}
+    
+    <div class="row">
+        <div class="col-md-12 ">
+            <div class="card">
+                <div class="card-body pd-y-15 pd-x-10">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-borderless table-sm tx-13 tx-nowrap mg-b-0" id="table-students">
+                            <thead>
+                                <tr class="tx-10 tx-spacing-1 tx-color-03 tx-uppercase">
+                                    <th>Tipo</th>
+                                    <th>Nome</th>
+                                    <td></td>
+                                    <th>Desempenho</th>
+                                    <th>Acertos</th>
+                                    <th>Corrigidas</th>
+                                    <th>Nota</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="applicationStudent in applicationsStudent">
+                                    <td class="align-middle tx-medium text-center text-muted">
+                                        <i class="fas fa-chalkboard-teacher" data-toggle="tooltip" data-placement="top" title="Presencial" v-if="applicationStudent.is_omr"></i>
+                                        <i class="fas fa-tv" data-toggle="tooltip" data-placement="top" title="Online" v-else-if="applicationStudent.start_time"></i>
+                                    </td>
+                                    <td class="align-middle tx-medium">
+                                        <a class="m-0 p-0" href="#" @click.stop.prevent="openStudentModal(applicationStudent)">
+                                            ${applicationStudent.student_name} - 
+                                        </a>
+                                        <p style="margin-top: -5px !important;" class="text-muted m-0 p-0">
+                                            ${applicationStudent.student_enrollment_number}
+                                        </p>
+                                    </td>
+                                    <td>
+                                        <a target="_blank" v-if="applicationStudent.has_suspicion_advantage" :href="getUrl(urls.applicationDetail, applicationStudent.application_id)">
+                                            <i data-toggle="tooltip" original-title="Suspeita de Obtenção de Vantagem Indevida" title="Suspeita de Obtenção de Vantagem Indevida" class="fas fa-exclamation-triangle fa-lg text-danger m-0 p-0 mt-2"></i>
+                                        </a>
+                                    </td>
+                                    <td class="align-middle">
+                                        <div class="wd-300 d-inline-block">
+                                            <div class="progress bg-gray op-7 ht-13 wd-100p mt-1">
+                                                <div class="progress-bar bg-success bd-l bd-white" role="progressbar" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100" :style="'width:'+ proportion(!applicationStudent.questions ? applicationStudent.total_correct_answers:getQuestionsSummary('correct_answers', applicationStudent), applicationStudent.total_answers).toFixed(2)+'%;'" data-toggle="tooltip" data-placement="right" :title="!applicationStudent.questions ? 'Acertos: '+ applicationStudent.total_correct_answers : 'Acertos: '+ getQuestionsSummary('correct_answers', applicationStudent)"></div>
+                                                <div class="progress-bar bg-warning bd-l bd-white" role="progressbar" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100" :style="'width:'+ proportion(!applicationStudent.questions ? applicationStudent.total_partial_answers:getQuestionsSummary('partial_answers', applicationStudent), applicationStudent.total_answers).toFixed(2)+'%;'" data-toggle="tooltip" data-placement="right" :title="!applicationStudent.questions ? 'Acertos parciais: '+ applicationStudent.total_partial_answers : 'Acertos parciais: '+ getQuestionsSummary('partial_answers', applicationStudent)"></div>
+                                                <div class="progress-bar bg-pink bd-l bd-white" role="progressbar" aria-valuenow="3" aria-valuemin="0" aria-valuemax="100" :style="'width:'+ proportion(!applicationStudent.questions ? applicationStudent.total_incorrect_answers:getQuestionsSummary('incorrect_answers', applicationStudent), applicationStudent.total_answers).toFixed(2)+'%;'" data-toggle="tooltip" data-placement="right" :title="!applicationStudent.questions ? 'Erros: '+ applicationStudent.total_incorrect_answers : 'Erros: '+ getQuestionsSummary('incorrect_answers', applicationStudent)"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">${!applicationStudent.questions ? applicationStudent.total_correct_answers : getQuestionsSummary('correct_answers', applicationStudent)} de ${applicationStudent.total_answers}</span>
+                                    </td>
+                                    <td class="align-middle text-right">
+                                        <span class="text-muted">${!applicationStudent.questions ? applicationStudent.total_corrected_answers : applicationStudent.questions.filter(question => !question.annuled && question.teacher_grade && question.category != "Objetiva").length} de ${applicationStudent.total_text_file_answers}</span>
+                                    </td>
+                                    <td class="align-middle text-right">
+                                        <span class="tx-medium" v-if="applicationStudent.total_grade">${!applicationStudent.questions ? applicationStudent.total_grade.toFixed(2) : getQuestionsSummary('total_grade', applicationStudent).toFixed(2)}</span>
+                                        <span class="tx-medium" v-else>-</span>
+                                        <br />
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <a target="_blank" :href="getUrl(urls.examPrint, '{{object.pk}}', applicationStudent.id)" class="btn btn-primary btn-xs">
+                                            <i class="fas fa-print"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-danger btn-xs" title="Zerar prova do aluno" :disabled="!applicationStudent.total_answers" @click="clearApplicationStudent(applicationStudent)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <h5>Selecione uma turma acima para ver os resultados</h5>
+{% endif %}
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+    <div class="overlay text-center d-none">
+        <div class="row m-0 shadow bg-secondary fixed-top">
+            <div class="col">
+                <h4 class="text-white pt-3 m-0 pb-1">Pressione SHIFT e mova o mouse para criar uma seleção, ou clique na imagem e arraste o mouse para move-la <i class="fas fa-times text-white fa-2x float-right" @click="showAnnotorious(close = true)"></i></h4>
+            </div>
+            <div class="col-12 pb-2">
+                <div id="toolbarDiv">
+                    <div class="row m-0 d-flex justify-content-center">
+                        <i class="fas fa-home m-2 text-white" style="font-size: 1.1rem;" id="home"></i>
+                        <i class="fas fa-search-plus m-2 text-white" style="font-size: 1.1rem;" id="zoom-in"></i>
+                        <i class="fas fa-search-minus m-2 text-white" style="font-size: 1.1rem;" id="zoom-out"></i>
+                        <i class="fas fa-undo m-2 text-white" style="font-size: 1.1rem;" id="rotate-left"></i>
+                        <i class="fas fa-undo m-2 text-white" style="transform: rotate(-90deg); transform: scaleX(-1); font-size: 1.1rem;" id="rotate-right"></i>
+                        <i class="fas fa-expand-arrows-alt m-2 text-white" style="font-size: 1.1rem;" id="full-page"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row m-0" style="padding-top: 100px;">
+            <div class="container p-0">
+                <div class="row d-flex justify-content-center">
+                    <div class="col">
+                        <div class="overlay-content" id="img-content" style="height: 720px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-dark p-2 shadow py-4 rounded" style="position: absolute; width: 300px; right: 0; top: 20%" id="annotations-list" v-if="annotationsList.length > 0">
+                <h5 class="text-white">Lista de Anotações</h5>
+                <div class="row m-0 mt-3" v-for="(annotation, indexAnnotation) in annotationsList">
+                    <div class="col-12">
+                        <div class="dropdown">
+                            <button class="btn btn-xs btn-secondary py-0 m-1 dropdown-toggle float-right" data-toggle="dropdown" @mouseenter="anno.selectAnnotation(annotation.id)"> Adicionar tag <i class="fas fa-tags mx-1"></i></button>
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <h6 class="dropdown-header tx-uppercase tx-12 tx-bold tx-inverse">Adicionar TAG especial</h6>
+                                <a class="dropdown-item bg-danger text-white my-1" href="#" @click="createTagInAnnotation('ERRO', annotation)">Tag de Erro</a>
+                                <a class="dropdown-item bg-warning my-1" href="#" @click="createTagInAnnotation('ATENÇÃO', annotation)">Tag de Atenção</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="card" style="cursor: pointer;" @click="anno.selectAnnotation(annotation.id)">
+                            <div class="card-body p-1">
+                                <p class="mb-0 pt-1 text-truncate" v-for="(comment, index) in annotation.comments"> ${comment} </p>
+                                <div class="mt-1" v-if="annotation.tags.length > 0">
+                                    <strong class="tx-10">TAG(S):</strong> <span class="badge mx-1" v-bind:class="getBadgeColor(tag)" v-for="tag in annotation.tags">${tag}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="row m-0 fixed-bottom bg-secondary">
+            <div class="col shadow">
+                <h4 class="text-center text-white py-2">Aluno: ${this.applicationStudent.fullname} - Questão: ${this.selectedQuestion.order}</h4>
+            </div>
+        </div>
+    </div>  
+
+    <div class="modal pr-0" tabindex="-1" role="dialog" id="detailModal">
+        <div class="modal-dialog" :class="hasFiles() ? 'modal-fullscreen':'modal-lg'" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-white py-1">
+                    <h5 class="modal-title">
+                        <div class="d-flex">
+                            <span> 
+                                <i class="fas fa-user mr-2"></i>
+                                ${applicationStudent.fullname}
+                            </span>
+                            <span class="text-muted m-0 mx-2">
+                                ${applicationStudent.enrollment_number}
+                            </span>
+                            <span v-if="applicationStudent.is_omr" class="text-muted">
+                            (aplicação presencial)
+                            </span>
+                        </div>
+                        <span 
+                            class="text-muted" 
+                            v-if="applicationStudent.start_time"> de ${formatDate(applicationStudent.start_time)} 
+                            <template v-if="applicationStudent.end_time">às ${formatDate(applicationStudent.end_time)}</template>
+                        </span>
+                        <template v-if="applicationStudent.empty_questions > 0"><br/>
+                            <span class="text-danger" v-if="applicationStudent.empty_questions == 1"> (finalizou a prova confirmando que havia 1 questão em branco)</span>
+                            <span class="text-danger" v-else> (finalizou a prova confirmando que havia ${applicationStudent.empty_questions} questões em branco)</span>
+                        </template>
+                        <span class="badge badge-warning" v-if="applicationStudent.randomization_version">ORDEM RANDOMIZADA</span>
+                    </h5>
+                    <div>
+                        <template v-if="selectedApplicationStudent && selectedApplicationStudent.can_be_corrected">
+                            <button type="button" @click="changeViewType(), !correctionFast ? getEnunciation(selectedQuestion) : ''" class="btn btn-xs btn-secondary">
+                                <template v-if="correctionFast">
+                                    <i class="fas fa-tasks" title="Correção completa"></i>
+                                </template>
+                                <template v-else>
+                                    <i class="fas fa-table" title="Correção rápida"></i>
+                                </template>
+                            </button>
+                        </template>
+                        <button class="btn btn-primary btn-xs m-1" @click="changeStudent('previous')" v-if="applicationsStudent.indexOf(selectedApplicationStudent) !== 0"><i class="fas fa-arrow-left"></i> Aluno anterior</button>
+                        <button class="btn btn-primary btn-xs m-1" @click="changeStudent('next')" v-if="applicationsStudent.indexOf(selectedApplicationStudent) != applicationsStudent.length -1">Próximo aluno <i class="fas fa-arrow-right"></i></button>
+                        <button @click="openedChat=false;" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <i class="fas fa-times-circle"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-body px-0 py-0" style="max-height: 100vh !important; overflow-y: hidden;">
+                    <div v-if="spinnerVerification" class="text-center mt-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                        <div>Carregando...</div>
+                    </div>
+                    <div class="row m-0">
+                        <div :class="hasFiles() ? 'col-6':'col-12'" class="py-2" style="overflow-y: scroll; max-height: 100vh;">
+                            <template  v-if="correctionFast">
+                                <div class="d-flex justify-content-between align-items-end">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Questão</th>
+                                                <th>Resposta do aluno</th>
+                                                <th ></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-if="!question.text_correction" v-for="(question, index) in applicationStudent.questions">
+                                                <td>Questão ${index+1}<br>
+                                                    <span class="font-weight-bold">Valor:</span>
+                                                    <span class="badge badge-info">${question.question_weight}</span> 
+                                                </td>
+                                                <td>
+                                                    <template v-if="question.category == 'Arquivo anexado'">
+                                                        {% if object.group_attachments %}
+                                                            <div class="row row-xs" v-if="getAttachmentsExamTeacherSubject(question.exam_teacher_subject)">
+                                                                <div class="col-sm-12 col-lg-6 col-xl-6 p-1" v-for="(attachment, index) in getAttachmentsExamTeacherSubject(question.exam_teacher_subject).attachments">
+                                                                    <div class="card">
+                                                                        <div class="card-body py-2 d-flex justify-content-between align-items-center">
+                                                                            <div class="d-flex align-items-center">
+                                                                                <i class="fas fa-file fa-2x text-primary"></i>
+                                                                                <h6 class="ml-1 mb-0"><a :href="attachment.file" target="_blank" class="link-02">Anexo ${index + 1}</a></h6>
+                                                                            </div>
+                                                                            <div>
+                                                                                <template v-if="checkAnswerType(attachment.file)">
+                                                                                    <a href="javascript:void(0)" class="btn btn-xs btn-primary" data-animation="effect-scale" @click="showAnnotorious(false, false, attachment.file)"><i class="fas fa-image"></i></a>
+                                                                                </template>
+                                                                                <template v-else>
+                                                                                    <a :href="attachment.file" target="_blank" class="btn btn-xs btn-primary"><i class="fas fa-download"></i></a>
+                                                                                </template>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <span class="text-danger" v-if="question && !getAttachmentsExamTeacherSubject(question.exam_teacher_subject).attachments.length">O aluno não enviou arquivo</span>
+                                                            </div>
+                                                        {% else %}
+                                                            <template v-if="question.corrected_but_no_answer">
+                                                                <span class="text-danger">A questão foi corrigida, mas a resposta do aluno não foi detectada automaticamente. Verifique na imagem do cartão ao lado.</span>
+                                                            </template>
+                                                            <template v-else>
+                                                                <template v-if="!(question.file_answer && question.file_answer_url)">
+                                                                    <br>
+                                                                    <span class="text-danger">Sem resposta enviada.</span>
+                                                                </template>
+                                                            </template>
+                                                        {% endif %}
+                                                    </template>
+                                                    <template v-if="question.category == 'Discursiva'">
+                                                        <p v-if="question.textual_answer">
+                                                            ${question.textual_answer_content}</p>
+                                                        <span class="text-danger" v-else>Sem resposta</span>
+                                                    </template>
+                                                </td>
+                                                <td>
+                                                    <template v-if="question.annuled">
+                                                        <div class="d-flex justify-content-end">
+                                                            <div class="btn-toolbar" role="toolbar">
+                                                                <div class="btn-group mr-2" role="group">
+                                                                    <button type="button" class="btn btn-secondary" class="btn btn-secondary text-uppercase" disabled>
+                                                                        Questão anulada <i class="fas fa-times-circle"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                    <template v-else>
+                                                        <div class="d-flex justify-content-end" v-if="question.category == 'Objetiva'">
+                                                            <div class="btn-toolbar" role="toolbar">
+                                                                <div class="btn-group mr-2" role="group">
+                                                                    <button 
+                                                                        type="button" 
+                                                                        v-for="(_alternative, indexAlternative) in question.alternatives" 
+                                                                        :class="{
+                                                                            'btn-success active': question.answer == _alternative.id && _alternative.is_correct,
+                                                                            'btn-danger active': question.answer == _alternative.id && !_alternative.is_correct
+                                                                        }" 
+                                                                        class="btn btn-secondary text-uppercase"
+                                                                        @click="updateChoiceAnswer(_alternative.id, question)"
+                                                                        :disabled="loadingSaveQuestion.includes(question.id || question.pk)"
+                                                                    >
+                                                                        ${generateAlternativeOrder(indexAlternative)}
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            <button type="button" class="btn btn-secondary" title="Remover nota" v-if="question.option_answer" @click="selectedQuestion = question, setQuestionList(question, null, false, true)">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                        <div class="d-flex justify-content-end" v-else>
+                                                            <div class="">
+                                                                <div class="btn-group">
+                                                                    <button class="btn btn-link dropdown-toggle" type="button" id="dropdownMenuClickable" data-toggle="dropdown" data-bs-auto-close="inside" aria-expanded="false">
+                                                                        + Comentário
+                                                                    </button>
+                                                                    <div class="dropdown-menu"  aria-labelledby="dropdownMenuClickable">
+                                                                        <form class="px-4 py-3">
+                                                                            <div class="d-flex justify-content-end">
+                                                                                <div class="form-group">
+                                                                                    <span class="badge badge-info">Questão ${index+1}</span><br>
+                                                                                    <label style="text-align: center">Comentário do professor</label>
+                                                                                    <textarea class="form-control" id="feedback-textarea" @blur="sendTeacherFeedback(question)" rows="3" cols="100" v-model="question.teacher_feedback"></textarea>
+                                                                                </div>
+                                                                            </div>
+                                                                        </form>
+                                                                        <div class="dropdown-divider"></div>
+                                                                        <a class="dropdown-item">
+                                                                            <span class="text-muted">O texto será salvo automaticamente ao sair do<br> campo de comentário.</span></a>
+                                                                    </div>
+                                                                    <ul class="dropdown-menu">
+                                                                    <li>
+                                                                        <div class="d-flex justify-content-end">
+                                                                            <div class="form-group">
+                                                                                <label for="feedback-textarea">Comentário do professor</label>
+                                                                                <textarea class="form-control" id="feedback-textarea" @blur="sendTeacherFeedback(question)" rows="10" v-model="question.teacher_feedback"></textarea>
+                                                                                <span class="text-muted">O texto será salvo automaticamente ao sair do campo de comentário.</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </li>
+                                                                    </ul>
+                                                                </div>
+                                                                <div class="btn-group">
+                                                                    <button type="button" class="btn btn-xs btn-danger" title="Atribuir nota zero" @click="selectedQuestion = question, setQuestionList(question, 0, hasCorrection=true)">
+                                                                        <i class="fas fa-angle-double-down"></i> 0%
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-xs btn-warning" title="Atribuir 25% da nota" @click="selectedQuestion = question, setQuestionList(question, (question.question_weight * 0.25).toFixed(4), hasCorrection=true)">
+                                                                        <i class="fas fa-angle-up"></i> 25%
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-xs btn-warning" title="Atribuir metade da nota" @click="selectedQuestion = question, setQuestionList(question, (question.question_weight * 0.5).toFixed(4), hasCorrection=true)">
+                                                                        <i class="fas fa-angle-up"></i> 50%
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-xs btn-warning" title="Atribuir 75% da nota" @click="selectedQuestion = question, setQuestionList(question, (question.question_weight * 0.75).toFixed(4), hasCorrection=true)">
+                                                                        <i class="fas fa-angle-up"></i> 75%
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-xs btn-success" title="Atribuir nota máxima" @click="selectedQuestion = question, setQuestionList(question, question.question_weight, hasCorrection=true)">
+                                                                        <i class="fas fa-angle-double-up"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-xs btn-secondary" title="Remover nota" v-if="(question.textual_answer || question.file_answer) && question.teacher_grade != null" @click="selectedQuestion = question, setQuestionList(question)">
+                                                                        <i class="fas fa-trash"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            <div class="ml-2 my-auto">
+                                                                <input :class="question.formValid ? question.formValid:''" :id="question.pk" data-type="question.pk" style="width: 120px;" type="number" :tabindex="index+1" class="form-control form-control-sm" v-model="question.teacher_grade" @keyup="question.teacher_grade = $event.target.value, $forceUpdate()" min="0" :max="question.question_weight" @input="question.formValid = ''" @blur="sendTeacherFeedback(question, next = false, hasCorrection=true)" step="0.01" placeholder="0.00">                        
+                                                                <div v-if="question.formValid == 'is-invalid'" class="invalid-feedback">Valor maior que a nota</div>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </template>
+                            <template v-else>
+                                <template v-if="applicationStudent.questions.length">
+                                    <table class="table table-responsive table-bordered" id="student-responses">
+                                        <thead>
+                                            <tr>
+                                                <th>
+                                                    <a 
+                                                        href="#" 
+                                                        class="ml-2 float-right" 
+                                                        :class="[ordering.category == 'order' ? 'text-primary' : 'text-secondary']" 
+                                                        @click.prevent.default="orderQuestions('order')"
+                                                    >
+                                                        <i class="fas fa-sort fa-rotate-90"></i>
+                                                    </a>
+                                                </th>
+                                                <th v-for="question in applicationStudent.questions" class="text-center" :class="{'bg-primary-light': question.pk == selectedQuestion.pk}">${question.order}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Resp.</td>
+                                                <td 
+                                                    v-for="answer in applicationStudent.questions" 
+                                                    data-toggle="popover" 
+                                                    data-content="<b>Tempo:</b> 12<br><b>Num. repostas: 12</b>" 
+                                                    data-placement="right"
+                                                    class="text-center text-secondary"
+                                                    data-html="true"
+                                                    :class="getAnswerClass(answer)"
+                                                    @click="getEnunciation(answer)"
+                                                >
+                                                    <template v-if="answer.annuled">
+                                                        <i class="far fa-times-circle"></i>
+                                                    </template>
+                                                    <template v-else-if="(!answer.answer && !answer.textual_answer && !answer.file_answer) && applicationStudent.duplicated_answers.includes(answer.pk || answer.id)">
+                                                        <i class="far fa-object-group" style="font-size: 1.3rem;"></i>
+                                                    </template>
+                                                    <template v-else>
+                                                        <template v-if="answer.corrected_but_no_answer">
+                                                            <i class="fas fa-user-edit"></i>
+                                                        </template>
+                                                        <template v-else>
+                                                            <i class="fas fa-pen-nib" v-if="answer.category == 'Discursiva' && answer.textual_answer"></i>
+                                                            {% if object.group_attachments %}
+                                                                <i class="fa fa-paperclip" v-if="answer.category == 'Arquivo anexado'"></i>
+                                                            {% else %}
+                                                                <i class="fa fa-paperclip" v-if="answer.category == 'Arquivo anexado' && answer.file_answer"></i>
+                                                            {% endif %}
+                                                        </template>
+                                                    </template>
+                                                </td>
+                                            </tr>
+                                            <template v-if="!applicationStudent.is_omr">
+                                                <tr>
+                                                    <td>
+                                                        <a 
+                                                            href="#" 
+                                                            class="ml-2 float-right" 
+                                                            :class="[ordering.category == 'duration' ? 'text-primary' : 'text-secondary']" 
+                                                            @click.prevent.default="orderQuestions('duration')"
+                                                        >
+                                                            <i class="fas fa-sort fa-rotate-90"></i>
+                                                        </a>
+                                                        Tempo
+                                                    </td>
+                                                    <td v-for="answer in applicationStudent.questions" class="text-center">
+                                                        ${answer.duration ? answer.duration.substring(3) : ''}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <a 
+                                                            href="#" 
+                                                            class="ml-2 float-right" 
+                                                            :class="[ordering.category == 'total_answers' ? 'text-primary' : 'text-secondary']" 
+                                                            @click.prevent.default="orderQuestions('total_answers')"
+                                                        >
+                                                            <i class="fas fa-sort fa-rotate-90"></i>
+                                                        </a>
+                                                        Alterações
+                                                    </td>
+                                                    <td v-for="answer in applicationStudent.questions" class="text-center">
+                                                        ${answer.total_answers || '-'}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <a 
+                                                            href="#" 
+                                                            class="ml-2 float-right" 
+                                                            :class="[ordering.category == 'last_modified' ? 'text-primary' : 'text-secondary']" 
+                                                            @click.prevent.default="orderQuestions('last_modified')"
+                                                        >
+                                                            <i class="fas fa-sort fa-rotate-90"></i>
+                                                        </a>
+                                                        Última modificação
+                                                    </td>
+                                                    <td v-for="answer in applicationStudent.questions" class="text-center">
+                                                        <template v-if="answer.last_modified">
+                                                            ${moment(answer.last_modified).format('HH:mm')}
+                                                        </template>
+                                                        <template v-else>
+                                                            -
+                                                        </template>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                    <div class="row" v-show="selectedQuestion">
+                                        <div class="col-12">
+                                            <div class="alert alert-danger" v-if="(!selectedQuestion.answer && !selectedQuestion.textual_answer && !selectedQuestion.file_answer) && applicationStudent.duplicated_answers.includes(selectedQuestion.pk || selectedQuestion.id)"><i class="far fa-object-group" style="font-size: 1.3rem;"></i> Possível <strong>marcação dupla</strong> ou <strong>resposta em branco</strong> na última folha enviada</div>
+                                            <div id="question-details" class="mb-3 p-2" v-show="selectedQuestion.enunciation || (applicationStudent.is_omr && applicationStudent.is_abstract)">
+                                                <template v-if="applicationStudent.is_abstract">
+                                                    Gabarito Avulso: <strong>${applicationStudent.exam_name}</strong> - Questão: <strong>${selectedQuestion.order}</strong>
+                                                </template>
+                                                <template v-else>
+                                                    <h6 class="text-center">
+                                                        <a data-toggle="collapse" href="#collapseEnunciation" role="button" aria-expanded="false" aria-controls="collapseEnunciation">Ver detalhes da questão <i class="fas fa-chevron-down"></i></a>
+                                                    </h6>
+                                                    <div class="collapse" id="collapseEnunciation">
+                                                        <div v-html="selectedQuestion.enunciation" class="mb-2"></div>
+                                                    </div>
+                                                </template>
+                                                <div class="text-center mt-3" v-if="selectedQuestion.answer_created_by_id && selectedQuestion.answer_created_by_id !== applicationStudent.user_pk">
+                                                    <span style="white-space: normal; font-size: 13px;" class="badge badge-warning mb-3">
+                                                        Resposta alterada manualmente por <b>${selectedQuestion.answer_created_by_name}</b> 
+                                                        <br/>em
+                                                        <b>${moment(selectedQuestion.answer_created_at).format('LLL')}</b>
+                                                    </span>
+                                                </div>
+                                                <template v-if="selectedApplicationStudent.can_be_corrected">
+                                                    <template v-if="selectedQuestion.category == 'Objetiva'">
+                                                        <table class="w-100 mt-2">
+                                                            <tr v-for="alternative in selectedQuestion.alternatives">
+                                                                <td class="form-check" v-if="alternative" :class="getOptionClass(alternative, selectedQuestion.answer)">
+                                                                    <div class="custom-control custom-radio my-2">
+                                                                        <input name="alternativa" v-model="alternativeUpdate" class="custom-control-input cp" type="radio" :checked="alternative.id == selectedQuestion.answer" :value="alternative.id" :id="alternative.id">
+                                                                        <label class="custom-control-label remove-p-margin cp" :for="alternative.id" v-html="alternative.text"></label>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                        <div class="d-flex align-items-center my-3">
+                                                            <button type="button" class="btn btn-xs btn-block mr-2 btn-primary" @click="updateChoiceAnswer(alternativeUpdate, selectedQuestion, true)" :disabled="alternativeUpdate == selectedQuestion.answer">
+                                                                <i class="fas fa-save"></i> Salvar resposta
+                                                            </button>
+                                                            <button type="button" class="btn btn-xs btn-block btn-danger m-0" v-if="selectedQuestion.option_answer" title="Deletar nota" @click="removeGradeAlert(isOption = true)">
+                                                                <i class="fas fa-trash"></i> Apagar resposta
+                                                            </button>
+                                                        </div>
+                                                    </template>
+                                                </template>
+                                                <template v-else>
+                                                    <div class="alert alert-warning">
+                                                        Essa prova não poderá ser corrigida, a data limite para correção expirou!
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <template v-if="selectedQuestion.category == 'Arquivo anexado'">
+                                                {% if object.group_attachments %}
+                                                    <div class="row row-xs" v-if="getAttachmentsExamTeacherSubject(selectedQuestion.exam_teacher_subject)">
+                                                        <div class="col-sm-12 col-lg-6 col-xl-6 p-1" v-for="(attachment, index) in getAttachmentsExamTeacherSubject(selectedQuestion.exam_teacher_subject).attachments">
+                                                            <div class="card">
+                                                                <div class="card-body py-2 d-flex justify-content-between align-items-center">
+                                                                    <div class="d-flex align-items-center">
+                                                                        <i class="fas fa-file fa-2x text-primary"></i>
+                                                                        <h6 class="ml-1 mb-0"><a :href="attachment.file" target="_blank" class="link-02">Anexo ${index + 1}</a></h6>
+                                                                    </div>
+                                                                    <div>
+                                                                        <template v-if="checkAnswerType(attachment.file)">
+                                                                            <a href="javascript:void(0)" class="btn btn-xs btn-primary" data-animation="effect-scale" @click="showAnnotorious(false, false, attachment.file)"><i class="fas fa-image"></i></a>
+                                                                        </template>
+                                                                        <template v-else>
+                                                                            <a :href="attachment.file" target="_blank" class="btn btn-xs btn-primary"><i class="fas fa-download"></i></a>
+                                                                        </template>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <span class="text-danger" v-if="selectedQuestion && !getAttachmentsExamTeacherSubject(selectedQuestion.exam_teacher_subject).attachments.length">O aluno não enviou arquivo</span>
+                                                    </div>
+                                                {% else %}
+                                                    <template v-if="selectedQuestion.corrected_but_no_answer">
+                                                        <span class="text-danger">A questão foi corrigida, mas a resposta do aluno não foi detectada automaticamente. Verifique na imagem do cartão ao lado.</span>
+                                                    </template>
+                                                    <template v-else>
+                                                        <div class="d-flex justify-content-center">
+                                                            <template v-if="selectedQuestion.file_answer && selectedQuestion.file_answer_url">
+                                                                <img @click="checkAnswerType(selectedQuestion.file_answer_url) ? showAnnotorious():''" :src="checkAnswerType(selectedQuestion.file_answer_url) ? selectedQuestion.file_answer_url:''" class="img-fluid cp" style="max-height: 300px;">
+                                                            </template>
+                                                            <template v-else>
+                                                                <span class="text-danger">Sem resposta lida ou enviada.</span>
+                                                            </template>
+                                                        </div>
+                                                    </template>
+                                                {% endif %}
+                                            </template>
+                        
+                                            <template v-if="selectedQuestion.category == 'Discursiva'">
+                                                <span class="font-weight-bold">Resposta do aluno:</span>
+                                                <p v-if="selectedQuestion.textual_answer">
+                                                    ${selectedQuestion.textual_answer_content}</p>
+                                                <span class="text-danger" v-else>Sem resposta</span>
+                                            </template>
+                        
+                                            <template v-if="selectedQuestion.category != 'Objetiva'">
+                                                <hr>
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <div class="d-flex justify-content-between">
+                                                            <div>
+                                                                <span class="font-weight-bold">Valor da questão:</span>
+                                                                <span class="badge badge-info">${selectedQuestion.question_weight}</span>
+                                                            </div>
+                                                            <template v-if="selectedApplicationStudent.can_be_corrected">
+                                                                <div>
+                                                                    <span class="text-center">
+                                                                        <a data-toggle="collapse" href="#collapseTeacherComment" role="button" aria-expanded="false" aria-controls="collapseTeacherComment">Adicionar comentário <i class="fas fa-chevron-down"></i></a>
+                                                                    </span>
+                                                                </div>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                    <div v-if="!selectedQuestion.text_correction" class="collapse form-group col-12" id="collapseTeacherComment">
+                                                        <label for="feedback-textarea">Comentário do professor</label>
+                                                        <textarea class="form-control" id="feedback-textarea" rows="3" v-model="selectedQuestion.teacher_feedback"></textarea>
+                                                    </div>
+                                                    <hr>
+                                                    <template v-if="selectedApplicationStudent.can_be_corrected">
+                                                        <div v-if="selectedQuestion.text_correction" class="form-check col-12 mb-2">
+                                                            <table class="table table-striped">
+                                                                <thead id="header" class="thead-dark">
+                                                                <tr>
+                                                                    <th scope="col">Competências</th>
+                                                                    <th scope="col">Pontos</th>
+                                                                </tr>
+                                                                </thead>
+                                                                <tbody v-for="criterion in selectedQuestion.generate_correction_criterion">
+                                                                    <tr>
+                                                                        <td>
+                                                                            ${criterion.name}
+                                                                        </td>
+                                                                        <td>
+                                                                            <div class="btn-group btn-group-toggle mt-1" data-toggle="buttons">
+                                                                                <label :class="criterion.checkedLabel == point ? 'active':''" v-for="point in criterion.value" @click="selectedCorrection(criterion.question, criterion.order, point, criterion.id)" class="btn btn-outline-primary btn-xs">
+                                                                                    <input type="radio" name="line_competence_enem" autocomplete="off">
+                                                                                    ${point.toString().replace('.',',')}
+                                                                                </label>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                            <textarea v-if="!selectedQuestion.text_correction" class="form-control" id="feedback-textarea" rows="3" v-model="selectedQuestion.teacher_feedback"></textarea>
+                                                        </div>
+                                                        <div class="form-group col-12">
+                                                            <label for="grade">Nota</label>
+                                                            <input v-if="selectedQuestion.text_correction" type="number" class="form-control" step='0.01' value='0.00' placeholder='0.00' v-model="totalPoints" :disabled="selectedQuestion.text_correction">
+                                                            <input v-else type="number" class="form-control" v-model="selectedQuestion.teacher_grade" @keyup="selectedQuestion.teacher_grade = $event.target.value, $forceUpdate()" id="grade" min="0" :max="selectedQuestion.question_weight" step="0.01" placeholder="0.00">
+                                                            <small class="text-danger" v-if="!(parseFloat(selectedQuestion.teacher_grade) >= 0 && parseFloat(selectedQuestion.teacher_grade) <= parseFloat(selectedQuestion.question_weight))">
+                                                                O valor da nota deve ser entre 0 e o valor máximo da questão.</small>
+                                                        </div>
+                                                        <div class="col-12">
+                                                            <div class="d-flex justify-content-between">
+                                                                <div v-if="!selectedQuestion.text_correction">
+                                                                    <button type="button" class="btn btn-xs btn-danger" title="Atribuir nota zero" @click="setGrade(0)">
+                                                                        0% <i class="fas fa-angle-double-down"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-xs btn-warning" @click="setGrade(parseFloat(selectedQuestion.question_weight * 0.25).toFixed(4))">
+                                                                        25% <i class="fas fa-angle-up"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-xs btn-warning" @click="setGrade(parseFloat(selectedQuestion.question_weight * 0.5).toFixed(4))">
+                                                                        50% <i class="fas fa-angle-up"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-xs btn-warning" @click="setGrade(parseFloat(selectedQuestion.question_weight * 0.75).toFixed(4))">
+                                                                        75% <i class="fas fa-angle-up"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-xs btn-success" title="Atribuir nota máxima" @click="setGrade(selectedQuestion.question_weight)">
+                                                                        100% <i class="fas fa-angle-double-up"></i>
+                                                                    </button>
+                                                                </div>
+                                                                <div class="d-flex justify-content-end">
+                                                                    <button type="button" class="btn btn-xs btn-secondary" v-if="(selectedQuestion.textual_answer || selectedQuestion.file_answer)" title="Deletar nota" @click="removeGradeAlert()">
+                                                                        <i class="fas fa-trash"></i>
+                                                                    </button>
+                                                                    <button type="button" @click="sendTeacherFeedback(selectedQuestion)" class="btn btn-xs btn-primary mx-1" title="Salvar nota" :disabled="!(parseFloat(selectedQuestion.teacher_grade) >= 0 && parseFloat(selectedQuestion.teacher_grade) <= parseFloat(selectedQuestion.question_weight))">
+                                                                        <i class="fas fa-save"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-xs btn-primary" title="Salvar nota e ir para a próxima questão" :disabled="!(parseFloat(selectedQuestion.teacher_grade) >= 0 && parseFloat(selectedQuestion.teacher_grade) <= parseFloat(selectedQuestion.question_weight))" @click="sendTeacherFeedback(selectedQuestion, true)" v-if="applicationStudent.questions.findIndex(question => question.pk == selectedQuestion.pk) != applicationStudent.questions.length - 1"> <i class="fas fa-arrow-right"></i></button>
+                                                                </div>
+                                                            </div>
+                                                            <div v-if="spinnerFeedbackSaved">
+                                                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                                                    <span class="sr-only">Loading...</span>
+                                                                </div>
+                                                                <span class="text-info">Salvando nota...</span>
+                                                            </div>
+                                                            <span class="text-info" v-if="!spinnerFeedbackSaved && feedbackSaved && !feedbackError">Correção salva!</span>
+                                                            <span class="text-danger" v-if="feedbackError">Erro no envio, tente novamente</span>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </template>
+                    
+                                            <template v-if="selectedQuestion.enunciation || applicationStudent.is_abstract">
+                                                <p v-if="selectedQuestion.teacher_feedback">
+                                                    <span class="font-weight-bold">Comentário do professor:</span>
+                                                    <span>${selectedQuestion.teacher_feedback}</span>
+                                                </p>
+                                                <p>
+                                                    <span class="font-weight-bold">Nota do aluno na questão:</span>
+                                                    <span class="badge badge-info">${selectedQuestion.teacher_grade || 'Não corrigida'}</span>
+                                                </p>
+                                                <p>
+                                                    <span class="font-weight-bold">Valor da questão:</span>
+                                                    <span class="badge badge-info">${selectedQuestion.question_weight}</span>
+                                                </p>
+                    
+                                                <div v-if="selectedQuestion.commented_awnser">
+                                                    <hr>
+                                                    <h6>Resposta comentada</h6>
+                                                    <div v-html="selectedQuestion.commented_awnser"></div>
+                                                </div>
+                                
+                                                <div v-if="selectedQuestion.feedback">
+                                                    <hr>
+                                                    <h6>Feedback do professor</h6>
+                                                    <div v-html="selectedQuestion.feedback"></div>
+                                                </div>                        
+                                            </template>
+                                            
+                                            <template v-if="selectedQuestion.similar_answers && selectedQuestion.similar_answers.length">
+                                                <span class="font-weight-bold">Respostas similares</span>
+                                                <span class="badge badge-danger">${selectedQuestion.similar_answers.length} encontradas</span>
+                                                <div id="accordion">
+                                                    <div class="card" v-for="answer in selectedQuestion.similar_answers">
+                                                        <div class="card-header p-2">
+                                                        <a :href="'#collapse-'+answer.student_application.pk" data-toggle="collapse">
+                                                            ${answer.student_application.student}
+                                                        </a>
+                                                        <span class="badge badge-primary float-right">
+                                                            ${(parseFloat(answer.similarity) * 100).toFixed(2)} %
+                                                        </span>
+                                                        </div>
+                                                        <div class="collapse card-body p-2" :id="'collapse-'+answer.student_application.pk" data-parent="#accordion" style="background: #f5f6fa;">
+                                                            <p class="mb-0">${answer.content}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </template>
+                        </div>
+                        <div class="col-6 px-0 bg-light" style="overflow-y: scroll; max-height: 100vh;" v-if="applicationStudent.questions.length && hasFiles()">
+                            <div class="text-center px-4 py-2" style="border-left: 3px solid rgb(153, 151, 151);">
+                                <button type="button" @click="selectImage(url)" class="btn btn-xs m-1" :class="shownImage == url ? 'btn-primary':'btn-outline-primary'" v-for="(url, index) in applicationStudent.omr_scan_url.objectives_urls.filter(u => u.length)">
+                                    Folha objetiva <i class="fa fa-list-ul"></i>
+                                </button>
+                                <button type="button" @click="selectImage(url, 'Discursivas')" class="btn btn-xs m-1" :class="shownImage == url ? 'btn-primary':'btn-outline-primary'" v-for="(url, index) in applicationStudent.omr_scan_url.discursive_urls.filter(u => u.length)">
+                                    ${index + 1}ª Folha discursiva <i class="fa fa-signature"></i>
+                                </button>
+                                <template v-if="imgLoading">
+                                    <h6 class="mt-3">Carregando, aguarde...</h6>
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="sr-only">Loading...</span>
+                                    </div>
+                                </template>
+                                <img :src="shownImage" id="previewImage" onLoad="app.imgLoading = false" v-show="!imgLoading" class="img-fluid my-3 shadow">
+                            </div>
+                        </div>
+                    </div>
+                    <template v-if="errors.forbidden">
+                        <div class="row">
+                            <div class="col-12 text-center">
+                                <h5 class="text-muted py-4">
+                                    Você não tem as permissões necessárias para ver as respostas do aluno selecionado.
+                                    <br>
+                                    <span class="py-2">Entre em contato com a sua coordenação para maiores informações!</span>
+                                </h5>
+                                <img src="{% static 'administration/assets/img/img18.png' %}" height="400" alt="Não há questões">
+                            </div>
+                        </div>
+                    </template>
+                    <template v-if="errors.notQuestions">
+                        <div class="row">
+                            <div class="col-12 text-center">
+                                <h5 class="text-muted py-4">
+                                    Não encontramos questões elaboradas por você.
+                                    <br>
+                                    <span class="py-2">Entre em contato com a sua coordenação para maiores informações!</span>
+                                </h5>
+                                <img src="{% static 'administration/assets/img/img21.png' %}" height="400" alt="Não há questões">
+                            </div>
+                        </div>
+                    </template>
+                    <img id="image" :src="selectedQuestion.file_answer_url" class="d-none">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalImgAnnotorious" tabindex="-1" aria-labelledby="modalImgAnnotoriousLabel">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content border-0">
+                <div class="modal-body">
+                    <div class="row text-center">
+                        <div class="col">
+                            <div id="img-content" style="height: 720px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer controls">
+                <button type="button" class="btn btn-dark" data-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock extra-modal %}
+
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'administration/lib/datatables.net-responsive-dt/js/responsive.dataTables.min.js' %}"></script>
+<script src="{% static 'administration/lib/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.20/lodash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+<script type="text/javascript">
+    
+    moment.locale('pt-br');
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+            imagesLoaded: [],
+            anno: '',
+            annotationsList: [],
+            viewer: '',
+            groupExamTeacherAttachments: [],
+            selectPoint: [],
+            correctionTextual: [],
+            spinnerVerification: false,
+            totalPoints: 0,
+            correctionFast: false,
+            listQuestions: [],
+            selectedQuestionOrder: 0,
+            spinnerFeedbackSaved: false,
+            errors: {
+                forbidden: false,
+                notQuestions: false,
+            },
+            type: 'iddle', 
+            imgLoading: false,
+            shownImage: '',
+            {% include 'dashboard/exams/includes/exam-detail-data.js' with application_student_details=applications_student %}
+        },
+        watch:{
+            selectedQuestion: function(val) {
+                let changeFile = this.type != val.category
+                if((!this.correctionFast || this.selectedQuestion.id) &&  (val && val.category)) {
+                    this.getFile(val.category, changeFile)
+                }
+            }
+        },
+        methods: {
+            moment(date) {
+                return moment(date)
+            },
+            hasFiles() {
+                if((this.applicationStudent && this.applicationStudent.omr_scan_url) && (this.applicationStudent.omr_scan_url.objectives_urls.length || this.applicationStudent.omr_scan_url.discursive_urls.length)) {
+                    return true;
+                }
+                return false;
+            },
+            handleImageLoad(url) {
+                if(!this.imagesLoaded.includes(url)) {
+                    this.imgLoading = true
+                }
+                this.imagesLoaded.push(url)
+            },
+            selectImage(url, type = 'Objetiva') {
+                this.handleImageLoad(url)
+                this.shownImage = url
+                this.type = type
+            },
+            getFile(category, changeFile) {
+                if(this.applicationStudent.omr_scan_url && (this.applicationStudent.omr_scan_url.objectives_urls || this.applicationStudent.omr_scan_url.discursive_urls)) {
+                    let objectives_urls = this.applicationStudent.omr_scan_url.objectives_urls.filter(u => u.length)
+                    let discursive_urls = this.applicationStudent.omr_scan_url.discursive_urls.filter(u => u.length)
+                    let url = ''
+                    if(changeFile) {
+                        if(category == 'Objetiva' && objectives_urls.length) {
+                            url = objectives_urls.at(objectives_urls.length - 1)
+                        } else if(discursive_urls.length) {
+                            url = discursive_urls[0]
+                        }
+                        this.shownImage = url
+                        this.handleImageLoad(url)
+                    }
+                }
+            },
+            {% include 'dashboard/exams/includes/exam-detail-functions.js' %},
+            {% include 'dashboard/exams/includes/exam-annotations-methods.js' %},
+            commentQuestion(question){
+                this.verificationCommentQuestion
+            },
+        },
+        mounted: function(){
+            self = this
+            {% comment %}
+                let url = "{% url 'answers:api_fileanswer_annotations' pk='00000000-0000-0000-0000-000000000000'  %}"
+                axios.get(url.replace('00000000-0000-0000-0000-000000000000', '14133b05-0bdb-4643-82bc-f3e5dd9ebeee')).then((response) => {
+                    anno.setAnnotations(response.data.img_annotations);
+                })
+            {% endcomment %}
+            
+            $('[data-toggle="tooltip"]').tooltip()
+            $('[data-toggle="popover"]').popover({ trigger: "hover" }) 
+
+            $(document).ready(function() {
+                $('#subjects-select').select2({
+                    placeholder: "Todas as disciplinas",
+                    closeOnSelect: false
+                });
+
+                $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                    $('#subjects-export').select2({
+                        placeholder: "Todas as disciplinas",
+                        closeOnSelect: false
+                    });
+                })            
+            }); 
+
+            $('#table-students').DataTable({
+                responsive: true,
+                pageLength: 50,
+                language: {
+                    url: "//cdn.datatables.net/plug-ins/1.10.22/i18n/Portuguese-Brasil.json"
+                },
+                order: [[ 5, "desc" ]],
+                columnDefs: [
+                    { "type": "html-num-fmt", "targets": 3 },
+                    { "orderable": false, "targets": 2 },
+                ]
+            });
+
+            $(".filter-button").click(function(e) {
+                e.preventDefault();
+
+                var form = $("#filter-form");
+
+                form.prop("action", $(this).data("url"));
+                form.submit();            
+            });
+
+            $(window).blur(function(){
+                $(".filter-button").prop("disabled", false);
+            })
+
+            if(window.location.hash) {
+                var hash = window.location.hash.substring(1);
+                self.openStudentModal(hash);
+            }
+
+            $(document).on('hidden.bs.modal', function (e) {
+                if($('modal:visible').length)
+                    $('body').addClass('modal-open');
+            })
+            if(localStorage.getItem('correctionFast') == 'true'){
+                self.correctionFast = true;
+            }
+        },
+        updated: function(){},
+    })
+</script>
+
+{% endblock js-additional %}

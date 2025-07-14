@@ -1,0 +1,124 @@
+{% extends 'dashboard/clean_base_without_header.html' %}
+
+{% block title %}
+    Lize - Impressão da lista de presença
+{% endblock title %}
+
+
+{% block css-additional %}
+    <style>
+        body {
+            background-color: #FFF !important;
+        }
+        @page {
+            size: A4;
+            margin-left: 5mm;
+            margin-top: 10mm;
+            margin-right: 5mm;
+            margin-bottom: 10mm;
+        }
+    </style>
+{% endblock css-additional %}
+
+{% block content %}
+    
+    <div class="row mb-0 px-3 pt-3 d-flex align-items-center">
+        <div class="col">
+            <img src="{{ object.coordination.unity.client.logo.url }}" style="max-height: 138px !important;" alt="Logo da escola">
+        </div>
+        <div class="col">
+            <h3 class="font-weight-bold text-uppercase">
+                Lista de presença
+            </h3>
+            <h4 class="font-weight-bold text-uppercase">
+                {{object.name}} - {{rooms_distributions_student.count}} alunos
+            </h4>
+        </div>
+        <div class="col-12 text-center py-3">
+            <h2 class="font-weight-bold">
+                {% for exam_name in room_exams_names %}
+                    {{exam_name}}<br>
+                {% endfor %}
+            </h2>
+        </div>
+        <div class="col-12">
+            <div class="row m-0">
+                <div class="col d-flex">
+                    <h4 class="mr-3"><strong>Unidade: </strong> <span class="ml-2">{{object.coordination.unity.name}}</span></h4>
+                    {% if distribution %}
+                        <h4 class="ml-3"><strong>Data: </strong> <span class="ml-2">{{room_applications.0.date}}</span></h4>
+                    {% else %}
+                        <h4 class="ml-3"><strong>Data: </strong> <span class="ml-2">{{application.date}}</span></h4>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row m-0">
+                <div class="col d-flex">
+                    {% if application.exam %}
+                    <h4 class="mr-3"><strong>Caderno: </strong> <span class="ml-2">{{application.exam.name}}</span></h4>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row m-0">
+        <div class="col">
+            <table class="table table-striped px-3">
+                <thead style="border:#000 2px solid; font-size: large;">
+                    <tr>
+                        <th>#</th>
+                        <th>Matrícula</th>
+                        <th>Aluno</th>
+                        <th>Assinatura</th>
+                    </tr>
+                </thead>
+                <tbody style="font-size: medium;">
+                    {% for distribution in rooms_distributions_student %}
+                        <tr>
+                            <td>{{forloop.counter}}</td>
+                            <td>{{distribution.student.enrollment_number}}</td>
+                            <td class="text-truncate" style="max-width: 10rem;">{{distribution.student.name}}</td>
+                            <td style="border-bottom: 1px solid #000; min-width: 10rem;"></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                
+            </table>
+        </div>
+    </div>
+
+
+{% endblock content %}
+
+
+
+{% block js-additional %}
+<script>
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+
+        },
+        methods: {
+
+        },
+        mounted: function() {
+            {% if not hide_dialog %}
+            window.print();
+            window.onafterprint = () => window.close();
+            {% endif %}
+        },
+        updated: function() {
+        },
+    })
+</script>
+
+<script defer>
+    document.addEventListener('DOMContentLoaded', function() {
+      let loadedElement = document.createElement('div')
+      loadedElement.id = 'loaded'
+      document.body.appendChild(loadedElement)
+    });
+</script>
+{% endblock js-additional %}

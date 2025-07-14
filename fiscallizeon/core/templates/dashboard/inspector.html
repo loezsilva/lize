@@ -1,0 +1,68 @@
+{% extends 'dashboard/base_fixed.html' %}
+{% load static %}
+
+
+{% block title %}
+  Lize - Painel do fiscal
+{% endblock title %}
+  
+
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">FISCAIS </a></li>
+          <li class="breadcrumb-item active" aria-current="page">APLICAÇÕES</li>
+        </ol>
+      </nav> 
+      <h4>Painel principal</h4>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+
+{% block content-fixed %}
+  <div class="row">
+    <div class="col-12">
+      <h4>Provas para você hoje</h4>
+    </div>
+    {% for application in applications_today %}
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+        {% include 'includes/card_application_coordination.html' with application=application %}
+      </div>
+    {% empty %}
+    <div class="col-12">
+        Não há provas disponíveis para você hoje.
+    </div>
+    {% endfor %}
+  </div>
+  <hr/>
+  <div class="row">
+      <hr/>
+        <div class="col-12">
+          <h4>Provas agendadas para você</h4>
+        </div>
+        {% for application in applications_future %}
+        <div class="col-3">
+          <div class="card card-event">
+            <div class="card-body tx-13">
+              <h4 class="mb-0"><a href="">{{application.date}}</a></h4>
+              <p class="mg-b-0">de {{application.start}} até às {{application.end}}</p>
+              {% if application.school_classes.all %}
+                {% for school_class in application.school_classes.all %}
+                  <span class="badge badge-light">{{ school_class.name }} - {{ school_class.coordination.unity.name }}</span>
+                {% endfor %}<br/>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            Não há provas agendadas para você fiscalizar.
+        </div>
+        {% endfor %}
+      </div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+{% endblock js-additional %}

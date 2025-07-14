@@ -1,0 +1,99 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+
+{% block title %}Análise de performance (ELIT) - Lize{% endblock title %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10 performance-content">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">COORDENAÇÃO</a></li>
+          <li class="breadcrumb-item active" aria-current="page">ANALÍTICO - ELIT</li>
+        </ol>
+      </nav> 
+    </div>    
+  </div>
+  <div class="row">
+    <div class="col-12 d-flex justify-content-between">
+      <h4>Análise de Performance</h4>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block css-additional %}
+  <link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+{% endblock css-additional %}
+
+{% block content-fixed %}
+<div class="ard cex ddc">
+<div class="ls" style="margin-top: 0.625rem; margin-bottom: 1rem; justify-content: space-between;"></div>
+<h4>Análise de performance (ELIT)</h4>
+<div class="performance-content" :class="{'applied-blur' : (widgets.applications_count == 0 && !load.widgets) }">
+  <div class="row">
+      <div class="col-12">
+          <div class="card">
+            <div class="card-body pd-y-20" v-if="applications">
+                <ul class="nav nav-tabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-toggle="tab" href="#centers">Polos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#unities">Escolas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#school-classes">Turmas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#students">Alunos</a>
+                    </li>
+                </ul>
+                
+                <div class="tab-content">
+                    <div class="tab-pane active p-0" id="centers">
+                        <iframe
+                            src="https://data.queiroz.dev.br/public/dashboard/356e01a4-ca70-45bd-99f8-33a68e84860a"
+                            frameborder="0"
+                            <!-- width="100%"
+                            height="1400" -->
+                            allowtransparency
+                        ></iframe>
+                    </div>
+                    <div class="tab-pane fade p-0" id="unities">
+                        <iframe
+                            src="https://data.queiroz.dev.br/public/dashboard/d3152579-e3fc-4083-8bac-4ab450e181c2"
+                            frameborder="0"
+                            width="100%"
+                            height="1400"
+                            allowtransparency
+                        ></iframe>
+                    </div>
+                    <div class="tab-pane fade p-0" id="school-classes">
+                        <iframe
+                            src="https://data.queiroz.dev.br/public/dashboard/3a920735-fe1f-4873-a809-afe4564ed99c"
+                            frameborder="0"
+                            width="100%"
+                            height="1400"
+                            allowtransparency
+                        ></iframe>
+                    </div>
+                    <div class="tab-pane fade p-0" id="students">
+                        <iframe
+                            src="https://data.queiroz.dev.br/public/dashboard/0a35d9e4-5c81-4e29-bf86-2942aa84442a"
+                            frameborder="0"
+                            <!-- width="100%"
+                            height="1400" -->
+                            allowtransparency
+                        ></iframe>
+                    </div>
+                </div>
+            </div>
+          </div>
+      </div>
+  </div>
+</div>
+</div>
+{% endblock content-fixed %}

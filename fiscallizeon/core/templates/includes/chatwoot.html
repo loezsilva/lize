@@ -1,0 +1,47 @@
+<script>
+    (function(d,t) {
+        var BASE_URL="https://chat.lizeedu.com.br";
+        var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+        g.src=BASE_URL+"/packs/js/sdk.js";
+        g.defer = true;
+        g.async = true;
+        s.parentNode.insertBefore(g,s);
+        g.onload=function(){
+          window.chatwootSDK.run({
+            websiteToken: '2TZfdmT97yQ1YxKrgD2jPCNe',
+            baseUrl: BASE_URL
+          })
+        }
+    })(document,"script");
+
+    window.addEventListener("chatwoot:ready", function () {
+
+        {% if user and not user.is_anonymous %}
+            window.$chatwoot.setUser("{{user.pk}}", {
+                email: "{{user.email}}",
+                name: "{{user.get_user_full_name}}",
+            });
+        
+            window.$chatwoot.setCustomAttributes({
+                nome_do_cliente: "{{user.get_clients.0.name}}",
+            });
+        {% endif %}
+        
+        {% if not user or user.is_anonymous %}
+            window.$chatwoot.reset(); 
+            setTimeout(function(){
+                window.$chatwoot.setLabel("anonymous")
+            }, 7000)
+        {% elif user_type == 'student' and IS_MENTORIZZE %}
+            window.$chatwoot.setLabel("mentorizze-student");
+            window.$chatwoot.removeLabel("anonymous");
+        {% else %}
+            window.$chatwoot.setLabel("{{user.user_type}}");
+            window.$chatwoot.removeLabel("anonymous");
+        {% endif %}
+
+        setTimeout(function(){
+            window.$chatwoot.setLocale('pt_BR')
+        }, 7000) 
+    });
+</script>

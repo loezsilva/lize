@@ -1,0 +1,94 @@
+{% extends 'dashboard/base_fixed.html' %}
+
+{% block css-additional %}
+<link rel="stylesheet" href="{% static 'new/administration/assets/fonts/feather/feather.css' %}" />
+<style>
+  .alternatives p {
+    margin: 0px;
+  }
+</style>
+{% endblock css-additional %}
+
+{% block content-fixed %}
+<div id="app" style="background-color: #f5f6fa; min-height: calc(100vh - 110px);">
+  <div class="container pd-x-0 pd-lg-x-10 pd-xl-x-0">
+    {% include 'exams/includes/view_questions_template.html' %}
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="d-sm-flex align-items-center justify-content-between">  
+          <button class="btn btn-sm pd-x-0 btn-link tx-bold tx-14" onclick="history.back()" style="text-decoration: underline;">
+              <i class="fe fe-arrow-left" class="mg-r-5"></i> Voltar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="{% static 'new/administration/lib/feather-icons/feather.min.js' %}"></script>
+
+<script>
+  const app = new Vue({
+    delimiters: ["#{", "}"],
+    el: "#app",
+    data: {
+      examTeacherSubject: null,
+    },
+    mounted() {
+      this.getQuestions()
+    },
+    watch: {
+      
+    },
+    methods: {
+      async callAPI(url, method="GET", body) {
+        try {
+          const res = await fetch(url, {
+            method: method, 
+            body: JSON.stringify(body),
+            headers: {
+              'Content-Type': 'application/json'
+              // 'Content-Type': 'application/x-www-form-urlencoded',
+            },
+          });
+          const data = await res.json();
+          if (!res.ok) throw data;
+          return data
+        } catch (err) {
+          throw err;
+        }
+      },
+      async getQuestions() {
+        this.callAPI("{% url 'api2:exam-teacher-data' object.pk %}").then((data) => {
+          this.examTeacherSubject = data
+        })
+      },
+      async removeExamQuestion(examQuestion) {
+        url  = "{% url 'exams:api-exam-delete-exam-question' pk='00000000-0000-0000-0000-000000000000' %}"
+        this.callAPI(url.replace('00000000-0000-0000-0000-000000000000', examQuestion.id), 'post').then((response) => {
+          this.examTeacherSubject.questions.splice(this.examTeacherSubject.questions.indexOf(examQuestion), 1)
+          this.alertTop('Questão removida do caderno.')
+        }).catch((e) => {
+          this.alertTop(e, 4000, 'error')
+        })
+      },
+      alertTop(text, timer=1000, icon='success') {
+        Swal.fire({
+            position: 'top-end',
+            text: text,
+            icon: icon,
+            toast: true,
+            showConfirmButton: false,
+            timer: timer,
+            timerProgressBar: true,
+            width: '450px',
+        })
+      },
+    },
+  });
+</script>
+{% endblock js-additional %}

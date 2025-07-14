@@ -1,0 +1,185 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    {% if not object %}
+        Adicionar etapa de ensino - Lize
+    {% else %}
+        Alteração de etapa de ensino - Lize
+    {% endif %}
+{% endblock title %}
+
+{% block css-additional %}
+<style>
+    .btn-white-custom {
+        color: #1c273c;
+        background-color: #fff;
+        border-color: #fff;
+        box-shadow: rgb(255 255 255) 0px 0px 0px 0px, rgb(51 65 85 / 10%) 0px 0px 0px 1px, rgb(0 0 0 / 5%) 0px 1px 2px 0px;
+    }
+    .btn-white-custom:hover {
+        color: #1c273c;
+        background-color: #efefef;
+        border-color: #dbdbdb;
+    }
+</style>
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+<div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                <li class="breadcrumb-item"><a href="#">ETAPA DE ENSINO</a></li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    {% if object %}
+                        ATUALIZAR
+                    {% else %}
+                        CADASTRAR
+                    {% endif %}
+                </li>
+            </ol>
+        </nav> 
+        <h4>
+            {% if object %}
+                Atualizar etapa de ensino
+            {% else %}
+                Cadastrar etapa de ensino
+            {% endif %}
+        </h4>
+    </div>
+    <div class="d-none d-md-block">
+        <button class="btn btn-sm pd-x-15 btn-white btn-uppercase" onclick="history.back();">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </button>
+    </div>
+</div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+      <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+        <nav class="ls" aria-label="Breadcrumb">
+          <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+            <li>
+              <div>
+                <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                    <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+                </a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="{% url 'clients:teaching-stage-list' %}" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Etapas de ensino</a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">{% if not object %}Cadastrar{% else %}Editar{% endif %}</a>
+              </div>
+            </li>
+          </ol>
+        </nav>
+        <div class="d-none d-md-block">
+          <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+          </a>
+        </div>
+      </div>
+<div class="row">
+    <div class="col-md-9">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+            <div>
+                <h6 class="mg-b-5">{% if not object %}Cadastrar uma nova{% else %}Editar a{% endif %} etapa de ensino</h6>
+                <p class="tx-13 tx-color-03 mg-b-5">Informe os dados abaixo e {% if not object %}cadastre uma nova{% else %}edite a{% endif %} etapa de ensino</p>
+            </div>
+            </div>
+            <div class="card-body">
+                <form method="post" onsubmit="return false" @submit="saveData()">
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <label for="{{form.name.auto_id}}">{{form.name.label}}</label>
+                            {% render_field form.name class="form-control" v-model="teachingStage.name" %}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <label for="{{form.code_export.auto_id}}">{{form.code_export.label}}</label>
+                            {% render_field form.code_export class="form-control" v-model="teachingStage.codeExport" %}
+                        </div>
+                    </div>
+                    <input type="hidden" name="client" value="{{request.user.get_clients.0.pk}}">
+                    <button type="submit" class="btn btn-primary float-right">Salvar etapa de ensino</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+
+<script>
+    moment.locale('pt-br')
+    var app = new Vue({
+        delimiters: ['#{', '}'],
+        el: '#app',
+        data: {
+            teachingStage: {
+                client: '{{user.get_clients_cache.0}}', 
+                name: '',
+                codeExport:''
+            },
+        },
+        methods: {
+            saveData() {
+                let url = "{% url 'api:clients:teaching-stage-list' %}"
+                let method = 'POST'
+                {% if object %}
+                    url = "{{object.urls.api_detail}}"
+                    method = "PATCH"
+                {% endif %}
+                axios({
+                    url: url,
+                    method: method,
+                    data: this.teachingStage,
+                }).then((response) => {
+                    window.location.href = "{% url 'clients:teaching-stage-list' %}"
+                }).catch((e) => {
+                    console.log(e.response.data)
+                })
+            },
+        },
+        mounted() { 
+            {% if object %}
+                axios.get("{{object.urls.api_detail}}").then((response) => {
+                    this.teachingStage = response.data
+                }).catch((e) => {
+                    console.log(e.response.data)
+                })
+            {% endif %}
+        },
+        updated() {
+            
+        },
+    })
+</script>
+
+{% endblock %}

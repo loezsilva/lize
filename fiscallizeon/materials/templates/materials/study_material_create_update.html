@@ -1,0 +1,464 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+{% load get_model %}
+
+{% block title %}
+  {% if not object %}
+    Adicionar material de estudo - Lize
+  {% else %}
+    Alterar material de estudo - Lize
+  {% endif %}
+{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">MATERIAL</a></li>
+          <li class="breadcrumb-item active" aria-current="page">CADASTRAR</li>
+        </ol>
+      </nav> 
+      <h4>Cadastrar material de estudo</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <button class="btn btn-sm pd-x-15 btn-white btn-uppercase" onclick="history.back();">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </button>
+    </div>
+</div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+      <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+        <nav class="ls" aria-label="Breadcrumb">
+          <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+            <li>
+              <div>
+                <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                    <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+                </a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="{% url 'materials:study_material_list' %}" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Materiais de estudo</a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">{% if not object %}Cadastrar{% else %}Editar{% endif %}</a>
+              </div>
+            </li>
+          </ol>
+        </nav>
+        <div class="d-none d-md-block">
+          <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+          </a>
+        </div>
+      </div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+                <div>
+                    <h6 class="mg-b-5">{% if not object %}Cadastrar um novo{% else %}Editar o{% endif %} material de estudo</h6>
+                <p class="tx-13 tx-color-03 mg-b-5">Informe os dados abaixo e {% if not object %}cadastre um novo{% else %}edite o{% endif %} material de estudo</p>
+                </div>
+            </div>
+            <div class="card-body">
+                {{form.errors}}
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <div class="form-group col-md-7">
+                            <label for="{{form.title.auto_id}}">Título</label>
+                            {% render_field form.title class="form-control" placeholder="Digite o Título do Material de Estudo" %}
+                            {% if form.title.errors %}
+                                {% for error in form.title.errors %}
+                                    <small class="text-danger">{{error}}</small>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="form-group col-md-7">
+                            <label for="{{form.thumbnail.auto_id}}">Capa do material</label>
+                            {% render_field form.thumbnail class="form-control" accept="image/*" %}
+                            {% if form.thumbnail.errors %}
+                                {% for error in form.thumbnail.errors %}
+                                    <small class="text-danger">{{error}}</small>
+                                {% endfor %}
+                            {% endif %}
+                            <small class="text-muted">
+                                <i class="fa fa-info-circle"></i>
+                                Apenas arquivos de imagem (JPG, PNG, GIF...)
+                            </small>
+                        </div>
+                        <div class="form-group col-md-7">
+                            <label for="{{form.material.auto_id}}">Material</label>
+                            {% render_field form.material class="form-control" %}
+                            {% for error in form.material.errors %}
+                                <small class="text-danger">{{error}}</small>
+                            {% endfor %}
+                        </div>
+
+                        <div class="form-group col-md-7">
+                            <label for="{{form.material_video_type.auto_id}}">{{form.material_video_type.label}}</label>
+                            {% render_field form.material_video_type class="form-control" %}
+                            {% for error in form.material_video_type.errors %}
+                                <small class="text-danger">{{error}}</small>
+                            {% endfor %}
+                        </div>
+
+                        <div class="form-group col-md-7">
+                            <label for="{{form.material_video.auto_id}}">{{form.material_video.label}}</label>
+                            {% render_field form.material_video class="form-control" %}
+                            {% for error in form.material_video.errors %}
+                                <small class="text-danger">{{error}}</small>
+                            {% endfor %}
+                        </div>
+                        <div class="form-group col-md-7">
+                            <label for="{{form.exam.auto_id}}">Caderno</label>
+                            <select name="{{form.exam.name}}" id="{{form.exam.auto_id}}" class="form-control"></select>
+                            {% if form.exam.errors %}
+                                {% for error in form.exam.errors %}
+                                    <small class="text-danger">{{error}}</small>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-row" v-show="!selectedExam">
+                        <div class="form-group col-md-7">
+                            <label for="{{form.subjects.auto_id}}">Disciplinas</label>
+                            <select name="{{form.subjects.name}}" id="{{form.subjects.auto_id}}" class="form-control" required></select>
+                            {% if form.subjects.errors %}
+                                {% for error in form.subjects.errors %}
+                                    <small class="text-danger">{{error}}</small>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="form-group col-md-7">
+                            <label for="{{form.grades.auto_id}}">Série</label>
+                            {% render_field form.grades class="form-control" required="true" %}
+                            {% if form.school_classes.errors %}
+                                {% for error in form.school_classes.errors %}
+                                    <small class="text-danger">Você precisa selecionar as turmas que terão acesso a este material</small>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <!-- <div class="form-group col-md-7">
+                            <label for="{{form.stage.auto_id}}">Etapa de ensino</label>
+                            {% render_field form.stage class="form-control" %}
+                            {% if form.stage.errors %}
+                                {% for error in form.stage.errors %}
+                                    <small class="text-danger">{{error}}</small>
+                                {% endfor %}
+                            {% endif %}
+                        </div> -->
+                        <div class="form-group col-md-7">
+                            <label for="{{form.teaching_stage.auto_id}}">Etapa do ensino</label>
+                            {% render_field form.teaching_stage class="form-control" %}
+                            {% if form.teaching_stage.errors %}
+                                {% for error in form.teaching_stage.errors %}
+                                    <small class="text-danger">{{error}}</small>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="form-group col-md-12">
+                            <div class="form-row blursable">
+                                <div class="form-group m-2">
+                                    <label for="{{form.release_material_study.auto_id}}">
+                                        {{ form.release_material_study.label }}
+                                    </label>
+                                    {% render_field form.release_material_study type="datetime-local" class="form-control" %}
+                                    <small class="form-text text-muted">
+                                        {{ form.release_material_study.help_text }}
+                                    </small>
+                                    {% if form.release_material_study.errors %}
+                                    <label class="text-danger">
+                                        {{ form.release_material_study.errors.0 }}</label>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="form-row mb-3">
+                                <div class="col-md-4">
+                                    <div class="custom-control custom-switch">
+                                        {% render_field form.emphasis class="custom-control-input" %}
+                                        <label class="custom-control-label" for="{{form.emphasis.auto_id}}">
+                                            <i class="fa fa-medal"></i>
+                                            {{ form.emphasis.label }}
+                                        </label>
+                                        <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                            {{ form.emphasis.help_text }}
+                                        </small>
+                                        {% if form.emphasis.errors %}
+                                            <label class="text-danger">
+                                                {{ form.emphasis.errors.0 }}
+                                            </label>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-show="!selectedExam">
+                                <hr>
+                                <p class="text-muted mb-0">Selecione as turmas que terão acesso a este material</p>
+                                <div class="d-flex flex-column" v-for="grade in selectedGrades">
+                                    <div class="row mb-0">
+                                        <div class="col-12 d-flex justify-content-between">
+                                            <span class="tx-bold">${grade.name}</span>
+                                            <div>
+                                                <span class="badge badge-primary m-1" style="cursor: pointer;" @click="select('selectAll', grade)">Selecionar todos</span>
+                                                <span class="badge badge-primary m-1" style="cursor: pointer;" @click="select('unselectAll', grade)">Desselecionar todos</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex flex-wrap">
+                                        <div class="custom-control custom-checkbox m-2" v-for="classe in schoolClasses.filter((classe) => classe.grade == grade.id)">
+                                            <input type="checkbox" class="custom-control-input" name="school_classes" :value="classe.id" :id="'grade_' + grade.id + '_classe_' + classe.id" checked>
+                                            <label class="custom-control-label" :for="'grade_' + grade.id + '_classe_' + classe.id">${classe.name}</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="client" value="{{request.user.get_clients.0.pk}}">
+                    <button type="submit" class="btn btn-primary float-right">Salvar Material</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+
+<script>
+    var app = new Vue({
+        el: '#app',
+        delimiters: ['${', '}'],
+        data: {
+            studyMaterial: '',
+            selectedGrades: [],
+            grades: [
+                {% for grade in grades %}
+                    {
+                        id: '{{grade.pk}}',
+                        name: '{{grade}}',
+                    },
+                {% endfor %}
+            ],
+            schoolClassesPkOnly: [{% for classe in object.school_classes.all %}'{{classe.id}}',{% endfor %}],
+            schoolClasses: [
+                {% for classe in school_classes %}
+                    {
+                        id: '{{classe.pk}}',
+                        grade: '{{classe.grade.pk}}',
+                        name: '{{classe.name}}',
+                    },
+                {% endfor %}
+            ],
+            selectedClasses: [
+                {% for classe in object.school_classes.all %}
+                    {
+                        id: '{{classe.pk}}',
+                        name: '{{classe.name}}',
+                    },
+                {% endfor %}
+            ],
+            selectedExam: '',
+        },
+        methods: {
+            select(option, grade) {
+                if(option == 'selectAll') {
+                    $(`[id*="grade_${grade.id}"]`).prop('checked', true)
+                } else {
+                    $(`[id*="grade_${grade.id}"]`).prop('checked', false)
+                }
+            },
+        },
+        mounted() {
+            self = this
+            $('#{{form.subjects.auto_id}}').select2({
+                placeholder: 'Digite o nome da disciplina...',
+                width: '100%',
+                multiple: true,
+                allowClear: true,
+                minimumInputLength: 3,
+                closeOnSelect: false,
+                ajax: {
+                    url: '{% url "subjects:subject_study_material_list_api" %}',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                        search: params.term
+                        }
+                    },
+                    processResults: function(results) {
+                        let new_results = $.map(results, function(element) {
+                            element.text = element.name
+                            return element 
+                        })
+                        return {
+                            results: new_results,
+                        }
+                    }
+                }
+            });
+            $('#{{form.exam.auto_id}}').select2({
+                placeholder: 'Digite o nome do caderno...',
+                width: '100%',
+                allowClear: true,
+                closeOnSelect: false,
+                minimumInputLength: 3,
+                ajax: {
+                    url: function () {
+                        url = '{% url "exams:exams_api_list" %}'
+                        return url + '?created_at__year={{year|force_escape}}'
+                    },
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                        search: params.term
+                        }
+                    },
+                    processResults: function(results) {
+                        let new_results = $.map(results, function(element) {
+                            element.text = element.name
+                            return element 
+                        })
+                        return {
+                            results: new_results,
+                        }
+                    }
+                }
+            });
+            $('#{{form.grades.auto_id}}').select2({
+                placeholder: "Selecione uma opção",
+                width: '100%',
+                closeOnSelect: false,
+            })
+            $('#{{ form.teaching_stage.auto_id }}').select2({
+                placeholder: 'Selecione uma etapa do ensino',
+                width: '100%',
+                closeOnSelect: false,
+            })
+            $("#{{form.release_material_study.auto_id}}").val(moment('{{form.release_material_study.value|safe}}').format("YYYY-MM-DDTHH:mm"))
+            $('#{{form.grades.auto_id}}').on('select2:select', function (e) {
+                let grade = self.grades.find((grade) => grade.id == e.params.data.id)
+                self.selectedGrades.push(grade)
+            })
+            $('#{{form.grades.auto_id}}').on('select2:unselect', function (e) {
+                let grade = self.grades.find((grade) => grade.id == e.params.data.id)
+                self.selectedGrades.splice(self.selectedGrades.indexOf(grade), 1)
+            })
+
+            {% if form.exam.value or object.exam %}
+                $("#{{form.subjects.auto_id}}").prop('required', false)
+                $("#{{form.grades.auto_id}}").prop('required', false)
+                this.selectedExam = '{{form.exam.value|safe|default:""}}'
+            {% endif %}
+            
+            $('#{{form.exam.auto_id}}').on('select2:select select2:select select2:unselect select2:clear', function (e) {
+                self.selectedExam = $(this).val()
+                if(self.selectedExam) {
+                    $("#{{form.subjects.auto_id}}").prop('required', false)
+                    $("#{{form.grades.auto_id}}").prop('required', false)
+                } else {
+                    $("#{{form.subjects.auto_id}}").prop('required', true)
+                    $("#{{form.grades.auto_id}}").prop('required', true)
+                }
+            });
+            {% if object %}
+                axios.get("{% url 'materials:api_study_material_detail' object.pk %}").then((response) => {
+                    this.studyMaterial = response.data
+                    this.studyMaterial.grades.forEach((_grade) => {
+                        let grade = self.grades.find((grade) => grade.id == _grade)
+                        self.selectedGrades.push(grade)
+                    })
+                }).finally(() => {
+                    $('input[type=checkbox]').not("#{{form.emphasis.auto_id}}").prop('checked', false)
+                    this.studyMaterial.school_classes.forEach((classe) => {
+                        $(`[id*="classe_${classe}"]`).click()
+                    })
+                    {% if form.exam.value %}
+                        {% with selected_exam=form.exam.value|get_exam %}
+                            $('#{{form.exam.auto_id}}').append($(new Option('{{selected_exam.name}}', '{{selected_exam.id}}', true, true))).trigger('change')
+                        {% endwith %}
+                    {% else %}
+                        if(this.studyMaterial.exam) {
+                            $('#{{form.exam.auto_id}}').append($(new Option(this.studyMaterial.exam.name, this.studyMaterial.exam.id, true, true))).trigger('change')
+                        }
+                    {% endif %}
+
+                    {% if form.subjects.value %}
+                        {% for subject in form.subjects.value %}
+                            {% with selected_subject=subject|get_subject %}
+                                $('#{{form.subjects.auto_id}}').append($(new Option('{{selected_subject.name}} - {{selected_subject.knowledge_area.name}}', '{{selected_subject.id}}', true, true))).trigger('change')
+                            {% endwith %}
+                        {% endfor %}
+                    {% else %}
+                        this.studyMaterial.subjects.forEach((subject) => {
+                            $('#{{form.subjects.auto_id}}').append($(new Option(subject.name, subject.id, true, true))).trigger('change')
+                        })
+                    {% endif %}
+                })
+            {% endif %}
+
+            {% if not object and form.errors %}
+                let grades = {{form.grades.value|safe|default:"[]"}}
+                new Promise((resolve, reject) => {
+                    grades.forEach((_grade) => {
+                        let grade = self.grades.find((grade) => grade.id == _grade)
+                        self.selectedGrades.push(grade)
+                    })
+                    resolve()
+                }).finally(() => {
+                    $('input[type=checkbox]').prop('checked', false)
+                    let schoolClasses = {{form.school_classes.value|safe|default:"[]"}}
+                    schoolClasses.forEach((classe) => {
+                        $(`[id*="classe_${classe}"]`).click()
+                    })
+                })
+                {% if form.exam.value %}
+                    {% with selected_exam=form.exam.value|get_exam %}
+                        $('#{{form.exam.auto_id}}').append($(new Option('{{selected_exam.name}}', '{{selected_exam.id}}', true, true))).trigger('change')
+                    {% endwith %}
+                {% endif %}
+                {% if form.subjects.value %}
+                    {% for subject in form.subjects.value %}
+                        {% with selected_subject=subject|get_subject %}
+                            $('#{{form.subjects.auto_id}}').append($(new Option('{{selected_subject.name}} - {{selected_subject.knowledge_area.name}}', '{{selected_subject.id}}', true, true))).trigger('change')
+                        {% endwith %}
+                    {% endfor %}
+                {% endif %}
+            {% endif %}
+        }
+    })
+</script>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block css-additional %}
+<link rel="stylesheet" href="{% static 'dashboard/assets/css/app.auth.css' %}">
+{% endblock css-additional %}
+
+{% block content %}
+<div class="content content-fixed content-auth-alt">
+  <div class="container ht-100p tx-center">
+    <div class="ht-100p d-flex flex-column align-items-center justify-content-center">
+      <div class="wd-70p wd-sm-250 wd-lg-300 mg-b-15 py-4">
+        <img src="{% static 'fiscallize-remote-logo.png' %}" class="img-fluid" alt="">
+      </div>
+      <h1 class="tx-color-01 tx-24 tx-sm-100 tx-lg-140 mg-xl-b-5 tx-white">502</h1>
+      <h5 class="tx-16 tx-sm-20 tx-lg-30 tx-normal mg-b-20 tx-white">Não foi possível carregar o servidor.</h5>
+      <p class="tx-color-03 mg-b-30 tx-18 tx-white">O servidor encontrou um erro interno e não conseguiu completar a sua solicitação.</p>
+      <div class="mg-b-40">
+        <button class="btn btn-white pd-x-30" onclick="history.back()">Voltar a página anterior</button>
+      </div>
+    </div>
+  </div><!-- container -->
+</div><!-- content -->
+{% endblock content %}
+
+
+{% block js-additional %}
+<script>
+  $('body').css('background-color', '#3DBFEE')
+</script>
+{% endblock js-additional %}

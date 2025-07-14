@@ -1,0 +1,1167 @@
+
+getHistogramProportion(value) {
+  let total = this.generalHistogram.data['0-40'] + this.generalHistogram.data['40-60'] + this.generalHistogram.data['60-75'] + this.generalHistogram.data['75-100']
+  return value / total * 100
+},
+getMarkerPosition(value) {
+  if (value >= 0 && value < 40) {
+    return { index: 0, proportion: value / 40, color: '#D92D20' };
+  } else if (value >= 40 && value < 60) {
+    return { index: 1, proportion: (value - 40) / 20, color: '#F3B364' };
+  } else if (value >= 60 && value < 75) {
+    return { index: 2, proportion: (value - 60) / 15, color: '#0C7BDB' };
+  } else if (value >= 75 && value <= 100) {
+    return { index: 3, proportion: (value - 75) / 25, color: '#41C588' };
+  }
+},
+getMarkPositionAndColor(value) {
+  if (!value) {
+    value = this.generalHistogram.performance
+  }
+  let numbers = [this.generalHistogram.data['0-40'], this.generalHistogram.data['40-60'], this.generalHistogram.data['60-75'], this.generalHistogram.data['75-100']]
+  let positionAndColor = this.getMarkerPosition(value)
+  let width = 0
+  let positionWidth = this.getHistogramProportion(numbers[positionAndColor.index])
+  numbers.filter((n, i) => i < positionAndColor.index).forEach((value, index) => {
+    width += this.getHistogramProportion(numbers[index])
+  })        
+  return { position: width + (positionWidth * positionAndColor.proportion), color: positionAndColor.color }
+},
+moment(date) {
+  return moment(date)
+},
+changeTab(tab) {
+  this.activeTab = tab
+},
+async fetchGeneralHistogramData() {
+  if(this.generalHistogram.status == 'idle' && this.isVisible(this.$refs.generalHistogram)) {
+    this.generalHistogram.status = 'loading'
+    return await axios({
+      method: 'POST',
+      url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+      data: {
+        "who": "{{who}}",
+        "who_ids": ["{{who_id|default:''}}"],
+        "what": this.what,
+        "what_ids": this.whatIDS.length ? this.whatIDS: null,
+        "operation": "get_histogram",
+        "filters": {
+          "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+          "user_unities": this.unities.map((u) => u.id),
+        }
+      }
+    }).then((response) => {
+      this.generalHistogram.status = 'success'
+      this.generalHistogram.data = response.data[0]
+    }).catch(() => {
+      this.generalHistogram.status = 'error'
+    })
+  }
+},
+async fetchStudentAvgXClasseData() {
+  if(this.average.status == 'idle' && this.isVisible(this.$refs.average)) {
+    this.average.status = 'loading'
+    return await axios({
+      method: 'POST',
+      url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+      data: {
+        "who": "{{who}}",
+        "who_ids": ["{{who_id|default:''}}"],
+        "operation": "get_avg_x_classe",
+        "what": this.what,
+        "what_ids": this.whatIDS.length ? this.whatIDS: null,
+        "filters": {
+          "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+          "user_unities": this.unities.map((u) => u.id),
+        }
+      }
+    }).then((response) => {
+      this.average.status = 'success'
+      let data = response.data[0]
+      this.average.data = data.student_grade_avg
+      let myChart = echarts.init(document.getElementById('chartAvg'))
+      this.fetchSchoolAverageData()
+      myChart.setOption({
+          grid: {
+            top: '15%',
+            right: 0,
+            bottom: '10%',
+            left: 0,
+          },
+          xAxis: {
+            type: 'category',
+            data: [
+              {
+                value: this.studentName,
+                textStyle: {
+                  color: '#001737',
+                  fontWeight: 500
+                }
+              },
+              {
+                value: '{{object.get_classes_current_year.0.name}}',
+                textStyle: {
+                  color: '#667085'
+                }
+              }
+            ],
+            axisLine: {
+              lineStyle: {
+                color: '#E5E7EA'
+              }
+            },
+            axisTick: {
+              show: false
+            },
+            axisLabel: {
+              fontFamily: 'Inter',
+              margin: 8,
+              fontSize: 14,
+            }
+          },
+          yAxis: {
+            max: 'dataMax',
+            show: false,
+          },
+          series: [
+            {
+              type: 'bar',
+              barCategoryGap: 32,
+              label: {
+                show: true,
+                formatter: '{@score}%',
+                position: 'insideTop',
+                padding: [24, 0, 0, 0],
+                fontFamily: 'Roboto',
+                fontSize: 30,
+                fontWeight: 500,
+              },
+              itemStyle: {
+                barBorderRadius: [8, 8, 0, 0]
+              },
+              data: [
+                {
+                  value: data.student_grade_avg,
+                  label: {
+                    color: '#FFFFFF',
+                  },
+                  itemStyle: {
+                    color: '#FF8F3D'
+                  }
+                },
+                {
+                  value: data.classe_grade_avg,
+                  label: {
+                    color: '#282F3E',
+                  },
+                  itemStyle: {
+                    color: '#FFF4EC'
+                  }
+                }
+              ]
+            }
+          ]
+        })
+    }).catch((e) => {
+      this.average.status = 'error'
+    })
+  }
+},
+async fetchClasseAvgXSchoolData() {
+  if(this.average.status == 'idle' && this.isVisible(this.$refs.average)) {
+    this.average.status = 'loading'
+    return await axios({
+      method: 'POST',
+      url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+      data: {
+        "who": "{{who}}",
+        "who_ids": ["{{who_id|default:''}}"],
+        "operation": "get_avg_x_school",
+        "what": this.what,
+        "what_ids": this.whatIDS.length ? this.whatIDS: null,
+        "filters": {
+          "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+          "user_unities": this.unities.map((u) => u.id),
+        }
+      }
+    }).then((response) => {
+      this.average.status = 'success'
+      let data = response.data[0]
+      this.average.data = data.grade_avg
+      this.generalHistogram.performance = this.average.data
+      this.fetchSchoolAverageData(data.school_grade_avg)
+      let myChart = echarts.init(document.getElementById('chartAvg'))
+      myChart.setOption({
+          grid: {
+            top: '15%',
+            right: 0,
+            bottom: '10%',
+            left: 0,
+          },
+          xAxis: {
+            type: 'category',
+            data: [
+              {
+                value: '{{object.name|truncatewords:2}}',
+                textStyle: {
+                  color: '#001737',
+                  fontWeight: 500
+                }
+              },
+              {
+                value: 'Escola',
+                textStyle: {
+                  color: '#667085'
+                }
+              }
+            ],
+            axisLine: {
+              lineStyle: {
+                color: '#E5E7EA'
+              }
+            },
+            axisTick: {
+              show: false
+            },
+            axisLabel: {
+              fontFamily: 'Inter',
+              margin: 8,
+              fontSize: 14,
+            }
+          },
+          yAxis: {
+            max: 'dataMax',
+            show: false,
+          },
+          series: [
+            {
+              type: 'bar',
+              barCategoryGap: 32,
+              label: {
+                show: true,
+                formatter: '{@score}%',
+                position: 'insideTop',
+                padding: [24, 0, 0, 0],
+                fontFamily: 'Roboto',
+                fontSize: 30,
+                fontWeight: 500,
+              },
+              itemStyle: {
+                barBorderRadius: [8, 8, 0, 0]
+              },
+              data: [
+                {
+                  value: data.grade_avg.toFixed(0),
+                  label: {
+                    color: '#FFFFFF',
+                  },
+                  itemStyle: {
+                    color: '#FF8F3D'
+                  }
+                },
+                {
+                  value: data.school_grade_avg.toFixed(0),
+                  label: {
+                    color: '#282F3E',
+                  },
+                  itemStyle: {
+                    color: '#FFF4EC'
+                  }
+                }
+              ]
+            }
+          ]
+        })
+    }).catch(() => {
+      this.average.status = 'error'
+    })
+  }
+},
+async fetchProgressByMonthData() {
+  if(this.progressByMonth.status == 'idle' && this.isVisible(this.$refs.progressByMonth)) {
+    this.progressByMonth.status = 'loading'
+    return await axios({
+      method: 'POST',
+      url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+      data: {
+        "who": "{{who}}",
+        "who_ids": ["{{who_id|default:''}}"],
+        "what": this.what,
+        "what_ids": this.whatIDS.length ? this.whatIDS: null,
+        "operation": "get_avg_group_by_month",
+        "filters": {
+          "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+          "user_unities": this.unities.map((u) => u.id),
+        }
+      }
+    }).then((response) => {
+      this.progressByMonth.status = 'success'
+      let data = response.data[0]
+      this.progressByMonth.data = data
+      let myChart2 = echarts.init(document.getElementById('chartProgressByMonth'))
+      
+      myChart2.setOption({
+        grid: {
+          top: '30%',
+          right: 0,
+          bottom: 30,
+          left: 0,
+          backgroundColor: new echarts.graphic.LinearGradient(0, 1, 0, 0, [
+            {
+              offset: 0,
+              color: 'rgba(255,244,236,1)'
+            },
+            {
+              offset: 1,
+              color: 'rgba(255,244,236,0)'
+            }
+          ]),
+          borderWidth: 0,
+          show: true,
+        },
+        tooltip: {
+          trigger: 'item',
+          formatter: '{c0}%',
+          backgroundColor: '#FF8F3D',
+          textStyle: {
+            fontFamily: 'Roboto',
+            fontSize: 16,
+            lineHeight: 20,
+            fontWeight: 500,
+            color: '#FFFFFF',
+          },
+        },
+        xAxis: {
+          type: 'category',
+          data: data.map((m, i) => {
+            month = m.month.slice(0, 3)
+            if (i == data.length - 1) {
+              return {
+                value: month,
+                textStyle: {
+                  color: '#001737',
+                  fontWeight: 500,
+                  fontFamily: 'Roboto',
+                  fontSize: 14,
+                  lineHeight: 20,
+                },
+              }
+            }
+            return month
+          }),
+          axisTick: {
+            show: false,
+          },
+          axisLine: {
+            lineStyle: {
+              color: '#E5E7EA'
+            }
+          },
+          axisLabel: {
+            margin: 8,
+            color: '#667085',
+            fontWeight: 400,
+            fontFamily: 'Inter',
+            fontSize: 14,
+            lineHeight: 20,
+          },
+        },
+        yAxis: {
+          show: false,
+          min: 0,
+        },
+        series: [
+          {
+            type: 'line',
+            lineStyle: {
+              color: '#FF8F3D',
+              width: 2,
+            },
+            label: {
+              show: true,  // Exibir o rótulo
+              position: 'top',  // Posição do rótulo em relação ao ponto
+              formatter: '{c}',  // Formato do rótulo (neste caso, o valor do ponto)
+              padding: [12, 0, 0, 0],
+              fontFamily: 'Roboto',
+              fontSize: 16,
+              fontWeight: 500,
+            },
+            itemStyle: {
+              color: '#FF8F3D',
+            },
+            symbolSize: 12,
+            data: data.map(m => m.performance.toFixed(0)),
+          }
+        ]
+      })
+    }).catch((e) => {
+      this.progressByMonth.status = 'error'
+    })
+  }
+},
+async fetchHitsAndMissesData() {
+  if(this.hitsAndMisses.status == 'idle' && this.isVisible(this.$refs.hitsAndMisses)) {
+    this.hitsAndMisses.status = 'loading'
+    return await axios({
+      method: 'POST',
+      url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+      data: {
+        "who": "{{who}}",
+        "who_ids": ["{{who_id|default:''}}"],
+        "operation": "get_hits_and_misses",
+        "what": this.what,
+        "what_ids": this.whatIDS.length ? this.whatIDS: null,
+        "filters": {
+          "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+          "user_unities": this.unities.map((u) => u.id),
+        }
+      }
+    }).then((response) => {
+      this.hitsAndMisses.status = 'success'
+      let data = response.data[0]
+      this.hitsAndMisses.data = data
+      let hits = data.hits
+      let misses = data.misses
+      let total = data.questions_count
+
+      let myChart3 = echarts.init(document.getElementById('chartHitsAndMisses'))
+      myChart3.setOption({
+        tooltip: {
+          trigger: 'item'
+        },
+        legend: {
+          bottom: 0,
+          left: 'center',
+          data: ['Acertos', 'Erros']
+        },
+        series: [
+          {
+            name: 'Acertos e erros',
+            type: 'pie',
+            radius: ['40%', '70%'],
+            label: {
+              show: false,
+            },
+            markPoint: {
+              tooltip: { show: false },
+              label: {
+                show: true,
+                formatter: '{b}',
+                color: '#282F3E',
+                fontFamily: 'Inter',
+                fontSize: 24,
+                lineHeight: 20,
+                fontWeight: 500,
+                letterSpacing: '-0.01em',
+              },
+              data: [{
+                name: `${total ? (hits / total * 100).toFixed(0) : 0}%`,
+                symbol: 'circle',
+                itemStyle: { color: 'transparent' },
+                x: '50%',
+                y: '50%',
+              }],
+            },
+            data: [
+              {
+                name: 'Acertos',
+                value: (hits / total * 100).toFixed(2),
+                itemStyle: { color: '#FF8F3D' },
+                emphasis: { itemStyle: { color: '#FF8024' } }
+              },
+              {
+                name: 'Erros',
+                value: (100 - (hits / total * 100)).toFixed(2),
+                itemStyle: { color: '#FFF4EC' },
+                emphasis: { itemStyle: { color: '#FFE5D3' } }
+              }
+            ]
+          }
+        ],
+      })
+    }).catch((e) => {
+      this.hitsAndMisses.status = 'error'
+    })
+  }
+},
+async fetchTopicsData() {
+
+  if(this.topics.status == 'idle' && this.isVisible(this.$refs.topics)) {
+    this.topics.status = 'loading'
+    return await axios({
+      method: 'POST',
+      url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+      data: {
+        "who": "{{who}}",
+        "who_ids": ["{{who_id|default:''}}"],
+        "what": this.what,
+        "what_ids": this.whatIDS.length ? this.whatIDS: null,
+        "operation": "get_topics_avg",
+        "filters": {
+          "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+          "user_unities": this.unities.map((u) => u.id),
+        }
+      }
+    }).then((response) => {
+      this.topics.status = 'success'
+      this.topics.data = response.data[0]
+      this.subjectsBNCCs.topics = []
+      this.topics.data.forEach((t) => {
+        if(!this.subjectsBNCCs.topics.find((_t) => t.subject_name && t.subject_id == _t.id)) {
+          this.subjectsBNCCs.topics.push({
+            id: t.subject_id,
+            name: t.subject_name,
+          })
+        }
+      })
+    }).catch(() => {
+      this.topics.status = 'error'
+    }).finally(() => {
+      this.startSelectInputsAndTooltips()
+      this.fetchAbilitiesData()
+      this.fetchCompetencesData()
+    })
+  }
+},
+async fetchAbilitiesData() {
+  this.abilities.status = 'loading'
+  return await axios({
+    method: 'POST',
+    url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+    data: {
+      "who": "{{who}}",
+      "who_ids": ["{{who_id|default:''}}"],
+      "what": this.what,
+      "what_ids": this.whatIDS.length ? this.whatIDS: null,
+      "operation": "get_abilities_avg",
+      "filters": {
+        "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+        "user_unities": this.unities.map((u) => u.id),
+      }
+    }
+  }).then((response) => {
+    this.abilities.status = 'success'
+    this.abilities.data = response.data[0]
+    this.subjectsBNCCs.abilities = []
+    this.abilities.data.forEach((t) => {
+      if(!this.subjectsBNCCs.abilities.find((_t) => t.subject_name && t.subject_id == _t.id)) {
+        this.subjectsBNCCs.abilities.push({
+          id: t.subject_id,
+          name: t.subject_name,
+        })
+      }
+    })
+  }).catch(() => {
+    this.abilities.status = 'error'
+  }).finally(() => {
+    this.startSelectInputsAndTooltips()
+  })
+},
+async fetchCompetencesData() {
+  this.competences.status = 'loading'
+  return await axios({
+    method: 'POST',
+    url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+    data: {
+      "who": "{{who}}",
+      "who_ids": ["{{who_id|default:''}}"],
+      "what": this.what,
+      "what_ids": this.whatIDS.length ? this.whatIDS: null,
+      "operation": "get_competences_avg",
+      "filters": {
+        "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+        "user_unities": this.unities.map((u) => u.id),
+      }
+    }
+  }).then((response) => {
+    this.competences.status = 'success'
+    this.competences.data = response.data[0]
+    this.subjectsBNCCs.competences = []
+    this.competences.data.forEach((t) => {
+      if(!this.subjectsBNCCs.competences.find((_t) => t.subject_name && t.subject_id == _t.id)) {
+        this.subjectsBNCCs.competences.push({
+          id: t.subject_id,
+          name: t.subject_name,
+        })
+      }
+    })
+  }).catch(() => {
+    this.competences.status = 'error'
+  }).finally(() => {
+    this.startSelectInputsAndTooltips()
+  })
+},
+async fetchSchoolAverageData(schoolAverage) {
+  if(schoolAverage) {
+    this.schoolAverage = schoolAverage
+    return
+  }
+  return await axios({
+    method: 'POST',
+    url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+    data: {
+      "who": "school",
+      "who_ids": ["{{user.client.id}}"],
+      "what": this.what,
+      "what_ids": this.whatIDS.length ? this.whatIDS: null,
+      "operation": "get_avg",
+      "filters": {
+        "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+        "user_unities": this.unities.map((u) => u.id),
+      }
+    }
+  }).then((response) => {
+    this.schoolAverage = response.data[0]
+  })
+},
+async fetchRankingData() {
+  if(this.classeRanking.status == 'idle' && this.isVisible(this.$refs.classeRanking)) {
+    this.classeRanking.status = 'loading'
+    return await axios({
+      method: 'POST',
+      url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+      data: {
+        "who": "{{who}}",
+        "who_ids": ["{{who_id|default:''}}"],
+        "what": this.what,
+        "what_ids": this.whatIDS.length ? this.whatIDS: null,
+        "operation": "get_ranking",
+        "filters": {
+          "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+          "user_unities": this.unities.map((u) => u.id),
+        }
+      }
+    }).then((response) => {
+      this.classeRanking.status = 'success'
+      this.classeRanking.data = response.data[0]
+    }).catch(() => {
+      this.classeRanking.status = 'error'
+    })
+  }
+},
+async fetchChallengesData() {
+  if(this.challenges.status == 'idle' && this.isVisible(this.$refs.challenges)) {
+    this.challenges.status = 'loading'
+    return await axios({
+      method: 'POST',
+      url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+      data: {
+        "who": '{{who}}',
+        "who_ids": ["{{object.id}}"],
+        "what": this.what,
+        "what_ids": this.whatIDS.length ? this.whatIDS: null,
+        "operation": "get_challenges",
+        "filters": {
+          "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+          "user_unities": this.unities.map((u) => u.id),
+        }
+      }
+    }).then((response) => {
+      this.challenges.status = 'success'
+      // let data = response.data[0]
+      this.challenges.data = response.data[0]
+
+      let myChart4 = echarts.init(document.getElementById('chartChallenges'))
+      myChart4.setOption({
+        grid: {
+          // show: true,
+          // backgroundColor: 'rgb(255, 0, 0)',
+          top: 0,
+          right: -4,
+          bottom: 0,
+          left: -4,
+          height: '100px',
+        },
+        xAxis: {
+          show: false,
+          type: 'category',
+          data: this.challenges.data,
+          axisTick: {
+            show: false
+          },
+        },
+        yAxis: {
+          show: false,
+        },
+        tooltip: {
+          trigger: 'item',
+          className: 'reset-echarts-tooltip',
+          position: 'top', // Posiciona o tooltip na parte superior
+          enterable: true, // Permite que o usuário entre no tooltip
+          formatter: (params) => {
+            const { id, name, performance, hits, misses, partials, questions, date } = params.data;
+            return `
+              <div class="tw-w-fit tw-flex tw-flex-col tw-bg-white tw-border tw-border-[#E6E8EC] tw-rounded-lg">
+                <div class="tw-border-b tw-border-[#F3F3F3]">
+                  <div class="tw-flex tw-items-center tw-justify-between tw-px-4 tw-pt-2 tw-pb-[0.563rem]">
+                    <div>
+                      <p class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">${name.toUpperCase().slice(0,10)}</p>
+                    </div>
+                    <div>
+                      <p class="tw-text-xs tw-font-medium tw-text-[#667085] tw-mb-0">${moment(date).format('D, MMM')}</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="tw-flex tw-gap-8 tw-p-4">
+                  <div>
+                    <div class="tw-flex tw-items-center tw-gap-1">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M6 12L10 8L6 4" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                      <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">${questions} questões</p>
+                    </div>
+                    <div class="tw-flex tw-items-center tw-gap-1">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M6 12L10 8L6 4" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                      <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">${hits} acertos</p>
+                    </div>
+                    <div class="tw-flex tw-items-center tw-gap-1">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M6 12L10 8L6 4" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                      <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">${misses} erros</p>
+                    </div>
+                    <div class="tw-flex tw-items-center tw-gap-1">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M6 12L10 8L6 4" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                      <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">${partials} parciais</p>
+                    </div>
+                  </div>
+                  <div class="tw-flex tw-items-center tw-justify-center">
+                    <p class="tw-text-3xl tw-leading-[2.125rem] tw-font-medium tw-text-[#FF8F3D] tw-tracking-[0.01em] tw-mb-0">${performance}%</p>
+                  </div>
+                </div>
+                <div class="tw-px-4 tw-pb-4">
+                  <a href="${'{% url 'exams:exams_detail_v2' pk='00000000-0000-0000-0000-000000000000' %}'.replace('00000000-0000-0000-0000-000000000000', id)}" target="_blank" class="btn-block text-center tw-w-full tw-rounded-lg tw-bg-primary-600 tw-px-3 tw-py-3 tw-text-sm tw-font-semibold tw-text-white hover:tw-bg-primary-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600">Visualizar</a>
+                </div>
+              </div>
+            `
+          },
+        },
+        series: [
+          {
+            itemStyle: {
+              barBorderRadius: 2,
+              color: '#FFF8F2',
+            },
+            data: this.challenges.data.map((d) => {
+              if (true) {
+                return { ...d, value: d.performance, itemStyle: { color: '#FF8F3D' } }
+              }
+              return d.performance
+            }),
+            barCategoryGap: 8,
+            type: 'bar'
+          }
+        ]
+      })
+    }).catch((e) => {
+      this.challenges.status = 'error'
+    })
+  }
+},
+
+async fetchAvailablesFilters() {
+  return await axios({
+    method: 'POST',
+    url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+    data: {
+      "who": "{{who}}",
+      "who_ids": ["{{who_id|default:''}}"],
+      "what": "{{who}}",
+      "what_ids": ["{{who_id|default:''}}"],
+      "operation": "get_availables_filters",
+      "filters": {
+        "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+        "user_unities": this.unities.map((u) => u.id),
+      }
+    }
+  })
+},
+async fetchPerformanceBySubjects() {
+  if(this.performanceBySubjects.status == 'idle' && this.isVisible(this.$refs.performanceBySubjects)) {
+    this.performanceBySubjects.status = 'loading'
+    return await axios({
+      method: 'post',
+      url: `{% url 'dashboards:get-data-from-service' user.client.id %}`, 
+      data: {
+        "who": "{{who}}",
+        "who_ids": ["{{who_id|default:''}}"],
+        "what": this.what,
+        "what_ids": this.whatIDS.length ? this.whatIDS: null,
+        "operation": "get_subjects_avg",
+        "filters": {
+          "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+          "user_unities": this.unities.map((u) => u.id),
+        }
+      }
+    }).then((response) => {
+      this.performanceBySubjects.status = 'success'
+      this.performanceBySubjects.data = response.data[0]
+      
+      let performanceBySubjectsChartElement = document.getElementById('performanceBySubjectsChart')
+      let performanceBySubjectsChart = echarts.init(performanceBySubjectsChartElement)
+
+      performanceBySubjectsChart.setOption({
+        grid: {
+          top: 25,
+          right: 0,
+          bottom: 34,
+          left: 32,
+        },
+        tooltip: {
+          position: 'top',
+          formatter: (params) => {
+            let subject = this.performanceBySubjects.data[params.dataIndex];
+            return subject.name + ': ' + subject.performance.toFixed(0) + '%';
+          }
+        },
+        xAxis: {
+          type: 'category',
+          data: this.performanceBySubjects.data.filter(s => s.performance).map(s => s.name.toUpperCase().slice(0,3)),
+          axisLine: {
+            lineStyle: {
+              color: '#E5E7EA'
+            }
+          },
+          axisTick: {
+            show: false
+          },
+          axisLabel: {
+            fontFamily: 'Inter',
+            margin: 16,
+            fontSize: 14,
+            color: '#667085'
+          }
+        },
+        yAxis: {
+          type: 'value',
+          axisLabel: {
+            fontFamily: 'Inter',
+            margin: 32,
+            fontSize: 12,
+            color: '#D0D5DD',
+            align: 'left',
+          },
+          splitLine: {
+            lineStyle: {
+              color: ['#E5E7EA']
+            }
+          }
+        },
+        series: [
+          {
+            label: {
+              show: true,
+              formatter: '{@score}%',
+              position: 'top',
+              padding: [12, 0, 0, 0],
+              fontFamily: 'Roboto',
+              fontSize: 16,
+              fontWeight: 500,
+              // color: '#FFF'
+            },
+            itemStyle: {
+              barBorderRadius: [8, 8, 0, 0],
+              color: '#FF8F3D',
+            },
+            data: this.performanceBySubjects.data.filter(s => s.performance).map(s => s.performance.toFixed(0)),
+            type: 'bar'
+          }
+        ]
+      })
+      const resizeObserver = new ResizeObserver(entries => {
+        performanceBySubjectsChart.resize()
+      })
+      resizeObserver.observe(performanceBySubjectsChartElement)
+    }).catch((error) => {
+      this.performanceBySubjects.status = 'error'
+      this.performanceBySubjects.error = error
+      console.error(error)
+    })
+  }
+},
+async fetchQuestionsSummary() {
+  if(this.questionsSummary.status == 'idle' && this.isVisible(this.$refs.questionsSummary)) {
+    this.questionsSummary.status = 'loading'
+    return await axios({
+      method: 'post',
+      url: `{% url 'dashboards:get-data-from-service' user.client.id %}`, 
+      data: {
+        "who": "{{who}}",
+        "who_ids": ["{{who_id|default:''}}"],
+        "what": this.what,
+        "what_ids": this.whatIDS.length ? this.whatIDS: null,
+        "operation": "get_questions_summary_hits",
+        "filters": {
+          "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+          "user_unities": this.unities.map((u) => u.id),
+        }
+      }
+    }).then((response) => {
+      this.questionsSummary.status = 'success'
+      this.questionsSummary.data = response.data[0]
+    }).catch((e) => {
+      this.questionsSummary.status = 'error'
+    })
+  }
+},
+async fetchDistribution() {
+  if(this.distribution.status == 'idle' && this.isVisible(this.$refs.distribution)) {
+    this.distribution.status = 'loading'
+    return await axios({
+      method: 'post',
+      url: `{% url 'dashboards:get-data-from-service' user.client.id %}`, 
+      data: {
+        "who": "{{who}}",
+        "who_ids": ["{{who_id|default:''}}"],
+        "what": this.what,
+        "what_ids": this.whatIDS.length ? this.whatIDS: null,
+        "operation": "get_hits_and_misses_questions",
+        "filters": {
+          "period": [this.period.start.format("YYYY-MM-DD"), this.period.end.format("YYYY-MM-DD")],
+          "user_unities": this.unities.map((u) => u.id),
+        }
+      }
+    }).then((response) => { 
+      this.distribution.status = 'success'
+      this.distribution.data = response.data[0]
+      
+      let distributionChartElement = document.getElementById('distributionChart')
+      let distributionChart = echarts.init(distributionChartElement)
+
+      {% comment %} const x = this.distribution.data.map((e) => e.id) {% endcomment %}
+      {% comment %} const y = this.distribution.data.map((e) => e.id) {% endcomment %}
+      
+      let questions = this.distribution.data;
+
+      let numRows = Math.ceil(questions.length / 20);  // Número de linhas necessárias
+      let data = [];
+
+      questions.forEach((question, idx) => {
+        let x = idx % 20;
+        let y = numRows - 1 - Math.floor(idx / 20);
+        let normalizedHits = question.total > 0 ? question.hits / question.total : 0  // Normalizar os acertos
+        data.push({ question: question, value: [x, y, normalizedHits]});
+      });
+
+      distributionChart.setOption({
+        tooltip: {
+          position: 'top'
+        },
+        animation: false,
+        grid: {
+          top: 26,
+          right: 0,
+          bottom: 20,
+          left: 0,
+        },
+        xAxis: {
+          type: 'category',
+          {% comment %} data: x, {% endcomment %}
+          {% comment %} data: ['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8', 'Q9', 'Q10', 'Q11', 'Q12', 'Q13', 'Q14', 'Q15', 'Q16', 'Q17', 'Q18', 'Q19', 'Q20'], {% endcomment %}
+          splitArea: {
+            show: false
+          },
+          axisLabel: {
+            show: false
+          },
+          splitLine: { show: false } // desativa linhas de divisão
+        },
+        yAxis: {
+          type: 'category',
+          {% comment %} data: y, {% endcomment %}
+          splitArea: {
+            show: false
+          },
+          axisLabel: {
+            show: false
+          },
+          splitLine: { show: false } // desativa linhas de divisão
+        },
+        visualMap: {
+          show: false,
+          min: 0,
+          max: 1,
+          calculable: true,
+          orient: 'horizontal',
+          left: 'center',
+          bottom: '15%',
+          inRange: {
+            color: ['#FFE9D8', '#FF8F3D']
+          },
+        },
+        series: [
+          {
+            name: 'Acertos e erros',
+            type: 'heatmap',
+            data: data,
+            label: {
+              show: false
+            },
+            itemStyle: {
+              borderColor: '#fff',  // Cor da borda dos quadrados
+              borderWidth: 5,      // Largura da borda dos quadrados
+              borderRadius: 4,
+              // maxWidth: 1, // Define a largura máxima de cada célula
+              // maxHeight: 1, // Define a largura máxima de cada célula
+            },
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowColor: 'rgba(0, 0, 0, 0.5)'
+              }
+            },
+            symbolSize: [5, 5],
+          }
+        ],
+        tooltip: {
+          trigger: 'item',
+          className: 'reset-echarts-tooltip',
+          position: 'top', // Posiciona o tooltip na parte superior
+          enterable: true, // Permite que o usuário entre no tooltip
+          formatter: (params) => {
+            const question = params.data.question
+            return `
+              <div class="tw-w-fit tw-flex tw-flex-col tw-bg-white tw-border tw-border-[#E6E8EC] tw-rounded-lg">
+                <div class="tw-border-b tw-border-[#F3F3F3]">
+                  <div class="tw-flex tw-items-center tw-justify-between tw-px-4 tw-pt-2 tw-pb-[0.563rem]">
+                    <div>
+                      <p class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">${question.exam_name}</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="tw-flex tw-gap-8 tw-p-4">
+                  <div>
+                    <div class="tw-flex tw-items-center tw-gap-1">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M6 12L10 8L6 4" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                      <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">${question.hits} Total de acertos</p>
+                    </div>
+                    <div class="tw-flex tw-items-center tw-gap-1">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M6 12L10 8L6 4" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                      <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">${question.total} Total de respostas</p>
+                    </div>
+                  </div>
+                  <div class="tw-flex tw-items-center tw-justify-center">
+                    <p class="tw-text-3xl tw-leading-[2.125rem] tw-font-medium tw-text-[#FF8F3D] tw-tracking-[0.01em] tw-mb-0">${(question.hits / question.total * 100).toFixed(2)}%</p>
+                  </div>
+                </div>
+                <div class="tw-px-4 tw-pb-4">
+                  <a href="${'{% url 'exams:exams_detail_v2' pk='00000000-0000-0000-0000-000000000000' %}'.replace('00000000-0000-0000-0000-000000000000', question.exam_id)}?turma={{who_id|default:''}}" target="_blank" class="btn-block text-center tw-w-full tw-rounded-lg tw-bg-primary-600 tw-px-3 tw-py-3 tw-text-sm tw-font-semibold tw-text-white hover:tw-bg-primary-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600">Visualizar</a>
+                </div>
+              </div>
+            `
+          },
+        },
+      })
+      const resizeObserver = new ResizeObserver(entries => {
+        distributionChart.resize()
+      })
+      resizeObserver.observe(distributionChartElement)
+    }).catch((error) => {
+      this.distribution.status = 'error'
+      this.distribution.error = error
+      console.error(error)
+    }) 
+  }
+},
+resetLoadings() {
+  this.average.status = 'idle'
+  this.progressByMonth.status = 'idle'
+  this.hitsAndMisses.status = 'idle'
+  this.challenges.status = 'idle'
+  this.performanceBySubjects.status = 'idle'
+  this.questionsSummary.status = 'idle'
+  this.distribution.status = 'idle'
+  this.topics.status = 'idle'
+  this.abilities.status = 'idle'
+  this.competences.status = 'idle'
+  this.classeRanking.status = 'idle'
+  this.generalHistogram.status = 'idle'
+},
+async fetchData(who = 'all') {
+  this.loading = true
+  {% if who == 'classe' or who == 'school' %} 
+    this.fetchClasseAvgXSchoolData()
+    this.fetchPerformanceBySubjects()
+    this.fetchRankingData()
+    // this.fetchDistribution()     
+    this.fetchGeneralHistogramData()     
+    this.fetchQuestionsSummary()     
+  {% else %}
+    this.fetchStudentAvgXClasseData()
+  {% endif %}
+  
+  this.fetchProgressByMonthData()
+  this.fetchHitsAndMissesData()
+  this.fetchTopicsData()
+  this.fetchChallengesData()
+  this.loading = false
+},
+getInitials(text) {
+  let textSplited = text.split(' ')
+  try {
+    if (textSplited.length > 1) {
+      return `${textSplited[0][0]}${textSplited[textSplited.length - 1][0]}`
+    } else {
+      return textSplited.slice(0, 2)
+    }
+  } catch {
+    return text[0].slice(0, 2)
+  }
+},
+isVisible(element) {
+  const rect = element.getBoundingClientRect();
+  const viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
+  
+  // Verifica se o elemento está acima ou abaixo da janela de visualização
+  const above = rect.bottom < 0;
+  const below = rect.top > viewHeight;
+
+  // Calcula a porcentagem do elemento visível na tela
+  const visibleHeight = Math.min(viewHeight, rect.bottom) - Math.max(0, rect.top);
+  const percentVisible = (visibleHeight / rect.height) * 100;
+
+  const minPercentViewed = 50
+
+  // Retorna true se pelo menos 20% do elemento estiver visível
+  return !(above || below) && percentVisible >= minPercentViewed;
+},
+buildURL(params = {}) {
+  const url = new URL(window.location.href);
+  const searchParams = new URLSearchParams(url.search);
+
+  // Adiciona os novos parâmetros
+  for (const [key, value] of Object.entries(params)) {
+    searchParams.set(key, value);
+  }
+
+  // Atualiza a URL com os novos parâmetros
+  url.search = searchParams.toString();
+
+  // Salva os parâmetros no localStorage
+  localStorage.setItem('urlParams', url.search);
+  return url.toString();
+},
+getURLParams() {
+  const urlParams = new URLSearchParams(localStorage.getItem('urlParams'));
+  const params = {};
+  for (const [key, value] of urlParams.entries()) {
+    params[key] = value;
+  }
+  return params;
+},
+handleOnLoadCharts() {
+  this.controls.interval = setInterval(() => {
+    this.fetchData()
+  }, 250)
+},
+printPage() {
+  window.print()
+},

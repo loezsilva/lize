@@ -1,0 +1,299 @@
+{% extends request.user.get_base_url|default:'administration/base.html' %}
+
+
+{% block head %}
+  <style>
+    .cp {
+      cursor: pointer;
+    }
+    .hover:hover {
+      background-color: #eef3f6
+    }
+  </style>
+{% endblock head %}
+  
+
+{% block content %}
+<div id="app" class="content content-fixed" style="background-color: #f5f6fa; min-height: calc(100vh - 110px);">
+  <div class="container pd-x-0 pd-lg-x-10 pd-xl-x-0">
+    <div class="d-sm-flex align-items-end justify-content-between mg-b-15 mg-lg-b-25">
+      <div>
+        <p class="mg-b-0 tx-color-03">Passo 2</p>
+        <h4 class="mg-b-5">Selecione suas questões!</h4>
+        <p class="mg-b-0 tx-color-03">Marque abaixo as questões desejadas.</p>
+      </div>
+      <div>
+        <nav class="nav nav-with-icon">
+          <a href="javascript:;" onclick="history.back()" class="nav-link active" style="text-decoration: underline;">
+            Editar filtros <i data-feather="edit" class="mg-l-5"></i>
+          </a>
+        </nav>
+      </div>
+    </div>
+    <template v-if="questions">
+      <div class="d-flex mg-b-15 mg-lg-b-25">
+        <div class="flex-1" style="min-width: 350px;">
+          <div class="card" style="max-height: 450px;">
+            <div class="card-header pd-t-20">
+              <div>
+                <div class="search-form">
+                  <button class="btn" type="button" style="border-right-width: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; border-left-width: 1px; border-top-left-radius: 0.25rem; border-bottom-left-radius: 0.25rem;"><i data-feather="search"></i></button>
+                  <input type="search" class="form-control" placeholder="Enunciado" style="border-top-left-radius: 0; border-bottom-left-radius: 0; border-left-width: 0; border-top-right-radius: 0.25rem; border-bottom-right-radius: 0.25rem; border-right-width: 1px;" />
+                </div>
+                <p class="mb-0 tx-12 tx-medium tx-color-03 mg-t-10">#{questions.count} encontradas</p>
+              </div>
+            </div>
+            <div class="card-body p-0" id="infinity-scroll" style="overflow-y: scroll;">
+              <div class="d-flex align-items-start p-2 cp hover" :id="question.id" :click="{'bg-light': checkSelection(question.id)}" @click="selectedQuestion = question" v-for="question in questions.results">
+                <div class="mg-r-10">
+                  <div class="custom-control custom-checkbox">
+                    <input type="checkbox" :checked="checkSelection(question.id)" class="custom-control-input" id="selectedQuestion">
+                    <label class="custom-control-label" for="selectedQuestion" @click="selectQuestion(question)"></label>
+                  </div>
+                </div>
+                <div>
+                  <p v-html="question.enunciation_str"></p>
+                  <div>
+                    <span class="badge badge-pill badge-primary tx-13" style="border-radius: 9999px; background-color: #fff; color: #000; border: 1px solid #cecece;">#{question.category}</span>
+                    <span class="badge badge-pill badge-primary tx-13" style="border-radius: 9999px; background-color: #fff; color: #000; border: 1px solid #cecece;">#{question.level}</span>
+                  </div>
+                </div>
+              </div>
+              <template v-if="infinityScrollConfig.type == 'clickToLoad' && !waitForQuestions">
+                <div class="p-2 text-center">
+                  <hr class="mb-1">
+                  <a href="javascript:;" class="tx-medium" @click="getQuestionsFromNextPage()">Carregar mais questões</a>
+                </div>
+              </template>
+              <div v-if="waitForQuestions" class="p-2 text-center">
+                <hr class="mb-1">
+                <p class="tx-medium tx-color-03"> Carregando questões, aguarde...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex-2">
+          <div class="card" style="max-height: 450px;">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between">
+              <div class="d-flex">
+                <p class="mb-0 tx-medium tx-color-03">Questão #{questions.results.indexOf(selectedQuestion) + 1}</p>
+              </div>
+              <div class="d-flex">
+                <div @click="selectQuestion(selectedQuestion)" class="cp d-flex align-items-center">
+                  <template v-if="checkSelection(selectedQuestion.id)">
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" checked class="custom-control-input" id="selectedQuestion">
+                      <label class="custom-control-label tx-medium tx-color-03" for="selectedQuestion">Questão selecionada</label>
+                    </div>
+                  </template>
+                  <template v-else>
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input" id="selectQuestionID">
+                      <label class="custom-control-label tx-medium tx-color-03" for="selectQuestionID">Selecionar questão</label>
+                    </div>
+                  </template>
+                </div>
+                <div class="pl-3">
+                  <button type="button" @click="changeQuestion()" class="btn p-0 mg-r-10" :disabled="!questions.results.indexOf(this.selectedQuestion)"><i data-feather="chevron-left"></i> <</button>
+                  <button type="button" @click="changeQuestion('next')" class="btn p-0" :disabled="questions.results.indexOf(this.selectedQuestion) == questions.results.length"><i data-feather="chevron-right"></i> ></button>
+                </div>
+              </div>
+            </div>
+            <div class="card-body" style="overflow-y: scroll;">
+              <div class="d-flex align-items-center justify-content-between mg-b-10" style="border-bottom: 1px solid #cecece; padding-bottom: 1rem;">
+                <div style="max-width: 70%;">
+                  <p class="mb-0 tx-color-03">#{selectedQuestion.subject_name}</p>
+                </div>
+                <div>
+                  <span class="badge badge-pill badge-primary tx-13" style="border-radius: 9999px; background-color: #fff; color: #000; border: 1px solid #cecece;">#{selectedQuestion.category}</span>
+                  <span class="badge badge-pill badge-primary tx-13" style="border-radius: 9999px; background-color: #fff; color: #000; border: 1px solid #cecece;">#{selectedQuestion.level}</span>
+                </div>
+              </div>
+              <div>
+                <ul class="nav nav-line" id="myTab5" role="tablist" style="border-bottom: unset;">
+                  <li class="nav-item">
+                    <a class="nav-link active" id="home-tab5" data-toggle="tab" href="#home5" role="tab" aria-controls="home" aria-selected="true">Enunciado</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" id="profile-tab5" data-toggle="tab" href="#profile5" role="tab" aria-controls="profile" aria-selected="false">Dados pedagógicos</a>
+                  </li>
+                </ul>
+                <div class="tab-content mg-t-20" id="myTabContent5">
+                  <div class="tab-pane fade show active" id="home5" role="tabpanel" aria-labelledby="home-tab5">
+                    <p class="mg-b-0" v-html="selectedQuestion.enunciation"></p>
+                    <hr>
+                    <div>
+                      <div class="custom-control custom-radio" v-for="alternative in selectedQuestion.alternatives">
+                        <input type="radio" :checked="alternative.is_correct" class="custom-control-input" :id="alternative.id">
+                        <label class="custom-control-label tx-medium tx-color-03" :for="alternative.id" v-html="alternative.text"></label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="tab-pane fade" id="profile5" role="tabpanel" aria-labelledby="profile-tab5">
+                    <div class="row">
+                      <div class="col-12">
+                        <div class="card">
+                          <div class="card-header p-2 font-weight-bold">
+                            Assuntos Abordados
+                          </div>
+                          <ul class="list-group list-group-flush">
+                            <template v-if="selectedQuestion.topics">
+                              <li v-if="!selectedQuestion.topics.length" class="list-group-item  p-1">Não há assuntos
+                                cadastrados nessa questão</li>
+                              <li v-else v-for="topic in selectedQuestion.topics" class="list-group-item  p-2">
+                                #{topic.name}</li>
+                            </template>
+                          </ul>
+                        </div>
+                      </div>
+                      <div class="col-12">
+                        <div class="card mt-2">
+                          <div class="card-header p-2 font-weight-bold">
+                            Habilidades
+                          </div>
+                          <ul class="list-group list-group-flush">
+                            <template v-if="selectedQuestion.abilities">
+                              <li v-if="!selectedQuestion.abilities.length" class="list-group-item  p-1">Não há habilidades
+                                cadastradas nessa questão</li>
+                              <li v-else v-for="abilitie in selectedQuestion.abilities" class="list-group-item  p-2">
+                                #{abilitie.text}</li>
+                            </template>
+                          </ul>
+                        </div>
+                      </div>
+                      <div class="col-12">
+                        <div class="card mt-2">
+                          <div class="card-header p-2 font-weight-bold">
+                            Competências
+                          </div>
+                          <ul class="list-group list-group-flush">
+                            <template v-if="selectedQuestion.competences">
+                              <li v-if="!selectedQuestion.competences.length" class="list-group-item  p-1">Não há competências
+                                cadastradas nessa questão</li>
+                              <li v-else v-for="competence in selectedQuestion.competences" class="list-group-item  p-2">
+                                #{competence.text}</li>
+                            </template>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12">
+          <div class="d-sm-flex align-items-center justify-content-between">
+            <div>
+              <button class="btn btn-sm pd-x-0 btn-link tx-bold tx-14" onclick="history.back()" style="text-decoration: underline;">
+                <i data-feather="arrow-left" class="mg-r-5"></i> Voltar
+              </button>
+            </div>
+            <div>
+              <button class="btn btn-sm pd-x-15 btn-outline-primary mg-l-5" style="background-color: #fff;">
+                Ver selecionadas (#{selectedQuestions.length})
+              </button>
+              <button class="btn btn-sm pd-x-15 btn-primary mg-l-5">
+                Concluir seleção
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+    <template v-else>
+      <div class="row">
+        <div class="col-12">
+          <h4>Nenhuma questão encontrada com o filtro selecionado</h4>
+        </div>
+      </div>
+    </template>
+  </div>
+</div>
+{% endblock content %}
+
+
+{% block bundle %}
+  
+  <script>
+    const app = new Vue({
+      delimiters: ["#{", "}"],
+      el: "#app",
+      data: {
+        questions: null,
+        selectedQuestion: null,
+        selectedQuestions: [],
+        waitForQuestions: false,
+        infinityScrollConfig: {
+          type: 'infinity',
+          availablesTypes: ['clickToLoad', 'infinity']
+        },
+      },
+      mounted() {
+        this.getQuestions();
+      },
+      methods: {
+        goTo(element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+        },
+        checkSelection(questionID) {
+          return this.selectedQuestions.find(question => question.id == questionID)
+        },
+        changeQuestion(action) {
+          action == 'next' ? this.selectedQuestion = this.questions.results.at(this.questions.results.indexOf(this.selectedQuestion) + 1) : this.selectedQuestion = this.questions.results.at(this.questions.results.indexOf(this.selectedQuestion) - 1)
+          this.goTo(document.getElementById(this.selectedQuestion.id))
+        },
+        selectQuestion(question) {
+          return this.checkSelection(question.id) ? this.selectedQuestions.splice(this.selectedQuestions.indexOf(question), 1) : this.selectedQuestions.push(question)
+        },
+        startIntiniteScroll() {
+          $('#infinity-scroll').scroll(() => {
+            let scrollHeight = document.getElementById('infinity-scroll').scrollHeight - $('#infinity-scroll').height() - 100
+            let currentScrollHeight = $('#infinity-scroll').scrollTop()
+            if(currentScrollHeight >=  scrollHeight) {
+              this.getQuestionsFromNextPage()
+            }
+          });
+        },
+        async getQuestions() {
+          try {
+            const res = await fetch(`{% url 'api2:select-questions' %}?{{topics_joined|safe}}`);
+            const data = await res.json();
+            if (!res.ok) throw data;
+            this.questions = data
+            this.selectedQuestion = data.results.at(0)
+            if(this.infinityScrollConfig.type == 'infinity') {
+              setTimeout(() => {
+                this.startIntiniteScroll()
+              }, 1000)
+            }
+
+          } catch (err) {
+            throw err;
+          }
+        },
+        async getQuestionsFromNextPage() {
+          try {
+            if(this.questions.next && !this.waitForQuestions) {
+              this.waitForQuestions = true
+              const res = await fetch(this.questions.next);
+              const data = await res.json();
+              if (!res.ok) throw data;
+              this.questions.previous = data.previous
+              this.questions.next = data.next
+              this.questions.results = this.questions.results.concat(data.results)
+              this.waitForQuestions = false
+            }
+          } catch (err) {
+            throw err;
+          }
+        }
+      }
+    })
+  </script>
+
+{% endblock bundle %}
+  

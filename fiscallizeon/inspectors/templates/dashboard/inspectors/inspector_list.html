@@ -1,0 +1,102 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load permissions %}
+
+{% block title %}Listagem de fiscais - Lize{% endblock title %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">FISCAIS</a></li>
+          <li class="breadcrumb-item active" aria-current="page">LISTAGEM</li>
+        </ol>
+      </nav> 
+      <h4>Seus fiscais</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <a href="{% url 'inspectors:inspectors_create' %}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+            <i data-feather="plus" class="wd-10 mg-r-5"></i> Cadastrar fiscal
+        </a >
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1rem; justify-content: space-between;">
+      <div style="flex: 1;">
+        <!-- Empty -->
+      </div>
+      {% if user|has_perm:'inspectors.add_inspector' %}
+        <div>
+          <a href="{% url 'inspectors:inspectors_create' %}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+            <i data-feather="plus" class="wd-10 mg-r-5"></i> Cadastrar fiscal
+          </a>
+        </div>
+      {% endif %}
+    </div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+              <div>
+                <h6 class="mg-b-5">Fiscais</h6>
+                <p class="tx-13 tx-color-03 mg-b-5">Gerencie todos os seus fiscais listadas abaixo</p>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-dashboard mg-b-1">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Tipo de fiscal</th>
+                    <th class="text-wrap text-right"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for inspector in object_list %}
+                  <tr>
+                    <td class="tx-medium">{{inspector.name}}</td>
+                    <td>{{inspector.email}}</td>
+                    <td>{{inspector.get_inspector_type_display}}</td>
+                    <td class="text-wrap ">
+                        <div class="d-flex float-right">
+                            <nav class="nav nav-icon-only float-right">
+                              {% if user|has_perm:'inspectors.change_inspector' %}
+                                <a href="{% url 'inspectors:inspectors_update' inspector.pk %}" class="nav-link d-none d-sm-block"><i class="fas fa-edit"></i></a>
+                              {% endif %}
+                              {% if user|has_perm:'inspectors.delete_inspector' %}
+                                <a href="javascript:void(0)" class="nav-link d-none d-sm-block" onClick="confirmCancel('{% url "inspectors:inspectors_delete" inspector.pk %}')" data-toggle="tooltip" data-placement="top" title="Deletar">
+                                  <i class="fas fa-trash"></i>
+                                </a>
+                              {% endif %}
+                            </nav>
+                        </div>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="4">
+                      Não há fiscais cadastrados até o momento.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div><!-- table-responsive -->
+        </div><!-- card -->
+          {% include 'includes/pagination.html' with objects=object_list %}
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+  {% include 'includes/confirm_modal.html' %}
+{% endblock extra-modal %}

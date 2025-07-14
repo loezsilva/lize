@@ -1,0 +1,101 @@
+<div class="media-body {% if application_student.application.category == 2 or application_student.application.leveling_test %}event-panel-primary{% elif application_student.application.category == 4 %}event-panel-green{% endif %} event-panel-border bg-white rounded ml-0 mb-2">
+    {% if not application_student.application.leveling_test or application_student.application.automatic_creation %}
+      <span class="badge-custom {% if application_student.application.get_priority_display == 'Baixa' %}bg-success{% elif application_student.application.get_priority_display == 'Média' %}bg-primary{% elif application_student.application.get_priority_display == 'Alta' %}bg-danger{%else%}bg-primary{% endif %} op-7 text-white">Prioridade: {{application_student.application.get_priority_display}}</span>
+    {% endif %}
+    {% if application_student.application.category == 2 %}
+      <span class="event-time">das {{ application_student.application.start }} até às {{ application_student.application.end }}</span>
+    {% elif application_student.application.category == 4 %}
+      <span class="event-time">
+        Encerra: {{ application_student.application.date_end|date:'d/m/Y' }} às {{ application_student.application.end }}
+      </span>
+    {% endif %}
+    {% if not application_student.application.automatic_creation %}
+      <span class="badge-custom {% if application_student.application.category == 2 or application_student.application.leveling_test %}badge-custom-blue{% elif application_student.application.category == 4 %}badge-custom-green{% endif %}">{% if application_student.application.leveling_test %} Prova de nivelamento {% elif application_student.application.category == 2 %}Prova{% elif application_student.application.category == 4 %}Lista de Exercício{% endif %}</span>
+    {% endif %}
+    <h6 class="event-title">{{ application_student.application.exam.name }}</h6>
+    <div class="card-todo">
+      {% if application_student.application.category == 4 and not application_student.end_time %}
+        <div class="card-progress pt-2 pb-0">
+          <label class="content-label mg-b-0">Progresso</label>
+          <div class="progress">
+            <div class="progress-bar {% if application_student.application.category == 2 %}bg-r-blue{% elif application_student.application.category == 4 %}bg-r-green{% endif %}" role="progressbar" aria-valuenow="{{ application_student.get_progress }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ application_student.get_progress }}%;"></div>
+          </div>
+          <label class="content-label mg-b-0">{{ application_student.get_progress }}%</label>
+        </div>
+      {% endif %}
+      {% if application_student.application.category == 2 and not application_student.end_time and not application_student.is_blocked_by_tolerance and not application_student.application.is_time_finished %}
+        <div class="card-footer {% if application_student.application.category == 2 %}card-footer-blue{% elif application_student.application.category == 4 %}card-footer-green{% endif %} bg-transparent bd-t-0 pt-2 px-0 pb-0">
+          <a href="{% url 'applications:applications_orientations_student' pk=application_student.pk %}" class="btn btn-block">&plus; {% if application_student.get_progress > 0 %}Continuar{% else %}Começar{% endif %}</a>
+        </div>
+      {% endif %}
+      {% if application_student.application.category == 4 and not application_student.end_time and not application_student.application.is_time_finished %}
+        <div class="card-footer {% if application_student.application.category == 2 %}card-footer-blue{% elif application_student.application.category == 4 %}card-footer-green{% endif %} bg-transparent bd-t-0 pt-2 px-0 pb-0">
+          {% if application_student.application.automatic_creation %}
+            <a href="{% url 'core:dashboard_student_mentorize_exam_review' pk=application_student.pk %}" class="btn btn-block">&plus; {% if application_student.get_progress > 0 %}Continuar{% else %}Começar{% endif %}</a>
+          {% else %}
+            <a href="{% url 'applications:applications_homework_student' pk=application_student.pk %}" class="btn btn-block">&plus; {% if application_student.get_progress > 0 %}Continuar{% else %}Começar{% endif %}</a>
+          {% endif %}
+        </div>
+      {% endif %}
+      {% if application_student.application.category == 2 %}
+        {% if application_student.end_time %}
+          <button type="button" disabled="disabled" class="btn btn-danger disabled btn-block font-weight-bold">Aplicação já realizada</button>
+        {% elif application_student.application.is_time_finished %}
+          <button type="button" disabled="disabled" class="btn btn-danger disabled btn-block font-weight-bold">Horário de prova encerrado!</button>
+        {% elif application_student.is_blocked_by_tolerance %}
+          <button type="button" disabled="disabled" class="btn btn-danger disabled btn-block font-weight-bold">Tempo de tolerância esgotado!</button>
+        {% else %}
+          <div>
+            <p style="font-size: 12px; margin-bottom: 0; color: #8392a5;">Liberação em:</p>
+            <p style="margin-bottom: 0; font-family: 'Rubik', sans-serif; font-size: 20px; line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums;">-</p>
+          </div>
+        {% endif %}
+      {% elif application_student.application.category == 4 %}
+        {% if application_student.end_time %}
+          <button type="button" disabled="disabled" class="btn btn-danger disabled btn-block font-weight-bold mt-2">Aplicação já realizada</button>
+        {% elif application_student.application.is_time_finished %}
+          <button type="button" disabled="disabled" class="btn btn-danger disabled btn-block font-weight-bold mt-2">Horário de prova encerrado!</button>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+  
+  {% comment %} 
+    <script>
+      function countDown() {
+        var time = '';
+    
+        $('#span-count-down-{{ application_student.application.pk }}').toggleClass('d-none');
+    
+        var countDownDate = moment(
+          '{{ application_student.date_time_start_tz|date:"Y-m-d H:i:s" }}',
+          'YYYY-MM-DD HH:mm:ss'
+        ).toDate().getTime();
+    
+        var now_datetime = moment('{% now "Y-m-d H:i:s" %}', 'YYYY-MM-DD HH:mm:ss');
+    
+        var x = setInterval(function () {
+          var now = now_datetime.toDate().getTime();
+    
+          var distance = countDownDate - now;
+    
+          if (distance < 0) {
+            clearInterval(x);
+            $('#span-count-down-{{ application_student.application.pk }}').toggleClass('d-none');
+            $('#buttom-{{ application_student.application.pk }}').toggleClass('d-none');
+          } else {
+            var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+    
+            time = ('0' + hours).slice(-2) + ':' + ('0' + minutes).slice(-2) + ':' + ('0' + seconds).slice(-2);
+    
+            $('#count-down-{{ application_student.application.pk }}').html(time);
+    
+            now_datetime = now_datetime.add(1, 'seconds');
+          }
+        }, 1000);
+      }
+      countDown(); 
+    </script>
+  {% endcomment %}

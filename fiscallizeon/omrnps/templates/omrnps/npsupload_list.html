@@ -1,0 +1,627 @@
+{% extends 'redesign/base.html' %}
+{% load static %}
+{% load cdn_url %}
+{% load widget_tweaks %}
+
+{% block css-additional %}
+
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+
+<link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+
+<style>
+  .select2-selection__choice__remove{
+    display: none !important;
+  }
+</style>
+{% endblock %}
+
+{% block title %} Listagem de NPS - Lize {% endblock title %}
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+
+        <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1rem; justify-content: space-between;">
+            <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-6 sm:tw-flex-nowrap tw-w-full">
+                <h1 class="tw-text-xl tw-font-semibold tw-leading-7 tw-text-[#374151] sm:tw-truncate sm:tw-text-2xl sm:tw-tracking-tight tw-mb-0">
+                Envios
+                </h1>
+                <div class="tw-order-last tw-flex tw-w-full tw-gap-x-8 tw-text-sm tw-font-semibold tw-leading-6 sm:tw-order-none sm:tw-w-auto sm:tw-border-l sm:tw-border-gray-200 sm:tw-pl-6 sm:tw-leading-7">
+                <button data-tg-title="Filtros detalhados" data-tg-order="3" data-tg-tour="Agora você pode acessar a janela de filtros detalhados clicando aqui." data-tg-group="default-application-list" type="button" class="tw-flex tw-items-center tw-text-[#667085] tw-off-canvas-menu" id="headlessui-slider-over-button-1" data-toggle-off-canvas="#right-off-canvas">
+                    <span>Filtrar</span>
+                    <span class="ml-2">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M5 10H15M2.5 5H17.5M7.5 15H12.5" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    </span>
+                </button>
+                </div>          
+                <div class="tw-ml-auto tw-flex tw-gap-3">
+                    {% include "redesign/includes/breadcrumb-year.html" with year=year|force_escape %}
+                    {% comment %}
+                        <a href="{% url 'exports:nps_applications_export' %}?{{request.GET.urlencode}}" data-tg-title="Exportação CSV ou XLS" data-tg-order="2" data-tg-tour='Baixe os resultados das aplicações já aplicados utilizando esse botão.' data-tg-group="default-template-list" class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold hover:tw-text-white tw-shadow-sm hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600">
+                            Exportar resultados
+                        </a>
+                        {% if user.is_superuser %}
+                            <a class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600 hover:tw-text-white" href="{% url 'admin:omrnps_npsapplication_add' %}">Cadastrar aplicação</a>
+                        {% endif %}
+                    {% endcomment %}
+                        
+                </div>
+            </div>
+        </div>
+
+        <div data-tg-title="Filtros aplicados" data-tg-order="4" data-tg-tour='Visualize os filtros já aplicados nesta listagem, remova-os individualmente clicando no "x" ou todos de uma vez clicando em "Limpar filtro".' data-tg-group="default-application-list" v-if="filters.selected || {{ count_filters|default:0|safe }}" class="tw-bg-white sm:tw-rounded-lg tw-py-5 tw-border tw-border-[#E5E7EA] tw-mb-4">
+            <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8" >
+                <div class="tw-flex tw-justify-between">
+                <div class="tw-flex tw-items-center">
+                    <p class="tw-mb-0 tw-pl-4 tw-pr-3 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900 sm:tw-pl-0">
+                    Filtrando por
+                    </p>
+                    <div class="tw-space-x-2">
+                    <span class="filter-elements tw-inline-flex tw-items-center tw-gap-x-0.5 tw-rounded tw-bg-[#F9FAFA] tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-text-[#384250]" v-for="filter in filters.labels()">
+                        <button @click="removeFilter(filter)" type="button" class="tw-group tw-relative tw--ml-1 tw-h-3.5 tw-w-3.5 tw-rounded-sm hover:tw-bg-gray-500/20">
+                        <span class="tw-sr-only">Remove</span>
+                        <svg viewBox="0 0 14 14" class="tw-h-3.5 tw-w-3.5 tw-stroke-gray-700/50 group-hover:tw-stroke-gray-700/75">
+                            <path d="M4 4l6 6m0-6l-6 6" />
+                        </svg>
+                        <span class="tw-absolute tw--inset-1"></span>
+                        </button>
+                        ${ filter.label }<template v-if="filter.showValues">:<span v-if="!filter.showCount">${ filter.values.join(', ') }</span><span v-else>${ filter.values.length }</span></template>
+                    </span>
+                    </div>
+                </div>
+                <div class="tw-flex tw-items-center">
+                    <button type="button" class="tw-text-left tw-text-sm tw-font-semibold tw-text-[#667085] tw-flex tw-items-center" @click="cleanFilter({{ year|force_escape }})">
+                    Limpar filtro
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="tw-ml-2">
+                        <path d="M15 5L5 15M5 5L15 15" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    </button>
+                </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+          <div class="col-12 mb-3">
+            <div class="card">
+                <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between pd-b-0">
+                    <div>
+                        Enviar respostas da avaliação
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{% url 'omrnps:upload-create' %}" enctype="multipart/form-data">
+                      <div class="row mb-0">
+                        {% csrf_token %}
+
+                        <div class="form-group mb-0 {% if form.omr_category.field.queryset %} col-6 {% else %} col-9 {% endif %}">
+                          <span class="text-danger">{{ form.pdf_scan.errors }}</span>
+                          <label class="font-weight-bold">{{form.pdf_scan.label}}</label>
+                          {% render_field form.pdf_scan class="form-control-file" accept="application/pdf" %}
+                        </div>
+                        <div class="form-group col-3 mt-4 mb-0">
+                          <button type="submit" class="btn btn-primary float-right">Enviar para leitura</button>
+                        </div>
+                      </div>
+                    </form>
+                </div>
+            </div>
+          </div>
+          <div class="col-md-12">
+              <div class="card mg-b-10">
+                  <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+                      <div>
+                          <h6 class="mg-b-5">Formulários de avaliação</h6>
+                          <p class="tx-13 tx-color-03 mg-b-5">Gerencie os formulários de avaliação listados abaixo</p>
+                      </div>
+                      <div class="float-right text-right">
+                          <!-- <button data-toggle-off-canvas="#right-off-canvas" class="btn btn-sm btn-info btn-icon rounded-pill off-canvas-menu  mb-2">
+                              <i class="fas fa-search"></i> Filtrar listagem 
+                              
+                              {% if count_filters > 0 %}
+                              <span class="badge badge-danger">{{count_filters}} Aplicado(s)</span>
+                              {% endif %}
+                          </button> -->
+                          {% if count_filters > 0 %}
+                              <a href="{% url 'omrnps:list' %}" class="btn btn-sm btn-info btn-icon rounded-pill mb-2">
+                              <i class="fas fa-eraser"></i> Apagar filtro(s)
+                              </a>
+                          {% endif %}
+                      </div>
+                  </div>
+                  
+                  <div class="table-responsive" style="overflow: inherit !important;">
+                      <table class="table table-dashboard mg-b-1">
+                          <thead>
+                          <tr>
+                              <th>Aplicação</th>
+                              <th>Arquivo</th>
+                              <th>Erros</th>
+                              <th>Status</th>
+                              <th class="text-wrap text-right"></th>
+                          </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-for="upload in uploads">
+                                <td class="tx-medium">
+                                    ${upload.createdDate}<br>
+                                    <span class="text-muted">Por: ${upload.user}</span>
+                                </td>
+                                <td>${upload.filename}</td>
+                                <td>
+                                    <template v-if="!upload.totalErroLoaded">
+                                        Carregando... <i class="fas fa-spin fa-spinner"></i>
+                                    </template>
+                                    <template v-else>
+                                        <template v-if="upload.totalErrors > 0">
+                                            ${upload.totalErrors} <i data-toggle="tooltip" title="Total de marcações com erro" class="fas fa-exclamation-triangle text-danger ml-1"></i>
+                                        </template>
+                                        <template v-else>
+                                            <i data-toggle="tooltip" title="Tudo certo com as marcações" class="fas fa-check text-success"></i>
+                                        </template>
+                                    </template>
+                                </td>
+                                <td>
+                                    <i class="fas fa-spinner fa-spin text-primary" v-if="upload.status === 0"></i>
+                                    <div v-else-if="upload.status === 1" class="progress">
+                                        <div
+                                            class="progress-bar bg-primary progress-bar-striped progress-bar-animated" 
+                                            role="progressbar"
+                                            :style="{ width: upload.progress + '%' }">
+                                        </div>
+                                    </div>
+                                    <template v-else>${ upload.statusDescription }</template>
+                                </td>
+                                <td class="text-wrap">
+                                    <div class="dropdown">
+                                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            Opções
+                                        </button>
+                                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                            <a :href="upload.detailUrl" class="nav-link d-none d-sm-block" data-toggle="tooltip" data-placement="top" title="Editar Professor">
+                                                <i class="fas fa-edit"></i> Detalhes
+                                            </a>
+                                            <a href="#" @click="deleteNpsUpload(upload)" class="nav-link d-none d-sm-block" data-toggle="tooltip" data-placement="top" title="Remover Upload" data-toggle="tooltip" data-placement="top" title="Deletar">
+                                                <i class="fas fa-trash"></i> Apagar
+                                                </a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% comment %}
+                            <tr>
+                                <td colspan="4">
+                                    Não há formulários enviados
+                                </td>
+                            </tr>
+                          </tbody>
+                          {% endcomment %}
+                      </table>
+                  </div>
+              </div>
+              {% include 'includes/pagination.html' with objects=object_list %}
+          </div>
+        </div>
+    </div>
+{% endblock content-fixed %}
+
+{% block slide-over %}
+    <div class="tw-relative tw-z-[1000] tw-off-canvas tw-off-canvas-right tw-invisible" aria-labelledby="slide-over-title" role="dialog" aria-modal="true" id="right-off-canvas">
+        <div class="tw-fixed tw-inset-0 tw-bg-[#9BA3AF] tw-bg-opacity-60 tw-transition-opacity"></div>
+        <div class="tw-fixed tw-inset-0 tw-overflow-hidden">
+            <div class="tw-absolute tw-inset-0 tw-overflow-hidden">
+                <div class="tw-pointer-events-none tw-fixed tw-inset-y-0 tw-right-0 tw-flex tw-max-w-full tw-pl-10" v-click-outside="onClickOutsideFilters">
+                <div class="tw-pointer-events-auto tw-w-screen tw-max-w-md">
+                    <div class="tw-flex tw-h-full tw-flex-col tw-divide-y tw-divide-gray-200 tw-bg-white tw-border-l">
+                    <div class="tw-h-0 tw-flex-1 tw-overflow-y-auto">
+                        <div class="tw-px-4 tw-pt-6 sm:tw-px-6">
+                        <div class="tw-flex tw-items-center tw-justify-between">
+                            <h2 class="tw-text-base tw-font-semibold tw-leading-6 tw-text-gray-900" id="slide-over-title">
+                            Filtrar aplicações
+                            </h2>
+                            <div class="tw-ml-3 tw-flex tw-h-7 tw-items-center">
+                            <button type="button" class="tw-relative tw-rounded-md tw-bg-white tw-text-gray-400 hover:tw-text-gray-500 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-primary-500 focus:tw-ring-offset-2 tw-off-canvas-close" id="headlessui-slider-over-close-button-1">
+                                <span class="tw-absolute tw--inset-2.5"></span>
+                                <span class="tw-sr-only">Close panel</span>
+                                <svg class="tw-h-6 tw-w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                            </div>
+                        </div>
+                        <div class="tw-mt-1">
+                            <p class="tw-text-sm tw-text-gray-500">
+                            Adiciona abaixo os filtros que você deseja aplicar na listagem abaixo.
+                            </p>
+                        </div>
+                        </div>
+                        <form id="filterForm" method="GET" class="tw-flex tw-flex-1 tw-flex-col tw-justify-between">
+                        <input type="hidden" value="{{ year|force_escape }}" name="year" />
+                        <div class="tw-divide-y tw-divide-gray-200 tw-px-4 sm:tw-px-6">
+                            <div class="tw-space-y-6 tw-pb-5 tw-pt-6">
+                            <div>
+                                <label for="application_name_id" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Nome da aplicação</label>
+                                <div class="tw-mt-2">
+                                <input type="text" id="application_name_id" name="q_name" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" value="{{ q_name }}" placeholder="Digite o nome da aplicação aqui" />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="file_name_id" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Nome do arquivo</label>
+                                <div class="tw-mt-2">
+                                <input type="text" id="file_name_id" name="q_file_name" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" value="{{ q_file_name }}" placeholder="Digite o nome do arquivo aqui" />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="school_class_id" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Turmas</label>
+                                <div class="tw-mt-2">
+                                <select id="school_class_id" name="q_school_class" class="tw-mt-2 tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pl-3 tw-pr-10 tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" multiple="multiple">
+                                    {% for school_class in school_classes %}
+                                    <option value="{{school_class.pk}}" {% if school_class.pk|stringformat:'s' in q_school_class %}selected="selected" {% endif %}>
+                                        {{school_class.name}} - {{ school_class.coordination__unity__name }} - {{ school_class.school_year|force_escape }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="grade_id" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Séries</label>
+                                <div class="tw-mt-2">
+                                <select id="grade_id" name="q_grade" class="tw-mt-2 tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pl-3 tw-pr-10 tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" multiple="multiple">
+                                    {% for grade in grades %}
+                                    <option value="{{ grade.pk }}" {% if grade.pk|stringformat:'s' in q_grade %}selected="selected"{% endif %}>
+                                        {{ grade }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="unity_id" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Unidades</label>
+                                <div class="tw-mt-2">
+                                <select id="unity_id" name="q_unity" class="tw-mt-2 tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pl-3 tw-pr-10 tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" multiple="multiple">
+                                    {% for unity in unities %}
+                                    <option value="{{ unity.pk }}" {% if unity.pk|stringformat:'s' in q_unity %}selected="selected"{% endif %}>
+                                        {{ unity }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                </div>
+                            </div>
+
+                            </div>
+                        </div>
+                        </form>
+                    </div>
+                    <div class="tw-flex tw-flex-wrap tw-space-y-3 sm:tw-space-x-3 sm:tw-space-y-0 tw-px-4 tw-py-4">
+                        <button type="submit" class="tw-inline-flex tw-w-full tw-flex-shrink-0 tw-items-center tw-justify-center tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600 sm:tw-flex-1" form="filterForm">
+                        Aplicar filtro
+                        </button>
+                    </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock slide-over %}
+
+{% block extra-modal %}
+  {% include 'includes/confirm_modal.html' %}
+{% endblock extra-modal %}
+
+{% block js-additional %}
+<script>
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+            omrUploadDetailUrl: "{% url 'omr:omr_upload_detail' '00000000-0000-0000-0000-000000000000' %}",
+            uploads: [
+                {% for upload in object_list %}
+                    {
+                        id: "{{ upload.pk }}",
+                        createdDate: "{{ upload.created_at }}",
+                        user: "{{ upload.user }}",
+                        filename: "{{ upload.get_filename|default_if_none:'' }}",
+                        status: {{ upload.status }},
+                        statusDescription: "{{ upload.get_status_display }}",
+                        totalPages: {{ upload.total_pages }},
+                        detailUrl: "{% url 'omrnps:upload-details' pk=upload.pk %}",
+                        deleteUrl: "{% url 'omrnps:upload-delete' pk=upload.pk %}",
+                        classes: [
+                            {% for class in upload.get_classes %}
+                            {'name': '{{class}}'},
+                            {% endfor %}
+                        ],
+                        totalErrors: 0,
+                        totalErroLoaded: false,
+                        urls: {{upload.urls|safe}}
+                    },
+                {% endfor %}
+            ],
+            filters: {
+                selected: false,
+                list: [],
+                selectedParams: '',
+                parseParamsInLabels(params) {
+                    let query = {}, labels = [];
+                    let pairs = (params[0] === '?' ? params.substr(1) : params).split('&');
+                    for (var i = 0; i < pairs.length; i++) {
+                    var pair = pairs[i].split('=');
+                    query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+                    }
+                    for(key in query) {
+                    if(query[key]) {
+                        const count = params.match(new RegExp(`\\b(${key})\\b`, 'g')).length;
+                        let input = $(`[name="${key}"]`), inputId = input.attr('id'), label = `${$(`[for="${inputId}"]`).text()}`
+                        if(input.prop('type') == 'select-multiple') {
+                        label += `: <span class="badge badge-dark rounded-circle">${count}</span>`
+                        } else {
+                        if(input.prop('type') == 'select-one') {
+                            label += `: ${input.find(`option[value=${query[key]}]`).text()}`
+                        }
+                        if(input.prop('type') == 'text') {
+                            label += `: ${query[key]}`
+                        }
+                        }
+                        labels.push(label)
+                    }
+                    }
+                    return labels
+                },
+                labels() {
+                    let labels = []
+                    
+                    $('#filterForm').find('select, input').each((index, input) => {
+                    let values = [], showValues = true, showCount = false
+                    if(input.id) {
+                        if(input.type.includes('select')  ) {
+                        if(input.type == 'select-multiple') {
+                            showCount = true
+                        }
+                        values = $(`#${input.id} option:selected`).toArray().map(item => item.text)
+                        }
+                        else if(input.type == 'checkbox' || input.type == 'radio') {
+                        value = $(`#${input.id}:checked`).val()
+                        if(value == 'on' || value === true) {
+                            showValues = false
+                            values.push(true)
+                        }
+                        } else {
+                        values.push($(`#${input.id}`).val())
+                        }
+                        if(values.filter(value => value).length) {
+                        labels.push({
+                            name: $(`#${input.id}`).attr('name'),
+                            label: $(`[for=${input.id}]`).text(),
+                            showValues: showValues,
+                            showCount: showCount,
+                            values: values,
+                        })
+                        }
+                    }
+                    })
+                    return labels
+                },
+            },
+        },
+        methods: {
+            async getErrors(upload) {
+                return axios.get(upload.urls.total_errors) 
+            },
+            fetchUploadStatus(pendingUploads) {
+                const self = this
+                pendingUploads.map(function(upload) {
+                let url = "{% url 'omrnps:omr_ingest_task_status' pk='00000000-0000-0000-0000-000000000000' %}"
+                fetch(url.replace('00000000-0000-0000-0000-000000000000', upload.id))
+                .then(response => response.json())
+                .then(data => {
+                    switch (data.status) {
+                        case 'STARTED':
+                            upload.status = 1
+                            upload.statusDescription = 'Processando'
+                            const {done, total} = data.details
+                            upload.progress = Math.round(done / total * 100)
+                            console.log(done, total)
+                            self.$forceUpdate()
+                            break
+                        case 'SUCCESS':
+                            upload.status = 2
+                            upload.statusDescription = 'Finalizado'
+                            upload.totalPages = data.total_pages
+                            upload.errorsCounter = data.error_pages
+                            break
+                        case 'ERROR':
+                            upload.status = 3
+                            upload.statusDescription = 'Erro'
+                            break;
+                        case 'FAILURE':
+                            upload.status = 3
+                            upload.statusDescription = 'Erro'
+                            break;
+                        }
+                    })
+                })
+            },
+            deleteNpsUpload(upload) {
+                Swal.fire({
+                    title: 'Você tem certeza que deseja remover esse upload? Todas as respostas associadas serão removidas!',
+                    showCancelButton: true,
+                    reverseButtons: true,
+                    confirmButtonText: 'Sim',
+                    cancelButtonText: "Cancelar",
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        let url = upload.deleteUrl
+                        axios.get(url)
+                        .then(response => {
+                            this.uploads = this.uploads.filter(item => item.id !== upload.id);
+                            Swal.fire({
+                                position: 'top-end',
+                                icon: 'success',
+                                text: "Upload removido com sucesso!",
+                                showConfirmButton: false,
+                                timer: 3000,
+                                backdrop: false,
+                                allowOutsideClick: false,
+                                timerProgressBar: true,
+                            })
+                        })
+                        .catch(error => {
+                            Swal.fire({
+                                position: 'top-end',
+                                icon: 'error',
+                                text: "Erro! Não foi possível remover o upload!",
+                                showConfirmButton: false,
+                                timer: 3000,
+                                backdrop: false,
+                                allowOutsideClick: false,
+                                timerProgressBar: true,
+                            })
+                        })
+                    }
+                })
+            },
+            removeFilter(filter) {
+                const url = new URL(window.location.href);
+                const urlParams = url.searchParams;
+                urlParams.delete(filter.name);
+                url.search = urlParams.toString();
+                window.location.href = url.href;
+            },
+            cleanFilter(year) {
+                window.location.href = "{% url 'omrnps:omrnps-list' %}?year=" + year;
+            },
+            onClickOutsideFilters(event) {
+                const target = event.target
+                const button = document.getElementById('headlessui-slider-over-button-1')
+
+                const select2DropdownAbove = document.getElementsByClassName('select2-dropdown--above')[0]
+                const select2DropdownBelow = document.getElementsByClassName('select2-dropdown--below')[0]
+                if (select2DropdownAbove || select2DropdownBelow) {
+                    return
+                }
+
+                if (!(target === button || button.contains(target))) {
+                    const rightOffCanvasContent = document.getElementById('right-off-canvas')
+                    if (rightOffCanvasContent.classList.contains('tw-show')) {
+                    rightOffCanvasContent.classList.remove('tw-show')
+                    }
+                }
+            },
+        },
+        directives: {
+            'click-outside': {
+                bind: function(el, binding, vNode) {
+                // Provided expression must evaluate to a function.
+                if (typeof binding.value !== 'function') {
+                    const compName = vNode.context.name
+                    let warn = `[Vue-click-outside:] provided expression '${binding.expression}' is not a function, but has to be`
+                    if (compName) { warn += `Found in component '${compName}'` }
+
+                    console.warn(warn)
+                }
+                // Define Handler and cache it on the element
+                const bubble = binding.modifiers.bubble
+                const handler = (e) => {
+                    if (bubble || (!el.contains(e.target) && el !== e.target)) {
+                    binding.value(e)
+                    }
+                }
+                el.__vueClickOutside__ = handler
+
+                // add Event Listeners
+                document.addEventListener('click', handler)
+                },
+
+                unbind: function(el, binding) {
+                // Remove Event Listeners
+                document.removeEventListener('click', el.__vueClickOutside__)
+                el.__vueClickOutside__ = null
+                }
+            },
+        },
+        async mounted() {
+            $(document).ready(() => {
+                setInterval(() => {
+                    const pendingUploads = this.uploads.filter(upload => upload.status < 2)
+                    if(pendingUploads) {
+                        this.fetchUploadStatus(pendingUploads)
+                    }
+                }, {% if DEBUG %}1000{% else %}30000{% endif %})
+    
+                $('#filterForm').find('input,select').change(this.filterFormChanged)
+                $('.tw-off-canvas-menu').on('click', function (e) {
+                e.preventDefault();
+                var target = $(this).attr('data-toggle-off-canvas');
+                $(target).addClass('tw-show');
+                });
+            
+                $('.tw-off-canvas .tw-off-canvas-close').on('click', function (e) {
+                e.preventDefault();
+                $(this).closest('.tw-off-canvas').removeClass('tw-show');
+                })
+    
+                $('#unity_id').select2({
+                    placeholder: "Selecione uma opção",
+                    closeOnSelect: false,
+                    }).on('select2:selecting', function(e) {
+                    let cur = e.params.args.data.id;
+                    let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+                    $(e.target).val(old).trigger('change');
+                    $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+                    return false;
+                });
+    
+                $('#grade_id').select2({
+                    placeholder: "Selecione uma opção",
+                    closeOnSelect: false,
+                    }).on('select2:selecting', function(e) {
+                    let cur = e.params.args.data.id;
+                    let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+                    $(e.target).val(old).trigger('change');
+                    $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+                    return false;
+                });
+    
+                $('#school_class_id').select2({
+                    placeholder: "Selecione uma opção",
+                    closeOnSelect: false,
+                    }).on('select2:selecting', function(e) {
+                    let cur = e.params.args.data.id;
+                    let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+                    $(e.target).val(old).trigger('change');
+                    $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+                    return false;
+                });
+            
+                $(document).on('click touchstart', function (e) {
+                if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+                    return
+                }
+                e.stopPropagation();
+                if (!$(e.target).closest('.tw-off-canvas-menu').length) {
+                    var offCanvas = $(e.target).closest('.tw-off-canvas').length;
+                    if (!offCanvas) {
+                    $('.tw-off-canvas.tw-show').removeClass('tw-show');
+                    }
+                }
+                });
+            })
+
+            for(upload of this.uploads) {
+                await this.getErrors(upload).then((response) => {
+                    upload.totalErrors = response.data.total_errors
+                    upload.totalErroLoaded = true
+                })
+            }
+        },
+  })
+</script>
+{% endblock js-additional %}

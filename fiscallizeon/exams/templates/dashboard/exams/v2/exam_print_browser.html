@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>MDN Example</title>
+<script type="text/javascript">
+function closePrint() {
+  document.body.removeChild(this.__container__);
+}
+
+function setPrint() {
+  this.contentWindow.__container__ = this;
+  this.contentWindow.onbeforeunload = closePrint;
+  this.contentWindow.onafterprint = closePrint;
+  this.contentWindow.focus(); // Required for IE
+  this.contentWindow.print();
+}
+
+function printPage(sURL) {
+  var oHideFrame = document.createElement("iframe");
+  oHideFrame.onload = setPrint;
+  oHideFrame.style.position = "fixed";
+  oHideFrame.style.right = "0";
+  oHideFrame.style.bottom = "0";
+  oHideFrame.style.width = "0";
+  oHideFrame.style.height = "0";
+  oHideFrame.style.border = "0";
+  oHideFrame.src = sURL;
+  document.body.appendChild(oHideFrame);
+}
+</script>
+</head>
+
+<body>
+  <p><span onclick="printPage('http://localhost:8000/provas/049922ab-9565-4e97-a80c-f50b2dbabc71/imprimir?header=&header_full=1&two_columns=0&separate_subjects=0&line_textual=0&hide_discipline_name=1&line_spacing=0&font_size=12');" style="cursor:pointer;text-decoration:underline;color:#0000ff;">Print external page!</span></p>
+</body>
+</html>

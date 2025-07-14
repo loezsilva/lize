@@ -1,0 +1,485 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+
+{% block title %}Detalhes do enunciado - Lize{% endblock title %}
+
+{% block css-additional %}
+<link rel="stylesheet" href="{% static 'administration/lib/datatables.net-responsive-dt/css/responsive.dataTables.min.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.10.2/viewer.css" integrity="sha512-HGWrJz+Lr07phD0DNoLsSVwn3przno/eSLf1cGOrLzr6c7NUZROZJPhQdSPmLHNbsO0HP2UfUnpKTMiVxonEHw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<style>
+.card-detail{
+    max-height: 70vh;
+    overflow: auto;
+}
+#question-details {
+    border-width: 1px;
+    border-style: solid;
+    border-color: #d9d7d7;
+}
+
+#question-details img {
+    min-width: 200px;
+    max-width: 100%;
+}
+
+.text-main {
+    color: #001737 !important;
+}
+
+table#student-responses td {
+    min-width: 53.85px;
+}
+
+td.bg-gray:hover {
+    background-color: #dedede !important;
+    cursor: pointer;
+}
+
+td.bg-success, td.bg-pink, td.bg-warning {
+    color: white !important;
+}
+
+td.bg-success:hover {
+    background-color: #10753c !important;
+    cursor: pointer;
+}
+
+td.bg-pink:hover {
+    background-color: #a80051 !important;
+    cursor: pointer;
+}
+
+td.bg-warning:hover {
+    cursor: pointer;
+}
+
+td.alternative-correct {
+    background-color: #10b75990 !important;
+}
+
+td.alternative-incorrect {
+    background-color: #dc354590 !important;
+}
+#viewerTitle0 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #001737;
+    opacity: 0.8;
+}
+</style>
+
+{% endblock %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">PROVAS</a></li>
+          <li class="breadcrumb-item active" aria-current="page">RELATÓRIO POR ENUNCIADO</li>
+        </ol>
+      </nav>
+      <h4>{{object.name}}</h4>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+      <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+        <nav class="ls" aria-label="Breadcrumb">
+          <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+            <li>
+              <div>
+                <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                    <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+                </a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="{% url 'exams:exams_list' %}?category=exam" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Cadernos</a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Relatório por enunciado</a>
+              </div>
+            </li>
+          </ol>
+        </nav>
+      </div>
+      <div><h4>{{object.name}}</h4></div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="card card-body">
+            <form class="" method="GET">
+                <div class="form-group">
+                    <label>Filtrar por turma</label>
+                    <select class="form-control" name="turma">
+                        <option value="">Selecione</option>
+                        <!-- <option value="all">Todas as turmas</option> -->
+                        {% for school_class in school_classes %}
+                            <option 
+                                value="{{ school_class.pk }}"
+                                {% if school_class.pk|stringformat:"s" == request.GET.turma %}selected="selected"{% endif %}
+                            >{{ school_class }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary float-right">Filtrar</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if exam_questions %}
+<div class="row">
+    <div class="col-md-12 ">
+        <div class="card">
+            <div class="card-body pd-y-15 pd-x-10">
+                <div class="table-responsive">
+                    <table class="table table-striped table-borderless table-sm tx-13 mg-b-0" id="table-questions">
+                        <thead>
+                            <tr class="tx-10 tx-spacing-1 tx-color-03 tx-uppercase">
+                                <th>Enunciado</th>
+                                <th>Tipo</th>
+                                <th>Aproveitamento</th>
+                                <th>Acertos</th>
+                                <th>Parciais</th>
+                                <th>Erros</th>
+                                <th>Corrigidas</th>
+                                <th>Respostas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="examQuestion in examQuestions">
+                                <td class="align-middle tx-medium">
+                                    <a href="#" @click.prevent.default="getAnswers(examQuestion.id)">
+                                       ${examQuestion.enunciation}
+                                    </a><br/>
+                                </td>
+                                <td class="align-right">
+                                    <i v-if="examQuestion.category == 'Arquivo anexado'" class="fa fa-paperclip"></i>
+                                    <i v-else-if="examQuestion.category == 'Discursiva'" class="fas fa-pen-nib"></i>
+                                    <i v-else class="fas fa-check"></i>
+                                </td> 
+                                <td class="align-right" :class="getPercentageClass(examQuestion.correctRate)">
+                                    ${examQuestion.correctRate}%
+                                </td>
+                                <td class="align-right text-success">
+                                    ${examQuestion.correctAnswers}
+                                </td> 
+                                <td class="align-right text-warning">
+                                    ${examQuestion.partialAnswers}
+                                </td> 
+                                <td class="align-right text-danger">
+                                    ${examQuestion.incorrectAnswers}
+                                </td> 
+                                <td class="align-right">
+                                    ${examQuestion.correctedAnswers}
+                                </td> 
+                                <td class="align-right">
+                                    ${examQuestion.totalAnswers}
+                                </td>                                
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="row">
+    <div class="col">
+        <h5>Selecione uma turma para exibir os resultados</h5>
+    </div>
+</div>
+{% endif %}
+</div>
+{% endblock content-fixed %}
+
+
+{% block extra-modal %}
+<div class="modal pr-0" tabindex="-1" role="dialog" id="detailModal">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-white">
+                <h5 class="modal-title">
+                <i class="fas fa-user mr-2"></i>
+                Respostas da questão
+                </h5>
+                <button @click="openedChat=false;" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <i class="fas fa-times-circle"></i>
+                </button>
+            </div>
+            <div v-if="!loadingAnswers" class="modal-body">
+                <template v-if="selectedQuestion.question">
+                    <h4>Enunciado 
+                        <small>
+                            <a href="#" @click.prevent.default="hideEnunciation = !hideEnunciation">
+                                ${hideEnunciation ? 'exibir' : 'ocultar'}
+                            </a>
+                        </small>
+                    </h4>
+                    <span class="badge badge-info float-right">${selectedQuestion.weight} pontos</span>
+                    <div v-if="!hideEnunciation">
+                        <div v-html="selectedQuestion.question.enunciation"></div>
+                        <table class="w-100">
+                            <tr v-for="alternative in selectedQuestion.question.alternatives">
+                                <td class="form-check" v-if="alternative">
+                                    <input class="form-check-input" type="radio" disabled="disabled">
+                                    <label v-html="alternative.text"></label>
+                                    <i v-show="alternative.is_correct" class="fas fa-check text-success"></i>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <h4>Respostas</h4>
+                    <div id="answers-accordion" class="accordion mb-5">
+                        <template v-for="answer in selectedQuestion.answers">
+                            <h6 @click="clearFeedbackMessage()">${answer.student_application.student}
+                                
+                                <span v-if="answer.similar_answers && answer.similar_answers.length" class="badge badge-danger">${answer.similar_answers.length} Respotas
+                                    similares</span>
+                                <span ></span>
+                                <template v-if="selectedQuestion.question.category != 'Objetiva'">
+                                    <template v-if="answer.teacher_grade != null && !answer.unsaved">
+                                        <div v-if="answer.teacher_grade == selectedQuestion.weight" class="text-success float-right">
+                                            <i class="fas fa-check"></i> ${answer.teacher_grade}
+                                        </div>
+                                        <div v-else-if="!parseFloat(answer.teacher_grade)" class="text-danger float-right">
+                                            <i class="fas fa-times"></i> 0.00
+                                        </div> 
+                                        <div v-else class="text-warning float-right">
+                                            <i class="fas fa-check"></i> ${answer.teacher_grade}
+                                        </div>
+                                    </template>
+                                </template>
+                                <template v-else>
+                                    <i v-show="answer.is_correct" class="fas fa-check text-success float-right"></i>
+                                    <i v-show="!answer.is_correct" class="fas fa-times text-danger float-right"></i>
+                                </template>
+                            </h6>
+                            <div>
+                                <div v-if="selectedQuestion.question.category == 'Objetiva'">                                    
+                                    <div v-html="answer.text"></div>
+                                </div>
+                                <div v-if="selectedQuestion.question.category == 'Arquivo anexado'">
+                                    <template v-if="checkAnswerType(answer)">
+                                        <a href="javascript:void(0)" class="btn btn-primary btn-sm" @click="showAnswerImage(answer)">
+                                            <i class="fas fa-image"></i>
+                                            Ver arquivo anexado
+                                        </a>
+                                    </template>
+                                    <template v-else>
+                                        <a class="btn btn-info btn-sm" :href="answer.arquivo" target="_blank">Ver arquivo anexado</a>
+                                    </template>
+                                </div>
+                                <div v-if="selectedQuestion.question.category == 'Discursiva'">
+                                    
+                                    <div class="row">
+                                        <div class="col-12 col-md-6">
+                                            ${answer.content}   
+                                        </div>
+                                        <div class="col-12 col-md-6" v-if="answer.similar_answers && answer.similar_answers.length">
+                                            <h6>Respostas similares</h6>
+                                            <div id="accordion">
+                                                <div class="card" v-for="similar in answer.similar_answers">
+                                                    <div class="card-header p-2">
+                                                        <a :href="'#collapse-'+answer.id+'-'+similar.student_application.pk"
+                                                            data-toggle="collapse">
+                                                            ${similar.student_application.student}
+                                                        </a>
+                                                        <span class="badge badge-primary float-right">
+                                                            ${(parseFloat(similar.similarity) * 100).toFixed(2)} %
+                                                        </span>
+                                                    </div>
+                                                    <div class="collapse card-body p-2"
+                                                        :id="'collapse-'+answer.id+'-'+similar.student_application.pk"
+                                                        data-parent="#accordion" style="background: #f5f6fa;">
+                                                        <p class="mb-0">${similar.content}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    
+
+                                </div>
+                                {% if user_type == 'teacher' %}
+                                <template v-if="selectedQuestion.question.category != 'Objetiva'">
+                                    <hr>
+                                    <div class="row">
+                                        <div class="form-group col-12">
+                                            <label for="feedback-textarea">Comentário do professor</label>
+                                            <textarea class="form-control" id="feedback-textarea" rows="3"
+                                                v-model="answer.teacher_feedback"></textarea>
+                                        </div>
+
+                                        <div class="form-group col-12">
+                                            <label for="grade">Nota</label>
+                                            <input 
+                                                type="number" 
+                                                class="form-control" 
+                                                id="grade" 
+                                                step='0.01' 
+                                                value='0.00'
+                                                placeholder='0.00' 
+                                                v-model="answer.teacher_grade" 
+                                                @change="setUnsaved(answer)"
+                                                @keyup="setUnsaved(answer)"
+                                            >
+                                        </div>
+                                        <div class="col-12">
+                                            <button 
+                                                type="submit" 
+                                                class="btn btn-danger" 
+                                                @click="setAnswerGrade(answer, 0)"
+                                            >
+                                                Atribuir valor zero
+                                            </button>
+
+                                            <button 
+                                                type="submit" 
+                                                class="btn btn-success"
+                                                @click="setAnswerGrade(answer, selectedQuestion.weight)"
+                                            >
+                                                Atribuir valor máximo
+                                            </button>
+
+                                            <span class="text-info" v-if="feedbackSaved && !feedbackError">Correção salva!</span>
+                                            <span class="text-danger" v-if="feedbackError">Erro no envio, tente novamente</span>
+
+                                            <button type="submit" class="btn btn-primary float-right" @click="sendTeacherFeedback(answer)">
+                                                Salvar correção
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                                {% elif user_type == 'coordination' %}       
+                                    <div v-if="answer.teacher_grade !== null">
+                                        <hr />
+                                        <span class="font-weight-bold">Comentário do professor:</span>
+                                        <span>${answer.teacher_feedback || 'Sem feedback'}</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </template>
+                    </div>
+                </template>
+                <img id="image" class="d-none">
+            </div> 
+            <div v-else class="modal-body text-center">
+                <i class="fas fa-spinner fa-spin fa-3x mt-5 text-primary"></i>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock extra-modal %}
+
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/datatables.net-responsive-dt/js/responsive.dataTables.min.js' %}"></script>
+<script src="{% static 'administration/lib/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'administration/lib/jqueryui/jquery-ui.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.10.2/viewer.min.js" integrity="sha512-lzNiA4Ry7CjL8ewMGFZ5XD4wIVaUhvV3Ct9BeFmWmyq6MFc42AdOCUiuUtQgkrVVELHA1kT7xfSLoihwssusQw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
+<script type="text/javascript">
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+            {% include 'dashboard/exams/includes/exam-detail-enunciation-data.js' %}
+        },
+        watch:{},
+        methods: {
+            {% include 'dashboard/exams/includes/exam-detail-enunciation-functions.js' %},
+            checkAnswerType(answer) {
+                const types = ['.jpeg', '.jpg', '.jpe', '.jfif', '.png', '.bmp', '.gif', '.tif', '.psd', '.tiff', '.exif', '.raw', '.crw', '.cr2', '.nef', '.nrw', '.eps', '.svg', '.webp']
+                if(answer && answer.arquivo && types.find(type => answer.arquivo.toLowerCase().includes(type)))
+                    return true
+                return false
+            },
+            showAnswerImage(answer) {
+                $('#image').attr('src', answer.arquivo)
+                const viewer = new Viewer(document.getElementById('image'), {
+                    inline: false,
+                    toolbar: {
+                        zoomIn: 4,
+                        zoomOut: 4,
+                        oneToOne: 4,
+                        reset: 4,
+                        prev: 0,
+                        play: {
+                            show: 4,
+                            size: 'large',
+                        },
+                        next: 0,
+                        rotateLeft: 4,
+                        rotateRight: 4,
+                        flipHorizontal: 0,
+                        flipVertical: 0,
+                    },
+                    title: [4, () => `Aluno: ${answer.student_application.student} - Questão: ${this.selectedQuestion.order}`],
+                    ready() {
+                        $('#detailModal').modal({ keyboard: false })
+                    },
+                    hide() {
+                        $('#detailModal').modal({ keyboard: true })
+                    }
+                })
+                $('#image').click()
+            },
+        },
+        mounted: function() {
+            $('[data-toggle="tooltip"]').tooltip()
+            $('[data-toggle="popover"]').popover({ trigger: "hover" })   
+            
+            this.examQuestions = this.examQuestions.map(el => ({
+                ...el, correctRate: this.getCorrectPercentage(el)
+            }))
+
+            $('#table-questions').DataTable({
+                responsive: true,
+                pageLength: 50,
+                language: {
+                    url: "//cdn.datatables.net/plug-ins/1.10.22/i18n/Portuguese-Brasil.json"
+                },
+                order: [],
+                columnDefs: [                
+                    { "orderable": false, "targets": 0 },
+                    { "orderable": false, "targets": 1 },
+                    { "orderable": false, "targets": 2 },
+                    { "orderable": false, "targets": 7 },
+                ]
+            });
+        },
+        updated: function(){
+            $('#answers-accordion').accordion({
+                heightStyle: 'content',
+                collapsible: true,
+            });
+        },
+    })
+</script>
+
+{% endblock js-additional %}

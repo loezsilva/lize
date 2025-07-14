@@ -1,0 +1,721 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Página de sincronizações - Lize{% endblock title %}
+
+{% block css-additional %}
+
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+    <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+        <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+            <li class="breadcrumb-item"><a href="{% url 'students:students_list' %}">CHAVES</a></li>
+            <li class="breadcrumb-item active" aria-current="page">SINCRONIZAR</li>
+            </ol>
+        </nav> 
+        <h4>Sincronizar alunos e turmas</h4>
+        </div>
+        <div class="d-none d-md-block">
+            <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+                <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+            </a>
+        </div>
+    </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+
+<div class="ard cer dcv">
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+      <nav class="ls" aria-label="Breadcrumb">
+        <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+          <li>
+            <div>
+              <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                  <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+              </a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="{% url 'students:students_list' %}" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Chaves</a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Sincronizar</a>
+            </div>
+          </li>
+        </ol>
+      </nav>
+      <div class="d-none d-md-block">
+        <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+          <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+      </div>
+    </div>
+    <div class="row mb-2">
+      <div class="col-12">
+        <h4>Sincronizar alunos e turmas</h4>
+      </div>
+    </div>
+<div class="row">
+    <div class="col-12">
+        <div class="card p-2">
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="unities-tab" data-toggle="tab" href="#unities" role="tab" aria-controls="unities" aria-selected="true"><i class="fas fa-city mr-1"></i> Unidades 
+                    <div class="spinner-border text-info ml-2" role="status" v-if="loads.unities" style="width: 1.3rem; height: 1.3rem;">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item" role="presentation" v-show="stepsChecked.classes">
+                <a class="nav-link" id="classes-tab" data-toggle="tab" href="#classes" role="tab" aria-controls="classes" aria-selected="true"><i class="fas fa-school mr-1"></i> Turmas 
+                    <div class="spinner-border text-info ml-2" role="status" v-if="loads.classes" style="width: 1.3rem; height: 1.3rem;">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item" role="presentation" v-show="stepsChecked.interships">
+                <a class="nav-link" id="interships-tab" data-toggle="tab" href="#interships" role="tab" aria-controls="interships" aria-selected="false"><i class="fas fa-bezier-curve mr-1"></i> Alunos e Enturmações
+                    <div class="spinner-border text-info ml-2" role="status" v-if="loads.interships" style="width: 1.3rem; height: 1.3rem;">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </a>
+            </li>
+        </ul>
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade show active" id="unities" role="tabpanel" aria-labelledby="unities-tab">
+                <section>
+                    <div class="row">
+                        <div class="col-12" v-if="unities.length">
+                            <div class="row m-0 py-2">
+                                <div class="col-lg-3 pl-0">
+                                    <div class="card shadow-sm">
+                                        <div class="card-body py-1">
+                                            <p class="text-muted mb-1 tx-medium">Unidade(s) Sincronizada(s)</p>
+                                            <h5 class="text-success">${unities.filter((unity) => unity.sync).length}</h5>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3">
+                                    <div class="card shadow-sm">
+                                        <div class="card-body py-1">
+                                            <p class="text-muted mb-1 tx-medium">Aguardando Sincronização</p>
+                                            <h5 class="text-danger">${unities.filter((unity) => !unity.sync).length}</h5>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col d-flex justify-content-end align-items-center">
+                                    <button class="btn btn-success m-1" @click="syncronizations('unities')">
+                                        <i class="fas fa-sync"></i> Sincronizar unidades
+                                    </button>
+                                    <button type="button" class="btn btn-primary m-1" @click="!stepsChecked.classes ? getClasses():changeTab('classes')">Avançar <i class="fas fa-arrow-right"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="table-responsive">
+                                <table class="table table-dashboard mg-b-1">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Unidade</th>
+                                            <th>Relacionada com</th>
+                                            <th class="text-center">Sincronizada</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="(unity, index) in unities">
+                                            
+                                            <td class="tx-medium align-middle">
+                                                ${index + 1}
+                                            </td>
+                                            <td class="align-middle">
+                                                ${unity['nome_unidade']}
+                                            </td>
+                                            <td class="align-middle">
+                                                <select class="form-control" v-model="unity.relation_id">
+                                                    <option value=""></option>
+                                                    <option v-for="unity in user_unities" :value="unity.id" :selected="{{unity.id_erp|default:'false'}} == unity['id_unidade']" :disabled="checkDifValues(unity.id)">${unity.name}</option>
+                                                </select>
+                                            </td>
+                                            <td class="align-middle text-center">
+                                                <template v-if="unity.sync">
+                                                    <i class="fas fa-sync-alt text-success" title="Sincronizada com sucesso"></i>
+                                                </template>
+                                                <template v-else>
+                                                    <i class="fas fa-sync-alt text-danger" title="Não sincronizada"></i>
+                                                </template>
+                                            </td>
+                                        </tr>
+                                        <tr v-if="unities.length == 0">
+                                            <td colspan="4" v-if="loads.unities">
+                                                Aguarde enquanto consultamos as unidades.
+                                                <div class="spinner-border text-info ml-2" role="status" v-if="loads.unities" style="width: 1.3rem; height: 1.3rem;">
+                                                    <span class="sr-only">Loading...</span>
+                                                </div>
+                                            </td>
+                                            <td colspan="4" v-else>
+                                                Não há unidades cadastradas até o momento.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <div class="tab-pane fade" id="classes" role="tabpanel" aria-labelledby="classes-tab">
+                <section>
+                    <div class="row">
+                        <div class="col-12" v-if="classes.length">
+                            <div class="row m-0 py-2">
+                                <div class="col-lg-3 pl-0">
+                                    <div class="card shadow-sm">
+                                        <div class="card-body py-1">
+                                            <p class="text-muted mb-1 tx-medium">Turmas(s) Sincronizada(s)</p>
+                                            <h5 class="text-success">${classes.filter((classe) => classe.sync).length}</h5>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3">
+                                    <div class="card shadow-sm">
+                                        <div class="card-body py-1">
+                                            <p class="text-muted mb-1 tx-medium">Aguardando Sincronização</p>
+                                            <h5 class="text-danger">${classes.filter((classe) => !classe.sync).length}</h5>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col d-flex justify-content-end align-items-center">
+                                    <button class="btn btn-success m-1" @click="syncronizations('classes')" :disabled="classes.every(classe => classe.sync)"> 
+                                        <template v-if="loads.classes">
+                                            <div class="spinner-border text-light ml-2" role="status" style="width: 1.3rem; height: 1.3rem;">
+                                                <span class="sr-only">Loading...</span>
+                                            </div> Sincronizando, Aguarde...
+                                        </template>
+                                        <template v-else>
+                                            <i class="fas fa-sync"></i> Sincronizar turmas
+                                        </template>                                
+                                    </button>
+                                    <button type="button" class="btn btn-primary m-1" @click="!stepsChecked.interships ? getInterships():changeTab('interships')">Avançar <i class="fas fa-arrow-right"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12" v-if="classes.length">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" id="concatenateSerieID" v-model="concatenateSerie" class="custom-control-input">
+                                <label class="custom-control-label" for="concatenateSerieID">Concatenar o nome da turma com a série</label>
+                                <p class="text-muted">
+                                    Marque essa opção caso você deseja concatenar o nome da turma com o nome da série.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="table-responsive">
+                                <table class="table table-dashboard mg-b-1">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Série</th>
+                                        <th>Unidade</th>
+                                        <th>Coordenação</th>
+                                        <th class="text-center">Sincronizada</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(classe, index) in classes">
+                                        <td class="tx-medium align-middle text-nowrap">
+                                            ${ concatenateSerie ? classe['curso']['nome'] + ' - ' + classe['nome'] : classe['nome'] }
+                                            <br>
+                                            <span class="text-muted">${classe['curso']['nome']}</span>
+                                        </td>
+                                        <td class="align-middle">
+                                            <div class="d-flex flex-column">
+                                                <span>${classe['curso']['nome']} - em {{user.client.integration.get_erp_display}}</span>
+                                                <select class="form-control form-control-sm" v-model="classe.grade">
+                                                    <option value=""></option>
+                                                    <option v-for="grade in user_grades" :value="grade.id" :selected="takeGradeName(classe)">${grade.name}</option>
+                                                </select>
+                                            </div>
+                                        </td>
+                                        <td class="align-middle">
+                                            ${getUnity(classe['unidade']['id'])['nome_unidade']}
+                                            <br/>
+                                            <span class="badge badge-primary">${classe['unidade']['nome']}</span>
+                                        </td>
+                                        <td class="align-middle">
+                                            <div class="d-flex align-items-center">
+                                                <div class="col">
+                                                    <select class="form-control form-control-sm" v-model="classe.relation_id">
+                                                        <option value=""></option>
+                                                        <option v-for="coordination in user_coordinations" :value="coordination.id">${coordination.name_unity} - ${coordination.name}</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-1">
+                                                    <i class="fas fa-copy text-primary px-2" @click="previousCopyCoordination(classes, index)" v-if="index > 0 && classes[index-1].relation_id && !classe.relation_id" style="cursor: pointer;"></i>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="align-middle text-center">
+                                            <template v-if="classe.sync">
+                                                <i class="fas fa-sync-alt text-success" title="Sincronizada com sucesso"></i>
+                                            </template>
+                                            <template v-else>
+                                                <i class="fas fa-sync-alt text-danger" title="Não sincronizada"></i>
+                                            </template>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="classes.length == 0">
+                                        <td colspan="5" v-if="loads.classes">
+                                            Aguarde enquanto consultamos as turmas. 
+                                            <div class="spinner-border text-info ml-2" role="status" v-if="loads.classes" style="width: 1.3rem; height: 1.3rem;">
+                                                <span class="sr-only">Loading...</span>
+                                            </div>
+                                        </td>
+                                        <td colspan="5" v-else>
+                                            Não há turmas cadastrada até o momento.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <div class="tab-pane fade" id="interships" role="tabpanel" aria-labelledby="interships-tab">
+                <section>
+                    <div class="row">
+                        <div class="col-12" v-if="interships.length">
+                            <div class="row m-0 py-2">
+                                <div class="col-lg-3 pl-0">
+                                    <div class="card shadow-sm">
+                                        <div class="card-body py-1">
+                                            <p class="text-muted mb-1 tx-medium">Aluno(s) Sincronizado(s)</p>
+                                            <h5 class="text-success">${interships.filter((student) => student.sync).length}</h5>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3">
+                                    <div class="card shadow-sm">
+                                        <div class="card-body py-1">
+                                            <p class="text-muted mb-1 tx-medium">Aguardando Sincronização</p>
+                                            <h5 class="text-danger">${interships.filter((student) => !student.sync).length}</h5>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col d-flex justify-content-end align-items-center">
+                                    <button class="btn btn-success m-1" @click="syncronizations('interships')" :disabled="loads.interships || interships.every(intership => intership.sync)"> 
+                                        <template v-if="loads.interships">
+                                            <div class="spinner-border text-light ml-2" role="status" style="width: 1.3rem; height: 1.3rem;">
+                                                <span class="sr-only">Loading...</span>
+                                            </div> Sincronizando, Aguarde...
+                                        </template>
+                                        <template v-else>
+                                            <i class="fas fa-sync"></i> Sincronizar alunos e enturmar
+                                        </template>                                
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" id="removeStudentClasses" v-model="removeStudentClasses" class="custom-control-input">
+                                        <label class="custom-control-label" for="removeStudentClasses">Remover as turmas anteriores dos alunos</label>
+                                        <p class="text-muted">
+                                            Marque essa opção caso você deseja remover as turmas anteriores dos alunos, esta opção será aplicada para todas as enturmações.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="table-responsive">
+                                <table class="table table-dashboard mg-b-1">
+                                    <thead>
+                                        <tr>
+                                            <th>Nome</th>
+                                            <th>Matrícula</th>
+                                            <th>E-mail</th>
+                                            <th class="text-center">Sincronizado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template v-if="!loads.interships || status == 'inProgress'">
+                                            <tr v-for="intership in interships">
+                                                <td class="align-middle">
+                                                    <strong>${intership.nome_aluno}</strong>
+                                                    <br/>
+                                                    <span class="text-muted">${getClasse(intership.id_turma).nome} - ${getClasse(intership.id_turma).curso.nome}</span>
+                                                </td>
+                                                <td class="align-middle">
+                                                    ${intership.numero_re}
+                                                </td>
+                                                <td class="align-middle">
+                                                    ${intership.aluno_email}
+                                                </td>
+                                                <td class="align-middle text-center">
+                                                    <template v-if="intership.sync">
+                                                        <i class="fas fa-sync-alt text-success" title="Sincronizado com sucesso"></i>
+                                                    </template>
+                                                    <template v-else>
+                                                        <i class="fas fa-sync-alt text-danger" title="Não sincronizado"></i>
+                                                    </template>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                        <template v-else>
+                                            <tr>
+                                                <td colspan="4">
+                                                    Aguarde enquanto consultamos os alunos.
+                                                    <div class="spinner-border text-info ml-2" role="status" style="width: 1.3rem; height: 1.3rem;">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                        <tr v-if="!loads.interships && !interships.length">
+                                            <td colspan="4">
+                                                Não há alunos cadastrados até o momento.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-steps/1.1.0/jquery.steps.min.js" integrity="sha512-bE0ncA3DKWmKaF3w5hQjCq7ErHFiPdH2IGjXRyXXZSOokbimtUuufhgeDPeQPs51AI4XsqDZUK7qvrPZ5xboZg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+            erpURL: 'https://api.ischolar.app',
+            classesRelation: [
+                {% for classe in syncronized_classes %}
+                    {
+                        id: '{{classe.id}}',
+                        id_erp: {{classe.id_erp}},
+                        coordination: '{{classe.coordination.id}}',
+                    },
+                {% endfor %}
+            ],
+            classes: [],
+            students: [],
+            interships: [],
+            unities: [],
+            user_unities: [
+                {% for unity in user.get_clients.0.unities.all %}
+                    {
+                        id: '{{ unity.pk }}',
+                        name: '{{ unity.name }}',
+                        id_erp: '{{ unity.id_erp }}',
+                    },
+                {% endfor %}
+            ],
+            user_grades: [
+                {% for grade in grades %}
+                    {
+                        id: '{{ grade.pk }}',
+                        name: '{{ grade }}',
+                        name_grade: '{{ grade.name_grade }}',
+                    },
+                {% endfor %}
+            ],
+            user_coordinations: [
+                {% for coordination in user.get_coordinations %}
+                    {
+                        id: '{{coordination.pk}}',
+                        name: '{{coordination.name}}',
+                        name_unity: '{{coordination.unity.name}}',
+                    },
+                {% endfor %}
+            ],
+            loads: {
+                classes: true,
+                interships: true,
+                unities: true,
+            },
+            status: 'iddle',
+            stepsChecked: {
+                classes: false,
+                interships: false,
+            },
+            concatenateSerie: false,
+            removeStudentClasses: false,
+        },
+        watch: {
+            concatenateSerie: function(val) {
+                if(val && this.classes.some(classe => classe.sync)) {
+                    Swal.fire({
+                        title: "Aviso!",
+                        html: `Turmas sincronizadas serão impactadas por mudanças no nome, que agora incluirão o nome da disciplina e a série.`,
+                        icon: "info"
+                    })
+                    localStorage.setItem('concatenateSerie', true)
+                } else {
+                    localStorage.removeItem('concatenateSerie')
+                }
+            }
+        },
+        methods: {
+            headers() {
+                return {{headers|safe}}
+            },
+            syncronizations(type) {
+                if(type == 'unities') {
+                    this.loads.unities = true
+                    axios.post("{% url 'integrations:sync_unities' %}", this.unities.map((unity) => ({...unity, unity: unity.relation_id ? this.user_unities.find((_unity) => _unity.id == unity.relation_id).name: ''}))).then((response) => {
+                        this.unities = response.data
+                    }).finally(() => { 
+                        this.loads.unities = false
+                        Swal.fire(
+                            'Sincronização concluída!',
+                            'As unidades foram sincronizadas com sucesso.',
+                            'success'
+                        )
+                    })
+                } else if (type == 'classes') {
+                    this.loads.classes = true
+                    axios.post(`{% url 'integrations:sync_classes' %}?concatenate_serie=${this.concatenateSerie}`, this.classes.map(classe => ({...classe, relation_id: classe.relation_id ? classe.relation_id.replace("'", '"') : ""}))).then((response) => {
+                        this.classes = response.data
+                        this.$forceUpdate()
+                        response.data.filter(classe => classe.sync).length == this.classes.length ? Swal.fire(
+                            'Sincronização concluída!',
+                            'Todas as turmas foram sincronizadas com sucesso.',
+                            'success'
+                        ) : Swal.fire(
+                            'Sincronização concluída!',
+                            'Algumas turmas não foram sincronizadas, verifique se os dados das turmas estão corretos e tente novamente.',
+                            'info'
+                        )
+                    }).catch((error) => {
+                        console.log(error)
+                        Swal.fire(
+                            'Erro ao sincronizar!',
+                            'Verifique se os dados das turmas estão corretos preenchidos corretamente e tente novamente, caso o erro persista, entre em contato com o administrador.',
+                            'error'
+                        )
+                    }).finally(() => { 
+                        this.loads.classes = false
+                    })
+                } else if (type == 'interships') {
+                    this.syncInterships()
+                }
+            },
+            async syncInterships() {
+                this.loads.interships = true
+                this.status = 'inProgress'
+                Swal.fire({
+                    title: 'Sincronizando enturmações!',
+                    html: 'Não saia dessa página enquanto o processo estiver em andamento',
+                    timer: 3000,
+                    timerProgressBar: true,
+                })
+                let count = 0
+                let notSyncCount = Number(Object.assign(this.interships.filter(intership => !intership.sync).length))
+
+                for await (let object of this.interships.filter(inter => !inter.sync)) {
+                    
+                    object['student'] = {
+                        email: object.aluno_email,  
+                        nome: object.nome_aluno,
+                        matricula: object.numero_re,
+                        id_enrollment_erp: object.id_matricula,
+                        id: object.id_aluno,
+                        data_nascimento: object.dt_nascimento,
+                    },
+
+                    object['turma_id'] = object.id_turma
+
+                    await axios.post(`{% url 'integrations:sync_interships' %}?${this.removeStudentClasses ? 'remove_student_classes=true':''}`, [object]).then((response) => {
+                        object['sync'] = response.data[0].sync
+                        this.$forceUpdate()
+                    })
+                    
+                    count++
+                    if(count === notSyncCount) {
+                        this.interships.filter(intership => intership.sync).length == this.interships.length ? Swal.fire(
+                            'Sincronização concluída!',
+                            'Todas as enturmações foram sincronizadas com sucesso.',
+                            'success'
+                        ) : Swal.fire(
+                            'Sincronização concluída!',
+                            'Algumas enturmações não foram sincronizadas, verifique se todas as turmas e alunos estão sincronizados e tente novamente.',
+                            'info'
+                        )
+                        this.status = 'iddle'
+                        this.loads.interships = false
+                    }
+                }
+            },
+            getUnities() {
+                axios.get('{{user.client.integration.urls.unities_list}}', { headers: this.headers() }).then((response) => {
+                    this.unities = response.data.dados.map((unity) => ({...unity, sync: false, relation_id: this.user_unities.find((u) => u.id_erp == unity['id_unidade']) ? this.user_unities.find((u) => u.id_erp == unity['id_unidade']).id : ''}));
+                    // Checa quais unidades estão sincronizada para poder marcar o icone "sync" como verde
+                    axios.post("{% url 'integrations:check-sincronization-unities' %}", this.unities.map((unity) => unity['id_unidade'])).then((_response) => {
+                        this.unities.forEach((unity) => {
+                            if(_response.data.includes(String(unity['id_unidade']))) {
+                                unity['sync'] = true
+                            }
+                        })
+                    })
+                }).catch((e) => {
+                    let erros_list = []
+                    if(e.response && e.response.data) {
+                        for (key in e.response.data) {
+                            erros_list.push(e.response.data[key])
+                        }
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Ocorreu um erro',
+                        html: `A sincronização retornou o(s) seguinte(s) erro(s): <br><br> <strong>${erros_list.join(',')}</strong>`,
+                    })
+                }).finally(() => {
+                    this.loads.unities = false;
+                })
+            },
+            getClasses() {
+                this.stepsChecked.classes = true
+                this.changeTab('classes')
+
+                axios.get('{{user.client.integration.urls.classes_list}}', { headers: this.headers() }).then((response) => {
+                    this.classes = response.data.dados.map((classe) => ({...classe, sync: false, relation_id: this.classesRelation.find(_classe => _classe.id_erp == classe['id']) ? this.classesRelation.find(_classe => _classe.id_erp == classe['id']).coordination : null}))
+                    
+                    // Checa quais turmas estão sincronizada para poder marcar o icone "sync" como verde
+                    axios.post("{% url 'integrations:check-sincronization-classes' %}", this.classes.map((classe) => classe['id'])).then((_response) => {
+                        this.classes.forEach((classe) => {
+                            if(_response.data.includes(String(classe['id']))) {
+                                classe['sync'] = true
+                            }
+                        })
+                    })
+                }).catch((error) => {
+                    console.log(error);
+                }).finally(() => {
+                    this.loads.classes = false;
+                })
+            },
+            async getIntership(classeID) {
+                return await axios.get(`{{user.client.integration.urls.intership_with_details}}?id_turma=${classeID}`, { headers: this.headers() })
+            },
+            async getInterships() {
+                this.stepsChecked.interships = true
+                this.changeTab('interships')
+            
+                await this.getStudents().then((studentsResponse) => {
+                    let loadeds = []
+                    
+                    for(intership of studentsResponse) {
+    
+                        if(['MATRICULADO', 'CURSANDO', 'ADMITIDO'].includes(intership['status_matricula_diario'])) {
+                            this.interships.push(intership)
+                        }
+                        
+                        loadeds.push(intership)
+                        
+                        if(loadeds.length == studentsResponse.length) {
+                            axios.post("{% url 'integrations:ischolar-check-sincronization-interships' %}", this.interships).then((_response) => {
+                                this.interships.forEach((intership) => {
+                                    if(_response.data.find((_intership => _intership.id_turma == intership.id_turma && _intership.id_aluno == intership.id_aluno))) {
+                                        intership['sync'] = true
+                                    }
+                                })
+                            }).finally(() => this.loads.interships = false)
+                        }
+                    }
+                })
+                
+            },
+            async getStudents() {
+                let students = []
+                for(let classe of this.classes.filter(c => c.sync)) {
+                    url = '{{user.client.integration.urls.students_list}}'
+                    await this.getIntership(classe.id).then((response) => {
+                        if(response.data.dados && response.data.dados.length) {
+                            response.data.dados.map((s) => ({...s, loaded: false, sync: false })).forEach((student) => {
+                                let foundedStudent = students.find((s) => s.id_aluno == student.id_aluno && s.id_turma == student.id_turma)
+                                if(!foundedStudent) {
+                                    students.push(student)
+                                }
+                            })
+                        }
+                    })
+                }
+                return students 
+            },
+            getClasse(id) {
+                if(id) {
+                    return this.classes.find(c => c.id == id)
+                }
+            },
+            getStudent(id) {
+                if(id){
+                    return this.students.find(s => s.id == id)
+                }
+            },
+            getUnity(id) {
+                if(id) {
+                    return this.unities.find(unity => unity['id_unidade'] == id)
+                }
+            },
+            checkDifValues(relation) {
+                if(this.unities.find(unity => relation == unity.relation_id)) {
+                    return true
+                }
+            },
+            previousCopyCoordination(array, index) {
+                array[index].relation_id = array[index - 1].relation_id
+                this.$forceUpdate()
+            },
+            takeGradeName(classe) {
+                if(!classe.grade) {
+                    grade = this.user_grades.find(grade => grade.name_grade.toLowerCase().trim() == classe['curso']['nome'].toLowerCase().trim())
+                    if(grade)
+                        classe.grade = grade.id
+                }
+            },
+            changeTab(tab) {
+                $(`[href='#${tab}']`).tab('show')
+            },
+        },
+        mounted() {
+            this.getUnities()
+            if(localStorage.getItem('concatenateSerie')) {
+                this.concatenateSerie = true
+            }            
+        }
+    })
+</script>
+{% endblock %}

@@ -1,0 +1,3378 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+
+{% load static %}
+{% load widget_tweaks %}
+{% load insert_field %}
+{% load insert_key %}
+{% load handle_list %}
+{% load remove_line_break %}
+
+{% block title %}
+  {% if not object %}
+    Cadastrar gabarito - Lize
+  {% else %}
+    Editar gabarito - Lize
+  {% endif %}
+{% endblock title %}
+
+{% block css-additional %}
+<!-- {{ form.media }} -->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/5.3.0/tinymce.min.js"></script>
+<script type="text/javascript" src="{% static 'django_custom_tinymce/init_tinymce.js' %}"></script>
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<link rel="stylesheet" href="{% static 'administration/lib/quill/quill.snow.css' %}">
+<link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+  integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+
+<link href="{% static 'administration/assets/css/boostrap5.css' %}" rel="stylesheet">
+<link rel="stylesheet" href="//unpkg.com/focus-overlay@latest/dist/focusoverlay.css" />
+<link rel="stylesheet" href="https://unpkg.com/@sjmc11/tourguidejs/dist/css/tour.min.css">
+<style>
+  .tg-backdrop{
+    z-index: 9999 !important;
+  }
+</style>
+<style>
+  .list-group-item .btn:hover{
+    cursor: pointer;
+  }
+  .line-through {
+    text-decoration: line-through;
+  }
+
+  .modal-body{
+    padding: 0;
+    max-height: 80vh !important;
+    height: 80vh !important;
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
+  }
+  .grid-item { width: 100%; }
+  @media (min-width: 992px){
+    .modal-lg, .modal-xl {
+      max-width: 95%;
+    }
+    .modal-content.modal-body{
+      max-height: 80vh !important;
+      height: 80vh !important;
+    }
+  }
+  #question-details img{
+    max-width: 90%;
+  }
+  .selected-row{
+    background-color: rgb(224 224 224 / 31%);
+  }
+  #teacherModal .list-group-item{
+    cursor: pointer;
+  }
+  #question-container .list-group-item {
+    cursor: move;
+  }
+  .tox-tinymce {
+    border-radius: 0.375rem !important;
+    padding-top: 0.375rem !important;
+    padding-bottom: 0.375rem !important;
+    color: rgb(17 24 39) !important;
+    font-size: 0.875rem !important;
+    line-height: 1.5rem !important;
+  }
+  /* .tox-editor-header {
+    display: none;
+  } */
+  .select2-container--default .select2-selection--multiple {
+    border: 0 !important;
+    border-radius: 0.375rem !important;
+    font-size: 0.875rem !important;
+    line-height: 1.5rem  !important;
+    color: rgb(17 24 39) !important;
+    padding-right: 0.438rem;
+    padding-left: 0.438rem;
+
+    box-shadow: inset 0 0 0 0px #fff, inset 0 0 0 calc(1px + 0px ) rgb(209 213 219 / 1 ), 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+  .select2-container--default.select2-container--focus .select2-selection--multiple {
+    border: 0 !important;
+    box-shadow: inset 0 0 0 0px #fff, inset 0 0 0 calc(2px + 0px ) rgb(255 143 62 / 1 ), 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+  }
+  #select-related-subjects {
+    min-width: 150px;
+  }
+</style>
+<link rel="stylesheet" href="https://unpkg.com/@sjmc11/tourguidejs/dist/css/tour.min.css">
+<style>
+  .tg-backdrop{
+    z-index: 9999 !important;
+  }
+</style>
+{% endblock css-additional %}
+
+{% block js-header-additional %}
+<script src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
+  integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
+  integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa" crossorigin="anonymous"></script>
+
+<script src="{% static 'js/treeselectjs.umd.js' %}"></script>
+<link rel="stylesheet" href="{% static 'css/treeselectjs.css' %}" />
+{% endblock js-header-additional %}
+
+{% block content-fixed %}
+<div class="tw-flex tw-justify-center">
+  <div class="ard cer dcv tw-max-w-[100rem] tw-flex-1 tw-mb-16">
+    <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1.5rem; justify-content: space-between;">
+      <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-8 sm:tw-flex-nowrap tw-w-full">
+        <h1 class="tw-text-xl tw-font-semibold tw-leading-7 tw-text-[#374151] sm:tw-truncate sm:tw-text-2xl sm:tw-tracking-tight tw-mb-0">
+          {% if not object %}
+            Cadastrar gabarito
+          {% else %}
+            Editar gabarito
+          {% endif %}
+        </h1>
+        <div class="tw-order-last tw-flex tw-w-full tw-gap-x-4 tw-text-sm tw-font-semibold tw-leading-6 sm:tw-order-none sm:tw-w-auto sm:tw-leading-7">
+          <!-- Empty -->
+        </div>
+        <div class="tw-ml-auto tw-flex tw-gap-4">
+          <div>
+            <button data-tg-order="2" data-tg-title="Situação" data-tg-tour='Defina a situação de criação do seu gabarito.' data-tg-group="default-template-create-update" class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-text-[#667085] tw-border tw-border-[#E5E7EA] tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-shadow-sm tw-bg-white hover:tw-bg-gray-50 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600" type="button" id="dropdownMenuButton-1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <span class="tw-font-medium">Situação</span>
+              <span class="tw-font-semibold">
+                <template v-if="status === 0">Elaborando</template>
+                <template v-else-if="status === 1">Em análise</template>
+                <template v-else-if="status === 2">Fechado</template>
+              </span>
+              <svg class="tw--mr-1 tw-h-5 tw-w-5 tw-text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+              </svg>
+            </button>
+            <div class="dropdown-menu dropdown-menu-right tw-absolute tw-right-0 tw-z-10 tw-mt-2 tw-w-56 tw-origin-top-right tw-divide-y tw-divide-gray-100 tw-rounded-md tw-bg-white tw-shadow-lg tw-ring-1 tw-ring-black tw-ring-opacity-5 focus:tw-outline-none tw-text-inherit tw-m-0 tw-p-0 tw-border-0" aria-labelledby="dropdownMenuButton-1" style="font-size: inherit;">
+              <div class="tw-py-1" role="none">
+                <template v-if="status !== 0">
+                  <button type="button" class="tw-w-full tw-text-gray-700 tw-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-text-sm tw-text-left hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" id="menu-item-0" @click="status = 0">
+                    <span>
+                      <svg width="16" height="16" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 7.5C2 7.5 2.5 7 4 7C5.5 7 6.5 8 8 8C9.5 8 10 7.5 10 7.5V1.5C10 1.5 9.5 2 8 2C6.5 2 5.5 1 4 1C2.5 1 2 1.5 2 1.5L2 11" stroke="#0C7BDB" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </span>
+                    <span>
+                      Elaborando
+                    </span>
+                  </button>
+                </template>
+                <template v-if="status !== 1">
+                  <button type="button" class="tw-w-full tw-text-gray-700 tw-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-text-sm tw-text-left hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" id="menu-item-1" @click="status = 1">
+                    <span>
+                      <svg width="16" height="16" viewBox="0 0 12 12" fill="none">
+                        <path d="M1.21006 6.35659C1.14197 6.24877 1.10792 6.19486 1.08886 6.11171C1.07455 6.04925 1.07455 5.95075 1.08886 5.88829C1.10792 5.80514 1.14197 5.75123 1.21006 5.64341C1.77276 4.75242 3.4477 2.5 6.0002 2.5C8.5527 2.5 10.2276 4.75242 10.7903 5.64341C10.8584 5.75123 10.8925 5.80514 10.9115 5.88829C10.9259 5.95075 10.9259 6.04925 10.9115 6.11171C10.8925 6.19486 10.8584 6.24877 10.7903 6.35659C10.2276 7.24758 8.5527 9.5 6.0002 9.5C3.4477 9.5 1.77276 7.24758 1.21006 6.35659Z" stroke="#0C7BDB" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M6.0002 7.5C6.82863 7.5 7.5002 6.82843 7.5002 6C7.5002 5.17157 6.82863 4.5 6.0002 4.5C5.17177 4.5 4.5002 5.17157 4.5002 6C4.5002 6.82843 5.17177 7.5 6.0002 7.5Z" stroke="#0C7BDB" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </span>
+                    <span>
+                      Em análise
+                    </span>
+                  </button>
+                </template>
+                <template v-if="status !== 2">
+                  <button type="button" class="tw-w-full tw-text-gray-700 tw-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-text-sm tw-text-left hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" id="menu-item-2" @click="status = 2">
+                    <span>
+                      <svg width="16" height="16" viewBox="0 0 12 12" fill="none">
+                        <g clip-path="url(#clip0_2_3631)">
+                          <path d="M3.75 6L5.25 7.5L8.25 4.5M11 6C11 8.76142 8.76142 11 6 11C3.23858 11 1 8.76142 1 6C1 3.23858 3.23858 1 6 1C8.76142 1 11 3.23858 11 6Z" stroke="#41C588" stroke-linecap="round" stroke-linejoin="round"/>
+                        </g>
+                        <defs>
+                          <clipPath id="clip0_2_3631">
+                            <rect width="16" height="16" fill="white"/>
+                          </clipPath>
+                        </defs>
+                      </svg>
+                    </span>
+                    <span>
+                      Fechado
+                    </span>
+                  </button>
+                </template>
+              </div>
+            </div>
+          </div>
+          <button data-tg-order="3" data-tg-title="Concluir" data-tg-tour='Ao finalizar a configuração do seu gabarito, clique aqui para salvá-lo.' data-tg-group="default-template-create-update" type="button" class="tw-flex tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 hover:tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600" @click="saveTemplate()">
+            <template v-if="statusSubmit === 'loading' && !generateApplication">
+              Concluindo...
+            </template>
+            <template v-else>
+              Concluir gabarito
+            </template>
+          </button>
+        </div>
+      </div>
+    </div>
+    <form method="POST" id="form-template-create-update" onsubmit="return false">
+      <div class="tw-space-y-4">
+        <div data-tg-order="4" data-tg-title="Configurações gerais" data-tg-tour='Defina as informações iniciais do seu gabarito.' data-tg-group="default-template-create-update" class="tw-bg-white sm:tw-rounded-lg tw-py-8 tw-border tw-border-[#E5E7EA]">
+          <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8">
+            <div class="tw-flex tw-items-center tw-justify-between tw-border-b tw-border-gray-900/10 tw-pb-6">
+              <h2 class="tw-text-base tw-font-semibold tw-leading-7 tw-text-gray-900 tw-mb-0">
+                Dados do gabarito
+              </h2>
+              <div class="tw-flex tw-flex-col tw-gap-3">
+                <div class="tw-flex tw-items-center">
+                  <div id="input_english_spanish" class="custom-control custom-switch" data-tg-order="5" data-tg-title="Língua estrangeira" data-tg-tour='Se o aluno deverá escolher entre duas disciplinas no momento de realizar a avaliação, marque esta opção.' data-tg-group="default-template-create-update">
+                    <input type="checkbox" id="is_english_spanish" name="english_spanish" class="custom-control-input" v-model="isEnglishSpanish" />
+                    <label class="custom-control-label tw-mb-0" for="is_english_spanish">
+                      <span class="tw-font-semibold tw-text-[#101928]">Caderno com língua estrangeira</span>
+                    </label>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="tw-ml-2" data-toggle="tooltip" data-placement="top" title="Ative esta opção se deseja que o aluno selecione uma língua estrangeira para realizar a prova.">
+                    <g clip-path="url(#clip0_8_3857)">
+                      <path d="M8.00004 10.6666V7.99998M8.00004 5.33331H8.00671M14.6667 7.99998C14.6667 11.6819 11.6819 14.6666 8.00004 14.6666C4.31814 14.6666 1.33337 11.6819 1.33337 7.99998C1.33337 4.31808 4.31814 1.33331 8.00004 1.33331C11.6819 1.33331 14.6667 4.31808 14.6667 7.99998Z" stroke="#D2D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </g>
+                    <defs>
+                      <clipPath id="clip0_8_3857">
+                        <rect width="16" height="16" fill="white"/>
+                      </clipPath>
+                    </defs>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div class="tw-mt-8 tw-grid tw-grid-cols-1 tw-gap-x-9 tw-gap-y-6 sm:tw-grid-cols-8">
+              <div class="sm:tw-col-span-4 sm:tw-col-start-1">
+                <label for="questions_title" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                  Título do gabarito
+                </label>
+                <div class="tw-mt-2">
+                  <input type="text" id="questions_title" v-model="examName" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" placeholder="" required>
+                </div>
+              </div>
+              <div class="sm:tw-col-span-2">
+                <label for="id_category" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                  Tipo do caderno
+                </label>
+                <div class="tw-relative tw-mt-2 tw-flex tw-items-center">
+                  <select id="id_category" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" v-model="category">
+                    <option value="0">Prova</option>
+                    <option value="1">Lista de exercício</option>
+                  </select>
+                </div>
+              </div>
+              <div class="sm:tw-col-span-2" data-tg-order="6" data-tg-title="Nota do caderno" data-tg-tour='Defina a nota total do caderno, o peso de cada questão será calculado automaticamente.' data-tg-group="default-template-create-update">
+                <div class="tw-flex tw-items-center" >
+                  <label for="questions_weight_distribution" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900 tw-mb-0">
+                    Nota geral distribuida
+                  </label>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="tw-ml-2" data-toggle="tooltip" data-placement="top" title="Somatório das notas de todas as questões nesse gabarito.">
+                    <g clip-path="url(#clip0_8_3857)">
+                      <path d="M8.00004 10.6666V7.99998M8.00004 5.33331H8.00671M14.6667 7.99998C14.6667 11.6819 11.6819 14.6666 8.00004 14.6666C4.31814 14.6666 1.33337 11.6819 1.33337 7.99998C1.33337 4.31808 4.31814 1.33331 8.00004 1.33331C11.6819 1.33331 14.6667 4.31808 14.6667 7.99998Z" stroke="#D2D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </g>
+                    <defs>
+                      <clipPath id="clip0_8_3857">
+                        <rect width="16" height="16" fill="white"/>
+                      </clipPath>
+                    </defs>
+                  </svg>
+                </div>
+                <div class="tw-relative tw-mt-2 tw-flex tw-items-center">
+                  <input type="number" id="questions_weight_distribution" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pr-14 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" v-model.number="weightDistribution" @blur="handleBlur">
+                  <div class="tw-absolute tw-inset-y-0 tw-right-0 tw-flex tw-py-1.5 tw-pr-1.5">
+                    <button ref="calcButton" type="button" class="tw-inline-flex tw-items-center tw-rounded tw-px-1 tw-text-gray-400" @click="handleQuestionWeight">
+                      <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="tw-w-6 tw-h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="sm:tw-col-span-4 tw-flex tw-space-x-20 tw-items-center">
+                <div>
+                  <div class="tw-flex tw-items-center">
+                    <label for="questions_start_number" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                      Número inicial das questões
+                    </label>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="tw-ml-2" data-toggle="tooltip" data-placement="top" title="Defina a numeração da primeira questão no caderno e que deverá aparecer no cartão resposta.">
+                      <g clip-path="url(#clip0_8_3857)">
+                        <path d="M8.00004 10.6666V7.99998M8.00004 5.33331H8.00671M14.6667 7.99998C14.6667 11.6819 11.6819 14.6666 8.00004 14.6666C4.31814 14.6666 1.33337 11.6819 1.33337 7.99998C1.33337 4.31808 4.31814 1.33331 8.00004 1.33331C11.6819 1.33331 14.6667 4.31808 14.6667 7.99998Z" stroke="#D2D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </g>
+                      <defs>
+                        <clipPath id="clip0_8_3857">
+                          <rect width="16" height="16" fill="white"/>
+                        </clipPath>
+                      </defs>
+                    </svg>
+                  </div>
+                  <div class="tw-relative tw-mt-2 tw-flex tw-items-center">
+                    <input type="number" id="questions_start_number" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pr-14 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" v-model.number="startNumber" @change="calculateStartNumber">
+                    <div class="tw-absolute tw-inset-y-0 tw-right-0 tw-flex tw-py-1.5 tw-pr-1.5">
+                      <button type="button" class="tw-inline-flex tw-items-center tw-rounded tw-px-1 tw-text-gray-400" @click="calculateStartNumber">
+                        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="tw-w-6 tw-h-6">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="sm:tw-col-span-2" id="input_template_quantity_alternatives" >
+                  <div style="margin-bottom: 4px;white-space: nowrap;">
+                    <label for="template_quantity_alternatives" class="tw-block tw-text-sm tw-font-medium tw-leading-8 tw-text-gray-900">
+                      Quantidade de alternativas
+                    </label>
+                  </div>
+                  <div class="tw-relative tw-flex tw-items-center">
+                    <select id="template_quantity_alternatives" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" v-model="templateQuantityAlternatives">
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                      <option value="5">5</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="sm:tw-col-span-4 tw-flex tw-space-x-20 tw-items-center">
+                
+                {% if teaching_stage %}
+                <div class="sm:tw-col-span-3 tw-flex tw-space-x-20 tw-items-center">
+                  <div class="sm:tw-col-span-3">
+                    <label for="teaching_stage_select" class="tw-block tw-text-sm tw-font-medium tw-leading-8 tw-text-gray-900">
+                      Etapas de ensino</label>
+                    <div class="tw-relative tw-flex tw-items-center">
+                      <select v-model="teachingStage" id="teaching_stage_select" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6">
+                        {% for staging in teaching_stage %}
+                          <option value="{{ staging.pk }}">{{ staging.name }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>  
+                  </div>
+                </div>
+                {% endif %}
+
+                {% if relations %}
+                <div class="sm:tw-col-span-1 tw-flex tw-space-x-20 tw-items-center">
+                  <div class="sm:tw-col-span-1">
+                    <label for="select-related-subjects" class="tw-block tw-text-sm tw-font-medium tw-leading-8 tw-text-gray-900">
+                      Disciplinas relacionadas</label>
+                    <div class="tw-relative tw-flex tw-items-center">
+                      <select id="select-related-subjects" multiple v-model="relations">
+                        {% for relation in relations %}
+                          <option value="{{relation.pk}}">{{relation}}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                {% endif %}
+                
+              </div>
+
+              <div class="sm:tw-col-span-2 tw-flex tw-space-x-20 tw-items-center">
+                <div>
+                  <label for="external_code" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900"
+                  >Código de prova</label>
+                  <input type="number" 
+                  class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" 
+                  id="external-code"
+                  v-model="externalCode">
+                </div>
+              </div>
+
+
+              {% if user.client_has_tri %}
+                <div class="sm:tw-col-span-2">
+                  <label class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">&nbsp;</label>
+                  <div class="tw-relative tw-mt-4 tw-flex tw-items-center">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" id="id_is_enem_simulator" name="is_enem_simulator" class="custom-control-input" v-model="isEnemSimulator" />
+                      <label class="custom-control-label" for="id_is_enem_simulator">
+                        <span class="tw-text-[#101928]" :class="[isEnemSimulator ? 'tw-font-semibold' : 'tw-font-medium']">É um simulado ENEM</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="sm:tw-col-span-2" v-if="isEnemSimulator">
+                  <label class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">&nbsp;</label>
+                  <div class="tw-relative tw-mt-4 tw-flex tw-items-center">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" id="id_show_ranking" name="show_ranking" class="custom-control-input" v-model="showRanking" />
+                      <label class="custom-control-label" for="id_show_ranking">
+                        <span class="tw-text-[#101928]" :class="[showRanking ? 'tw-font-semibold' : 'tw-font-medium']">Mostrar ranking</span>
+                      </label>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="tw-ml-2" data-toggle="tooltip" data-placement="top" title="Ative esta opção se deseja que os alunos vejam sua posição na prova.">
+                      <g clip-path="url(#clip0_8_3857)">
+                        <path d="M8.00004 10.6666V7.99998M8.00004 5.33331H8.00671M14.6667 7.99998C14.6667 11.6819 11.6819 14.6666 8.00004 14.6666C4.31814 14.6666 1.33337 11.6819 1.33337 7.99998C1.33337 4.31808 4.31814 1.33331 8.00004 1.33331C11.6819 1.33331 14.6667 4.31808 14.6667 7.99998Z" stroke="#D2D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </g>
+                      <defs>
+                        <clipPath id="clip0_8_3857">
+                          <rect width="16" height="16" fill="white"/>
+                        </clipPath>
+                      </defs>
+                    </svg>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="tw-bg-white sm:tw-rounded-lg tw-py-8 tw-border tw-border-[#E5E7EA]">
+          <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8">
+            <button data-tg-order="7" data-tg-title="Agrupamento por disciplina" data-tg-tour='Agora você criará grupos de questões de acordo com a disciplina delas, agilizando a qualificação e criação.' data-tg-group="default-template-create-update" type="button" class="tw-flex tw-w-full tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-shadow-sm hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600" data-toggle="modal" data-target="#modalHandleQuestion">
+              Adicionar Disciplina e Questões
+              <svg width="25" height="24" viewBox="0 0 25 24" fill="none" class="ml-2">
+                <path d="M12.5 5V19M5.5 12H19.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div v-if="listSubject.length > 0">
+          <div class="tw-flex tw-items-center tw-justify-between tw-pb-6">
+            <div class="tw-flex tw-items-center tw-gap-2">
+              <h2 class="tw-text-base tw-font-semibold tw-leading-7 tw-text-gray-900 tw-mb-0">
+                Questões agrupadas por disciplinas
+              </h2>
+              <template v-if="quantityQuestions > 2">
+                <p class="tw-text-sm tw-text-gray-500 tw-mb-0">
+                  (${quantityQuestions} questões)
+                </p>
+              </template>
+            </div>
+            <template v-if="listSubject.every(subject => subject.expanded)">
+              <button type="button" class="tw-flex tw-items-center tw-gap-2" @click="handleCompactAll">
+                <span>
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M5.83325 12.5002L9.99992 16.6668L14.1666 12.5002M5.83325 7.50016L9.99992 3.3335L14.1666 7.50016" stroke="#D2D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </span>
+                <span>Compactar tudo</span>
+              </button>
+            </template>
+            <template v-else>
+              <button type="button" class="tw-flex tw-items-center tw-gap-2" @click="handleExpandAll">
+                <span>
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M5.83325 12.5002L9.99992 16.6668L14.1666 12.5002M5.83325 7.50016L9.99992 3.3335L14.1666 7.50016" stroke="#D2D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </span>
+                <span>Expandir tudo</span>
+              </button>
+            </template>
+          </div>
+          <draggable class="tw-space-y-4" v-model="listSubject" handle=".button-drag-subject" @change="handleSubjectDrag">
+            <div
+              class="tw-bg-white sm:tw-rounded-lg tw-border tw-border-[#E5E7EA]"
+              v-for="(subject, subjectIndex) in listSubject"
+            >
+              <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8 tw-py-6">
+                <div class="tw-flex tw-items-center tw-justify-between">
+                  <div class="tw-flex tw-items-center tw-gap-5">
+                    <div class="tw-flex tw-items-center tw-justify-between">
+                      <button
+                        type="button"
+                        class="!tw-cursor-move button-drag-subject"
+                      >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                          <path d="M12 6C12.5523 6 13 5.55228 13 5C13 4.44772 12.5523 4 12 4C11.4477 4 11 4.44772 11 5C11 5.55228 11.4477 6 12 6Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M12 13C12.5523 13 13 12.5523 13 12C13 11.4477 12.5523 11 12 11C11.4477 11 11 11.4477 11 12C11 12.5523 11.4477 13 12 13Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M12 20C12.5523 20 13 19.5523 13 19C13 18.4477 12.5523 18 12 18C11.4477 18 11 18.4477 11 19C11 19.5523 11.4477 20 12 20Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M19 6C19.5523 6 20 5.55228 20 5C20 4.44772 19.5523 4 19 4C18.4477 4 18 4.44772 18 5C18 5.55228 18.4477 6 19 6Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M19 13C19.5523 13 20 12.5523 20 12C20 11.4477 19.5523 11 19 11C18.4477 11 18 11.4477 18 12C18 12.5523 18.4477 13 19 13Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M19 20C19.5523 20 20 19.5523 20 19C20 18.4477 19.5523 18 19 18C18.4477 18 18 18.4477 18 19C18 19.5523 18.4477 20 19 20Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M5 6C5.55228 6 6 5.55228 6 5C6 4.44772 5.55228 4 5 4C4.44772 4 4 4.44772 4 5C4 5.55228 4.44772 6 5 6Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M5 13C5.55228 13 6 12.5523 6 12C6 11.4477 5.55228 11 5 11C4.44772 11 4 11.4477 4 12C4 12.5523 4.44772 13 5 13Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M5 20C5.55228 20 6 19.5523 6 19C6 18.4477 5.55228 18 5 18C4.44772 18 4 18.4477 4 19C4 19.5523 4.44772 20 5 20Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <div class="tw-flex tw-items-center tw-gap-2">
+                      <h3 class="tw-text-base tw-font-semibold tw-leading-7 tw-text-gray-900 tw-mb-0">
+                        ${subject.name}
+                      </h3>
+                      <span class="tw-text-gray-400">-</span>
+                      <button
+                        type="button"
+                        class="tw-text-gray-400"
+                        @click="handleEditSubject(subjectIndex, subject)"
+                      >
+                        Editar
+                      </button>
+                      <span class="tw-text-gray-400">-</span>
+                      <button
+                        type="button"
+                        class="tw-text-gray-400"
+                        @click="handleDeleteQuestionsSubjects(subjectIndex, subject)"
+                      >
+                        Apagar todas
+                      </button>
+                      <template v-if="subject.firstForeignLanguage">
+                        <div>
+                          <span class="tw-inline-flex tw-items-center tw-rounded-md tw-bg-indigo-50 tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-text-indigo-700 tw-ring-1 tw-ring-inset tw-ring-indigo-700/10">
+                            Primeira opção de língua estrangeira
+                          </span>
+                        </div>
+                      </template>
+                      <template v-if="subject.secondForeignLanguage">
+                        <div>
+                          <span class="tw-inline-flex tw-items-center tw-rounded-md tw-bg-purple-50 tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-text-purple-700 tw-ring-1 tw-ring-inset tw-ring-purple-700/10">
+                            Segunda opção de língua estrangeira
+                          </span>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                  <div class="tw-flex tw-items-center tw-gap-8">
+                    <div class="tw-flex tw-items-center tw-gap-2.5">
+                      <span class="tw-text-base tw-font-semibold tw-leading-7 tw-text-gray-900">${subject.questions.length}</span>
+                      <span class="tw-text-sm tw-leading-7 tw-text-gray-900">Questões</span>
+                    </div>
+                    <div class="tw-flex tw-items-center tw-gap-2.5">
+                      <label class="tw-text-sm tw-leading-7 tw-text-gray-900 tw-mb-0">Nota</label>
+                      <div class="tw-relative tw-flex tw-items-center">
+                        <input type="number" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pr-14 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" v-model.number="subject.weightToDistribute" @focus="handleFocusSubjectWeightToDistribute(subject, $event)" @blur="handleBlurSubjectWeightToDistribute(subject, $event)">
+                        <div class="tw-absolute tw-inset-y-0 tw-right-0 tw-flex tw-py-1 tw-pr-1.5">
+                          <div class="tw-flex tw-space-x-1 tw-rounded-lg tw-bg-slate-200 tw-p-0.5">
+                            <button
+                              type="button"
+                              class="tw-flex tw-items-center tw-rounded-md tw-p-1 tw-text-sm tw-font-semibold"
+                              :class="[subject.blockWeightToDistribute ? 'tw-bg-white tw-shadow' : '']"
+                              @click="updateBlockWeightToDistribute(subject)"
+                            >
+                              <template v-if="subject.blockWeightToDistribute">
+                                <span class="tw-text-red-600">
+                                  <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="tw-w-4 tw-h-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                  </svg>
+                                </span>
+                              </template>
+                              <template v-else>
+                                <span class="tw-text-slate-600">
+                                  <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="tw-w-4 tw-h-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                  </svg>
+                                </span>
+                              </template>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="tw-flex tw-items-center tw-justify-between">
+                      <button type="button" @click="handleExpandSubject(subject)">
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          :class="{ 'tw-rotate-180': subject.expanded }"
+                        >
+                          <path d="M6 9L12 15L18 9" stroke="#6C727F" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="tw-border-t tw-border-gray-900/10" v-show="subject.expanded">
+                <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8 tw-pt-8 tw-pb-6">
+                  <div :id="'change-subject-'+subject.id" 
+                  class="tw-flex tw-px-4 tw-pb-4 tw-gap-1"
+                  :style="questionsSelected[subject.id] ? 'display: flex;' : 'display: none;'">
+                    <button type="button"
+                    @click="removeSelectedQuestions(subjectIndex, subject)" 
+                    class="tw-inline-flex tw-items-center tw-rounded tw-bg-white tw-px-2 tw-py-1 tw-text-sm tw-font-semibold tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 disabled:tw-cursor-not-allowed disabled:tw-opacity-30 disabled:hover:tw-bg-white" 
+                    >
+                      Remover selecionadas
+                    </button>
+                    <button type="button" 
+                    @click="deactivateSelectedQuestions(subject)"
+                    class="tw-inline-flex tw-items-center tw-rounded tw-bg-white tw-px-2 tw-py-1 tw-text-sm tw-font-semibold tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 disabled:tw-cursor-not-allowed disabled:tw-opacity-30 disabled:hover:tw-bg-white" 
+                    >
+                      Desativar marcações
+                    </button>
+                  </div>
+                  <div class="tw-flex tw-px-5 tw-pb-4">
+                    <div>
+                      Ordem
+                    </div>
+                    <div class="tw-ml-8">
+                      Qualificação
+                    </div>
+                    <div class="tw-ml-[17rem] tw-flex tw-items-center tw-gap-2">
+                      <svg v-if="!canChangeQuestionType" width="16" height="16" viewBox="0 0 16 16" fill="none" class="tw-ml-2" data-toggle="tooltip" data-placement="top" title="Não é possível alterar o tipo das questões pois existe um malote gerado associado a esse gabarito.">
+                        <g clip-path="url(#clip0_8_3857)">
+                          <path d="M8.00004 10.6666V7.99998M8.00004 5.33331H8.00671M14.6667 7.99998C14.6667 11.6819 11.6819 14.6666 8.00004 14.6666C4.31814 14.6666 1.33337 11.6819 1.33337 7.99998C1.33337 4.31808 4.31814 1.33331 8.00004 1.33331C11.6819 1.33331 14.6667 4.31808 14.6667 7.99998Z" stroke="#F14646" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </g>
+                        <defs>
+                          <clipPath id="clip0_8_3857">
+                            <rect width="16" height="16" fill="white"/>
+                          </clipPath>
+                        </defs>
+                      </svg>
+                      Tipo
+                    </div>
+                    <div v-if="subject.questions.find(q => q.category == 0)" class="tw-flex tw-items-center" style="margin-left: 5rem;white-space: nowrap;">
+                      É redação
+                    </div>
+                    <div class="tw-ml-[7rem]" :style="getCategoryQuestions(subject) == 0 ? 'margin-left: 3rem;' : ''">
+                      Nota
+                    </div>
+                    <div v-if="getCategoryQuestions(subject) == 1" class="tw-ml-60">
+                      <div class="tw-flex tw-items-center">
+                        Alternativa correta
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="tw-ml-2" data-toggle="tooltip" data-placement="top" title="Defina qual é a alternativa correta da questão.">
+                          <g clip-path="url(#clip0_8_3857)">
+                            <path d="M8.00004 10.6666V7.99998M8.00004 5.33331H8.00671M14.6667 7.99998C14.6667 11.6819 11.6819 14.6666 8.00004 14.6666C4.31814 14.6666 1.33337 11.6819 1.33337 7.99998C1.33337 4.31808 4.31814 1.33331 8.00004 1.33331C11.6819 1.33331 14.6667 4.31808 14.6667 7.99998Z" stroke="#D2D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          </g>
+                          <defs>
+                            <clipPath id="clip0_8_3857">
+                              <rect width="16" height="16" fill="white"/>
+                            </clipPath>
+                          </defs>
+                        </svg>
+                      </div>
+                    </div>                        
+                    <div v-if="getCategoryQuestions(subject) == 0"  style="margin-left: 75px;">
+                      <div class="tw-flex tw-items-center">
+                          Quantidade de linhas
+                      </div>
+                    </div>
+                    <div>
+                      <span class="tw-sr-only">Ações</span>
+                    </div>
+                  </div>
+                  <draggable class="tw-space-y-4" v-model="subject.questions" handle=".button-drag-question">
+                    <div
+                      class="tw-bg-white tw-flex tw-justify-between tw-border tw-rounded-2xl tw-px-5 tw-py-6"
+                      v-for="(question, questionIndex) in subject.questions"
+                    >
+                      <div class="tw-flex">
+                        <div class="tw-flex tw-items-center tw-gap-4 tw-mr-4">
+                          <input 
+                          @click="handleChecbox($event.target, subject)" 
+                          :id="question.id" :value="question.id"
+                          :style="questionsSelected[subject.id] ? 'display: flex;' : 'display: none;'" 
+                          :class="'checkbox-'+subject.id" type="checkbox" 
+                          class="tw-left-4 tw-top-1/2 tw-h-6 tw-w-6 tw-rounded tw-border-gray-300 tw-text-primary-600 focus:tw-ring-primary-600"
+                          />
+                          <button
+                          :style="questionsSelected[subject.id] ? 'display: none;' : 'display: flex;'"  
+                          :class="'draggable-'+subject.id" type="button" 
+                          class="!tw-cursor-move button-drag-question">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                              <path d="M12 6C12.5523 6 13 5.55228 13 5C13 4.44772 12.5523 4 12 4C11.4477 4 11 4.44772 11 5C11 5.55228 11.4477 6 12 6Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                              <path d="M12 13C12.5523 13 13 12.5523 13 12C13 11.4477 12.5523 11 12 11C11.4477 11 11 11.4477 11 12C11 12.5523 11.4477 13 12 13Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                              <path d="M12 20C12.5523 20 13 19.5523 13 19C13 18.4477 12.5523 18 12 18C11.4477 18 11 18.4477 11 19C11 19.5523 11.4477 20 12 20Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                              <path d="M19 6C19.5523 6 20 5.55228 20 5C20 4.44772 19.5523 4 19 4C18.4477 4 18 4.44772 18 5C18 5.55228 18.4477 6 19 6Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                              <path d="M19 13C19.5523 13 20 12.5523 20 12C20 11.4477 19.5523 11 19 11C18.4477 11 18 11.4477 18 12C18 12.5523 18.4477 13 19 13Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                              <path d="M19 20C19.5523 20 20 19.5523 20 19C20 18.4477 19.5523 18 19 18C18.4477 18 18 18.4477 18 19C18 19.5523 18.4477 20 19 20Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                              <path d="M5 6C5.55228 6 6 5.55228 6 5C6 4.44772 5.55228 4 5 4C4.44772 4 4 4.44772 4 5C4 5.55228 4.44772 6 5 6Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                              <path d="M5 13C5.55228 13 6 12.5523 6 12C6 11.4477 5.55228 11 5 11C4.44772 11 4 11.4477 4 12C4 12.5523 4.44772 13 5 13Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                              <path d="M5 20C5.55228 20 6 19.5523 6 19C6 18.4477 5.55228 18 5 18C4.44772 18 4 18.4477 4 19C4 19.5523 4.44772 20 5 20Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                          </button>
+                          <span class="tw-text-base tw-font-semibold tw-text-black">
+                            ${calculateIndex(subject.id, subjectIndex, questionIndex)}
+                          </span>
+                        </div>
+                        <button type="button" class="tw-hidden xl:tw-flex xl:tw-items-center xl:tw-gap-4" @click="openModalAddQualification(subject, question)">
+                          <div class="tw-flex tw-items-center tw-gap-2">
+                            <span>
+                              <template v-if="question.topics.length > 0">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                  <g clip-path="url(#clip0_242_5875)">
+                                    <path d="M5.00004 8.00016L7.00004 10.0002L11 6.00016M14.6667 8.00016C14.6667 11.6821 11.6819 14.6668 8.00004 14.6668C4.31814 14.6668 1.33337 11.6821 1.33337 8.00016C1.33337 4.31826 4.31814 1.3335 8.00004 1.3335C11.6819 1.3335 14.6667 4.31826 14.6667 8.00016Z" stroke="#41C588" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                  </g>
+                                  <defs>
+                                    <clipPath id="clip0_242_5875">
+                                      <rect width="16" height="16" fill="white"/>
+                                    </clipPath>
+                                  </defs>
+                                </svg>
+                              </template>
+                              <template v-else>
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                  <g clip-path="url(#clip0_242_5871)">
+                                    <path d="M8.00004 10.6668V8.00016M8.00004 5.3335H8.00671M14.6667 8.00016C14.6667 11.6821 11.6819 14.6668 8.00004 14.6668C4.31814 14.6668 1.33337 11.6821 1.33337 8.00016C1.33337 4.31826 4.31814 1.3335 8.00004 1.3335C11.6819 1.3335 14.6667 4.31826 14.6667 8.00016Z" stroke="#FFCB56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                  </g>
+                                  <defs>
+                                    <clipPath id="clip0_242_5871">
+                                      <rect width="16" height="16" fill="white"/>
+                                    </clipPath>
+                                  </defs>
+                                </svg>
+                              </template>
+                            </span>
+                            <span class="tw-text-xs">Assuntos</span>
+                          </div>
+                          <div class="tw-flex tw-items-center tw-gap-2">
+                            <span>
+                              <template v-if="question.abilities.length > 0">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                  <g clip-path="url(#clip0_242_5875)">
+                                    <path d="M5.00004 8.00016L7.00004 10.0002L11 6.00016M14.6667 8.00016C14.6667 11.6821 11.6819 14.6668 8.00004 14.6668C4.31814 14.6668 1.33337 11.6821 1.33337 8.00016C1.33337 4.31826 4.31814 1.3335 8.00004 1.3335C11.6819 1.3335 14.6667 4.31826 14.6667 8.00016Z" stroke="#41C588" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                  </g>
+                                  <defs>
+                                    <clipPath id="clip0_242_5875">
+                                      <rect width="16" height="16" fill="white"/>
+                                    </clipPath>
+                                  </defs>
+                                </svg>
+                              </template>
+                              <template v-else>
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                  <g clip-path="url(#clip0_242_5871)">
+                                    <path d="M8.00004 10.6668V8.00016M8.00004 5.3335H8.00671M14.6667 8.00016C14.6667 11.6821 11.6819 14.6668 8.00004 14.6668C4.31814 14.6668 1.33337 11.6821 1.33337 8.00016C1.33337 4.31826 4.31814 1.3335 8.00004 1.3335C11.6819 1.3335 14.6667 4.31826 14.6667 8.00016Z" stroke="#FFCB56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                  </g>
+                                  <defs>
+                                    <clipPath id="clip0_242_5871">
+                                      <rect width="16" height="16" fill="white"/>
+                                    </clipPath>
+                                  </defs>
+                                </svg>
+                              </template>
+                            </span>
+                            <span class="tw-text-xs">Habilidades</span>
+                          </div>
+                          <div class="tw-flex tw-items-center tw-gap-2">
+                            <span>
+                              <template v-if="question.competences.length > 0">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                  <g clip-path="url(#clip0_242_5875)">
+                                    <path d="M5.00004 8.00016L7.00004 10.0002L11 6.00016M14.6667 8.00016C14.6667 11.6821 11.6819 14.6668 8.00004 14.6668C4.31814 14.6668 1.33337 11.6821 1.33337 8.00016C1.33337 4.31826 4.31814 1.3335 8.00004 1.3335C11.6819 1.3335 14.6667 4.31826 14.6667 8.00016Z" stroke="#41C588" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                  </g>
+                                  <defs>
+                                    <clipPath id="clip0_242_5875">
+                                      <rect width="16" height="16" fill="white"/>
+                                    </clipPath>
+                                  </defs>
+                                </svg>
+                              </template>
+                              <template v-else>
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                  <g clip-path="url(#clip0_242_5871)">
+                                    <path d="M8.00004 10.6668V8.00016M8.00004 5.3335H8.00671M14.6667 8.00016C14.6667 11.6821 11.6819 14.6668 8.00004 14.6668C4.31814 14.6668 1.33337 11.6821 1.33337 8.00016C1.33337 4.31826 4.31814 1.3335 8.00004 1.3335C11.6819 1.3335 14.6667 4.31826 14.6667 8.00016Z" stroke="#FFCB56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                  </g>
+                                  <defs>
+                                    <clipPath id="clip0_242_5871">
+                                      <rect width="16" height="16" fill="white"/>
+                                    </clipPath>
+                                  </defs>
+                                </svg>
+                              </template>
+                            </span>
+                            <span class="tw-text-xs">Competências</span>
+                          </div>
+                        </button>
+                        <div class="tw-flex tw-items-center tw-ml-12 " >
+                          <select style="min-width: 120px;" :disabled="!canChangeQuestionType" class="tw-block  tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" v-model="question.category">
+                            <option value="0">Discursiva</option>
+                            <option value="1" selected>Objetiva</option>
+                          </select>
+                        </div>
+                        <template v-if="subject.questions.find(q => q.category == 0)">
+                          <template v-if="question.category == 0">
+                            <div class="custom-control custom-switch" style="display: flex; align-items: center; justify-content: end; margin-right: 3.5rem;">
+                              <input type="checkbox" v-model="question.isEssay" class="custom-control-input" :id="'is_essay_' + question.id" @change="setFalseAnotherEssayQuestion(subject, question)">
+                              <label :for="'is_essay_' + question.id" class="custom-control-label"></label>
+                            </div>
+                          </template>
+                          <template v-else>
+                            <div class="custom-control custom-switch" style="display: flex; align-items: center; justify-content: end; margin-right: 3.5rem;"></div>
+                          </template>
+                        </template>
+                        <div class="tw-flex tw-items-center tw-ml-5">
+                          <div class="tw-relative tw-flex tw-items-center ">
+                            <input type="number" class="tw-block tw-w-full tw-min-w-32 tw-rounded-md tw-border-0 tw-py-1.5 tw-pr-14 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" :disabled="question.lastStatusObject.status_display == 'Anulada'" v-model.number="question.weight" @focus="handleFocusQuestionWeight(question, $event)" @blur="handleBlurQuestionWeight(question, $event)">
+                            <div class="tw-absolute tw-inset-y-0 tw-right-0 tw-flex tw-py-1 tw-pr-1.5">
+                              <div v-if="question.lastStatusObject.status_display != 'Anulada'" class="tw-flex tw-space-x-1 tw-rounded-lg tw-bg-slate-200 tw-p-0.5">
+                                <button
+                                  type="button"
+                                  class="tw-flex tw-items-center tw-rounded-md tw-p-1 tw-text-sm tw-font-semibold"
+                                  :class="[question.blockWeight ? 'tw-bg-white tw-shadow' : '']"
+                                  @click="updateBlockWeight(subject, question)"
+                                >
+                                  <template v-if="question.blockWeight">
+                                    <span class="tw-text-red-600">
+                                      <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="tw-w-4 tw-h-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                      </svg>
+                                    </span>
+                                  </template>
+                                  <template v-else>
+                                    <span class="tw-text-slate-600">
+                                      <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="tw-w-4 tw-h-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                      </svg>
+                                    </span>
+                                  </template>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                          <div
+                            class="tw-ml-1"
+                            :class="[!question.focused && weightDistribution && question.blockWeight && totalWeightQuestions > weightDistribution ? 'visible' : 'invisible']"
+                          >
+                            <svg class="tw-h-5 tw-w-5 tw-text-red-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Ajuste os valores, pois a soma das notas das questões ultrapassa o valor total a ser distribuído.">
+                              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                            </svg>
+                          </div>
+                        </div>
+                        <div v-if="question.category == 1" class="tw-flex tw-items-center tw-ml-8 tw-mr-2">
+                          <span v-for="(alt, index) in combinedRange" class="tw-isolate tw-inline-flex tw-rounded-md tw-shadow-sm">
+                            <button
+                              v-if="alt.num == 1"
+                              type="button"
+                              class="tw-relative tw-inline-flex tw-items-center tw-rounded-l-md tw-px-3 tw-py-2 tw-text-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-z-10"
+                              :class="[question.correctAlternatives.includes(alt.letter) ? 'tw-font-bold tw-text-[#41C588] tw-bg-[#D9F3E7]' : 'tw-text-[#374151] tw-bg-[#F9FAFA]']"
+                              @click="updateQuestionCorrectAlternatives(question, alt.letter)"
+                            >
+                              ${alt.letter}
+                            </button>
+                            <button v-if="alt.num != 1 && alt.num != templateQuantityAlternatives"
+                            type="button"
+                            class="tw-relative tw--ml-px tw-inline-flex tw-items-center tw-px-3 tw-py-2 tw-text-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-z-10"
+                            :class="[question.correctAlternatives.includes(alt.letter) ? 'tw-font-bold tw-text-[#41C588] tw-bg-[#D9F3E7]' : 'tw-text-[#374151] tw-bg-[#F9FAFA]']"
+                            @click="updateQuestionCorrectAlternatives(question, alt.letter)"
+                            >
+                              ${alt.letter}
+                            </button>
+                            <button
+                              v-if="alt.num == templateQuantityAlternatives"
+                              type="button"
+                              class="tw-relative tw--ml-px tw-inline-flex tw-items-center tw-rounded-r-md tw-px-3 tw-py-2 tw-text-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-z-10"
+                              :class="[question.correctAlternatives.includes(alt.letter) ? 'tw-font-bold tw-text-[#41C588] tw-bg-[#D9F3E7]' : 'tw-text-[#374151] tw-bg-[#F9FAFA]']"
+                              @click="updateQuestionCorrectAlternatives(question, alt.letter)"
+                            >
+                              ${alt.letter}
+                            </button>
+                              
+                          </span>
+                        </div>
+                        <div v-if="question.category == 0" class="tw-flex tw-items-center tw-ml-8 tw-mr-2">
+                          <div class="tw-relative tw-rounded-md tw-shadow-sm tw-w-80 tw-items-center tw-inline-flex " style="max-width: 220px;"  data-toggle="tooltip" data-placement="top" title="Definir quantidade de linhas e tipo de impressão de linhas">
+                            <input 
+                              id="id_quantity_lines" 
+                              name="id_quantity_lines"  
+                              v-model.number="question.quantityLines" 
+                              @change="updateQuantityLines(question, question.quantityLines)" 
+                              class="tw-block tw-w-200 tooltips tw-rounded-md tw-border-0 tw-py-1.5 tw-pl-7 tw-pr-28 tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6"
+                              style="min-width: 100px; max-width: fit-content;"
+                            />
+                            
+                            <div class="tw-absolute tw-inset-y-0 tw-right-0 tw-flex tw-items-center">
+                              <label for="question_format" class="tw-sr-only">Formato da Questão</label>
+                              <select 
+                                id="question_format" 
+                                v-model.number="question.textQuestionFormat" 
+                                class="tw-h-full tw-rounded-md tw-border-0 tw-bg-transparent tw-pl-2 tw-pr-7 tw-text-gray-500 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm"
+                                style=" max-width: fit-content;"
+                              >
+                                <option value="0">Espaço em branco</option>
+                                <option value="1">Imprimir linhas</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="tw-flex tw-items-center tw-gap-4 ">
+                        <template v-if="question.topics.length > 0 && question.competences.length > 0 && question.abilities.length > 0">
+                          <button type="button">
+                            <div class="tw-flex tw-items-center tw-justify-center tw-w-10 tw-h-10 tw-rounded-full tw-bg-[#41C588]">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                              </svg>
+                            </div>
+                          </button>
+                        </template>
+                        <template v-else>
+                          <button
+                            :id="`button-${question.id}`"
+                            :aria-describedby="`tooltip-${question.id}`"
+                            type="button"
+                            @click="openModalAddQualification(subject, question)"
+                            @mouseenter="showTooltip(question)"
+                            @mouseleave="hideTooltip(question, $event)"
+                            @focus="showTooltip(question)"
+                            @blur="hideTooltip(question)"
+                          >
+                            <div class="tw-flex tw-items-center tw-justify-center tw-w-10 tw-h-10 tw-rounded-full tw-bg-[#FFCB56]">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M6 18L18 6M18 6H10M18 6V14" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                              </svg>
+                            </div>
+                          </button>
+                          <div
+                            v-show="question.tooltip.isVisible"
+                            :id="`tooltip-${question.id}`"
+                            role="tooltip"
+                            style="display: none;"
+                            :style="{ top: question.tooltip.top + 'px', left: question.tooltip.left + 'px' }"
+                            class="tw-w-72 tw-absolute tw-top-0 tw-left-0 tw-bg-[#FEF0C7] tw-p-6 tw-rounded-xl"
+                          >
+                            <div class="tw-flex tw-items-center tw-gap-6">
+                              <div class="tw-w-12 tw-rounded-full tw-bg-[#F3B364] tw-p-2.5">
+                                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                                  <path fill-rule="evenodd" clip-rule="evenodd" d="M13.9991 20.2923L18.3747 22.5919C19.2267 23.0392 20.2216 22.3159 20.0591 21.3679L19.2234 16.4959L22.7645 13.0475C23.454 12.3755 23.0743 11.205 22.1209 11.0664L17.2293 10.3552L15.042 5.92062C14.6165 5.05771 13.3849 5.05771 12.9594 5.92062L10.7711 10.3552L5.87944 11.0664C4.92707 11.205 4.54635 12.3755 5.2358 13.0475L8.77689 16.4959L7.94126 21.3679C7.77871 22.3159 8.77362 23.0403 9.62562 22.5919L14.0013 20.2923H13.9991Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              </div>
+                              <div>
+                                <p class="tw-text-base tw-text-[#D67B05]">
+                                  Aprimore os dados desta questão, com assuntos, habilidades e competências.
+                                </p>
+                              </div>
+                            </div>
+                            <div :id="`arrow-${question.id}`" class="tw-absolute tw-w-6 tw-h-6 tw-bg-[#FEF0C7] tw-rounded tw-rotate-45"></div>
+                          </div>
+                        </template>
+
+                          <button 
+                             type="button" id="dropdownMenuButton-{{ exam.pk }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tw-text-gray-400"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                          </button>
+                          <div class="dropdown-menu dropdown-menu-right tw-absolute tw-right-0 tw-z-10 tw-mt-2 tw-origin-top-right tw-divide-y tw-divide-gray-100 tw-rounded-md tw-bg-white tw-shadow-lg tw-ring-1 tw-ring-black tw-ring-opacity-5 focus:tw-outline-none tw-text-inherit tw-m-0 tw-p-0 tw-border-0" aria-labelledby="dropdownMenuButton-{{ exam.pk }}" style="font-size: inherit;">
+                            <div class="tw-py-1" role="none">
+                              <button type="button" v-if="!subject.isForeignLanguage" @click="handleRemoveQuestion(subjectIndex, subject, question.id)" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm tw-w-full hover:tw-bg-gray-100 hover:tw-text-gray-900 tw-cursor-pointer" role="menuitem" tabindex="-1" id="menu-item-0">Remover</button>
+                              <button type="button" @click="selectMultiple(subject, question.id)" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm tw-w-full hover:tw-bg-gray-100 hover:tw-text-gray-900 tw-cursor-pointer" role="menuitem" tabindex="-1">Selecionar várias</button>
+                              {% comment %} {% if can_anull_exam_questions or exam_questions_with_answer %} {% endcomment %}
+                              {% if exam_questions_with_answer %}
+
+                              {% if user_type != 'teacher' or user.inspector.can_annul %}
+                                <button v-if="question.lastStatus != 'Anulada'" @click="openDialog(question, 6)" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm tw-w-full hover:tw-bg-gray-100 hover:tw-text-gray-900 tw-cursor-pointer" role="menuitem" tabindex="-1" id="menu-item-1">Anular questão</button>
+                                <button v-else @click="revertAnullQuestion(question)" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm tw-w-full hover:tw-bg-gray-100 hover:tw-text-gray-900 tw-cursor-pointer" role="menuitem" tabindex="-1" id="menu-item-1">Reverter Anulação</button>
+
+                                {% endif %}
+                              {% endif %}
+                            </div>
+                          </div>
+                      </div>
+                    </div>
+                  </draggable>
+                  <template v-if="!subject.isForeignLanguage">
+                    <div class="tw-pt-6">
+                      <div class="tw-flex tw-items-center tw-justify-center">
+                        <button type="button" class="tw-flex tw-items-center tw-gap-2" @click="handleAddQuestion(subject)">
+                          <span class="tw-font-semibold tw-text-[#6C727F]">Adicionar questão</span>
+                          <span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                              <path d="M12 5V19M5 12H19" stroke="#D0D3D9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </draggable>
+        </div>
+      </div>
+      <div
+        class="tw-mt-5 sm:tw-mt-6 tw-mb-9 sm:tw-grid sm:tw-grid-flow-row-dense sm:tw-grid-cols-2 sm:tw-gap-3"
+        v-if="listSubject.length > 0"
+      >
+        <button type="button" class="tw-inline-flex tw-w-full tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 tw-py-2.5 tw-text-sm tw-font-semibold tw-shadow-sm hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600 sm:tw-col-start-2" @click="saveTemplate(true)">
+          <template v-if="statusSubmit === 'loading' && generateApplication">
+            Concluindo e gerando...
+          </template>
+          <template v-else>
+            Concluir e gerar aplicação
+          </template>
+        </button>
+        <button type="button" class="tw-mt-3 tw-inline-flex tw-w-full tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2.5 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 hover:tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600 sm:tw-col-start-1 sm:tw-mt-0" @click="saveTemplate()">
+          <template v-if="statusSubmit === 'loading' && !generateApplication">
+            Concluindo...
+          </template>
+          <template v-else>
+            Concluir gabarito
+          </template>
+        </button>
+      </div>
+    </form>
+  </div>
+  {% include "includes/modals/status_dialog.html" with include_question_fragment=False %}
+
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+  <div class="modal fade" id="modalHandleQuestion" tabindex="-1" role="dialog" aria-labelledby="modalHandleQuestionLabel" aria-hidden="true">
+    <div class="modal-dialog sm:tw-max-w-2xl sm:tw-my-8" role="document">
+      <div class="modal-content" style="background: inherit; border: inherit; border-radius: inherit;">
+        <div class="tw-flex tw-min-h-full tw-items-end tw-justify-center tw-p-4 tw-text-center sm:tw-items-center sm:tw-p-0">
+          <div class="tw-relative tw-transform tw-overflow-hidden tw-rounded-lg tw-bg-white tw-px-4 tw-pb-4 tw-pt-5 tw-text-left tw-shadow-xl tw-transition-all sm:tw-w-full sm:tw-max-w-2xl sm:tw-p-6">
+            <div class="tw-absolute tw-right-0 tw-top-0 tw-hidden tw-pr-4 tw-pt-4 sm:tw-block">
+              <button type="button" class="tw-rounded-md tw-bg-white tw-text-gray-400 hover:tw-text-gray-500 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-primary-500 focus:tw-ring-offset-2" data-dismiss="modal">
+                <span class="tw-sr-only">Close</span>
+                <svg class="tw-h-6 tw-w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <form method="GET" onsubmit="return false;" @submit="handleQuestions">
+              <div>
+                <div class="tw-mt-3 tw-text-center sm:tw-mt-0 sm:tw-text-left">
+                  <h3 class="tw-text-base tw-font-semibold tw-leading-6 tw-text-gray-900" id="modal-title">
+                    <template v-if="modalQuestionMode === 'create'">
+                      Adicionar questões
+                    </template>
+                    <template v-else>
+                      Editar disciplina
+                    </template>
+                  </h3>
+                  <hr />
+                  <div class="tw-mt-4 tw-grid tw-grid-cols-1 tw-gap-x-6 tw-gap-y-8 sm:tw-grid-cols-6">
+                    <template v-if="modalQuestionMode === 'create'">
+                      <div class="tw-col-span-full sm:tw-col-span-3">
+                        <label for="id_question_quantity" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                          Quantidade de questões
+                        </label>
+                        <div class="tw-mt-2">
+                          <input type="number" min="1" id="id_question_quantity" name="questionQuantity" required class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" value="1" v-model.number="modalQuestion.quantity">
+                        </div>
+                      </div>
+                      <div class="tw-col-span-full sm:tw-col-span-3">
+                        <label for="id_question_category" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                          Tipo de questão
+                        </label>
+                        <div class="tw-mt-2">
+                          <select id="id_question_category" name="questionCategory" required class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" v-model="modalQuestion.category">
+                            <option value="0">Discursiva</option>
+                            <option value="1" selected>Objetiva</option>
+                          </select>
+                        </div>
+                      </div>
+                    </template>
+                    <div class="tw-col-span-full sm:tw-col-span-3">
+                      <label for="id_grade_level" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                        Etapa do ensino
+                      </label>
+                      <div class="tw-mt-2">
+                        <select v-model="modalQuestion.gradeLevel" id="id_grade_level" name="grade_level" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" required>
+                          <option value="3">Selecione</option>
+                          <option value="0">Ensino médio</option>
+                          <option value="1">Ensino fundamental 1</option>
+                          <option value="2">Ensino fundamental 2</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="tw-col-span-full sm:tw-col-span-3">
+                      <label for="id_grade" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                        Ano/Série
+                      </label>
+                      <div class="tw-mt-2">
+                        <select name="grade" id="id_grade" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" v-model="modalQuestion.grade" required>
+                          <option value="">Selecione</option>
+                          ${selectedExamQuestion.selectedOptions}
+                          <option :value="grade.id" v-for="grade in grades">${grade.full_name}</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="tw-col-span-full sm:tw-col-span-3">
+                      <label for="id_knowledge_area" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                        Área do conhecimento
+                      </label>
+                      <div class="tw-mt-2">
+                        <select class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" v-model="modalQuestion.area" id="id_knowledge_area" name="knowledge_area" required>
+                          <option value="">Selecione</option>
+                          <option :value="area.id" v-for="area in knowledgeAreas">${area.name}</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="tw-col-span-full sm:tw-col-span-3">
+                      <label for="id_subject" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                        Disciplina
+                      </label>
+                      <div class="tw-mt-2">
+                        <select id="id_subject" name="subject" v-model="modalQuestion.subject" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" required>
+                          <option value="">Selecione</option>
+                          <option
+                            v-for="subject in subjects"
+                            :value="{ id: subject.id, name: subject.name, parentSubjects: (subject.parent_subjects ? (subject.parent_subjects.length == 0 ? [''] : subject.parent_subjects) : ([])) }"
+                          >
+                            ${subject.name}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="tw-mt-10 sm:tw-mt-8">
+                <button
+                  type="submit"
+                  class="tw-inline-flex tw-w-full tw-justify-center tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 not-disable"
+                >
+                  <template v-if="modalQuestionMode === 'create'">
+                    Cadastrar questões
+                  </template>
+                  <template v-else>
+                    Atualizar disciplina
+                  </template>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="modalAddQualification" tabindex="-1" role="dialog" aria-labelledby="modalAddQualificationLabel" aria-hidden="true">
+    <div class="modal-dialog sm:tw-max-w-2xl sm:tw-my-8" role="document">
+      <div class="modal-content" style="background: inherit; border: inherit; border-radius: inherit;">
+        <div class="tw-flex tw-min-h-full tw-items-end tw-justify-center tw-p-4 tw-text-center sm:tw-items-center sm:tw-p-0">
+          <div class="tw-relative tw-transform tw-overflow-hidden tw-rounded-lg tw-bg-white tw-px-4 tw-pb-4 tw-pt-5 tw-text-left tw-shadow-xl tw-transition-all sm:tw-w-full sm:tw-max-w-2xl sm:tw-p-6">
+            <div class="tw-absolute tw-right-0 tw-top-0 tw-hidden tw-pr-4 tw-pt-4 sm:tw-block">
+              <button type="button" class="tw-rounded-md tw-bg-white tw-text-gray-400 hover:tw-text-gray-500 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-primary-500 focus:tw-ring-offset-2" data-dismiss="modal">
+                <span class="tw-sr-only">Close</span>
+                <svg class="tw-h-6 tw-w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <form method="GET" onsubmit="return false;" @submit="addQualification">
+              <div>
+                <div class="tw-mt-3 tw-text-center sm:tw-mt-0 sm:tw-text-left">
+                  <h3 class="tw-text-base tw-font-semibold tw-leading-6 tw-text-gray-900" id="modal-title">
+                    Qualificador de questões
+                  </h3>
+                  <hr />
+
+
+                  <div class="">
+                    <div class="sm:tw-hidden">
+                      <label for="tabs" class="tw-sr-only">Select a tab</label>
+                      <select id="tabs" name="tabs" class="tw-block tw-w-full tw-rounded-md tw-border-gray-300 focus:tw-border-[#0C7BDB] focus:tw-ring-[#0C7BDB]">
+                        <option selected>Respostas</option>
+                        <option>Assuntos</option>
+                        <option>Habilidades e Competências</option>
+                      </select>
+                    </div>
+                    <div class="tw-hidden sm:tw-block">
+                      <div>
+                        <nav aria-label="Progress">
+                          <ol role="list" class="tw-divide-y tw-divide-x tw-divide-[#E5E7EA] tw-rounded-md tw-border tw-border-[#E5E7EA] md:tw-flex md:tw-divide-y-0">
+                            <li class="tw-relative md:tw-flex md:tw-flex-1">
+                              <a
+                                id="answers-tab"
+                                data-toggle="tab"
+                                href="#answers"
+                                role="tab"
+                                aria-controls="answers"
+                                :aria-current="qualificationModalTabActive === 'answers' ? 'step' : ''"
+                                class="tw-group tw-flex tw-items-center"
+                                @click="updateQualificationModalTabActive('answers')"
+                              >
+                                <span class="tw-flex tw-items-center tw-px-6 tw-py-1 tw-text-sm tw-font-medium">
+                                  <span
+                                    class="tw-flex tw-h-6 tw-w-6 tw-flex-shrink-0 tw-items-center tw-justify-center tw-rounded-full"
+                                    :class="[qualificationModalTabActive === 'answers' ? 'tw-bg-primary-600' : 'tw-bg-[#F9FAFA] group-hover:tw-border-gray-400']"
+                                  >
+                                    <span :class="[qualificationModalTabActive === 'answers' ? 'tw-text-white' : 'tw-text-[#9BA3AF] group-hover:tw-text-gray-900']">1</span>
+                                  </span>
+                                  <span
+                                    class="tw-ml-4 tw-text-sm tw-font-medium"
+                                    :class="[qualificationModalTabActive === 'answers' ? 'tw-text-[#384250]' : 'tw-text-[#9BA3AF] group-hover:tw-text-gray-900']"
+                                  >
+                                    Respostas
+                                  </span>
+                                </span>
+                              </a>
+                            </li>
+                            <li class="tw-relative md:tw-flex md:tw-flex-1">
+                              <a
+                                id="topics-tab"
+                                data-toggle="tab"
+                                href="#topics"
+                                role="tab"
+                                aria-controls="topics"
+                                :aria-current="qualificationModalTabActive === 'topics' ? 'step' : ''"
+                                class="tw-group tw-flex tw-items-center"
+                                @click="updateQualificationModalTabActive('topics')"
+                              >
+                                <span class="tw-flex tw-items-center tw-px-6 tw-py-1 tw-text-sm tw-font-medium">
+                                  <span
+                                    class="tw-flex tw-h-6 tw-w-6 tw-flex-shrink-0 tw-items-center tw-justify-center tw-rounded-full"
+                                    :class="[qualificationModalTabActive === 'topics' ? 'tw-bg-primary-600' : 'tw-bg-[#F9FAFA] group-hover:tw-border-gray-400']"
+                                  >
+                                    <span :class="[qualificationModalTabActive === 'topics' ? 'tw-text-white' : 'tw-text-[#9BA3AF] group-hover:tw-text-gray-900']">2</span>
+                                  </span>
+                                  <span
+                                    class="tw-ml-4 tw-text-sm tw-font-medium"
+                                    :class="[qualificationModalTabActive === 'topics' ? 'tw-text-[#384250]' : 'tw-text-[#9BA3AF] group-hover:tw-text-gray-900']"
+                                  >
+                                    Assuntos
+                                  </span>
+                                </span>
+                              </a>
+                            </li>
+                            <li class="tw-relative md:tw-flex md:tw-flex-1">
+                              <a
+                                id="abilitiesandcompetences-tab"
+                                data-toggle="tab"
+                                href="#abilitiesandcompetences"
+                                role="tab"
+                                aria-controls="abilitiesandcompetences"
+                                :aria-current="qualificationModalTabActive === 'abilitiesandcompetences' ? 'step' : ''"
+                                class="tw-group tw-flex tw-items-center"
+                                @click="updateQualificationModalTabActive('abilitiesandcompetences')"
+                              >
+                                <span class="tw-flex tw-items-center tw-px-6 tw-py-1 tw-text-sm tw-font-medium">
+                                  <span
+                                    class="tw-flex tw-h-6 tw-w-6 tw-flex-shrink-0 tw-items-center tw-justify-center tw-rounded-full"
+                                    :class="[qualificationModalTabActive === 'abilitiesandcompetences' ? 'tw-bg-primary-600' : 'tw-bg-[#F9FAFA] group-hover:tw-border-gray-400']"
+                                  >
+                                    <span :class="[qualificationModalTabActive === 'abilitiesandcompetences' ? 'tw-text-white' : 'tw-text-[#9BA3AF] group-hover:tw-text-gray-900']">3</span>
+                                  </span>
+                                  <span
+                                    class="tw-ml-4 tw-text-sm tw-font-medium"
+                                    :class="[qualificationModalTabActive === 'abilitiesandcompetences' ? 'tw-text-[#384250]' : 'tw-text-[#9BA3AF] group-hover:tw-text-gray-900']"
+                                  >
+                                    Habilidades e Competências
+                                  </span>
+                                </span>
+                              </a>
+                            </li>
+                          </ol>
+                        </nav>
+
+                      </div>
+                    </div>
+                  </div>
+                  <div class="tw-flex-1">
+                    <div class="tab-content" id="myTabContent" style="margin-top: 2rem; overflow: auto; max-height: 400px;">
+                      <div
+                        id="answers"
+                        role="tabpanel"
+                        aria-labelledby="answers-tab"
+                        class="tab-pane fade"
+                        :class="[qualificationModalTabActive === 'answers' ? 'show active' : '']"
+                      >
+                        <div class="tw-grid tw-grid-cols-1 tw-gap-x-6 tw-gap-y-8 sm:tw-grid-cols-6">
+                          <div class="tw-col-span-full">
+                            <label for="id_modal_qualification_level" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                              Nível de dificuldade
+                            </label>
+                            <div class="tw-mt-2">
+                              <select id="id_modal_qualification_level" name="modal_qualification_level" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" v-model.number="currentLevel">
+                                <option value="3">Selecione</option>
+                                <option value="0">Fácil</option>
+                                <option value="1">Médio</option>
+                                <option value="2">Difícil</option>
+                              </select>
+                            </div>
+                          </div>
+                          <div class="tw-col-span-full">
+                            <label for="id_modal_qualification_commented_answer" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                              Resposta da questão
+                            </label>
+                            <div class="tw-mt-2">
+                              <textarea id="id_modal_qualification_commented_answer" cols="30" rows="10" class="form-control"></textarea>
+                            </div>
+                          </div>
+                          <div class="tw-col-span-full">
+                            <label for="id_modal_qualification_feedback" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                              Feedback do professor
+                            </label>
+                            <div class="tw-mt-2">
+                              <textarea id="id_modal_qualification_feedback" cols="30" rows="10" class="form-control"></textarea>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        id="topics"
+                        role="tabpanel"
+                        aria-labelledby="topics-tab"
+                        class="tab-pane fade"
+                        :class="[qualificationModalTabActive === 'topics' ? 'show active' : '']"
+                      >
+                        <div>
+                          <div class="tw-col-span-full">
+                            <template v-if="statusTopics === 'loading'">
+                              <div class="row py-5">
+                                <div class="col d-flex justify-content-center align-items-center flex-wrap">
+                                  <h4 class="mb-0">Carregando assuntos</h4>
+                                  <div class="mx-2 spinner-border text-dark" style="width: 1.4rem; height: 1.4rem;" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </template>
+                            <template v-else>
+                              <div class="form-group">
+                                <label for="">Buscar assuntos disponíveis</label>
+                                <input placeholder="Digite aqui o assunto que você está procurando" type="text" v-model="searchTopic" class="form-control">
+                              </div>
+                              <input v-for="topic in currentTopics" v-if="topic.id" type="hidden" :value="topic.id" name="topics">
+                              <div class="row">
+                                <div class="col-6" v-for="stage in Object.entries(regroupedTopics)">
+                                  <table class="table table table-bordered table-sm table-hover">
+                                    <thead>
+                                      <tr>
+                                        <th>
+                                          Assuntos (Etapa ${stage[0]}) <span class="text-muted small">Assuntos abordados nessa questão</span>
+                                        </th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      <tr v-for="topic in stage[1]">
+                                        <td>
+                                          <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" :id="'topic_'+topic.id" :value="topic.id" :checked="checkExist(topic.id, currentTopics)" name="topics_reference" @change="checkOption(topic, currentTopics, $event)">
+                                            <label class="custom-control-label" :for="'topic_'+topic.id">
+                                              ${topic.name}
+                                            </label>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                              <table class="table" v-if="!topics.length > 0">
+                                <tbody>
+                                  <tr>
+                                    <td>Não há assuntos disponíveis para esses dados pedagógicos</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </template>
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        id="abilitiesandcompetences"
+                        role="tabpanel"
+                        aria-labelledby="abilitiesandcompetences-tab"
+                        class="tab-pane fade"
+                        :class="[qualificationModalTabActive === 'abilitiesandcompetences' ? 'show active' : '']"
+                      >
+                        <div>
+                          <div class="tw-col-span-full">
+                            <template v-if="statusCompetences === 'loading'">
+                              <div class="row py-5">
+                                <div class="col d-flex justify-content-center align-items-center flex-wrap">
+                                  <h4 class="mb-0">Carregando competências</h4>
+                                  <div class="mx-2 spinner-border text-dark" style="width: 1.4rem; height: 1.4rem;" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </template>
+                            <template v-else>
+                              <div class="form-group">
+                                <label for="">Buscar competências disponíveis</label>
+                                <input placeholder="Digite aqui a competência que está procurando" type="text" v-model="searchCompetence" class="form-control">
+                              </div>
+                              <table class="table table table-bordered table-sm table-hover">
+                                <thead>
+                                  <tr>
+                                    <th>
+                                      Competências <span class="text-muted small">Competências necessárias para realizar esta questão</span>
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <input v-for="competence in currentCompetences" v-if="competence.id" type="hidden" :value="competence.id" name="competences">
+                                  <tr v-for="competence in filterCompetences">
+                                    <td>
+                                      <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" :id="'competence_'+competence.id" :value="competence.id" :checked="checkExist(competence.id, currentCompetences)" name="competences_reference" @change="checkOption(competence, currentCompetences, $event)">
+                                        <label class="custom-control-label" :for="'competence_'+competence.id">
+                                          ${competence.text}
+                                        </label>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                  <tr v-if="!competences.length > 0">
+                                    <td>Não há competências disponíveis</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </template>
+                          </div>
+                          <div class="tw-col-span-full">
+                            <template v-if="statusAbilities === 'loading'">
+                              <div class="row py-5">
+                                <div class="col d-flex justify-content-center align-items-center flex-wrap">
+                                  <h4 class="mb-0">Carregando habilidades</h4>
+                                  <div class="mx-2 spinner-border text-dark" style="width: 1.4rem; height: 1.4rem;" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </template>
+                            <template v-else>
+                              <div class="form-group">
+                                <label for="">Buscar habilidades disponíveis</label>
+                                <input placeholder="Digite aqui a habilidade que está procurando" type="text" v-model="searchAbility" class="form-control">
+                              </div>
+                              <table class="table table table-bordered table-sm table-hover">
+                                <thead>
+                                  <tr>
+                                    <th>
+                                      Habilidades <span class="text-muted small">Habilidades necessárias para realizar esta questão</span>
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <input v-for="ability in currentAbilities" v-if="ability.id" type="hidden" :value="ability.id" name="abilities">
+                                  <tr v-for="ability in filterAbilities">
+                                    <td>
+                                      <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" :id="'ability_'+ability.id" :value="ability.id" :checked="checkExist(ability.id, currentAbilities)" name="abilities_reference" @change="checkOption(ability, currentAbilities, $event)">
+                                        <label class="custom-control-label" :for="'ability_'+ability.id">
+                                          (${ability.code}) ${ability.text}
+                                        </label>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                  <tr v-if="!abilities.length > 0">
+                                    <td>Não há habilidades disponíveis</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </template>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+
+                  <!-- <div class="tw-mt-4 tw-grid tw-grid-cols-1 tw-gap-x-6 tw-gap-y-8 sm:tw-grid-cols-6"> -->
+
+                    <!-- <div class="tw-col-span-full">
+                      <label for="id_modal_qualification_commented_answer" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                        Resposta da questão
+                      </label>
+                      <div class="tw-mt-2">
+                        <textarea id="id_modal_qualification_commented_answer" cols="30" rows="10" class="form-control"></textarea>
+                      </div>
+                    </div>
+                    <div class="tw-col-span-full">
+                      <label for="id_modal_qualification_feedback" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                        Feedback do professor
+                      </label>
+                      <div class="tw-mt-2">
+                        <textarea id="id_modal_qualification_feedback" cols="30" rows="10" class="form-control"></textarea>
+                      </div>
+                    </div> -->
+
+                    <!-- <div class="tw-col-span-full">
+                      <template v-if="statusTopics === 'loading'">
+                        <div class="row py-5">
+                          <div class="col d-flex justify-content-center align-items-center flex-wrap">
+                            <h4 class="mb-0">Carregando assuntos</h4>
+                            <div class="mx-2 spinner-border text-dark" style="width: 1.4rem; height: 1.4rem;" role="status">
+                              <span class="sr-only">Loading...</span>
+                            </div>
+                          </div>
+                        </div>
+                      </template>
+                      <template v-else>
+                        <div class="form-group">
+                          <label for="">Buscar assuntos disponíveis</label>
+                          <input placeholder="Digite aqui o assunto que você está procurando" type="text" v-model="searchTopic" class="form-control">
+                        </div>
+                        <input v-for="topic in currentTopics" v-if="topic.id" type="hidden" :value="topic.id" name="topics">
+                        <div class="col-6" v-for="stage in Object.entries(regroupedTopics)">
+                          <table class="table table table-bordered table-sm table-hover">
+                            <thead>
+                              <tr>
+                                <th>
+                                  Assuntos (Etapa ${stage[0]}) <span class="text-muted small">Assuntos abordados nessa questão</span>
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr v-for="topic in stage[1]">
+                                <td>
+                                  <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" :id="'topic_'+topic.id" :value="topic.id" :checked="checkExist(topic.id, currentTopics)" name="topics_reference" @change="checkOption(topic, currentTopics, $event)">
+                                    <label class="custom-control-label" :for="'topic_'+topic.id">
+                                      ${topic.name}
+                                    </label>
+                                  </div>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <table class="table" v-if="!topics.length > 0">
+                          <tbody>
+                            <tr>
+                              <td>Não há assuntos disponíveis para esses dados pedagógicos</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </template>
+                    </div> -->
+
+                    <!-- <div class="tw-col-span-full">
+                      <template v-if="statusCompetences === 'loading'">
+                        <div class="row py-5">
+                          <div class="col d-flex justify-content-center align-items-center flex-wrap">
+                            <h4 class="mb-0">Carregando competências</h4>
+                            <div class="mx-2 spinner-border text-dark" style="width: 1.4rem; height: 1.4rem;" role="status">
+                              <span class="sr-only">Loading...</span>
+                            </div>
+                          </div>
+                        </div>
+                      </template>
+                      <template v-else>
+                        <div class="form-group">
+                          <label for="">Buscar competências disponíveis</label>
+                          <input placeholder="Digite aqui a competência que está procurando" type="text" v-model="searchCompetence" class="form-control">
+                        </div>
+                        <table class="table table table-bordered table-sm table-hover">
+                          <thead>
+                            <tr>
+                              <th>
+                                Competências <span class="text-muted small">Competências necessárias para realizar esta questão</span>
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <input v-for="competence in currentCompetences" v-if="competence.id" type="hidden" :value="competence.id" name="competences">
+                            <tr v-for="competence in filterCompetences">
+                              <td>
+                                <div class="custom-control custom-checkbox">
+                                  <input type="checkbox" class="custom-control-input" :id="'competence_'+competence.id" :value="competence.id" :checked="checkExist(competence.id, currentCompetences)" name="competences_reference" @change="checkOption(competence, currentCompetences, $event)">
+                                  <label class="custom-control-label" :for="'competence_'+competence.id">
+                                    ${competence.text}
+                                  </label>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr v-if="!competences.length > 0">
+                              <td>Não há competências disponíveis</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </template>
+                    </div> -->
+
+                    <!-- <div class="tw-col-span-full">
+                      <template v-if="statusAbilities === 'loading'">
+                        <div class="row py-5">
+                          <div class="col d-flex justify-content-center align-items-center flex-wrap">
+                            <h4 class="mb-0">Carregando habilidades</h4>
+                            <div class="mx-2 spinner-border text-dark" style="width: 1.4rem; height: 1.4rem;" role="status">
+                              <span class="sr-only">Loading...</span>
+                            </div>
+                          </div>
+                        </div>
+                      </template>
+                      <template v-else>
+                        <div class="form-group">
+                          <label for="">Buscar habilidades disponíveis</label>
+                          <input placeholder="Digite aqui a habilidade que está procurando" type="text" v-model="searchAbility" class="form-control">
+                        </div>
+                        <table class="table table table-bordered table-sm table-hover">
+                          <thead>
+                            <tr>
+                              <th>
+                                Habilidades <span class="text-muted small">Habilidades necessárias para realizar esta questão</span>
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <input v-for="ability in currentAbilities" v-if="ability.id" type="hidden" :value="ability.id" name="abilities">
+                            <tr v-for="ability in filterAbilities">
+                              <td>
+                                <div class="custom-control custom-checkbox">
+                                  <input type="checkbox" class="custom-control-input" :id="'ability_'+ability.id" :value="ability.id" :checked="checkExist(ability.id, currentAbilities)" name="abilities_reference" @change="checkOption(ability, currentAbilities, $event)">
+                                  <label class="custom-control-label" :for="'ability_'+ability.id">
+                                    (${ability.code}) ${ability.text}
+                                  </label>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr v-if="!abilities.length > 0">
+                              <td>Não há habilidades disponíveis</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </template>
+                    </div> -->
+
+                  <!-- </div> -->
+                </div>
+              </div>
+              <div class="tw-mt-10 sm:tw-mt-8">
+                <button
+                  type="submit"
+                  class="tw-inline-flex tw-w-full tw-justify-center tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 not-disable"
+                >
+                  Salvar informações
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="modalForeignLanguage" tabindex="-1" role="dialog" aria-labelledby="modalForeignLanguageLabel" aria-hidden="true">
+    <div class="modal-dialog sm:tw-max-w-2xl sm:tw-my-8" role="document">
+      <div class="modal-content" style="background: inherit; border: inherit; border-radius: inherit;">
+        <div class="tw-flex tw-min-h-full tw-items-end tw-justify-center tw-p-4 tw-text-center sm:tw-items-center sm:tw-p-0">
+          <div class="tw-relative tw-transform tw-overflow-hidden tw-rounded-lg tw-bg-white tw-px-4 tw-pb-4 tw-pt-5 tw-text-left tw-shadow-xl tw-transition-all sm:tw-w-full sm:tw-max-w-2xl sm:tw-p-6">
+            <div class="tw-absolute tw-right-0 tw-top-0 tw-hidden tw-pr-4 tw-pt-4 sm:tw-block">
+              <button type="button" class="tw-rounded-md tw-bg-white tw-text-gray-400 hover:tw-text-gray-500 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-primary-500 focus:tw-ring-offset-2" data-dismiss="modal">
+                <span class="tw-sr-only">Close</span>
+                <svg class="tw-h-6 tw-w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <form method="GET" onsubmit="return false;" @submit="handleForeignLanguage">
+              <div>
+                <div class="tw-mt-3 tw-text-center sm:tw-mt-0 sm:tw-text-left">
+                  <h3 class="tw-text-base tw-font-semibold tw-leading-6 tw-text-gray-900" id="modal-title">
+                    Definir disciplinas de língua estrangeira
+                  </h3>
+                  <hr />
+                  <div class="tw-mt-4 tw-grid tw-grid-cols-1 tw-gap-x-6 tw-gap-y-8 sm:tw-grid-cols-6">
+                    <div class="tw-col-span-full sm:tw-col-span-2">
+                      <label for="id_foreign_language_grade_level" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                        Etapa do ensino
+                      </label>
+                      <div class="tw-mt-2">
+                        <select v-model="modalForeignLanguage.gradeLevel" id="id_foreign_language_grade_level" name="foreign_language_grade_level" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" required>
+                          <option value="3">Selecione</option>
+                          <option value="0">Ensino médio</option>
+                          <option value="1">Ensino fundamental 1</option>
+                          <option value="2">Ensino fundamental 2</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="tw-col-span-full sm:tw-col-span-2">
+                      <label for="id_grade" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                        Ano/Série
+                      </label>
+                      <div class="tw-mt-2">
+                        <select name="foreign_language_grade" id="id_foreign_language_grade" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" v-model="modalForeignLanguage.grade" required>
+                          <option value="">Selecione</option>
+                          ${selectedExamQuestion.selectedOptions}
+                          <option :value="grade.id" v-for="grade in grades">${grade.full_name}</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="tw-col-span-full sm:tw-col-span-2">
+                      <label for="id_quantity_questions" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                        Quantidade de questões
+                      </label>
+                      <div class="tw-mt-2">
+                        <input type="number" name="quantity_questions" id="id_quantity_questions" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" v-model="modalForeignLanguage.quantityQuestions" required />
+                      </div>
+                    </div>
+                    <div class="tw-col-span-full sm:tw-col-span-3" >
+                      <p class="tw-text-xs tw-text-gray-600 tw-mb-0">Referente a 1&#170; língua estrangeira</p>
+                      <label for="id_foreign_language_knowledge_area" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                        Área do conhecimento
+                      </label>
+                      <div class="tw-mt-2">
+                        <select class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" v-model="modalForeignLanguage.firstArea" id="id_foreign_language_knowledge_area" name="foreign_language_knowledge_area" required>
+                          <option value="">Selecione</option>
+                          <option :value="area.id" v-for="area in knowledgeAreasWithLanguageSubjects">${area.name}</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="tw-col-span-full sm:tw-col-span-3">
+                      <p class="tw-text-xs tw-text-gray-600 tw-mb-0">&nbsp;</p>
+                      <label for="id_first_foreign_language" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                        1&#170; Língua estrangeira
+                      </label>
+                      <div class="tw-mt-2">
+                        <select id="id_first_foreign_language" name="first_foreign_language" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" required v-model="modalForeignLanguage.firstForeignLanguage">
+                          <option value="">Selecione</option>
+                          <option
+                          v-for="subject in firstSubjects.filter(subject => subject.is_foreign_language_subject)"
+                              :value="{ id: subject.id, name: subject.name, parentSubjects: subject.parent_subjects }"
+                          >
+                            ${subject.name}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="tw-col-span-full sm:tw-col-span-3">
+                      <p class="tw-text-xs tw-text-gray-600 tw-mb-0">Referente a 2&#170; língua estrangeira</p>
+                      <label for="id_foreign_language_knowledge_area" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                        Área do conhecimento
+                      </label>
+                      <div class="tw-mt-2">
+                        <select class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" v-model="modalForeignLanguage.secondArea" id="id_foreign_language_knowledge_area" name="foreign_language_knowledge_area" required>
+                          <option value="">Selecione</option>
+                          <option :value="area.id" v-for="area in knowledgeAreasWithLanguageSubjects">${area.name}</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="tw-col-span-full sm:tw-col-span-3">
+                      <p class="tw-text-xs tw-text-gray-600 tw-mb-0">&nbsp;</p>
+                      <label for="id_second_foreign_language" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                        2&#170; Língua estrangeira
+                      </label>
+                      <div class="tw-mt-2">
+                        <select id="id_second_foreign_language" name="second_foreign_language" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" required v-model="modalForeignLanguage.secondForeignLanguage">
+                          <option value="">Selecione</option>
+                          <option
+                          v-for="subject in secondSubjects.filter(subject => subject.is_foreign_language_subject)"
+                            :value="{ id: subject.id, name: subject.name, parentSubjects: subject.parent_subjects }"
+                          >
+                            ${subject.name}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="tw-mt-10 sm:tw-mt-8">
+                <button
+                  type="submit"
+                  class="tw-inline-flex tw-w-full tw-justify-center tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 not-disable"
+                >
+                  Definir disciplinas
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="tw-relative tw-z-[1001] tw-hidden"
+    aria-labelledby="modal-title"
+    role="dialog"
+    aria-modal="true"
+    :style="{ display: statusSubmit === 'loading' ? 'block' : 'none' }"
+  >
+    <div class="tw-fixed tw-inset-0 tw-bg-gray-500 tw-bg-opacity-75 tw-transition-opacity"></div>
+    <div class="tw-fixed tw-inset-0 tw-z-10 tw-w-screen tw-overflow-y-auto">
+      <div class="tw-flex tw-min-h-full tw-items-end tw-justify-center tw-p-4 tw-text-center sm:tw-items-center sm:tw-p-0">
+        <div class="tw-relative tw-transform tw-overflow-hidden tw-rounded-lg tw-bg-white tw-px-4 tw-pb-4 tw-pt-5 tw-text-left tw-shadow-xl tw-transition-all sm:tw-my-8 sm:tw-w-full sm:tw-max-w-sm sm:tw-p-6">
+          <div>
+            <div class="tw-mx-auto tw-flex tw-h-12 tw-w-12 tw-items-center tw-justify-center">
+              <svg class="tw-animate-spin tw-h-10 tw-w-10" fill="none" viewBox="0 0 24 24">
+                <circle class="tw-opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="tw-opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+            <div class="tw-mt-3 tw-text-center sm:tw-mt-4">
+              <h3 class="tw-text-base tw-font-semibold tw-leading-6 tw-text-gray-900" id="modal-title">
+                {% if object %}
+                  Atualizando <template v-if="!generateApplication">gabarito...</template><template v-else>gabarito e gerando aplicação...</template>
+                {% else %}
+                  Salvando <template v-if="!generateApplication">gabarito...</template><template v-else>gabarito e gerando aplicação...</template>
+                {% endif %}
+              </h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock extra-modal %}
+
+{% block js-additional %}
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/@floating-ui/core@1.5.2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.5.3"></script>
+<script src="https://unpkg.com/@sjmc11/tourguidejs/dist/tour.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+
+<script id="ref-app" type="text/javascript">
+  var app = new Vue({
+    el: '#app',
+    delimiters: ['${', '}'],
+    data: {
+      questionsSelected: {},
+      relations: [],
+      relationsSelectd: [],
+      teachingStage: "",
+      relatedSubjects: '{{ object.related_subjects|default:False|lower }}',
+      externalCode: '{{ object.external_code|default:0|safe }}',
+      listSubject: [
+        {% regroup object.examquestion_set.all by question.subject.pk as subjects %}
+        {% for subject in subjects %}
+          {% with is_foreign_language=subject.list.0.is_foreign_language %}
+          {% if is_foreign_language %}{% cycle 'first' 'second' as type_foreign_language silent %}{% endif %}
+          {
+            id: '{{ subject.grouper }}',
+            name: '{{ subject.list.0.question.subject.name }}',
+            weightToDistribute: '',
+            blockWeightToDistribute: {{ subject.list|all_attr_true:'block_weight'|lower }},
+            expanded: true,
+            parentSubjectsId: ['{{ subject.list.0.question.subject.parent_subject.pk }}'],
+            knowledgeAreaId: ['{{ subject.list.0.question.subject.knowledge_area.pk }}'],
+            isForeignLanguage: {{ is_foreign_language|lower }},
+            firstForeignLanguage: {% if is_foreign_language and type_foreign_language == 'first' %}true{% else %}false{% endif %},
+            secondForeignLanguage: {% if is_foreign_language and type_foreign_language == 'second' %}true{% else %}false{% endif %},
+            questions: [
+              {% for exam_question in subject.list %}
+                {
+                  kind: 'update',
+                  id: '{{ exam_question.question.pk }}',
+                  examQuestionId: '{{ exam_question.pk }}',
+                  lastStatus: '{{ exam_question.last_status }}',
+                  lastStatusObject: {
+                    annuled_distribute_exam_teacher_subject: {{ exam_question.last_status_v2.annuled_distribute_exam_teacher_subject|default:False|lower }},
+                    annuled_give_score: {{ exam_question.last_status_v2.annuled_give_score|default:False|lower }},
+                    status: "{{ exam_question.last_status_v2.status|default:2 }}",
+                    note: "{{ exam_question.last_status_v2.note|default:'' }}",
+                    status_display: "{{ exam_question.last_status_v2.get_status_display|default:'Em aberto' }}",
+                    
+                  }, 
+                  category: '{{ exam_question.question.category }}',
+                  isEssay: {{ exam_question.question.is_essay|lower }},
+                  level: '{{ exam_question.question.level }}',
+                  grade: '{{ exam_question.question.grade.pk }}',
+                  weight: Number('{{ exam_question.weight }}'.replace(',', '.')),
+                  blockWeight: {{ exam_question.block_weight|default:'False'|lower }},
+                  gradeLevel: '{{ exam_question.question.grade.level }}',
+                  correctAlternatives: [
+                    {% for correct_alternative in exam_question.question.correct_alternatives %}
+                      '{{ correct_alternative }}',
+                    {% endfor %}
+                  ],
+                  feedback: '{{ exam_question.question.feedback }}',
+                  commentedAnswer: "{{ exam_question.question.commented_awnser|default:''|escapejs|remove_line_break|safe }}",
+                  quantityLines: {{ exam_question.question.quantity_lines|lower }},
+                  
+                  textQuestionFormat:{{ exam_question.question.text_question_format|lower }},
+                  topics: [
+                    {% for topic in exam_question.question.topics.all %}
+                      {
+                        id: '{{ topic.pk }}',
+                      },
+                    {% endfor %}
+                  ],
+                  abilities: [
+                    {% for ability in exam_question.question.abilities.all %}
+                      {
+                        id: '{{ ability.pk }}',
+                      },
+                    {% endfor %}
+                  ],
+                  competences: [
+                    {% for competence in exam_question.question.competences.all %}
+                      {
+                        id: '{{ competence.pk }}',
+                      },
+                    {% endfor %}
+                  ],
+
+                  tooltip: {
+                    isVisible: false,
+                    top: 0,
+                    left: 0,
+                  },
+
+                  focused: false,
+                },
+              {% endfor %}
+            ],
+          },
+          {% endwith %}
+        {% endfor %}
+      ],
+      weightDistribution: Number('{{ object.get_total_weight }}'.replace(',', '.')),
+      coordinations: [
+        {% for coordination in request.user.get_coordinations %}
+          '{{ coordination.pk }}',
+        {% endfor %}
+      ],
+      questionsNumber: 0,
+      startNumber: {{ object.start_number|default:1 }},
+      examName: '{{ object.name|default:'' }}',
+      status: {{ object.status|default:0 }},
+      category: {{ object.category|default:0 }},
+      templateQuantityAlternatives: {{ object.template_quantity_alternatives|default:5 }},
+      saltaCode: null,
+      isEnglishSpanish: {{ object.is_english_spanish|default:'False'|lower }},
+      isEnemSimulator: {{ object.is_enem_simulator|default:'False'|lower }},
+      showRanking: {{ object.show_ranking|default:'False'|lower }},
+      inputTeacherFeedback: '',
+      inputCommentedAnswer: '',
+      searchTopic: '',
+      searchCompetence: '',
+      searchAbility: '',
+      examquestions: [],
+      selectedExamQuestion: '',
+      subjects: [
+        {% for subject in subjects %}
+          {
+            id: '{{ subject.id }}',
+            name: '{{ subject.name }}',
+            knowledgeArea: {
+              id: '{{ subject.knowledge_area.id }}',
+              name: '{{ subject.knowledge_area.name }}',
+            },
+          },
+        {% endfor %}
+      ],
+      firstSubjects: [],
+      secondSubjects: [],
+      selectedGradeLevel: 0,
+      selectedGrade: '',
+      selectedArea: '',
+      selectedSubject: '',
+      grades: [],
+      knowledgeAreasWithLanguageSubjects: [],
+      knowledgeAreas: [],
+      competences: [],
+      abilities: [],
+      topics: [],
+      currentLevel: 3,
+      currentTopics: [],
+      currentCompetences: [],
+      currentAbilities: [],
+      currentQuantityLines: {{ exam_question.question.quantity_lines|default:5|lower }},
+      // saving: false,
+      loads: {
+        topics: true,
+        abilities: true,
+        competences: true,
+      },
+      subjectsSummaryLoading: false,
+      subjectsSummary: [],
+      newSubjectName: '',
+      selectedParentSubject: '',
+      parentSubjects: [
+        {% for subject in parent_subjects %}
+          {
+            id: '{{ subject.id }}',
+            name: '{{ subject }}',
+          },
+        {% endfor %}
+      ],
+      modalQuestion: {
+        quantity: 1,
+        category: 1,
+        gradeLevel: 3,
+        grade: '',
+        area: '',
+        subject: '',
+        subjectIndex: '',
+      },
+      modalQuestionMode: 'create',
+      modalQualification: '',
+      statusTopics: 'idle',
+      statusCompetences: 'idle',
+      statusAbilities: 'idle',
+
+      modalForeignLanguage: {
+        category: 1,
+        gradeLevel: 0,
+        grade: '',
+        quantityQuestions: 5,
+        firstArea: '',
+        secondArea: '',
+        firstForeignLanguage: '',
+        secondForeignLanguage: '',
+      },
+      shouldRunBlur: true,
+      qualificationModalTabActive: 'answers',
+      statusSubmit: 'idle',
+      generateApplication: false,
+      // Caso a variável não venha da view, o template filter "default" não funciona corretamente, esse if foi como consegui fazer funcionar
+      {% if not can_change_question_type == None %} 
+      canChangeQuestionType: {{ can_change_question_type|lower }},
+      {% else %}
+      canChangeQuestionType: true,
+      {% endif %}
+      newStatusQuestion: {
+        status: "",
+        note: "",
+        give_score: false,
+        question_fragment: "",
+        distributeInExamTeacherSubject: false,
+      },
+      clientTags: [
+        {% for tag in client_tags %}
+        {
+            id: "{{ tag.pk }}",
+            name: "{{ tag.name }}",
+        },
+        {% endfor %}
+      ],
+      statusDialogElement: null,
+      statusMap: [
+        "Aprovada",
+        "Reprovada",
+        "Em aberto",
+        "Aguardando correção",
+        "Corrigido",
+        "Visto",
+        "Anulada",
+        "Usar depois",
+        "Rascunho"
+      ],
+    },
+    computed: {
+      combinedRange() {
+        const numRange = Array.from({ length: this.templateQuantityAlternatives }, (_, i) => i + 1);
+        const letters = 'ABCDE'.slice(0, this.templateQuantityAlternatives).split('');
+        return numRange.map((num, index) => ({ num, letter: letters[index] }));
+      },
+
+      regroupedTopics: function() {
+        return this.groupBy(this.filterTopics, 'stage')
+      },
+      filterTopics: function() {
+        return this.topics.filter(item => {
+          return item.name.toLowerCase().indexOf(this.searchTopic.toLowerCase()) > -1
+        })
+      },
+      filterCompetences: function() {
+        return this.competences.filter(item => {
+          return item.text.toLowerCase().indexOf(this.searchCompetence.toLowerCase()) > -1
+        })
+      },
+      filterAbilities: function() {
+        return this.abilities.filter(item => {
+          return item.text.toLowerCase().indexOf(this.searchAbility.toLowerCase()) > -1
+        })
+      },
+      quantityQuestions: function() {
+        return this.listSubject.filter(subject => !subject.secondForeignLanguage).reduce((total, subject) => total + subject.questions.length, 0)
+      },
+      quantityForWeightQuestions: function() {
+        return this.listSubject.filter(subject => !subject.secondForeignLanguage).reduce((total, subject) => total + subject.questions.filter(question => !question.blockWeight && question.lastStatusObject.status_display != 'Anulada' || (question.lastStatusObject.status_display == 'Anulada' && question.lastStatusObject.annuled_give_score == true)).length, 0)
+      },
+      blockedWeightQuestions: function() {
+        let totalWeight = 0
+        this.listSubject.forEach(subject => {
+          subject.questions.forEach(question => {
+            if (question.blockWeight) {
+              totalWeight += question.weight
+            }
+          })
+        })
+        return totalWeight
+      },
+      totalWeightQuestions: function() {
+        let totalWeight = 0
+        this.listSubject.filter(subject => !subject.secondForeignLanguage).forEach(subject => {
+          subject.questions.forEach(question => {
+            const questionWeight = Number(question.weight)
+            totalWeight += questionWeight
+          })
+        })
+
+        const DECIMAL_PLACE = 6
+        const totalWeightFixedDecimalPlace = Number(totalWeight).toFixed(DECIMAL_PLACE)
+        return totalWeightFixedDecimalPlace
+      },
+    },
+    methods: {
+      setFalseAnotherEssayQuestion(subject, question) {
+        subject.questions.forEach((q) => {
+          if(q.id != question.id) {
+            q.isEssay = false
+          }
+        })
+      },
+      deactivateSelectedQuestions(subject) {
+
+        this.questionsSelected[subject.id] = null
+
+        document.querySelectorAll(`.draggable-${subject.id}`).forEach(element => {
+          element.style.display = 'flex';
+        });
+        document.querySelectorAll(`.checkbox-${subject.id}`).forEach(element => {
+          element.style.display = 'none';
+        });
+        document.querySelector("#change-subject-"+subject.id).style.display = 'none';
+      },
+      removeSelectedQuestions(subjectIndex, subject) {
+
+        if (!this.questionsSelected[subject.id] || this.questionsSelected[subject.id].length == 0) {
+          this.alertTop("Você não selecionou questões dessa disciplina","info")
+          return
+        }
+
+        this.questionsSelected[subject.id].forEach(questionId => {
+          this.handleRemoveQuestion(subjectIndex, subject, questionId);
+        });
+        this.questionsSelected[subject.id] = [];
+        document.querySelectorAll(".checkbox-" + subject.id).forEach(element => {
+          element.checked = false;
+        });
+        this.alertTop(`As questões da disciplina "${subject.name}" foram removidas com sucesso.`);
+      },
+      handleChecbox(element, subject) {
+        if (element.checked) {
+          this.questionsSelected[subject.id].push(element.value)
+        }
+        else {
+          // Remove o elemento do objeto na chave de sua disciplina
+          this.questionsSelected[subject.id] = this.questionsSelected[subject.id].filter((questionId) => questionId != element.value)
+        }        
+      },
+      selectMultiple(subject, questionId) {
+
+        if (this.questionsSelected[subject.id]) {
+          this.alertTop("Você já pode marcar as questões dessa disciplina","info")
+          return
+        }
+
+        // Reatividade do vue funcionou muito lento nessa tela, fiz algumas coisas na mão pra ficar mais rápido
+        document.querySelectorAll(`.draggable-${subject.id}`).forEach(element => {
+          element.style.display = 'none';
+        });
+        document.querySelectorAll(`.checkbox-${subject.id}`).forEach(element => {
+          element.style.display = 'flex';
+          if (element.value == questionId) {
+            element.checked = true;
+            this.questionsSelected[subject.id] = [questionId]
+            document.querySelector("#change-subject-"+subject.id).style.display = 'flex';
+          }
+        });
+
+      },
+      openDialog(examQuestion, status) {
+                
+        this.newStatusQuestion.status = status
+        this.selectedExamQuestion = examQuestion
+
+        if(status != 0){
+            this.newStatusQuestion.question_fragment = ''
+            this.statusDialogElement.showModal()
+        }else{
+            this.newStatusQuestion.question_fragment = ''
+            this.submitNewStatus()
+        }
+      },
+      closeDialog() {
+          let buttons = this.statusDialogElement.querySelectorAll("button")
+          buttons.forEach((b) => b.disabled = false)
+          this.resetNewStatusObject()
+          this.statusDialogElement.close()
+      },
+      resetNewStatusObject(){
+        this.newStatusQuestion = {
+            status: "",
+            note: "",
+            give_score: false,
+            question_fragment:"",
+            distributeInExamTeacherSubject: false,
+        }
+      },
+      submitNewStatus() {
+        // criação de status
+        let url = "{% url 'exams:exams_status_question_api_create'  pk='00000000-0000-0000-0000-000000000000' %}"
+        url = url.replace('00000000-0000-0000-0000-000000000000', this.selectedExamQuestion.examQuestionId)
+
+        axios.post(url, this.newStatusQuestion).then((response) => {
+            if(this.newStatusQuestion.status != 0 && this.newStatusQuestion.status != 5){
+              this.createStatusTags(response.data.id)
+            }
+            
+            let updateQuestion = null
+            this.listSubject.forEach((subject) => {
+                subject.questions.forEach((question) => {
+                    if(question.examQuestionId == this.selectedExamQuestion.examQuestionId) {
+                        updateQuestion = question
+                    }
+                })
+            })
+            updateQuestion.lastStatus = this.statusMap[this.newStatusQuestion.status]
+            updateQuestion.lastStatusObject = {
+              annuled_distribute_exam_teacher_subject: this.newStatusQuestion.distributeInExamTeacherSubject,
+              annuled_give_score: this.newStatusQuestion.give_score,
+              note: this.newStatusQuestion.note,
+              status_display: this.statusMap[this.newStatusQuestion.status],
+            }
+
+            this.alertTop('Situação da questão atualizada')
+            this.statusDialogElement.close()
+        }).finally(() => {
+          if(!this.newStatusQuestion.give_score) {
+            this.handleQuestionWeight()
+            this.saveTemplate(generate_application=false, redirect=false)
+          }
+          this.resetNewStatusObject()
+        })
+      },
+      revertAnullQuestion(exam_question) {
+        Swal.fire({
+          title: 'Confirmação',
+          text: "Ao reverter a anulação, os pesos serão recalculados. Deseja continuar?",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Confirmar',
+          cancelButtonText: 'Cancelar',
+        }).then(result => {
+          if(result.isConfirmed) {
+              axios.post("{% url 'exams:revert_status_question' %}", {
+                exam_question: exam_question.examQuestionId
+              }).then((response) => {
+                if(response.data.new_status){
+                  exam_question.lastStatusObject = response.data.new_status
+                  this.handleQuestionWeight()
+                  this.alertTop('Anulação revertida com sucesso.')
+                  this.saveTemplate(generate_application=false, redirect=false)
+                }else if(response.data.noLastStatus){
+                  exam_question.lastStatusObject = {
+                    annuled_give_score: false,
+                    note: "",
+                    status: 2,
+                    status_display: "Em aberto",
+                    annuled_distribute_exam_teacher_subject: false,
+                    question_fragment: "",
+                  }
+                  this.handleQuestionWeight()
+                  this.alertTop('Anulação revertida com sucesso.')
+                  this.saveTemplate(generate_application=false, redirect=false)
+                }
+              }).catch(() => {
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Erro',
+                  text: 'Não foi possível reverter a anulação.',
+                })
+              })
+            }
+          }
+        )
+      },
+      createStatusTags(statusPk) {
+          // tags de status
+          let tagsInputs = document.querySelectorAll(".status-tags")
+          let values = []
+          tagsInputs.forEach((input) => {
+              values.push(input.value)
+          })
+          newStatusTagsRecord = {
+              status: statusPk,
+              tags: values
+          }
+          let url = "{% url 'exams:exams_status_tags_api_create'  pk='00000000-0000-0000-0000-000000000000' %}"
+          url = url.replace('00000000-0000-0000-0000-000000000000', statusPk)
+
+          axios.post(url, newStatusTagsRecord).then((response)=>{
+              console.log("status Tags criadas")
+          })
+      },
+      alertTop(text, icon = 'success') {
+        Swal.fire({
+          position: 'top-end',
+          text: text,
+          icon: icon,
+          showConfirmButton: false,
+          timer: 2000,
+          toast: true,
+          timerProgressBar: true,
+        })
+      },
+      alternatives(question){
+        return this.combinedRange.map((item, index) => ({
+          text: item.letter,
+          is_correct: question.correctAlternatives.includes(item.letter),
+          index: index + 1
+        }))
+      },
+      getCategoryQuestions(subject) {
+        return subject.questions[0].category
+      },
+      updatePositionTooltip(questionId) {
+        const { computePosition, flip, shift, offset, arrow } = FloatingUIDOM
+
+        const button = document.querySelector(`#button-${questionId}`)
+        const tooltip = document.querySelector(`#tooltip-${questionId}`)
+        const arrowElement = document.querySelector(`#arrow-${questionId}`)
+
+        computePosition(button, tooltip, {
+          placement: 'top',
+          middleware: [
+            offset(14),
+            flip(),
+            shift({ padding: 5 }),
+            arrow({ element: arrowElement }),
+          ],
+        }).then(({ x, y, placement, middlewareData }) => {
+          Object.assign(tooltip.style, {
+            left: `${x}px`,
+            top: `${y}px`,
+          })
+
+          const { x: arrowX, y: arrowY } = middlewareData.arrow
+
+          const staticSide = {
+            top: 'bottom',
+            right: 'left',
+            bottom: 'top',
+            left: 'right',
+          }[placement.split('-')[0]]
+
+          Object.assign(arrowElement.style, {
+            left: arrowX != null ? `${arrowX}px` : '',
+            top: arrowY != null ? `${arrowY}px` : '',
+            right: '',
+            bottom: '',
+            [staticSide]: '-4px',
+          })
+        })
+      },
+      showTooltip(question) {
+        question.tooltip.isVisible = true
+        this.updatePositionTooltip(question.id)
+      },
+      hideTooltip(question, event) {
+        question.tooltip.isVisible = false
+      },
+      handleBlur(event) {
+        setTimeout(() => {
+          const activeElement = document.activeElement;
+
+          if (activeElement === this.$refs.calcButton) {
+            this.handleQuestionWeight()
+          } else {
+            if (this.listSubject.length === 0) return
+
+            let totalWeightToDistribute = 0
+            this.listSubject.forEach(subject => {
+              totalWeightToDistribute += subject.weightToDistribute
+            })
+            this.weightDistribution = totalWeightToDistribute
+          }
+        }, 10)
+      },
+      handleFocusQuestionWeight(question, event) {
+        question.focused = true
+      },
+      handleBlurQuestionWeight(question, event) {
+        this.handleQuestionWeight()
+        question.focused = false
+      },
+      handleFocusSubjectWeightToDistribute(subject, event) {
+        // subject.focused = true
+      },
+      handleBlurSubjectWeightToDistribute(subject, event) {
+        if (subject.blockWeightToDistribute) {
+          const values = this.divideValue(subject.weightToDistribute, subject.questions.length)
+          let subjectQuestionIndex = 0
+          subject.questions.forEach((question, index) => {
+            question.weight = values[subjectQuestionIndex]
+            subjectQuestionIndex++
+          })
+        }
+        this.handleQuestionWeight()
+        // subject.focused = false
+      },
+      divideValue(dividend, parts) {
+        const DECIMAL_PLACE = 6
+        let baseValue = Number((dividend / parts).toFixed(DECIMAL_PLACE))
+        let remainder = Number((dividend - (baseValue * parts)).toFixed(DECIMAL_PLACE))
+        if (baseValue < 0) {
+          baseValue = 0
+          remainder = 0
+        }
+
+        const result = Array.from({ length: parts }, (_, index) => {
+          return index === parts - 1 ? Number((baseValue + remainder).toFixed(DECIMAL_PLACE)) : baseValue
+        })
+
+        return result
+      },
+      handleQuestionWeight() {
+        const totalQuestions = this.quantityForWeightQuestions
+        const DECIMAL_PLACE = 6
+
+        if (this.weightDistribution !== '') {
+          const freeWeightDistribution = this.weightDistribution - this.blockedWeightQuestions
+          const values = this.divideValue(freeWeightDistribution, totalQuestions)
+
+          let globalIndex = 0
+          this.listSubject.filter(subject => !subject.secondForeignLanguage).forEach(subject => {
+            let subjectWeightToDistribute = 0
+            subject.questions.forEach((question, index) => {
+              if(question.lastStatusObject.status_display == 'Anulada' && question.lastStatusObject.annuled_give_score == false) {
+                return
+              }
+              
+              if (question.blockWeight) {
+                subjectWeightToDistribute += question.weight
+                return
+              }
+
+              question.weight = values[globalIndex]
+              subjectWeightToDistribute += values[globalIndex]
+              globalIndex++
+            })
+            subject.weightToDistribute = Number(subjectWeightToDistribute.toFixed(DECIMAL_PLACE))
+          })
+
+          const subjectFirstForeignLanguage = this.listSubject.find(subject => subject.firstForeignLanguage)
+          this.listSubject.filter(subject => subject.secondForeignLanguage).forEach(subject => {
+            subject.weightToDistribute = subjectFirstForeignLanguage.weightToDistribute
+            subject.questions.forEach((question, index) => {
+              question.weight = subjectFirstForeignLanguage.questions[index].weight
+            })
+          })
+        }
+      },
+      handleInitialQuestionWeight() {
+        const DECIMAL_PLACE = 6
+
+        this.listSubject.forEach(subject => {
+          let subjectWeightToDistribute = 0
+          subject.questions.forEach((question, index) => {
+            if(question.lastStatusObject.status_display == 'Anulada' && question.lastStatusObject.annuled_give_score == false) {
+              return
+            }
+            subjectWeightToDistribute += question.weight
+          })
+          subject.weightToDistribute = Number(subjectWeightToDistribute.toFixed(DECIMAL_PLACE))
+        })
+      },
+      handleSubjectDrag(evt) {
+        const elementChanged = evt.moved.element
+        let indexChanged = this.listSubject.findIndex(item => item.id === elementChanged.id)
+        if (indexChanged === -1) return
+        if (elementChanged.firstForeignLanguage) {
+          let indexSecond = this.listSubject.findIndex(item => item.secondForeignLanguage)
+          if (indexSecond !== -1 && indexSecond < indexChanged) {
+            let elementSecond = this.listSubject.splice(indexSecond, 1)[0]
+            indexChanged--
+            this.listSubject.splice(indexChanged + 1, 0, elementSecond)
+          } else if (indexSecond !== -1 && indexSecond > indexChanged) {
+            let elementSecond = this.listSubject.splice(indexSecond, 1)[0]
+            this.listSubject.splice(indexChanged + 1, 0, elementSecond)
+          }
+        } else if (elementChanged.secondForeignLanguage) {
+          let indexFirst = this.listSubject.findIndex(item => item.firstForeignLanguage)
+          if (indexFirst !== -1 && indexFirst > indexChanged) {
+            let elementFirst = this.listSubject.splice(indexFirst, 1)[0]
+            this.listSubject.splice(indexChanged, 0, elementFirst)
+          } else if (indexFirst !== -1 && indexFirst < indexChanged) {
+            let elementFirst = this.listSubject.splice(indexFirst, 1)[0];
+            this.listSubject.splice(indexChanged - 1, 0, elementFirst);
+          }
+        } else if (!elementChanged.firstForeignLanguage && !elementChanged.secondForeignLanguage) {
+          if (evt.moved.newIndex > 0 && evt.moved.newIndex < this.listSubject.length - 1) {
+            let beforeFirst = this.listSubject[evt.moved.newIndex - 1].firstForeignLanguage
+            let afterSecond = this.listSubject[evt.moved.newIndex + 1].secondForeignLanguage
+            if (evt.moved.newIndex < evt.moved.oldIndex && beforeFirst && afterSecond) {
+              this.listSubject.splice(evt.moved.newIndex - 1, 0, this.listSubject.splice(indexChanged, 1)[0])
+            }
+            else if (evt.moved.newIndex > evt.moved.oldIndex && beforeFirst && afterSecond) {
+              this.listSubject.splice(evt.moved.newIndex + 1, 0, this.listSubject.splice(indexChanged, 1)[0])
+            }
+          }
+        }
+      },
+      handleForeignLanguage() {
+        let firstForeignLanguageExists = false
+        let secondForeignLanguageExists = false
+
+        const quantityQuestions = this.modalForeignLanguage.quantityQuestions
+
+        this.listSubject.forEach(subject => {
+          if (!firstForeignLanguageExists & subject.id === this.modalForeignLanguage.firstForeignLanguage.id) {
+            firstForeignLanguageExists = true
+            subject.isForeignLanguage = true
+            subject.firstForeignLanguage = true
+
+
+            const firstSubjectQuestionsLength = subject.questions.length
+            for (let i = 1; i <= (quantityQuestions - firstSubjectQuestionsLength); i++) {
+              subject.questions.push({
+                kind: 'new',
+                id: crypto.randomUUID(),
+                examQuestionId: '',
+                category: 1, // objective
+                gradeLevel: this.modalForeignLanguage.gradeLevel,
+                grade: this.modalForeignLanguage.grade,
+                weight: '',
+                blockWeight: false,
+                correctAlternatives: [],
+                feedback: '',
+                commentedAnswer: '',
+                quantityLines: 5,
+                textQuestionFormat: 1,
+                level: 3,
+                topics: [],
+                abilities: [],
+                competences: [],
+                tooltip: {
+                  isVisible: false,
+                  top: 0,
+                  left: 0,
+                },
+                focused: false,
+                lastStatusObject: {
+                  annuled_distribute_exam_teacher_subject: false,
+                  annuled_give_score: false,
+                  status_display: "Em aberto",
+                  note: "",
+                  status: 2,
+                  status_description: "Em aberto",
+                  active: true,
+                },
+              })
+            }
+          }
+          if (!secondForeignLanguageExists & subject.id === this.modalForeignLanguage.secondForeignLanguage.id) {
+            secondForeignLanguageExists = true
+            subject.isForeignLanguage = true
+            subject.secondForeignLanguage = true
+
+            const secondSubjectQuestionsLength = subject.questions.length
+            for (let i = 1; i <= (quantityQuestions - secondSubjectQuestionsLength); i++) {
+              subject.questions.push({
+                kind: 'new',
+                id: crypto.randomUUID(),
+                examQuestionId: '',
+                category: 1, // objective
+                gradeLevel: this.modalForeignLanguage.gradeLevel,
+                grade: this.modalForeignLanguage.grade,
+                weight: '',
+                blockWeight: false,
+                correctAlternatives: [],
+                feedback: '',
+                commentedAnswer: '',
+                quantityLines: 5,
+                textQuestionFormat: 1,
+                level: 3,
+                topics: [],
+                abilities: [],
+                competences: [],
+                tooltip: {
+                  isVisible: false,
+                  top: 0,
+                  left: 0,
+                },
+                focused: false,
+                lastStatusObject: {
+                  annuled_distribute_exam_teacher_subject: false,
+                  annuled_give_score: false,
+                  status_display: "Em aberto",
+                  note: "",
+                  status: 2,
+                  status_description: "Em aberto",
+                  active: true,
+                },
+              })
+            }
+          }
+        })
+
+        if (!firstForeignLanguageExists) {
+          this.listSubject.push({
+            id: this.modalForeignLanguage.firstForeignLanguage.id,
+            name: this.modalForeignLanguage.firstForeignLanguage.name,
+            weightToDistribute: '',
+            blockWeightToDistribute: false,
+            expanded: true,
+            parentSubjectsId: this.modalForeignLanguage.firstForeignLanguage.parentSubjects,
+            knowledgeAreaId: this.modalForeignLanguage.firstArea,
+            isForeignLanguage: true,
+            firstForeignLanguage: true,
+            secondForeignLanguage: false,
+            questions: Array.from(
+              { length: quantityQuestions },
+              (v, i) => {
+                return {
+                  kind: 'new',
+                  id: crypto.randomUUID(),
+                  examQuestionId: '',
+                  category: 1, // objective
+                  gradeLevel: this.modalForeignLanguage.gradeLevel,
+                  grade: this.modalForeignLanguage.grade,
+                  weight: '',
+                  blockWeight: false,
+                  correctAlternatives: [],
+                  feedback: '',
+                  commentedAnswer: '',
+                  quantityLines: 5,
+                  textQuestionFormat: 1,
+                  level: 3,
+                  topics: [],
+                  abilities: [],
+                  competences: [],
+                  tooltip: {
+                    isVisible: false,
+                    top: 0,
+                    left: 0,
+                  },
+                  focused: false,
+                  lastStatusObject: {
+                    annuled_distribute_exam_teacher_subject: false,
+                    annuled_give_score: false,
+                    status_display: "Em aberto",
+                    note: "",
+                    status: 2,
+                    status_description: "Em aberto",
+                    active: true,
+                  },
+                }
+              }
+            ),
+          })
+        }
+
+        if (!secondForeignLanguageExists) {
+          this.listSubject.push({
+            id: this.modalForeignLanguage.secondForeignLanguage.id,
+            name: this.modalForeignLanguage.secondForeignLanguage.name,
+            weightToDistribute: '',
+            blockWeightToDistribute: false,
+            expanded: true,
+            parentSubjectsId: this.modalForeignLanguage.secondForeignLanguage.parentSubjects,
+            knowledgeAreaId: this.modalForeignLanguage.secondArea,
+            isForeignLanguage: true,
+            firstForeignLanguage: false,
+            secondForeignLanguage: true,
+            questions: Array.from(
+              { length: quantityQuestions },
+              (v, i) => {
+                return {
+                  kind: 'new',
+                  id: crypto.randomUUID(),
+                  examQuestionId: '',
+                  category: 1, // objective
+                  gradeLevel: this.modalForeignLanguage.gradeLevel,
+                  grade: this.modalForeignLanguage.grade,
+                  weight: '',
+                  blockWeight: false,
+                  correctAlternatives: [],
+                  feedback: '',
+                  commentedAnswer: '',
+                  quantityLines: 5,
+                  textQuestionFormat: 1,
+                  level: 3,
+                  topics: [],
+                  abilities: [],
+                  competences: [],
+                  tooltip: {
+                    isVisible: false,
+                    top: 0,
+                    left: 0,
+                  },
+                  focused: false,
+                  lastStatusObject: {
+                    annuled_distribute_exam_teacher_subject: false,
+                    annuled_give_score: false,
+                    status_display: "Em aberto",
+                    note: "",
+                    status: 2,
+                    status_description: "Em aberto",
+                    active: true,
+                  },
+                }
+              }
+            ),
+          })
+        }
+
+        $('#modalForeignLanguage').modal('hide')
+        this.modalForeignLanguage = {
+          category: this.modalForeignLanguage.category,
+          gradeLevel: this.modalForeignLanguage.gradeLevel,
+          grade: this.modalForeignLanguage.grade,
+          quantityQuestions: this.modalForeignLanguage.quantityQuestions,
+          firstArea: '',
+          secondArea: '',
+          firstForeignLanguage: '',
+          secondForeignLanguage: '',
+        }
+
+        this.handleQuestionWeight()
+      },
+      groupBy(collection, iteratee) {
+        return collection.reduce((acc, item) => {
+          const key = typeof iteratee === 'function' ? iteratee(item) : item[iteratee]
+
+          if (!acc[key]) {
+            acc[key] = []
+          }
+
+          acc[key].push(item)
+
+          return acc
+        }, {})
+      },
+      isAfterFirstForeignLanguage(subjectId) {
+        const firstForeignLanguageIndex = this.listSubject.findIndex(subject => subject.firstForeignLanguage)
+        if (firstForeignLanguageIndex === -1) return false
+        const subjectIndex = this.listSubject.findIndex(subject => subject.id === subjectId)
+        return subjectIndex > firstForeignLanguageIndex
+      },
+      calculateIndex(subjectId, subjectIndex, questionIndex) {
+        let startNumber = 1
+        if (this.startNumber !== '' && this.startNumber > 0) {
+          startNumber = this.startNumber
+        }
+
+        let index = startNumber
+        for (let i = 0; i < subjectIndex; i++) {
+          index += this.listSubject[i].questions.length
+        }
+
+        let indexDiff = 0
+        if (this.isAfterFirstForeignLanguage(subjectId)) {
+          const subjectFirstForeignLanguage = this.listSubject.find(subject => subject.firstForeignLanguage)
+          if (subjectFirstForeignLanguage) {
+            indexDiff = subjectFirstForeignLanguage.questions.length
+          }
+        }
+
+        return index + questionIndex - indexDiff
+      },
+      calculateStartNumber() {
+        if (!this.startNumber) {
+          this.startNumber = 1
+        }
+      },
+      handleQuestions() {
+        if (this.modalQuestionMode === 'create') {
+          this.addQuestions()
+        } else {
+          this.updateSubject()
+        }
+        this.handleQuestionWeight()
+      },
+      addQuestions() {
+        const subjectQuestions = Array.from(
+          { length: this.modalQuestion.quantity },
+          (_, index) => {
+            return {
+              kind: 'new',
+              id: crypto.randomUUID(),
+              examQuestionId: '',
+              category: this.modalQuestion.category,
+              gradeLevel: this.modalQuestion.gradeLevel,
+              grade: this.modalQuestion.grade,
+              weight: '',
+              blockWeight: false,
+              correctAlternatives: [],
+              feedback: '',
+              commentedAnswer: '',
+              quantityLines: 5,                  
+              textQuestionFormat: 1,
+              level: 3,
+              topics: [],
+              abilities: [],
+              competences: [],
+              tooltip: {
+                isVisible: false,
+                top: 0,
+                left: 0,
+              },
+              lastStatusObject: {
+                annuled_distribute_exam_teacher_subject: false,
+                annuled_give_score: false,
+                status_display: "Em aberto",
+                note: "",
+                status: 2,
+                status_description: "Em aberto",
+                active: true,
+              },
+              focused: false,
+            }
+          }
+        )
+
+        this.listSubject.push({
+          id: this.modalQuestion.subject.id,
+          name: this.modalQuestion.subject.name,
+          weightToDistribute: '',
+          blockWeightToDistribute: false,
+          expanded: true,
+          parentSubjectsId: this.modalQuestion.subject.parentSubjects,
+          knowledgeAreaId: this.modalQuestion.area,
+          isForeignLanguage: false,
+          firstForeignLanguage: false,
+          secondForeignLanguage: false,
+          questions: subjectQuestions,
+        })
+        $('#modalHandleQuestion').modal('hide')
+        this.modalQuestion = {
+          quantity: 1,
+          category: this.modalQuestion.category,
+          gradeLevel: this.modalQuestion.gradeLevel,
+          grade: this.modalQuestion.grade,
+          area: '',
+          subject: '',
+          subjectIndex: '',
+        }
+        this.modalForeignLanguage = {
+          category: this.modalQuestion.category,
+          gradeLevel: this.modalQuestion.gradeLevel,
+          grade: this.modalQuestion.grade,
+          quantityQuestions: 5,
+          firstArea: '',
+          secondArea: '',
+          firstForeignLanguage: '',
+          secondForeignLanguage: '',
+        }
+        this.showMessage('Disciplina adicionada com sucesso!')
+        setTimeout(() => {
+          this.scrollToBottom('#app')
+        }, 100)
+      },
+      handleEditSubject(subjectIndex, subject) {
+        this.modalQuestionMode = 'update'
+        this.modalQuestion = {
+          quantity: subject.questions.length,
+          category: subject.questions[0].category,
+          gradeLevel: subject.questions[0].gradeLevel,
+          grade: subject.questions[0].grade,
+          area: subject.knowledgeAreaId[0],
+          subject: { id: subject.id, name: subject.name, parentSubjects: subject.parentSubjectsId },
+          subjectIndex: subjectIndex,
+        }
+        $('#modalHandleQuestion').modal('show')
+      },
+      handleDeleteQuestionsSubjects(subjectIndex, subject) {
+        this.listSubject = this.listSubject.filter(subjectSelected => subjectSelected.id !== subject.id)
+        this.alertTop(`Questões da disciplina "${subject.name}" foram removidas com sucesso.`)
+      },
+      updateSubject() {
+        this.listSubject.forEach((subject, index) => {
+          if (index === this.modalQuestion.subjectIndex) {
+            subject.id = this.modalQuestion.subject.id
+            subject.name = this.modalQuestion.subject.name
+            subject.parentSubjectsId = this.modalQuestion.subject.parentSubjects
+            subject.knowledgeAreaId = this.modalQuestion.area
+            subject.questions = subject.questions.map(question => {
+              return {
+                ...question,
+                gradeLevel: this.modalQuestion.gradeLevel,
+                grade: this.modalQuestion.grade,
+              }
+            })
+          }
+        })
+        $('#modalHandleQuestion').modal('hide')
+        this.modalQuestion = {
+          quantity: 1,
+          category: this.modalQuestion.category,
+          gradeLevel: this.modalQuestion.gradeLevel,
+          grade: this.modalQuestion.grade,
+          area: '',
+          subject: '',
+          subjectIndex: '',
+        }
+      },
+      updateQuestionCorrectAlternatives(question, alternative) {
+        if (question.correctAlternatives.includes(alternative)) {
+          question.correctAlternatives = question.correctAlternatives.filter(item => item !== alternative)
+        } else {
+          question.correctAlternatives.push(alternative)
+        }
+      },
+      updateQuantityLines(question, newQuantity) {
+          question.quantityLines = newQuantity;
+      },
+      updateBlockWeight(subject, question) {
+        question.blockWeight = !question.blockWeight
+        if (question.blockWeight && subject.questions.every((question) => question.blockWeight)) {
+          subject.blockWeightToDistribute = true
+        } else {
+          subject.blockWeightToDistribute = false
+        }
+      },
+      updateBlockWeightToDistribute(subject) {
+        subject.blockWeightToDistribute = !subject.blockWeightToDistribute
+        subject.questions.forEach(question => {
+          question.blockWeight = subject.blockWeightToDistribute
+        })
+      },
+      handleRemoveQuestion(subjectIndex, subject, questionId) {
+        subject.questions = subject.questions.filter(question => question.id !== questionId)
+        if (subject.questions.length === 0) {
+          this.listSubject = this.listSubject.filter((subject, index) => index !== subjectIndex)
+        }
+        this.handleQuestionWeight()
+      },
+      handleExpandSubject(subject) {
+        subject.expanded = !subject.expanded
+      },
+      handleExpandAll() {
+        this.listSubject.forEach(subject => subject.expanded = true)
+      },
+      handleCompactAll() {
+        this.listSubject.forEach(subject => subject.expanded = false)
+      },
+      handleAddQuestion(subject) {
+        const questionRef = subject.questions[0]
+        subject.questions.push({
+          kind: 'new',
+          id: crypto.randomUUID(),
+          examQuestionId: '',
+          category: questionRef.category,
+          gradeLevel: questionRef.gradeLevel,
+          grade: questionRef.grade,
+          weight: '',
+          blockWeight: false,
+          correctAlternatives: [],
+          feedback: '',
+          commentedAnswer: '',
+          quantityLines: questionRef.quantityLines,
+          textQuestionFormat: questionRef.textQuestionFormat,
+          level: 3,
+          topics: [],
+          abilities: [],
+          competences: [],
+          tooltip: {
+            isVisible: false,
+            top: 0,
+            left: 0,
+          },
+          focused: false,
+          lastStatusObject: {
+            annuled_distribute_exam_teacher_subject: false,
+            annuled_give_score: false,
+            status_display: "Em aberto",
+            note: "",
+            status: 2,
+            status_description: "Em aberto",
+            active: true,
+          },
+        })
+        this.handleQuestionWeight()
+      },
+      addQualification() {
+        this.listSubject = this.listSubject.map(subject => {
+          subject.questions = subject.questions.map(question => {
+            if (question.id === this.modalQualification) {
+              question.commentedAnswer = tinymce.get('id_modal_qualification_commented_answer').getContent()
+              question.feedback = tinymce.get('id_modal_qualification_feedback').getContent()
+              question.level = this.currentLevel
+              question.topics = this.currentTopics
+              question.competences = this.currentCompetences
+              question.abilities = this.currentAbilities
+            }
+            return question
+          })
+          return subject
+        })
+
+        $('#modalAddQualification').modal('hide')
+        this.modalQualification = ''
+        tinymce.get('id_modal_qualification_commented_answer').setContent('')
+        tinymce.get('id_modal_qualification_feedback').setContent('')
+        this.currentLevel = 3
+        this.currentTopics = []
+        this.currentCompetences = []
+        this.currentAbilities = []
+      },
+      openModalAddQualification(subject, question) {
+        this.modalQualification = question.id
+        tinymce.get('id_modal_qualification_commented_answer').setContent(question.commentedAnswer)
+        tinymce.get('id_modal_qualification_feedback').setContent(question.feedback)
+        this.currentLevel = question.level
+        $('#modalAddQualification').modal('show')
+        this.getTopicData(subject.id, question.grade)
+        this.getCompetenceData(subject.id, subject.parentSubjectsId, subject.knowledgeAreaId)
+        this.getAbilityData(subject.id, subject.parentSubjectsId, subject.knowledgeAreaId, question.grade)
+        this.currentTopics = [...question.topics]
+        this.currentCompetences = [...question.competences]
+        this.currentAbilities = [...question.abilities]
+      },
+      async getTopicData(subjectId, gradeId) {
+        this.statusTopics = 'loading'
+        let topicListUrl = `{% url 'subjects:topic_list_api' %}?subject_pk=${subjectId}&grade=${gradeId}`
+        const res = await fetch(topicListUrl)
+        if (!res.ok) {
+          this.statusTopics = 'error'
+          return
+        }
+        const data = await res.json()
+        this.statusTopics = 'success'
+        this.topics = data
+      },
+      async getCompetenceData(subjectId, parentSubjectsId, knowledgeAreaId) {
+        this.statusCompetences = 'loading'
+        let competenceListUrl = `{% url 'bncc:competence_list_api' %}?subject_in_or_none=${subjectId}`
+
+        if (parentSubjectsId) {
+          parentSubjectsId.forEach(parentSubjectId => competenceListUrl += `&subject_in_or_none=${parentSubjectId}`)
+        }
+
+        if (knowledgeAreaId) {
+          competenceListUrl += `&knowledge_area=${knowledgeAreaId}`
+        }
+        const res = await fetch(competenceListUrl)
+        if (!res.ok) {
+          this.statusCompetences = 'error'
+          return
+        }
+        const data = await res.json()
+        this.statusCompetences = 'success'
+        this.competences = data
+      },
+      async getAbilityData(subjectId, parentSubjectsId, knowledgeAreaId, gradeId) {
+        this.statusAbilities = 'loading'
+        let abilityListUrl = `{% url 'bncc:ability_list_api' %}?subject_in_or_none=${subjectId}&grades=${gradeId}`
+
+        if (parentSubjectsId) {
+          parentSubjectsId.forEach(parentSubjectId => abilityListUrl += `&subject_in_or_none=${parentSubjectId}`)
+        }
+
+        if (knowledgeAreaId) {
+          abilityListUrl += `&knowledge_area=${knowledgeAreaId}`
+        }
+
+        const res = await fetch(abilityListUrl)
+        if (!res.ok) {
+          this.statusAbilities = 'error'
+          return
+        }
+        const data = await res.json()
+        this.statusAbilities = 'success'
+        this.abilities = data
+      },
+      scrollToBottom(selector) {
+        const element = document.querySelector(selector)
+        element.scroll({ top: element.scrollHeight, behavior: 'smooth' })
+      },
+      showMessage(message, time = 1500) {
+        this.showToast(`<div class="tw-pointer-events-auto tw-w-full tw-max-w-sm tw-overflow-hidden tw-rounded-lg tw-bg-white tw-shadow-lg tw-ring-1 tw-ring-black tw-ring-opacity-5"><div class="tw-p-4"><div class="tw-flex tw-items-start"><div class="tw-flex-shrink-0"><svg class="tw-h-6 tw-w-6 tw-text-green-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div><div class="tw-ml-3 tw-w-0 tw-flex-1 tw-pt-0.5"><p class="tw-text-sm tw-font-medium tw-text-gray-900">${message}</p></div></div></div><div class="tw-relative tw-h-1 tw-overflow-hidden tw--mt-1"><div id="toast-progressbar" class="tw-w-full tw-h-1 tw-rounded-b-md tw-bg-[#00000033]"></div></div></div>`, time);
+      },
+      showToast(html, time) {
+        const wrapper = document.createElement('div');
+        wrapper.setAttribute('aria-live', 'assertive');
+        wrapper.classList.add('tw-pointer-events-none', 'tw-fixed', 'tw-inset-0', 'tw-flex', 'tw-items-end', 'tw-px-4', 'tw-py-6', 'sm:tw-items-start', 'sm:tw-p-6');
+        wrapper.innerHTML = `<div class="tw-flex tw-w-full tw-flex-col tw-items-center tw-space-y-4 sm:tw-items-end">${html}</div>`;
+        document.body.appendChild(wrapper);
+
+        const progressBar = document.getElementById('toast-progressbar');
+        progressBar.style.display = 'flex';
+        progressBar.style.transition = `width ${time/1000}s linear 0s`;
+        setTimeout(function() { progressBar.style.width = '0%'; }, 1);
+        setTimeout(function() { wrapper.remove(); }, time);
+      },
+      registerNewSubject() {
+        newSubject = {
+          "name": this.newSubjectName,
+          "parent_subject": this.selectedParentSubject
+        }
+
+        axios.post("{% url 'subjects:subject_create_api' %}", newSubject).then((res) => {
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Disciplina criada com sucesso',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+          })
+        })
+      },
+      saveTempleteApi(generate_application, templateData, redirect=true) {
+        this.statusSubmit = 'loading'
+        // this.saving = true
+        
+        axios.post("{% url 'omr:exam_template_v2_create' %}", templateData).then((response) => {
+          if(redirect){
+            if (generate_application) {
+              window.location.href = `{% url 'applications:applications_create' %}?exam_template=${response.data.id}`
+            } else {
+              window.location.href = "{% url 'omr:template_list' %}"
+            }
+          }else{
+            this.statusSubmit = 'idle'
+            // habilitar os botões de opções manualmente (alguma coisa está desabilitando eles após reverter uma anulação, mas não encontrei o motivo)
+            const disabledButtons = document.querySelectorAll("button[id*='menu-item-']:disabled")
+
+            disabledButtons.forEach(botao => {
+              botao.disabled = false;
+            });
+          }
+        }).catch((error) => {
+          this.statusSubmit = 'error'
+          console.log(error)
+          // this.saving = false
+          Swal.fire(
+            'Ocorreu um erro',
+            {% comment %} 'Verifique se preencheu todos os dados corretamente e tente novamente em breve.', {% endcomment %}
+            error.response.data,
+            'error'
+          )
+        })
+      },
+      updateTemplateApi(generate_application, templateData, redirect=true) {
+        this.statusSubmit = 'loading'
+        // this.saving = true
+
+        url = "{% url 'omr:exam_template_v2_update' pk='00000000-0000-0000-0000-000000000000' %}"
+        axios.put(url.replace('00000000-0000-0000-0000-000000000000', '{{ object.pk }}'), templateData).then((response) => {
+          if(redirect){
+            if (generate_application) {
+              window.location.href = `{% url 'applications:applications_create' %}?exam_template=${response.data.id}`
+            } else {
+              window.location.href = "{% url 'omr:template_list' %}"
+            }
+          }else{
+            this.statusSubmit = 'idle'
+            const disabledButtons = document.querySelectorAll("button[id*='menu-item-']:disabled")
+
+            disabledButtons.forEach(botao => {
+              botao.disabled = false;
+            });
+          }
+        }).catch((error) => {
+          this.statusSubmit = 'error'
+          console.log(error)
+          //
+          this.saving = false
+          Swal.fire(
+            'Ocorreu um erro',
+            error.response.data,
+            {% comment %} 'Verifique se preencheu todos os dados corretamente e tente novamente em breve.', {% endcomment %}
+            'error'
+          )
+        })
+      },
+      saveTemplate(generate_application = false, redirect=true) {
+        if (this.statusSubmit === 'loading') return
+
+        this.generateApplication = generate_application
+        let questionIndex = 1
+        const transformedData = this.listSubject.flatMap(subject =>
+          subject.questions.map(question => {
+            let examQuestionIdData = {}
+            let questionIdData = {}
+            if (question.kind === 'update') {
+              examQuestionIdData = { id: question.examQuestionId }
+              questionIdData = { id: question.id }
+            }
+            return {
+              ...examQuestionIdData,
+              order: questionIndex++,
+              weight: question.weight || 0,
+              block_weight: question.blockWeight,
+              is_foreign_language: subject.isForeignLanguage,
+              question: {
+                ...questionIdData,
+                grade: question.grade,
+                category: question.category,
+                subject: subject.id,
+                is_abstract: true,
+                feedback: question.feedback,
+                commented_awnser: question.commentedAnswer,
+                quantity_lines: question.quantityLines,
+                text_question_format: question.textQuestionFormat,
+                level: question.level,
+                topics: question.topics.map(topic => topic.id),
+                abilities: question.abilities.map(ability => ability.id),
+                competences: question.competences.map(competence => competence.id),
+                coordinations: this.coordinations,
+                is_essay: question.isEssay || false,
+                alternatives: this.alternatives(question)
+              },
+            }
+          })
+        )
+
+        template = {
+          name: this.examName,
+          status: this.status,
+          is_abstract: true,
+          coordinations: this.coordinations,
+          examquestions: transformedData,
+          start_number: this.startNumber,
+          is_english_spanish: this.isEnglishSpanish,
+          is_enem_simulator: this.isEnemSimulator,
+          show_ranking: this.showRanking && this.isEnemSimulator,
+          external_code: this.externalCode,
+          relations: this.relations,
+          related_subjects: this.relatedSubjects,
+          teaching_stage: this.teachingStage,
+          template_quantity_alternatives: this.templateQuantityAlternatives
+        }
+        if (this.examName.length > 1 && transformedData.length > 0) {
+          if (this.isEnglishSpanish) {
+            Swal.fire({
+              title: 'Caderno com língua estrangeira',
+              html: 'Você confirma que selecionou 1ª opção <strong>Inglês</strong> e e 2ª opção <strong>Espanhol</strong> nessa ordem?',
+              icon: 'warning',
+              width: '60%',
+              showCancelButton: true,
+              confirmButtonColor: '#3085d6',
+              cancelButtonColor: '#d33',
+              confirmButtonText: 'Sim, confirmo!',
+              cancelButtonText: 'Cancelar'
+            }).then((result) => {
+              if (result.isConfirmed) {
+                if ('{{ object.pk }}') {
+                  this.updateTemplateApi(generate_application, template, redirect)
+                } else {
+                  this.saveTempleteApi(generate_application, template, redirect)
+                }
+              }
+            })
+          } else {
+            if ('{{ object.pk }}') {
+              this.updateTemplateApi(generate_application, template, redirect)
+            } else {
+              this.saveTempleteApi(generate_application, template, redirect)
+            }
+            template.examquestions.forEach(exam_question => exam_question.is_foreign_language = false)
+          }
+        } else {
+          if (this.examName.length < 2) {
+            Swal.fire(
+              'Nome da prova',
+              'O nome da prova precisa ter pelo menos duas letras.',
+              'error'
+            )
+            return
+          }
+          if (transformedData.length == 0) {
+            Swal.fire(
+              'Questões',
+              'Você precisa preencher os dados de pelo menos uma questão.',
+              'error'
+            )
+            return
+          }
+        }
+      },
+      updateQualificationModalTabActive(value) {
+        this.qualificationModalTabActive = value
+      },
+      {% include "includes/template-functions.js" %}
+    },
+    watch: {
+      'modalQuestion.gradeLevel': function(value) {
+        if (value) {
+          this.fetchGrades(value).then((response) => {
+            this.grades = response.data
+            if (this.modalQuestion.grade) {
+              if (!this.grades.map(grade => grade.id).includes(this.modalQuestion.grade)) {
+                this.modalQuestion.grade = ''
+                this.modalQuestion.area = ''
+                this.modalQuestion.subject = ''
+              }
+            }
+          })
+        }
+      },
+      'modalQuestion.grade': function(value) {
+        if (value) {
+          this.fetchKnowledgeArea(value).then((response) => {
+            this.knowledgeAreas = response.data
+            if (this.modalQuestion.area) {
+              if (!this.knowledgeAreas.map(knowledgeArea => knowledgeArea.id).includes(this.modalQuestion.area)) {
+                this.modalQuestion.area = ''
+                this.modalQuestion.subject = ''
+              }
+            }
+          })
+        }
+      },
+      'modalQuestion.area': function(value) {
+        if (value) {
+          this.fetchSubject(value).then((response) => {
+            this.subjects = response.data
+            if (this.modalQuestion.subject && this.modalQuestion.subject.id) {
+              if (!this.subjects.map(subject => subject.id).includes(this.modalQuestion.subject.id)) {
+                this.modalQuestion.subject = ''
+              }
+            }
+          })
+        }
+      },
+      'modalForeignLanguage.gradeLevel': function(value) {
+        if (value) {
+          this.fetchGrades(value).then((response) => this.grades = response.data)
+        }
+      },
+      'modalForeignLanguage.grade': function(value) {
+        if (value) {
+          this.fetchKnowledgeAreasWithLanguageSubject(value).then((response) => this.knowledgeAreasWithLanguageSubjects = response.data)
+        }
+      },
+      'modalForeignLanguage.firstArea': function(value) {
+        if (value) {
+          this.fetchSubject(value).then((response) => this.firstSubjects = response.data)
+        }
+      },
+      'modalForeignLanguage.secondArea': function(value) {
+        if (value) {
+          this.fetchSubject(value).then((response) => this.secondSubjects = response.data)
+        }
+      },
+      isEnglishSpanish: function(value) {
+        if (value) {
+          $('#modalForeignLanguage').modal('show')
+        } else {
+          this.listSubject = this.listSubject.map(subject => {
+            return {
+              ...subject,
+              isForeignLanguage: false,
+              firstForeignLanguage: false,
+              secondForeignLanguage: false,
+            }
+          })
+          this.handleQuestionWeight()
+        }
+      },
+    },
+    mounted() {
+    
+      $("#select-related-subjects").select2({ height:'0%', closeOnSelect: false })    
+
+      $('#select-related-subjects').on('select2:select select2:unselect', (e) => {
+        this.relations = $('#select-related-subjects').val()
+      })
+
+      {% for relation in object.relations.all %}
+        this.relations.push('{{ relation.pk }}')
+      {% endfor %}
+      $('#select-related-subjects').val(this.relations).trigger('change')
+                        
+      {% if object %}
+        this.teachingStage = '{{ object.teaching_stage.pk }}'
+        $('#teaching_stage_select').val(this.teachingStage).trigger('change')
+      {% endif %}
+
+      this.initTinyMCE()
+
+      this.statusDialogElement = document.querySelector("#status-dialog")
+      
+      this.fetchGrades(this.selectedGradeLevel).then((response) => this.grades = response.data)
+
+      this.handleInitialQuestionWeight()
+
+      {% include 'help/includes/tour_guide.js' with group_guide_name='default-template-create-update' %}
+      {% comment %} {% include 'help/includes/tour_guide_event.js' with group_guide_name='default_template_create_update_lingua' element_click_id='input_english_spanish' %} {% endcomment %}
+
+
+      let vueThis = this
+      $('#modalHandleQuestion').on('hidden.bs.modal', function (event) {
+        vueThis.modalQuestionMode = 'create'
+        vueThis.modalQuestion = {
+          quantity: 1,
+          category: vueThis.modalQuestion.category,
+          gradeLevel: vueThis.modalQuestion.gradeLevel,
+          grade: vueThis.modalQuestion.grade,
+          area: '',
+          subject: '',
+          subjectIndex: '',
+        }
+      })
+      $('#modalForeignLanguage').on('hidden.bs.modal', function (event) {
+        if (vueThis.listSubject.filter(subject => subject.isForeignLanguage).length !== 2) {
+          vueThis.isEnglishSpanish = false
+        }
+      })
+    },
+  })
+  
+  $('#app').tooltip({
+    selector: '[data-toggle="tooltip"]'
+  })
+</script>
+{% endblock %}

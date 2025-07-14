@@ -1,0 +1,1089 @@
+{% extends 'redesign/base.html' %}
+
+{% load static %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'dashboard/lib/apexcharts/apexcharts.css' %}">
+
+<style>
+    .position-bar-vertical {
+        width: 160px; 
+        border-top-left-radius: 12px; 
+        border-top-right-radius: 12px;
+        text-align: center;
+        min-height: 20%;
+    }
+    .position-bar-vertical p, h1, h2, h3 {
+        color: #fff;
+    }
+    .position-bar-horizontal {
+        color: #fff !important;
+        height: 52px;
+        border-top-right-radius: 8px; 
+        border-bottom-right-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block title %}
+    LizeEdu - Dashboard de TRI 
+{% endblock title %} 
+
+
+{% block content-fixed %}
+<div class="p-3">
+    <div class="row">
+        <div class="col-12">
+            <div class="lize-card">
+                <div class="lize-card-body pd-y-15">
+                    <form method="get">
+                        <div class="row mb-0">
+                            <div class="col-6">
+                                <div class="d-flex align-items-center" style="min-width: 15rem;">
+                                    <div class="avatar">
+                                        <span class="avatar-initial rounded-circle bg-primary"><i class="fas fa-users"></i></span>
+                                    </div>
+                                    <div class="pd-sm-l-10 d-flex align-items-center">
+                                        <div v-if="getSelectedExams().length">
+                                            <h6 class="tx-medium mb-0 text-truncate tooltips cp" style="max-width: 8rem;" :data-tippy-content="getSelectedExams().map(exam => exam.name).join(', ')">${getSelectedExams().at(0).name} 
+                                        </div>
+                                        <div>
+                                            <a href="javascript:;" data-toggle="modal" data-target="#modalSelectFilters" class="ml-2">Trocar</a></h6>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="d-flex jusfity-content-between">
+                                    <div class="d-flex justify-content-end w-100">
+                                        <div class="mx-1 w-100">
+                                            <input type="text" class="form-control" data-toggle="modal" data-target="#modalSelectFilters" :value="selectedUnities.length ? selectedUnities.length + ' Unidade(s) selecionadas':''" placeholder="Selecione uma unidade">                                    
+                                        </div>
+                                        <div class="mx-1 w-100">
+                                            <input type="text" class="form-control" data-toggle="modal" data-target="#modalSelectFilters" :value="selectedClasses.length ? selectedClasses.length + ' Turma(s) selecionadas':''" placeholder="Selecione uma turma">                                    
+                                        </div>
+                                        <button type="button" class="btn btn-primary btn-sm ml-2" style="min-width: 100px;" :disabled="!selectedUnities.length && !selectedClasses.length" @click="getTriData()"><i class="fas fa-filter" title="Aplicar filtro"></i> Filtrar</button> 
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-primary btn-sm ml-2" 
+                                            style="min-width: 100px;" 
+                                            @click="exportTriData()"
+                                            :disabled="loadingExport || (!selectedUnities.length && !selectedClasses.length)"
+                                        >
+                                            <i v-if="loadingExport" class="fas fa-spinner fa-spin"></i>
+                                            <template v-else>
+                                                <i class="fas fa-save"></i> Exportar
+                                            </template>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div v-show="!loading">
+        <div class="row">
+            <template v-for="knowledgeArea in knowledgeAreas">
+                <div class="col-6 col-lg-3 mb-1">
+                    <div class="lize-card p-1 lize-hover-primary cp" @click="selectKnowledgeArea(knowledgeArea)" :class="{ 'lize-bd-primary': selectedKnowledgeArea == knowledgeArea }">
+                        <div class="lize-card-body">
+                            <div class="row mb-0">
+                                <div class="col-6 d-flex flex-column">
+                                    <h1 class="tx-40 mb-0 tx-primary">${Number(knowledgeArea.grade_avg).toFixed(1)}</h1>
+                                    <h6 class="tx-primary mb-0">Média de acertos: <strong>${Number(knowledgeArea.correct_count_avg).toFixed(0)}</strong></h6>
+                                </div>
+                                <div class="col-6 d-flex justify-content-end">
+                                    <div class="rounded-circle tx-32 d-flex justify-content-center align-items-center" style="width: 64px; height: 64px; background-color: #F1F9FC">
+                                        <template v-if="knowledgeArea.name.toUpperCase().includes('HUMANA')">
+                                            <img height="52" src="{% static 'administration/assets/img/icons/earth-globe.png' %}" alt="">
+                                        </template>
+                                        <template v-if="knowledgeArea.name.toUpperCase().includes('MATEM')">
+                                            <img height="52" src="{% static 'administration/assets/img/icons/ruler.png' %}" alt="">
+                                        </template>
+                                        <template v-if="knowledgeArea.name.toUpperCase().includes('NATUREZA')">
+                                            <img height="52" src="{% static 'administration/assets/img/icons/atom.png' %}" alt="">
+                                        </template>
+                                        <template v-if="knowledgeArea.name.toUpperCase().includes('LINGUAGENS')">
+                                            <img height="52" src="{% static 'administration/assets/img/icons/qa.png' %}" alt="">
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mb-0 mt-2">
+                                <div class="col-12">
+                                    <h6 class="text-muted text-truncate">${knowledgeArea.shortName}</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+        <template v-if="selectedKnowledgeArea">
+            <div class="row">
+                <div class="col-8 py-3">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="lize-card">
+                                <div class="lize-card-body pb-0">
+                                    <div class="row mb-0">
+                                        <div class="col-12">
+                                            <h5 class="d-flex justify-content-between mb-0">Alunos em destaque <i style="color: #D0D3D9;" class="tx-24 fas fa-exclamation-circle tooltips cp" data-tippy-content="Acompanhe o desempenho dos 3 primeiros alunos em destaque. Esses estudantes têm se destacado em suas atividades acadêmicas e demonstrado comprometimento com seus estudos. Fique por dentro dos resultados e contribua para o incentivo contínuo desses talentosos alunos!"></i></h5>
+                                        </div>
+                                        <div class="col-12">
+                                            <h5 class="text-muted">${selectedKnowledgeArea.name}</h5>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-center">
+                                        <div class="mx-3 text-center d-flex flex-column align-items-center justify-content-end cp" v-if="selectedKnowledgeArea.students.at(1)" data-toggle="modal" data-target="#modalStudentDetail" @click="selectStudent(selectedKnowledgeArea.students[1])">
+                                            <div>
+                                                <div :data-tippy-content="selectedKnowledgeArea.students[1].student_name" class="d-flex justify-content-center tooltips">
+                                                    <div class="rounded-circle d-flex justify-content-center align-items-center" style="width: 72px; height: 72px; background-color: #F1F9FC;">
+                                                        <span class="tx-primary tx-32">${handlerStudentName(selectedKnowledgeArea.students[1])}</span>
+                                                    </div>
+                                                </div>
+                                                <h6 class="text-center mt-3 text-truncate text-capitalize" style="max-width: 8rem;">${selectedKnowledgeArea.students[1].student_name}</h6>
+                                                <span class="tx-12 text-muted">Nota: ${Number(getStudentKnowledgeArea(selectedKnowledgeArea.students[1]).grade).toFixed(1)}</span>
+                                            </div>
+                                            <div class="position-bar-vertical d-flex flex-column justify-content-between" style="height: 153px; background-color: #69C7F0;">
+                                                <h2 class="pt-3">2º</h2>
+                                                <p>Acertos <strong>${getStudentKnowledgeArea(selectedKnowledgeArea.students[1]).correct_count}</strong></p>
+                                            </div>
+                                        </div>
+                                        <div class="mx-3 text-center d-flex flex-column align-items-center justify-content-end cp" v-if="selectedKnowledgeArea.students.at(0)" data-toggle="modal" data-target="#modalStudentDetail" @click="selectStudent(selectedKnowledgeArea.students[0])">
+                                            <div>
+                                                <div :data-tippy-content="selectedKnowledgeArea.students[0].student_name" class="d-flex justify-content-center tooltips">
+                                                    <div class="rounded-circle d-flex justify-content-center align-items-center" style="width: 72px; height: 72px; background-color: #F1F9FC;">
+                                                        <span class="tx-primary tx-32">${handlerStudentName(selectedKnowledgeArea.students[0])}</span>
+                                                    </div>
+                                                </div>
+                                                <h6 class="text-center mt-3 text-truncate text-capitalize" style="max-width: 8rem;">${selectedKnowledgeArea.students[0].student_name}</h6>
+                                                <span class="tx-12 text-muted">Nota: ${Number(getStudentKnowledgeArea(selectedKnowledgeArea.students[0]).grade).toFixed(1)}</span>
+                                            </div>
+                                            <div class="position-bar-vertical d-flex flex-column justify-content-between" style="height: 190px; background-color: #37B5EB;">
+                                                <h2 class="pt-3">1º</h2>                                                                                                            
+                                                <p>Acertos <strong>${getStudentKnowledgeArea(selectedKnowledgeArea.students[0]).correct_count}</strong></p>                                                                                                                                                                       
+                                            </div>
+                                        </div>
+                                        <div class="mx-3 text-center d-flex flex-column align-items-center justify-content-end cp" v-if="selectedKnowledgeArea.students.at(2)" data-toggle="modal" data-target="#modalStudentDetail" @click="selectStudent(selectedKnowledgeArea.students[2])">
+                                            <div>
+                                                <div :data-tippy-content="selectedKnowledgeArea.students[2].student_name" class="d-flex justify-content-center tooltips">
+                                                    <div class="rounded-circle d-flex justify-content-center align-items-center" style="width: 72px; height: 72px; background-color: #F1F9FC;">
+                                                        <span class="tx-primary tx-32">${handlerStudentName(selectedKnowledgeArea.students[2])}</span>
+                                                    </div>
+                                                </div>
+                                                <h6 class="text-center mt-3 text-truncate text-capitalize" style="max-width: 8rem;">${selectedKnowledgeArea.students[2].student_name}</h6>
+                                                <span class="tx-12 text-muted">Nota: ${Number(getStudentKnowledgeArea(selectedKnowledgeArea.students[2]).grade).toFixed(1)}</span>
+                                            </div>
+                                            <div class="position-bar-vertical d-flex flex-column justify-content-between" style="height: 105px; background-color: #9BDAF5;">
+                                                <h2 class="pt-3">3º</h2>
+                                                <p>Acertos <strong>${getStudentKnowledgeArea(selectedKnowledgeArea.students[2]).correct_count}</strong></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="lize-card">
+                                <div class="lize-card-body pb-0">
+                                    <div class="row mb-0">
+                                        <div class="col-12">
+                                            <h5 class="d-flex justify-content-between mb-0">Todos os alunos <i style="color: #D0D3D9;" class="tx-24 fas fa-exclamation-circle tooltips cp" data-tippy-content="Aqui você terá acesso à lista completa de todos os alunos matriculados em nossa instituição. Aqui, é possível visualizar informações relevantes, como nomes, números de matrícula, séries ou cursos em que estão matriculados e informações de contato. Essa lista é atualizada regularmente para garantir que você tenha acesso aos dados mais recentes de todos os nossos estudantes. Utilize essa ferramenta para obter uma visão geral de nossa comunidade educacional e facilitar a comunicação e o acompanhamento individual de cada aluno."></i></h5>
+                                        </div>
+                                        <div class="col-12">
+                                            <h5 class="text-muted">${selectedKnowledgeArea.name}</h5>
+                                        </div>
+                                        <div class="col-12 mt-2">
+                                            <div class="search-form mg-t-20 mg-sm-t-0">
+                                                <input type="search" class="form-control" v-model="filters.student" placeholder="Digite o nome do aluno">
+                                                <button class="btn" type="button">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-search"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                                </button>
+                                            </div>
+                                            <div class="d-flex justify-content-between mt-3">
+                                                <div class="d-flex">
+                                                    <div class="custom-control custom-checkbox mr-2" v-if="selectedKnowledgeArea.belowBasic">
+                                                        <input type="checkbox" class="custom-control-input cp" v-model="filters.types" value="belowBasic" id="customCheck1">
+                                                        <label class="custom-control-label cp" for="customCheck1">Abaixo do básico <span class="text-muted">(${selectedKnowledgeArea.belowBasic})</span></label>
+                                                    </div>
+                                                    <div class="custom-control custom-checkbox mr-2" v-if="selectedKnowledgeArea.basic">
+                                                        <input type="checkbox" class="custom-control-input cp" v-model="filters.types" value="basic" id="customCheck2">
+                                                        <label class="custom-control-label cp" for="customCheck2">Básico <span class="text-muted">(${selectedKnowledgeArea.basic})</span></label>
+                                                    </div>
+                                                    <div class="custom-control custom-checkbox mr-2" v-if="selectedKnowledgeArea.adequate">
+                                                        <input type="checkbox" class="custom-control-input cp" v-model="filters.types" value="adequate" id="customCheck3">
+                                                        <label class="custom-control-label cp" for="customCheck3">Adequado <span class="text-muted">(${selectedKnowledgeArea.adequate})</span></label>
+                                                    </div>
+                                                    <div class="custom-control custom-checkbox mr-2" v-if="selectedKnowledgeArea.advanced">
+                                                        <input type="checkbox" class="custom-control-input cp" v-model="filters.types" value="advanced" id="customCheck4">
+                                                        <label class="custom-control-label cp" for="customCheck4">Avançado <span class="text-muted">(${selectedKnowledgeArea.advanced})</span></label>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div class="dropdown">
+                                                        <h6 id="dropdownOrderingMenu" data-toggle="dropdown" class="text-right mb-0 cp">Ordenar por: <span class="text-muted">${filters.orderingLabel} <i class="fas text-muted" :class="filters.orderingType == 'asc' ? 'fa-chevron-down':'fa-chevron-up'"></i></span></h6>
+                                                        <div class="dropdown-menu" style="border-radius: 12px;" aria-labelledby="dropdownOrderingMenu">
+                                                            <a class="dropdown-item" href="javascript:;" @click="handlerOrdering('name', 'asc', 'Nome A-Z')">Nome A-Z</a>
+                                                            <a class="dropdown-item" href="javascript:;" @click="handlerOrdering('name', 'desc', 'Nome Z-A')">Nome Z-A</a>
+                                                            <a class="dropdown-item" href="javascript:;" @click="handlerOrdering('percent', 'asc', 'Maior para menor')">Maior para menor</a>
+                                                            <a class="dropdown-item" href="javascript:;" @click="handlerOrdering('percent', 'desc', 'Menor para maior')">Menor para maior</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="progress" style="height: 15px; border-radius: 8px;">
+                                                <div v-if="selectedKnowledgeArea.belowBasic" class="progress-bar" :style="{ backgroundColor: '#FF3857', width: handlerBarsColors() + '%' }" role="progressbar" :aria-valuenow="handlerBarsColors()" aria-valuemin="0" aria-valuemax="100">Abaixo do básico</div>
+                                                <div v-if="selectedKnowledgeArea.basic" class="progress-bar" :style="{ backgroundColor: '#FFCB56', width: handlerBarsColors('basic') + '%' }" role="progressbar" :aria-valuenow="handlerBarsColors('basic')" aria-valuemin="0" aria-valuemax="100">Básico</div>
+                                                <div v-if="selectedKnowledgeArea.adequate" class="progress-bar" :style="{ backgroundColor: '#37B5EB', width: handlerBarsColors('adequate') + '%' }" role="progressbar" :aria-valuenow="handlerBarsColors('adequate')" aria-valuemin="0" aria-valuemax="100">Adequado</div>
+                                                <div v-if="selectedKnowledgeArea.advanced" class="progress-bar" :style="{ backgroundColor: '#41C588', width: handlerBarsColors('advanced') + '%' }" role="progressbar" :aria-valuenow="handlerBarsColors('advanced')" aria-valuemin="0" aria-valuemax="100">Avançado</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="mt-3 pr-3" style="max-height: 400px; overflow-y: scroll;">
+                                                <div data-toggle="modal" data-target="#modalStudentDetail" @click="selectStudent(student)" class="cp my-1 position-bar-horizontal d-flex align-items-center justify-content-between px-2 text-nowrap " :style="{ width: student.percent + '%', backgroundColor: student.category == 'advanced' ? '#41C588' : student.category == 'adequate' ? '#37B5EB' : student.category == 'basic' ? '#FFCB56': '#FF3857'}" v-for="student in handlerStudentsList(selectedKnowledgeArea.students)">
+                                                    <div class="text-truncate">
+                                                        <span class="tx-16 mx-3 tx-bold">${student.order}</span>
+                                                        <span class="tx-16 text-uppercase text-truncate tooltips text-truncate" :data-tippy-content="student.student_name">${student.student_name}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span class="tx-16 mr-3 tx-bold">${Number(getStudentKnowledgeArea(student).grade).toFixed(1)}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row" v-if="!handlerStudentsList(selectedKnowledgeArea.students).length">
+                                                    <div class="col">
+                                                        <div class="lize-card-body d-flex justify-content-center align-items-center text-center" style="min-height: 180px;">
+                                                            <div>
+                                                                <h4 class="text-muted">Nenhum aluno encontrado.</h4>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4 py-3">
+                    <div style="position: -webkit-sticky; position: sticky; top: 15px;">
+                        <div class="lize-card">
+                            <div class="lize-card-body">
+                                <template v-if="loadingCharts">
+                                    <div class="row">
+                                        <div class="col">
+                                            <div class="lize-card">
+                                                <div class="lize-card-body d-flex justify-content-center align-items-center text-center" style="min-height: 240px;">
+                                                    <div>
+                                                        <h5>Aguarde o carregamento</h5>
+                                                        <p>O processo pode demorar um pouco...</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div v-show="!loadingCharts">
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <h5 class="d-flex justify-content-between mb-0">Dispersão de notas <i style="color: #D0D3D9;" class="tx-24 fas fa-exclamation-circle tooltips cp" data-tippy-content="Aqui você encontrará um gráfico de dispersão que apresenta a distribuição das notas dos alunos em uma visualização clara e intuitiva. O gráfico de dispersão nos permite identificar padrões e tendências nos resultados acadêmicos, auxiliando na análise do desempenho geral da turma. Através dessa representação gráfica, poderemos tomar decisões fundamentadas para o aprimoramento do ensino e apoio individualizado aos estudantes."></i></h5>
+                                            <p class="text-muted mb-0">${selectedKnowledgeArea.name}</p>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-12 px-1">
+                                            <div id="chartID"></div>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <h5 class="d-flex justify-content-between mb-0">Distribuição de notas <i style="color: #D0D3D9;" class="tx-24 fas fa-exclamation-circle tooltips cp" data-tippy-content="Aqui você encontrará um gráfico de barras que exibe a distribuição das notas dos alunos em intervalos de 100 pontos. Esse gráfico nos proporciona uma visão clara e abrangente do desempenho da turma, permitindo identificar a quantidade de alunos em cada faixa de pontuação. Dessa forma, poderemos avaliar o progresso dos estudantes e implementar estratégias para apoiar aqueles que possam precisar de assistência adicional."></i></h5>
+                                            <p class="text-muted mb-0">${selectedKnowledgeArea.name}</p>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-12 px-1">
+                                            <div id="chartHistogramID"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- <div class="row">
+                                    <div class="col-12">
+                                        <h5 class="d-flex justify-content-between">Insights <i style="color: #D0D3D9;" class="tx-24 fas fa-exclamation-circle tooltips cp" data-tippy-content="Os insights te auxiliam na tomada de decisão, e é um excelênte aliado na análise dos cadernos"></i></h5>
+                                    </div>
+                                </div>
+                                <div class="row" v-for="insight in handlerInsights()">
+                                    <div class="col-12">
+                                        <div class="lize-card">
+                                            <div class="lize-card-body">
+                                                <h6 class="tx-16" :class="insight.title.color" v-html="insight.title.text"></h6>
+                                                <p class="text-muted tx-14 mt-2" v-html="insight.subTitle"></p>
+                                                <a href="#" class="tx-12">Ver mais informações</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div> -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <div v-show="!selectedKnowledgeArea || !selectedKnowledgeArea.students.length">
+            <div class="row">
+                <div class="col">
+                    <div class="lize-card">
+                        <div class="lize-card-body d-flex justify-content-center align-items-center text-center" style="min-height: 460px;">
+                            <div>
+                                <h5>Nenhum aluno foi encontrado com o filtro selecionado</h5>
+                                <p>Tente modificar os filtros aplicados...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div v-show="loading">
+        <div class="row">
+            <div class="col">
+                <div class="lize-card">
+                    <div class="lize-card-body d-flex justify-content-center align-items-center text-center" style="min-height: 460px;">
+                        <div>
+                            <h5>Aguarde enquanto buscamos os dados</h5>
+                            <p>O processo pode demorar um pouco...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalSelectFilters" {% if not classe %}data-backdrop="static" data-keyboard="false"{% endif %} tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border-radius: 16px !important;">
+            <div class="modal-header">
+            <h5 class="modal-title" id="staticBackdropLabel">Selecione os filtros</h5>
+                <button v-if="selectedExams.length" type="button" class="close p-2" data-dismiss="modal" aria-label="Close" style="font-size: 2.5rem; color: #D0D5DD;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <button v-else type="button" onclick="history.back()" class="close p-2" style="font-size: 2.5rem; color: #D0D5DD;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="card-body">
+                <template v-if="loading">
+                    <div class="row p-3">
+                        <div class="col">
+                            <div class="lize-card">
+                                <div class="lize-card-body d-flex justify-content-center align-items-center text-center" style="min-height: 260px;">
+                                    <div>
+                                        <h5>Aguarde enquanto buscamos os dados dos cadernos</h5>
+                                        <p>O processo pode demorar um pouco...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <div v-show="!loading">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="search-form">
+                                <input type="search" @input="handlerSeachExams($event.target.value)" style="background-color:#FAFBFC; padding: 24px;" autofocus v-model="inputSearchExams" class="form-control" placeholder="Digite o nome do caderno">
+                                <button class="btn" type="button"><i data-feather="search"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <template v-if="searchingExams">
+                        <div class="row m-0">
+                            <div class="col-12">
+                                <h6>${foundedExams.length} Caderno(s) encontrado(s)</h6>
+                            </div>
+                        </div>
+                        <div class="lize-card shadow-sm">
+                            <div class="card-body p-0">
+                                <div class="row m-0 my-2">
+                                    <div class="col-6 tx-bold">Caderno</div>
+                                    <div class="col-6 tx-bold text-right">Ações</div>
+                                </div>
+                                <div class="row m-0 py-2 cp" @click="selectExam(exam.id)" style="border-top: 1px solid #F3F3F3;" v-for="exam in foundedExams">
+                                    <div class="col-12 d-flex justify-content-between tx-14 tooltips" :data-tippy-content="exam.name"><span class="text-truncate">${exam.name}</span> <i class="fas fa-plus-circle cp tx-18" :style="{ color: selectedExams.includes(exam.id) ? '#D2D6DB':'#37B5EB' }"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row my-0 mt-4">
+                            <div class="col-12">
+                                <button type="button" @click="searchingExams = false" class="btn btn-primary btn-block d-flex align-items-center justify-content-center">Concluir seleção de cadernos <span class="badge badge-danger mx-2 rounded-circle tx-12">${selectedExams.length}</span></button>
+                            </div>
+                        </div>
+                    </template>
+                    <template v-else>
+                        <h6 class="text-muted">${selectedExams.length} Caderno(s) selecionado(s)</h6>
+                        <div class="row my-1">
+                            <div class="col-6 mb-1" v-for="examID in selectedExams">
+                                <div class="lize-card shadow-sm">
+                                    <div class="card-body p-2 d-flex align-items-center justify-content-between">
+                                        <h6 class="mb-0 text-truncate">${getExam(examID).name}</h6>
+                                        <button type="button" class="close" @click="selectExam(examID)" style="font-size: 2rem; color: #D0D5DD;">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <template v-if="unities.length">
+                            <hr>
+                            <h6 class="text-muted">${selectedUnities.length} Unidade(s) selecionada(s)</h6>
+                            <div class="row my-1">
+                                <div class="col-3 mb-1" v-for="unity in unities">
+                                    <div class="lize-card shadow-sm cp" @click="selectUnity(unity.id)" :class="{ 'lize-bd-primary': selectedUnities.includes(unity.id) }">
+                                        <div class="card-body p-2 d-flex align-items-center justify-content-between">
+                                            <h6 class="mb-0 text-truncate">${unity.name}</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                        <template v-if="classes.length">
+                            <hr>
+                            <h6 class="text-muted">${selectedClasses.length} Turma(s) selecionada(s)</h6>
+                            <div class="row my-1">
+                                <div class="col-3 mb-1" v-for="classe in classes">
+                                    <div class="lize-card shadow-sm cp" @click="selectClasse(classe.id)" :class="{ 'lize-bd-primary': selectedClasses.includes(classe.id) }">
+                                        <div class="card-body p-2">
+                                            <h6 class="mb-0 text-truncate">${classe.name}</h6>
+                                            <p class="tx-12 text-muted m-0">${classe.unity_name}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                        <div class="row my-0 mt-4">
+                            <div class="col-12">
+                                <button v-if="selectedExams.length" type="button" @click="getTriData()" :disabled="!selectedUnities.length && !selectedClasses.length" class="btn btn-primary btn-block"><i class="fas fa-filter"></i> Aplicar filtros</button>
+                                <button v-else type="button" class="btn btn-secondary btn-block" onclick="history.back()"><i class="fas fa-arrow-left"></i> Sair do TRI</button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalStudentDetail" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content" style="border-radius: 12px;">
+            <div class="modal-body p-4">
+            <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </a>
+
+            <div v-if="selectedStudent">
+                <h4>${selectedStudent.student_name} <span class="text-muted">- ${selectedStudent.order}º</span></h4>
+                <p class="tx-color-03">Desempenho do aluno por área do conhecimento</p>
+                <div class="row">
+                    <template v-for="knowledgeArea in selectedStudent.knowledge_areas">
+                        <div class="col-6 mb-1">
+                            <div class="lize-card p-1">
+                                <div class="lize-card-body">
+                                    <div class="row mb-0">
+                                        <div class="col-6">
+                                            <h1 class="tx-40 tx-primary mb-0">${Number(knowledgeArea.grade).toFixed(1)}</h1>
+                                            <h6 class="tx-primary">Acertos: <strong>${knowledgeArea.correct_count}</strong></h6>
+                                        </div>
+                                        <div class="col-6 d-flex justify-content-end">
+                                            <div class="rounded-circle tx-32 d-flex justify-content-center align-items-center" style="width: 64px; height: 64px; background-color: #F1F9FC">
+                                                <template v-if="knowledgeArea.name.toUpperCase().includes('HUMANA')">
+                                                    <img height="52" src="{% static 'administration/assets/img/icons/earth-globe.png' %}" alt="">
+                                                </template>
+                                                <template v-if="knowledgeArea.name.toUpperCase().includes('MATEM')">
+                                                    <img height="52" src="{% static 'administration/assets/img/icons/ruler.png' %}" alt="">
+                                                </template>
+                                                <template v-if="knowledgeArea.name.toUpperCase().includes('NATUREZA')">
+                                                    <img height="52" src="{% static 'administration/assets/img/icons/atom.png' %}" alt="">
+                                                </template>
+                                                <template v-if="knowledgeArea.name.toUpperCase().includes('LINGUAGENS')">
+                                                    <img height="52" src="{% static 'administration/assets/img/icons/qa.png' %}" alt="">
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-0 mt-2">
+                                        <div class="col-12">
+                                            <h6 class="text-muted text-truncate">${knowledgeArea.name}</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <template v-if="selectedStudent.loading.exams">
+                    <div class="row">
+                        <div class="col">
+                            <div class="lize-card">
+                                <div class="lize-card-body d-flex justify-content-center align-items-center text-center" style="min-height: 260px;">
+                                    <div>
+                                        <h5>Aguarde enquanto buscamos os dados dos cadernos</h5>
+                                        <p>O processo pode demorar um pouco...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <template v-else>
+                    <h4 class="mt-3">Cadernos</h4>
+                    <p class="tx-color-03">Desempenho do aluno por caderno</p>
+                    <div class="row" v-for="summary in selectedStudent.exams">
+                        <div class="col-12">
+                            <div class="lize-card">
+                                <div class="lize-card-body py-2 px-3">
+                                    <div class="row mb-0">
+                                        <div class="col-6 d-flex align-items-center">
+                                            <h4 class="tx-30 text-truncate tx-primary mb-0">${summary.exam.name}</h4>
+                                        </div>
+                                        <div class="col-6 d-flex flex-column text-right">
+                                            <h4 class="tx-40 tx-primary mb-0">${summary.exam.performance} %</h4>
+                                            <p class="tx-primary tx-12 mb-0">Desempenho no caderno</p>
+                                        </div>
+                                    </div>
+                                    <template v-if="summary.subjects.length">
+                                        <hr>
+                                        <div class="row mb-0 mt-2">
+                                            <div class="col-6 text-muted tx-16"><strong>Disciplina</strong></div>
+                                            <div class="col-6 text-muted tx-16 text-right"><strong>Desempenho</strong></div>
+                                        </div>
+                                        <div class="row mb-0 mt-2" v-for="subject in summary.subjects">
+                                            <div class="col-6 text-muted tx-16">${subject.name}</div>
+                                            <div class="col-6 text-muted tx-16 text-right">${Number(subject.performance).toFixed(2)} %</div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <button class="btn btn-primary btn-block" data-dismiss="modal">Fechar</button>
+            </div>
+            </div><!-- modal-body -->
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+{% endblock content-fixed %} 
+
+
+{% block js-additional %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'js/tippy/popper.min.js' %}"></script>
+<script src="{% static 'js/tippy/tippy.min.js' %}"></script>
+<script src="{% static 'dashboard/lib/apexcharts/apexcharts.min.js' %}"></script>
+
+<script>
+    var app = new Vue({
+        delimiters: ["${", "}"],
+        el: "#app",
+        data: {
+            exams: [
+                {% for exam in exams %}
+                    {
+                        id: '{{exam.id}}',
+                        name: '{{exam.name}}',
+                    },
+                {% endfor %}
+            ],  
+            loading: false,
+            loadingExport: false,
+            loadingCharts: true,
+            chart: null,
+            chartHistogram: null,
+            chartsOnStarted: false,
+            selectedUnities: [],
+            selectedClasses: [],
+            selectedExams: [],
+            unities: [],
+            classes: [],
+            knowledgeAreas: [],
+            selectedKnowledgeArea: null,
+            filters: {
+                student: '',
+                ordering: 'percent',
+                orderingType: 'asc',
+                orderingLabel: 'Maior para menor',
+                types: ['belowBasic', 'basic', 'adequate', 'advanced']
+            },
+            insightObject: {
+                title: {
+                    text: '',
+                    color: 'text-dark',
+                },
+                subTitle: '',
+            },
+            selectedStudent: null,
+            inputSearchExams: '',
+            searchingExams: false,
+            foundedExams: [],
+            retryCount: 2,
+        },
+        methods: {
+            handlerReset() {
+                this.knowledgeAreas = []
+                this.selectedKnowledgeArea = null
+                this.unities = []
+                this.classes = []
+            },
+            getExam(examID) {
+                return this.exams.find(exam => exam.id == examID)
+            },
+            selectExam(examID) {
+                if(this.selectedExams.includes(examID)) {
+                    this.selectedExams.splice(this.selectedExams.indexOf(examID), 1)
+                } else {
+                    if(this.selectedExams.length < 4) {
+                        this.selectedExams.push(examID)
+                    }
+                    else {
+                        this.inputSearchExams = ''
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Limite atingido',
+                            text: 'Você só pode selecionar até no máximo 4 cadernos para analisar os dados.',
+                        })
+                    }
+                }
+                
+            },
+            selectUnity(unityID) {
+                this.selectedUnities.includes(unityID) ? this.selectedUnities.splice(this.selectedUnities.indexOf(unityID), 1) : this.selectedUnities.push(unityID)
+            },
+            selectClasse(classeID) {
+                this.selectedClasses.includes(classeID) ? this.selectedClasses.splice(this.selectedClasses.indexOf(classeID), 1) : this.selectedClasses.push(classeID)
+            },
+            async exportTriData() {
+                this.loadingExport = true
+
+                const data = {
+                    exams: this.selectedExams,
+                    unities: this.selectedUnities,
+                    school_classes: this.selectedClasses,
+                    year: 2025,
+                }
+
+                axios.post("{% url 'analytics:exams_tri_csv_export' %}", data)
+                .then(response => {
+                    const type = response.headers['content-type']
+                    const blob = new Blob([response.data], { type: type, encoding: 'UTF-8' })
+                    const link = document.createElement('a')
+                    link.href = window.URL.createObjectURL(blob)
+                    link.download = 'tri.csv'
+                    link.click()
+                })
+                .finally(() => {
+                    this.loadingExport = false
+                })
+            },
+            retryGetTriData() {
+                if(this.retryCount) {
+                    this.getTriData()
+                }
+                this.retryCount--
+            },
+            async getTriData() {
+                this.loading = true
+
+                // TODO: Testar o envio de classes (falar com anderson sobre o client)
+                const data = {
+                    exams: this.selectedExams,
+                    unities: this.selectedUnities,
+                    school_classes: this.selectedClasses,
+                    year: 2025,
+                }
+
+                axios.post("{% url 'analytics:exams_tri' %}", data).then((response)=>{
+                    this.knowledgeAreas = response.data.knowledge_areas_agg.map((knowledgeArea) => ({...knowledgeArea, shortName: '', students: [], chartData: null, chartHistogramData: null, }))
+                    if (this.knowledgeAreas.length) {
+                        this.selectedKnowledgeArea = this.knowledgeAreas.at(0)
+                    } else {
+                        this.retryGetTriData()
+                    }
+                    this.knowledgeAreas.forEach(knowledgeArea => {
+                        
+                        knowledgeArea.shortName = knowledgeArea.name.split(" - ")[0]
+                        
+                        let students = response.data.students.filter(student => student.knowledge_areas.find(k => k.id == knowledgeArea.id))
+                        
+                        // Sort
+                        students = students.sort((a, b) => b.knowledge_areas.find(k => k.id == knowledgeArea.id).grade - a.knowledge_areas.find(k => k.id == knowledgeArea.id).grade)
+
+                        // Maps
+                        students = students.map((student, index) => ({
+                            ...student, 
+                            exams: [], 
+                            loading: {
+                                exams: true,
+                            },
+                            order: index + 1, 
+                            percent: (student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade / 1000) * 100,
+                            category: '',
+                            belowBasic: 0,
+                            basic: 0,
+                            adequate: 0,
+                            advanced: 0,
+                        }))
+                        students.forEach((student) => {
+                            this.handlerStudentCategory(student, knowledgeArea)
+                        })
+
+                        knowledgeArea.chartData = students.map((student) => {
+                            let y = Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).correct_count)
+                            let x = Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade)
+                            return [y, x]
+                        })
+                        
+                        let histogram = [
+                            students.filter(student => Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade) <= 100).length,
+                            students.filter(student => Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade) > 100 && Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade) <= 200).length,
+                            students.filter(student => Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade) > 200 && Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade) <= 300).length,
+                            students.filter(student => Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade) > 300 && Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade) <= 400).length,
+                            students.filter(student => Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade) > 400 && Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade) <= 500).length,
+                            students.filter(student => Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade) > 500 && Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade) <= 600).length,
+                            students.filter(student => Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade) > 600 && Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade) <= 700).length,
+                            students.filter(student => Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade) > 700 && Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade) <= 800).length,
+                            students.filter(student => Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade) > 800 && Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade) <= 900).length,
+                            students.filter(student => Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade) > 900 && Number(student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade) <= 1000).length,
+                        ]
+
+                        knowledgeArea.chartHistogramData = histogram
+
+                        knowledgeArea.belowBasic = students.filter(s => s.category == 'belowBasic').length
+                        knowledgeArea.basic = students.filter(s => s.category == 'basic').length
+                        knowledgeArea.adequate = students.filter(s => s.category == 'adequate').length
+                        knowledgeArea.advanced = students.filter(s => s.category == 'advanced').length
+
+                        knowledgeArea.students = students
+
+                    })
+                }).finally(() => {
+                    if(this.selectedKnowledgeArea) {
+                        this.startCharts()
+                    }
+                    this.loading = false
+                    $('#modalSelectFilters').modal('hide')
+                })
+            },
+            handlerStudentCategory(student, knowledgeArea) {
+                let grade = student.knowledge_areas.find(k => k.id == knowledgeArea.id).grade
+                if(grade < 250) {
+                    student.category = 'belowBasic'
+                } else if(grade >= 250 && grade < 500) {
+                    student.category = 'basic'
+                } else if(grade >= 500 && grade < 750) {
+                    student.category = 'adequate'
+                } else if(grade >= 750) {
+                    student.category = 'advanced'
+                }
+            },
+            getSelectedExams() {
+                return this.exams.filter(exam => this.selectedExams.includes(exam.id))
+            },
+            handlerFilterTypes(students) {
+                return students.filter(s => this.filters.types.includes(s.category))
+            },
+            handlerOrdering(ordering, type, label) {
+                this.filters.ordering = ordering
+                this.filters.orderingType = type
+                this.filters.orderingLabel = label
+            },
+            handlerStudentsList(students) {
+                students = this.handlerFilterTypes(students)
+                students = students.filter(s => this.filters.student.length ? s.student_name.toUpperCase().includes(this.filters.student.toUpperCase()) : true)
+                if(this.filters.ordering == 'name') {
+                    students = students.sort((a, b) => this.filters.orderingType == 'asc' ? a.student_name.localeCompare(b.student_name) : b.student_name.localeCompare(a.student_name))
+                }
+                if(this.filters.ordering == 'percent') {
+                    students = students.sort((a, b) => this.filters.orderingType == 'asc' ? b.percent - a.percent : a.percent - b.percent)
+                }
+            
+                return students
+            },
+            getTheBestStudents(knowledgeArea) {
+                let students = knowledgeArea.students
+                return students.slice(0, 3)
+            },
+            handlerBarsColors(option) {
+                if (option == 'advanced') {
+                    return (this.selectedKnowledgeArea.students.filter(student => student.category == 'advanced').length / this.selectedKnowledgeArea.students.length) * 100
+                } else if (option == 'adequate') {
+                    return (this.selectedKnowledgeArea.students.filter(student => student.category == 'adequate').length / this.selectedKnowledgeArea.students.length) * 100
+                } else if (option == 'basic') {
+                    return (this.selectedKnowledgeArea.students.filter(student => student.category == 'basic').length / this.selectedKnowledgeArea.students.length) * 100
+                } else {
+                    return (this.selectedKnowledgeArea.students.filter(student => student.category == 'belowBasic').length / this.selectedKnowledgeArea.students.length) * 100
+                }
+            },
+            getStudentKnowledgeArea(student) {
+                return student.knowledge_areas.find(k => k.id == this.selectedKnowledgeArea.id)
+            },
+            handlerStudentName(student) {
+                let splitedName = student.student_name.split(' ')
+                let firstName = splitedName.at(0)
+                let initiais = firstName.at(0)
+                if (splitedName.length > 1) {
+                    initiais += splitedName.at(splitedName.length - 1)[0]
+                } 
+                return initiais.toUpperCase()
+            },
+            handlerInsights() {
+                let insights = []
+                let students = this.selectedKnowledgeArea.students
+                
+                if(students.filter((student) => this.getStudentKnowledgeArea(student).grade <= this.selectedKnowledgeArea.grade_avg).length > (students.length / 2)) {
+                    let insight = Object.assign({}, this.insightObject)
+                    insight.title.text = "Mais da metade dos alunos estão abaixo da média da grade área selecionada"
+                    insight.title.color = "text-danger"
+                    insight.subTitle = "O desempenho dos alunos está muito abaixo do esperado para essa grande área."
+                    insights.push(insight)
+                } else {
+                    let insight = Object.assign({}, this.insightObject)
+                    insight.title.text = `<strong>${students.filter((student) => this.getStudentKnowledgeArea(student).grade <= this.selectedKnowledgeArea.grade_avg).length}<strong> dos <strong>${students.length}<strong> alunos estão abaixo da média para a grande área selecionada`
+                    insight.title.color = "text-muted"
+                    insight.subTitle = "O desempenho dos alunos está muito abaixo do esperado para essa grande área."
+                    insights.push(insight)
+                }
+            
+                return insights
+            },
+            async getStudentExam(studentID, examID) {
+                let payload =  { 
+                    exam: examID, 
+                    student: studentID, 
+                    get_exam_score: true,
+                }
+                return await axios.post("{% url 'api2:students-get-performance-subjects' %}", payload)
+            },
+            async selectStudent(student) {
+                this.selectedStudent = student
+                if(student.loading.exams) {
+                    new Promise((resolve) => {
+                        let count = 0
+                        this.selectedExams.forEach((examID) => {
+                            this.getStudentExam(student.student_id, examID).then((response) => {
+                                student.exams.push(response.data)
+                            }).finally(() => {
+                                count += 1
+                                if (count == this.selectedExams.length) {
+                                    student.loading.exams = false
+                                    resolve()
+                                }
+                            })
+                        })
+                    })
+                }
+            },
+            async selectKnowledgeArea(knowledgeArea) {
+                this.loadingCharts = true
+                new Promise((resolve) => {
+                    this.selectedKnowledgeArea = knowledgeArea
+                    resolve()
+                }).then(() => {
+                    this.startCharts()
+                })
+            },
+            startCharts() {
+                let chartSerie = {
+                    name: "Nota do aluno",
+                    data: this.selectedKnowledgeArea.chartData,
+                }
+                let chartHistogramSerie = {
+                    name: 'Alunos',
+                    data: this.selectedKnowledgeArea.chartHistogramData
+                }
+                let colors = ['#37B5EB']
+                if(this.chartsOnStarted) {
+                    this.chart.updateSeries([chartSerie]);
+                    this.chartHistogram.updateSeries([chartHistogramSerie]);
+                } else {
+                    this.chart = new ApexCharts(document.getElementById('chartID'), {
+                        series: [
+                            chartSerie
+                        ],
+                        markers: {
+                            size: 4,
+                            strokeWidth: 0,
+                        },
+                        colors: colors,
+                        chart: {
+                            height: 240,
+                            type: 'scatter',
+                            zoom: {
+                            enabled: true,
+                                type: 'xy'
+                            },
+                            events: {
+                                dataPointSelection: (event, chartContext, config) => {
+                                    let ix = config.dataPointIndex;
+                                    this.selectStudent(this.selectedKnowledgeArea.students.at(ix))
+                                    $("#modalStudentDetail").modal('show')
+                                }
+                            }
+                        },
+                        grid: {
+                            show: false,
+                            padding: {
+                                left: 30, // or whatever value that works
+                                right: 30 // or whatever value that works
+                            },
+                            xaxis: {
+                                lines: {
+                                    show: true
+                                }
+                            },
+                            yaxis: {
+                                lines: {
+                                    show: false
+                                }
+                            },
+                        },
+                        xaxis: {
+                            tickAmount: 5,
+                            labels: {
+                                formatter: function(val) {
+                                    return parseFloat(val).toFixed(0)
+                                }
+                            },
+                            title: {
+                                text: 'Total de acertos'
+                            }
+                        },
+                        yaxis: {
+                            tickAmount: 5,
+                            labels: {
+                                formatter: function(val) {
+                                    return parseFloat(val).toFixed(1)
+                                }
+                            }
+                        },
+                    });
+                    this.chartHistogram = new ApexCharts(document.getElementById('chartHistogramID'), {
+                        series: [
+                            chartHistogramSerie
+                        ],
+                        chart: {
+                            height: 240,
+                            type: 'bar',
+                        },
+                        colors: colors,
+                        plotOptions: {
+                            bar: {
+                                columnWidth: '95%',
+                            }
+                        },
+                        grid: {
+                            show: false,
+                            padding: {
+                                left: 30, // or whatever value that works
+                                right: 30 // or whatever value that works
+                            },
+                        },
+                        dataLabels: {
+                            enabled: false
+                        },
+                        legend: {
+                            show: false
+                        },
+                        xaxis: {
+                            categories: [
+                                ['0 - 100'],
+                                ['101 - 200'],
+                                ['201 - 300'], 
+                                ['301 - 400'], 
+                                ['401 - 500'], 
+                                ['501 - 600'], 
+                                ['601 - 700'], 
+                                ['701 - 800'], 
+                                ['801 - 900'], 
+                                ['901 - 1000'], 
+                            ],
+                            labels: {
+                                style: {
+                                    fontSize: '12px'
+                                }
+                            }
+                        },
+                    });
+                    this.chart.render();
+                    this.chartHistogram.render();
+                }
+
+                setTimeout(() => {
+                    this.loadingCharts = false
+                    this.chartsOnStarted = true
+                }, 1000)
+            },
+            async handlerUnitiesAndClasses() {
+                let url = "{% url 'exams:api-exam-get-unities-and-classes' %}"
+                axios.post(url, this.selectedExams).then((response) => {
+                    this.classes = response.data.classes
+                    this.unities = response.data.unities
+                })
+            },
+            getUrl(url, id) {
+                return url.replace('00000000-0000-0000-0000-000000000000', id)
+            },
+            handlerSeachExams(val) {
+                if(val.length) {
+                    this.searchingExams = true
+                    this.foundedExams = this.exams.filter(exam => exam.name.toUpperCase().includes(this.inputSearchExams.toUpperCase())).slice(0, 10)
+                    if(!this.foundedExams.length) {
+                        this.searchingExams = false
+                    }
+                } else {
+                    this.searchingExams = false
+                }
+            }
+        },
+        watch: {
+            selectedExams: function() {
+                this.handlerUnitiesAndClasses()
+            },
+        },
+        updated() {
+            tippy('.tooltips', {
+                placement: 'bottom',
+                allowHTML: true,
+                theme: 'custom',
+            })
+        },
+        mounted() {
+            {% comment %}
+                this.selectedExams = ["56275cdc-ba85-4a2e-a9b0-ed58312faf8f"]
+                this.getTriData()
+            {% endcomment %}
+            $("#modalSelectFilters").modal('show')
+        }
+    });
+</script>
+{% endblock js-additional %}

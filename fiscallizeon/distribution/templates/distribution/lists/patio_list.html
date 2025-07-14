@@ -1,0 +1,185 @@
+{% extends 'dashboard/clean_base_without_header.html' %}
+{% load math %}
+{% load separate_distributions %}
+
+{% block title %}
+    Lize - Impressão da lista de pátio
+{% endblock title %}
+
+{% block css-additional %}
+    <style>
+        body {
+            background-color: #FFF !important;
+        }
+        @page {
+            size: A4;
+            margin-left: 5mm;
+            margin-top: 10mm;
+            margin-right: 5mm;
+            margin-bottom: 10mm;
+        }
+        @media print {
+            .table-break {
+            }
+        }
+        .pagebreak { 
+            display: block; 
+            page-break-before: always; 
+            break-before: always;
+        }
+        .table-body {
+            width: 100%;
+            font-size: medium;
+        }
+    </style>
+{% endblock css-additional %}
+
+{% block content %}
+
+    <div class="row m-0 pagebreak" v-for="unity in unities">
+        <div class="row mb-0 px-3 pt-3 d-flex align-items-center">
+            <div class="col">
+                {% if unities.0.client_logo %}
+                    <img src="{{ unities.0.client_logo }}" style="max-height: 138px !important;" alt="Logo da escola">
+                {% endif %}
+            </div>
+            <div class="col">
+                <h3 class="font-weight-bold text-uppercase">
+                    Lista de Pátio
+                </h3>
+            </div>
+            <div class="col-12 text-center py-3">
+                {% for application in object.get_applications %}
+                    <h2 class="font-weight-bold">
+                        {{application.exam.name}}
+                    </h2>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="col-12 px-0">
+            <div class="row m-0">
+                <div class="col d-flex">
+                    <h4 class="mr-3 text-truncate"><strong>Unidade: </strong> <span>${unity.name}</span></h4>
+                    <h4 class="ml-3 text-truncate"><strong>Data:</strong> <span class="ml-2">{{object.get_applications.0.date}}</span></h4>
+                </div>
+            </div>
+        </div>
+        <div v-for="(separation, room) in correctDistributionList(unity.distributions)">
+            <div v-if="separation.split">
+                <table class="mb-4 table table-break">
+                    <thead class="border-right-0" style="border: 1.5px solid #000 !important; font-size: large;">
+                        <tr>
+                            <th><b>sala: ${room}</b></th>
+                            <th><b>sala: ${room}</b></th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-body">
+                        <tr v-for="(student1, index) in separation.students[0]" :key="index">
+                            <td class="text-nowrap">${student1}</td>
+                            <td v-if="separation.students[1][index]" class="text-nowrap">${separation.students[1][index]}</td>
+                            <td v-else class="text-nowrap"></td>
+                          </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div v-else>
+                <table class="mb-4 table table-break">
+                    <thead class="border-right-0" style="border: 1.5px solid #000 !important; font-size: large;">
+                        <tr>
+                            <th>${room}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-body">
+                        <tr v-for="student in separation.students">
+                            <td class="text-nowrap">${student}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
+
+
+
+{% block js-additional %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"></script>
+
+<script>
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+            unities: [
+                {% for unity in unities %}
+                    {
+                        name: '{{unity.name}}',
+                        distributions: [
+                            {% for distribution in unity.distributions %}
+                                {
+                                    student: '{{distribution.student.name|truncatechars:50}}',
+                                    room: '{{distribution.room.name}}'
+                                },
+                            {% endfor %}
+                        ]
+                    },
+                {% endfor %}
+            ],
+            twoColumns: {{ two_columns|yesno:"true,false" }},
+            columMin: 25,
+            separatedByRoom: {},
+        },
+        methods: {
+            correctDistributionList(distributions) {
+                let separatedByRoom = {}
+                distributions.forEach((item) => {
+                    const room = item.room;
+                    if (!separatedByRoom[room]) {
+                        separatedByRoom[room] = {students: [], split: false};
+                    }
+                    separatedByRoom[room].students.push(item.student);
+                });
+                for (const room in separatedByRoom) {
+                    let separatedList = separatedByRoom[room]
+                    separatedList.students.sort();
+
+                    if(this.twoColumns && separatedList.students.length >= this.columMin){
+                        separatedList.split = true
+                        let length = 0
+
+                        if(separatedList.students.length % 2 == 0) {
+                            length = separatedList.students.length / 2
+                        } else {
+                            length = Math.round(separatedList.students.length / 2)
+                        }
+                        let half1 = separatedList.students.slice(0, length)
+                        let half2 = separatedList.students.slice(length, separatedList.length)
+                        separatedList.students = []
+
+                        separatedList.students.push(half1, half2)
+                    }
+                }
+                return separatedByRoom;
+            }
+        },
+        mounted: function() {
+            {% if not hide_dialog %}
+                window.print();
+                //window.onafterprint = () => window.close();
+            {% endif %}
+        },
+        updated: function() {
+        },
+    })
+</script>
+<script defer>
+    document.addEventListener('DOMContentLoaded', function() {
+      let loadedElement = document.createElement('div')
+      loadedElement.id = 'loaded'
+      document.body.appendChild(loadedElement)
+    });
+</script>
+{% endblock js-additional %}

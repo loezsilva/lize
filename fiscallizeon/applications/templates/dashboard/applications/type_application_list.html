@@ -1,0 +1,127 @@
+{% extends 'redesign/base.html' %}
+{% load static %}
+{% load cleaned_params %}
+{% load call_function_with_params %}
+{% load get_value_from_dict %}
+{% load permissions %}
+{% load filter_inspector_subjects %}
+
+
+{% block title %}Listagem de tipos de aplicações - Lize{% endblock title %}
+
+{% block css-additional %}
+
+{% endblock %}
+
+
+{% block content-fixed %}
+<div class="tw-flex tw-justify-center">
+  <div class="ard cer dcv tw-pb-8 tw-max-w-[100rem] tw-flex-1 tw-mb-16">
+    <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1.5rem; justify-content: space-between;">
+      <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-6 sm:tw-flex-nowrap tw-w-full">
+        <h1 class="tw-text-xl tw-font-semibold tw-leading-7 tw-text-[#374151] sm:tw-truncate sm:tw-text-2xl sm:tw-tracking-tight tw-mb-0">
+          Tipos de aplicações cadastradas
+        </h1>  
+
+        <div class="tw-ml-auto tw-flex tw-gap-3">
+          <div>
+            <a href="{% url 'applications:type_application_create' %}" class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600 hover:tw-text-white">
+              Cadastrar novo tipo de aplicação
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tw-bg-white sm:tw-rounded-lg tw-pt-5 tw-border tw-border-[#E5E7EA]">
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8">
+        <div class="tw-flow-root">
+          <div class="tw--mx-4 tw--my-2 tw-overflow-x-auto sm:tw--mx-6 lg:tw--mx-8">
+            <div class="tw-inline-block tw-min-w-full tw-py-2 tw-align-middle sm:tw-px-6 lg:tw-px-8">
+              <div class="tw-relative">
+                <table class="tw-min-w-full tw-table-fixed tw-divide-y tw-divide-gray-300">
+                  <thead>
+                    <tr>
+                      <th scope="col"
+                        class="tw-min-w-[12rem] tw-py-3.5 tw-pr-3 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900">Nome
+                      </th>
+                      <th scope="col" class="tw-px-3 tw-py-3.5 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900">Criado por
+                      </th>
+                      <th scope="col" class="tw-px-3 tw-py-3.5 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900">Data de
+                        criação
+                      </th>
+                      <th>
+
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody class="tw-divide-y tw-divide-gray-200 tw-bg-white">
+                    {% for application_type in object_list %}
+                
+                    <tr id="tr-{{ application_type.pk }}">
+                      <td class='tw-py-4 tw-pr-3 tw-text-sm tw-font-medium tw-text-gray-900'>
+                        <div class="tw-font-medium tw-text-gray-900">{{ application_type.name }}</div>
+                      </td>
+                      <td class='tw-py-4 tw-pl-4 tw-text-sm tw-font-medium tw-text-gray-900'>
+                        <div class="tw-font-medium tw-text-gray-900">{{ application_type.created_by.get_full_name }}</div>
+                      </td>
+                      <td class="tw-pl-4">
+                        <div class="tw-font-medium tw-text-gray-900">{{ application_type.created_at|date:"d/m/Y" }}</div>
+                      </td>
+                      <td class="tw-text-right tw-pr-4">
+                        <button
+                          class="tw-inline-flex tw-w-full tw-justify-center tw-gap-x-1.5 tw-rounded-md tw-bg-white tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-[#667085] tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50"
+                          type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" 7
+                          style="width: 150px;">
+                          Opções
+                          <svg class="tw--mr-1 tw-h-5 tw-w-5 tw-text-primary-600" viewBox="0 0 20 20" fill="currentColor"
+                            aria-hidden="true">
+                            <path fill-rule="evenodd"
+                              d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                              clip-rule="evenodd" />
+                          </svg>
+                        </button>
+                        <div class="dropdown-menu" style="position: relative !important;" aria-labelledby="dropdownMenuButton">
+                
+                          <a href="javascript:void(0)" class="nav-link d-none d-sm-block" onClick="confirmCancel('{% url "applications:type_application_delete" application_type.pk %}')" data-toggle="tooltip" data-placement="top" title="Deletar">
+                            <i class="fas fa-trash"></i> Deletar
+                          </a> 
+
+                          <a
+                          href="{% url 'applications:type_application_update' application_type.pk %}" 
+                          style="display: flex !important;" class="nav-link d-none d-sm-block" role="menuitem" tabindex="-1">
+                            <i>
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                              </svg>
+                            </i>
+                            Editar
+                          </a>
+                
+                        </div>
+                      </td>
+                    </tr>
+                
+                    {% empty %}
+                    <tr>
+                      <td colspan="4">
+                        <p class="tw-py-4">Não há tipos de aplicações cadastradas</p>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% include 'redesign/includes/pagination.html' with objects=object_list %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+  {% include 'includes/confirm_modal.html' %}
+{% endblock extra-modal %}

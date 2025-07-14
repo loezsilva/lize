@@ -1,0 +1,355 @@
+{% extends 'redesign/base.html' %}
+{% comment %}{% extends 'administration/base.html' %} {% endcomment %}
+
+{% load static %}
+{% load proportion %}
+{% load exclude_especific_params %}
+
+{% block title %}Listagem de provas de {{ object.name|lower }} - Lize{% endblock title %}
+
+{% block content %}
+  <nav class="p-3">
+    <!-- Mobile -->
+    <div class="d-block d-md-none">
+      <div class="row">
+        <div class="col-12 col-md-6 mt-2 text-center">
+          <h3><i class="fas fa-graduation-cap"></i> {{object.name}}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="d-none d-md-block">
+      <nav class="navbar navbar-dark">
+        <div class="col-md text-center">
+          <h3><i class="fas fa-graduation-cap"></i> {{object.name}}</h3>
+        </div>
+      </nav>
+    </div>
+  </nav>
+  <div id="app" class="content {% if not type_client == 3 %}content-fixed{% endif %}{% if is_external %} mt-0{% endif %}" style="min-height: calc(100vh - 106px);">
+    <div class="container pd-x-0 pd-lg-x-10 pd-xl-x-0">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item">
+            <a href="{% url 'core:redirect_dashboard' %}">Início</a>
+          </li>
+          <li class="breadcrumb-item breadcrumb-item-ellipsis breadcrumb-item-sm-unset active" aria-current="page">
+            Listagem de provas de {{object.name|lower}}
+          </li>
+        </ol>
+      </nav>
+      <!-- Mobile screen -->
+      <div class="d-block d-md-none">
+        <div class="card-header p-0 d-flex flex-column flex-sm-row align-items-sm-start justify-content-sm-between">
+          <div>
+            <h6 class="mg-b-5">Lista de provas</h6>
+            <p class="tx-12 tx-color-03 mg-b-0">Visualize todas as provas realizadas ou que estão agendadas.</p>
+          </div>
+          <div class="btn-group mt-1">
+            <a href="?year=2024{{request|exclude_especific_params:'year,page'}}" class="btn btn-xs {% if year == '2024' or year == 2024 %} btn-primary {% else %} btn-white {% endif %} btn-uppercase">2024</a>
+            <a href="?year=2025{{request|exclude_especific_params:'year,page'}}" class="btn btn-xs {% if year == '2025' or year == 2025 %} btn-primary {% else %} btn-white {% endif %} btn-uppercase">2025</a>
+          </div>
+          <div class="btn-group mt-1">
+            <a href="?{{request|exclude_especific_params:'year,page,only_scheduled'}}" class="btn btn-xs {% if not only_scheduled %} btn-primary {% else %} btn-white {% endif %} btn-uppercase">Liberadas</a>
+            <a href="?only_scheduled=true{{request|exclude_especific_params:'year,page,only_scheduled'}}" class="btn btn-xs {% if only_scheduled %} btn-primary {% else %} btn-white {% endif %} btn-uppercase">Agendadas</a>
+          </div>
+          {% if user.parent.students.all.count > 1 %}
+            <a href="{% url 'core:redirect_dashboard' %}" class="btn btn-sm mt-1 btn-white">Selecionar aluno(a)</a>
+          {% else %}  
+            <button class="btn btn-white mt-1" onclick="history.back()">Voltar</button>
+          {% endif %}
+        </div>
+        <hr>
+        <div class="row mb-0 mt-2">
+          {% for application_student in object_list %}
+            <div class="col-sm-6 col-lg-6 mb-3">
+                <div class="card card-body shadow-sm">
+                    {% if application_student.application.get_category_display == 'Online' %}
+                      <span class="badge badge-primary text-center" style="max-width: 7rem;">Prova Online</span>
+                    {% endif %}
+                    
+                    {% if application_student.application.get_category_display == 'Presencial' %}
+                      <span class="badge badge-success text-center" style="max-width: 7rem;">Prova Presencial</span>
+                    {% endif %}
+                    
+                    {% if application_student.application.get_category_display == 'Lista de Exercício' %}
+                      <span class="badge badge-success text-center" style="max-width: 7rem;">Lista de Exercício</span>
+                    {% endif %}
+                    <h6 class="mb-0 text-truncate mt-2">{{application_student.application.exam.name}}</h6>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div>
+                            <p style="margin-bottom: 0; font-size: 14px; color: #7987A1;">
+                              {% if application_student.application.get_category_display == 'Lista de Exercício' %}
+                                {% if application_student.application.date_end == today %}
+                                  {{ application_student.application.date }} <br/>
+                                  <span class="text-muted">{{ application_student.application.start }} até {{ application_student.application.end }}</span>
+                                {% else %}
+                                  {{ application_student.application.date }} {{ application_student.application.start }}<br/>
+                                  <span class="text-muted"> Até {{ application_student.application.date_end }} {{ application_student.application.end }}</span>
+                                {% endif %}
+                              {% else %}
+                                {{ application_student.application.date }} <br/>
+                                <span class="text-muted">{{ application_student.application.start }} até {{ application_student.application.end }}</span>
+                              {% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <div class="col-6 col-sm media">
+                                <div class="media-body">
+                                    <h6
+                                        class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold mg-b-5 mg-md-b-8">
+                                        Nota</h6>
+                                    <h4 class="tx-24 tx-sm-24 tx-md-30 tx-normal tx-rubik mg-b-0">
+                                      {% if application_student.application.release_result_at_end and application_student.end_time or application_student.application.release_result_at_end and application_student.application.is_time_finished %}
+                                          {{ application_student.total_grade|floatformat:2 }}
+                                      {% elif application_student.application.release_result_at_end and not application_student.end_time %}
+                                        <span class="text-muted">--</span>
+                                      {% elif application_student.application.student_stats_permission_date %}
+                                        {% if application_student.application.is_time_finished and today >= application_student.application.student_stats_permission_date %}
+                                          {{ application_student.total_grade|floatformat:2 }}
+                                        {% else %}
+                                          <span class="text-muted">--</span>
+                                        {% endif %}
+                                      {% else %}
+                                        {{ application_student.total_grade|floatformat:2 }}
+                                      {% endif %}
+                                    </h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="my-2">
+                    <div class="d-flex flex-column flex-sm-row align-items-sm-start justify-content-sm-between">
+                      {% if application_student.application.is_time_finished %}
+                        {% if today >= application_student.application.student_stats_permission_date or not application_student.application.student_stats_permission_date %}
+                          <div class="btn-group mt-1">
+                            <a href="{% url 'applications:application_exam_student_detail_v2' application_student.pk %}" class="btn btn-xs btn-white btn-uppercase"><i class="fas fa-search"></i> Ver resultado</a>
+                          </div>
+                        {% else %}
+                          <div class="btn-group mt-1">
+                            <button type="button" disabled class="btn btn-xs btn-white btn-uppercase"><i class="far fa-calendar"></i> Resultado não divulgado</button>
+                          </div>
+                        {% endif %}
+                      {% elif application_student.application.release_result_at_end and application_student.end_time %}
+                        <div class="btn-group mt-1">
+                          <a href="{% url 'applications:application_exam_student_detail_v2' application_student.pk %}" class="btn btn-xs btn-white btn-uppercase"><i class="fas fa-search"></i> Ver resultado</a>
+                        </div>
+                      {% else %}
+                        <a href="javascript:void(0)" class="btn btn-xs btn-white btn-uppercase">
+                          {% if today < application_student.application.date_time_start_tz %}
+                            <i class="far fa-calendar-times"></i>
+                            A prova ainda não começou!
+                          {% else %}
+                            {% if application_student.application.is_time_finished %}
+                              <i class="far fa-clock"></i>
+                              Aguarde a divulgação
+                            {% else %}
+                              <i class="far fa-clock"></i>  
+                              Prova em andamento
+                            {% endif %}
+                          {% endif %}
+                        </a>
+                      {% endif %}
+                    </div>
+                </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      <!-- Large screen -->
+      <div class="d-none d-md-block">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            {% include "dashboard/breadcrumb-year.html" with year=year|force_escape %}
+          </div>
+          <div>
+            {% if user.parent.students.all.count > 1 %}
+              <a href="{% url 'core:redirect_dashboard' %}" class="btn btn-white">Selecionar aluno(a)</a>
+            {% else %}  
+              <button class="btn btn-white" onclick="history.back()">Voltar</button>
+            {% endif %}
+          </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mg-b-10">
+                    <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+                      <div>
+                        <h6 class="mg-b-5">Provas</h6>
+                        <p class="tx-13 tx-color-03 mg-b-5">Visualize todas as provas realizadas ou que estão agendadas</p>
+                      </div>
+                    </div>
+                    <div class="table-responsive">
+                      <table class="table table-dashboard mg-b-1 table-bordered">
+                        <thead>
+                          <tr>
+                            <th>Quando</th>
+                            <th>Disciplina(s)</th>
+                            {% comment %}
+                            <th>Resultado</th>
+                            {% endcomment %}
+                            <th>Nota</th>                    
+                            <th class="text-wrap"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for student_application in object_list %}
+                            <tr>
+                              <td class="tx-medium" style="white-space: nowrap;">
+                                {% if student_application.application.get_category_display == 'Lista de Exercício' %}
+                                  {% if student_application.application.date_end == today %}
+                                    {{ student_application.application.date }} <br/>
+                                    <span class="text-muted">{{ student_application.application.start }} até {{ student_application.application.end }}</span>
+                                  {% else %}
+                                    {{ student_application.application.date }} {{ student_application.application.start }}<br/>
+                                    <span class="text-muted"> Até {{ student_application.application.date_end }} {{ student_application.application.end }}</span>
+                                  {% endif %}
+                                {% else %}
+                                  {{ student_application.application.date }} <br/>
+                                  <span class="text-muted">{{ student_application.application.start }} até {{ student_application.application.end }}</span>
+                                {% endif %}
+                              </td>
+                              <td>
+                                {% if student_application.application.get_category_display == 'Online' %}
+                                  <span class="badge badge-primary">Prova Online</span>
+                                {% endif %}
+                                
+                                {% if student_application.application.get_category_display == 'Presencial' %}
+                                  <span class="badge badge-success" data-toggle="tooltip">Prova Presencial</span>
+                                {% endif %}
+                                
+                                {% if student_application.application.get_category_display == 'Lista de Exercício' %}
+                                  <span class="badge badge-success">Lista de Exercício</span>
+                                {% endif %}
+                                <br>
+                                {{ student_application.application.exam.name }}
+                              </td>
+                              {% comment %}
+                              <td class="align-middle">
+                                {% if student_application.application.is_time_finished and student_application.application.student_stats_permission_date and today >= student_application.application.student_stats_permission_date or not student_application.application.student_stats_permission_date %}
+                                  <div class="wd-300 d-inline-block">
+                                    <div class="progress bg-gray op-7 ht-10 mg-b-15 wd-100p">
+                                        <div class="progress-bar bg-success bd-l bd-white" role="progressbar" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100" style="width: {{ student_application.total_correct_answers|proportion:student_application.application.exam.questions.count|stringformat:'.2f' }}%;" data-toggle="tooltip" data-placement="right" title="Acertos: {{ student_application.total_correct_answers }}"></div>
+                                        <div class="progress-bar bg-warning bd-l bd-white" role="progressbar" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100" style="width: {{ student_application.total_partial_answers|proportion:student_application.application.exam.questions.count|stringformat:'.2f' }}%;" data-toggle="tooltip" data-placement="right" title="Acertos parciais: {{ student_application.total_partial_answers }}"></div>
+                                        <div class="progress-bar bg-pink bd-l bd-white" role="progressbar" aria-valuenow="3" aria-valuemin="0" aria-valuemax="100" style="width: {{ student_application.total_incorrect_answers|proportion:student_application.application.exam.questions.count|stringformat:'.2f' }}%;" data-toggle="tooltip" data-placement="right" title="Erros: {{ student_application.total_incorrect_answers }}"></div>
+                                    </div>
+                                  </div>
+                                {% else %}
+                                  <span class="text-muted">
+                                    {% if today < student_application.application.date_time_start_tz %}
+                                      A prova irá começar em {{ student_application.application.date_time_start_tz|date:'d/m/Y' }} as {{ student_application.application.date_time_start_tz|date:'H:i' }}
+                                    {% else %}
+                                      {% if student_application.application.is_happening %}
+                                        A prova está acontecendo agora... <br>
+                                        {% if today == student_application.application.student_stats_permission_date %}
+                                          O resultado será divulgado assim que a prova acabar
+                                        {% endif %}
+                                      {% else %}
+                                        Aguarde a divulgação
+                                      {% endif %}
+                                    {% endif %}
+                                  </span>
+                                {% endif %}
+                              </td>
+                              {% endcomment %}
+                              {% if student_application.application.release_result_at_end and student_application.end_time or student_application.application.release_result_at_end and student_application.application.is_time_finished %}
+                                <td>
+                                  {{ student_application.total_grade|floatformat:2 }}
+                                </td>
+                              {% elif student_application.application.release_result_at_end and not student_application.end_time %}
+                                <td class="tx-medium">
+                                  Divulgação <br>
+                                  <span class="text-muted">
+                                    Após o término do caderno
+                                  </span>
+                                </td>
+                              {% elif student_application.application.student_stats_permission_date %}
+                                {% if student_application.application.is_time_finished and today >= student_application.application.student_stats_permission_date %}
+                                  <td>
+                                      {{ student_application.total_grade|floatformat:2 }}
+                                  </td>
+                                {% else %}
+                                  <td class="tx-medium">  
+                                    Divulgação <br>
+                                    <span class="text-muted">
+                                      {{ student_application.application.student_stats_permission_date|date:"d/m/Y H:i" }}
+                                    </span>
+                                  </td>
+                                {% endif %}
+                              {% else %}
+                                <td>
+                                  {{ student_application.total_grade|floatformat:2 }}
+                                </td>
+                              {% endif %}
+                              <td class="text-wrap">
+                                <div class="d-flex justify-content-end">
+                                  <div class="dropdown mr-2">
+                                      <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        Opções
+                                      </button>
+                                      <div class="dropdown-menu" style="min-width: 230px;" aria-labelledby="dropdownMenuButton">
+                                        {% if student_application.total_answered_questions > 0 and not student_application.is_omr %}
+                                          {% if student_application.application.is_time_finished or student_application.application.category == 4 %}
+                                            <a target="_blank" href="{% url 'answers:proof_of_answers_create' student_application.pk %}" class="nav-link d-none d-sm-block">
+                                              <i class="fas fa-receipt"></i> Imprimir comprovante
+                                            </a>
+                                          {% endif %}
+                                        {% endif %}
+                                        {% if student_application.application.is_time_finished %}
+                                          {% if today >= student_application.application.student_stats_permission_date or not student_application.application.student_stats_permission_date %}
+                                            <a href="{% url 'applications:application_exam_student_detail_v2' student_application.pk %}" class="nav-link d-none d-sm-block">
+                                              <i class="fas fa-search"></i> Ver Resultado
+                                            </a>
+    
+                                          {% else %}
+                                            <a href="javascript:void(0)" class="nav-link d-none d-sm-block disabled">
+                                              Resultado não divulgado
+                                            </a>
+                                          {% endif %}
+                                          {% if not student_application.application.has_open_applications_exam and user.client_show_previews_template_student %}                                  
+                                            <a href="{% url 'applications:application_previous_feedback' student_application.pk %}" class="nav-link d-none d-sm-block">
+                                              <i class="fas fa-grip-vertical"></i> Gabarito Prévio
+                                            </a>
+                                          {% endif %}
+                                        {% elif student_application.application.release_result_at_end and student_application.end_time %}
+                                          <a href="{% url 'applications:application_exam_student_detail_v2' student_application.pk %}" class="nav-link d-none d-sm-block">
+                                            <i class="fas fa-search"></i> Ver Resultado
+                                          </a>
+      
+                                        {% else %}
+                                          <a href="javascript:void(0)" class="nav-link d-none d-sm-block">
+                                            {% if today < student_application.application.date_time_start_tz %}
+                                              <i class="far fa-calendar-times"></i>
+                                              A prova ainda não começou!
+                                            {% else %}
+                                              {% if student_application.application.is_time_finished %}
+                                                <i class="far fa-clock"></i>
+                                                Aguarde a divulgação
+                                              {% else %}
+                                                <i class="far fa-clock"></i>  
+                                                Prova em andamento
+                                              {% endif %}
+                                            {% endif %}
+                                          </a>
+                                        {% endif %}
+                                        {% if student_application.application.category == 4 and today >= student_application.application.date_time_start_tz %}
+                                          <a href="{% url 'exams:exam_homework_print' pk=student_application.application.exam.pk application_student=student_application.pk %}" target="_blank" class="nav-link d-none d-sm-block">
+                                            <i class="fas fa-file-alt"></i> Imprimir Caderno
+                                          </a>
+                                        {% endif %}
+                                      </div>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+      {% include 'includes/pagination.html' with objects=object_list %}
+    </div>
+  </div>
+{% endblock content %}

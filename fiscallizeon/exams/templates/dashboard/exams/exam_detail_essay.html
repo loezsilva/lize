@@ -1,0 +1,428 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load permissions %}
+{% load static %}
+{% load get_answer_sheet_link %}
+{% load getlist %}
+{% load cdn_url %}
+
+{% block title %}Listagem de redações - Lize{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<link rel="stylesheet" href="{% static 'css/tourjs/tour.min.css' %}">
+<!-- <link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet"> -->
+
+<style>
+  .column-300 {
+    max-width: 400px;
+  }
+  .row {
+    padding: 0;
+    margin: 0;
+  }
+  .tg-backdrop{
+    z-index: 9999 !important;
+  }
+</style>
+{% endblock %}
+
+{% block top-menu %}
+
+    {% comment %} 
+    <header>
+      <div class="tw-flex tw-justify-center">
+        <nav class="ls add afa agv arx tw-flex-1" data-tg-title="Tipos de redações" data-tg-order="2" data-tg-tour='Clique em "Presencial" ou "Online" para filtrar a listagem de redações.' data-tg-group="default-application-list" style="display: flex; overflow-x: auto; border-width: 0px; border-style: solid; border-color: rgb(229, 231, 235); border-bottom-width: 1px; border-color: #E2E5ED; padding-top: 1rem; padding-bottom: 1rem; max-width: calc(100vw - 240px);">
+          <ul role="list" class="ls tn uj aad ard avv awb awk axk cer dcv" style="list-style: none; margin: 0px; min-width: 100%; flex: 0 0 auto; column-gap: 1.5rem; font-size: 0.875rem; line-height: 1.5rem; font-weight: 500;">
+            <li>
+              <a href="{% url 'applications:applications_list' %}?category=presential" class="axz font-display" style="{% if request.resolver_match.url_name == 'applications_list' and request.GET.category == 'presential' %}color: #FEA464;{% else %}color: #9CA3AF;{% endif %}">
+                Presencial
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'applications:applications_list' %}?category=online" class="axz font-display" style="{% if request.resolver_match.url_name == 'applications_list' and request.GET.category == 'online' %}color: #FEA464;{% else %}color: #9CA3AF;{% endif %}">
+                Online
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </header> 
+    {% endcomment %}
+{% endblock top-menu %}
+
+{% block content-fixed %}
+<div class="tw-flex tw-justify-center">
+  <div class="ard cer dcv tw-pb-8 tw-flex-1" style="max-width: calc(100vw - 240px);">
+    <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1.5rem; justify-content: space-between;">
+      <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-6 sm:tw-flex-nowrap tw-w-full">
+        <h1 class="tw-text-xl tw-font-semibold tw-leading-7 tw-text-[#374151] sm:tw-truncate sm:tw-text-2xl sm:tw-tracking-tight tw-mb-0">
+          Redações do caderno {{object.name}}
+        </h1>
+        
+        {% comment %}
+        <div class="tw-order-last tw-flex tw-w-full tw-gap-x-8 tw-text-sm tw-font-semibold tw-leading-6 sm:tw-order-none sm:tw-w-auto sm:tw-border-l sm:tw-border-gray-200 sm:tw-pl-6 sm:tw-leading-7">
+          <button data-tg-title="Filtros detalhados" data-tg-order="3" data-tg-tour="Agora você pode acessar a janela de filtros detalhados clicando aqui." data-tg-group="default-application-list" type="button" class="tw-flex tw-items-center tw-text-[#667085] tw-off-canvas-menu" id="headlessui-slider-over-button-1" data-toggle-off-canvas="#right-off-canvas" @click="filters.createNewFilter = false">
+            <span>Filtrar</span>
+            <span class="ml-2">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M5 10H15M2.5 5H17.5M7.5 15H12.5" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </button>
+        </div>          
+        <div class="tw-ml-auto tw-flex tw-gap-3">
+          
+        </div>
+        {% endcomment %}
+      </div>
+    </div>
+    <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1.5rem; justify-content: space-between;">
+      <div class="tw-gap-6 sm:tw-flex-nowrap tw-w-full">
+        <div class="row">
+          <div class="col-md-12 px-2">
+              <div class="card">
+                  <div class="card-body">
+                      <form class="" method="GET">
+                          <div class="form-group">
+                              <label>Filtrar por turma</label>
+                              <select class="form-control" name="school_class">
+                                  <option value="">Selecione uma turma</option>
+                                  {% for school_class in school_classes %}
+                                      <option 
+                                          value="{{ school_class.pk }}"
+                                          {% if school_class.pk|stringformat:"s" == request.GET.school_class %}selected="selected"{% endif %}
+                                      >{{ school_class }}</option>
+                                  {% endfor %}
+                              </select>
+                          </div>
+                          <button type="submit" :disabled="controls.loading" class="btn btn-primary float-right">
+                            <template v-if="controls.loading">
+                              Buscando alunos <i class="fas fa-spin fa-spinner"></i>
+                            </template>
+                            <template v-else>
+                              Filtrar
+                            </template>
+                          </button>
+                      </form>
+                  </div>
+              </div>
+          </div>
+        </div>
+      </div>
+    </div>
+      
+    <template v-if="applicationsStudent.length">
+      <hr>
+      <div class="row">
+          <div class="col-12">
+              <p class="mb-0 px-2" style="color: #667085;">
+                  ${applicationsStudent.length} redações listadas
+              </p>
+          </div>
+      </div>
+      <div class="row">
+          <div class="col-2 p-3" v-for="applicationStudent in applicationsStudent">
+              <div class="card shadow-sm cp" @click="goTo(`{% url 'exams:exam_answers_correction' object.id %}?application_student=${applicationStudent.id}&school_class={{school_class}}`)">
+                  <div class="card-body px-1">
+                      <div class="row">
+                          <div class="col-12 d-flex justify-content-between">
+                              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" :stroke="applicationStudent.answer.essayWasCorrected ? '#41C588':'#D0D5DD'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                              </svg>
+                              
+                              {% comment %}
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 13C12.5523 13 13 12.5523 13 12C13 11.4477 12.5523 11 12 11C11.4477 11 11 11.4477 11 12C11 12.5523 11.4477 13 12 13Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M12 6C12.5523 6 13 5.55228 13 5C13 4.44772 12.5523 4 12 4C11.4477 4 11 4.44772 11 5C11 5.55228 11.4477 6 12 6Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M12 20C12.5523 20 13 19.5523 13 19C13 18.4477 12.5523 18 12 18C11.4477 18 11 18.4477 11 19C11 19.5523 11.4477 20 12 20Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              {% endcomment %}
+                                
+                          </div>
+                      </div>
+                      <div class="row mt-3">
+                          <div class="col-12">
+                              <h5 class="text-truncate font-weight-bold">${applicationStudent.student.name}</h5>
+                          </div>
+                      </div>
+                      <div class="row mt-5">
+                          <div class="col-12">
+                              <h5 class="text-truncate font-weight-bold mb-0">${getMaximumCriterionsScore(applicationStudent) - getCriterionValue(applicationStudent)}</h5>
+                          </div>
+                      </div>
+                      <div class="row">
+                          <div class="col-12">
+                              <h6 class="text-truncate font-weight-normal mb-0" style="color: #9BA3AF;">Pontos</h6>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+    </template>
+  </div>
+</div>
+{% include 'includes/confirm_modal.html' %}
+{% endblock content-fixed %}
+
+{% block slide-over %}
+  
+{% endblock slide-over %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'js/moment/moment-with-locales.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'js/sweetalert/sweetalert2.min.js' %}"></script>
+<script src="{% static 'js/tippy/popper.min.js' %}"></script>
+<script src="{% static 'js/tippy/tippy.min.js' %}"></script>
+<script src="{% static 'js/tourjs/tour.min.js' %}"></script>
+<script>
+
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    components: {
+      {% include 'includes/vue-tooltip.html' %},
+    },
+    data: {
+      controls: {
+        loading: false,
+      },
+      applicationsStudent: [],
+      textCorrection: {},
+      filters: {
+          selected: false,
+          list: [],
+          createNewFilter: false,
+          selectedParams: '',
+          parseParamsInLabels(params) {
+          let query = {}, labels = [];
+          let pairs = (params[0] === '?' ? params.substr(1) : params).split('&');
+          for (var i = 0; i < pairs.length; i++) {
+              var pair = pairs[i].split('=');
+              query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+          }
+          for(key in query) {
+              if(query[key]) {
+              const count = params.match(new RegExp(`\\b(${key})\\b`, 'g')).length;
+              let input = $(`[name="${key}"]`), inputId = input.attr('id'), label = `${$(`[for="${inputId}"]`).text()}`
+              if(input.prop('type') == 'select-multiple') {
+                  label += `: <span class="badge badge-dark rounded-circle">${count}</span>`
+              } else {
+                  if(input.prop('type') == 'select-one') {
+                  label += `: ${input.find(`option[value=${query[key]}]`).text()}`
+                  }
+                  if(input.prop('type') == 'text') {
+                  label += `: ${query[key]}`
+                  }
+              }
+              labels.push(label)
+              }
+          }
+          return labels
+          },
+          labels() {
+          let labels = []
+          
+          $('#filterForm').find('select, input').each((index, input) => {
+              let values = [], showValues = true, showCount = false
+              if(input.id) {
+              if(input.type.includes('select')  ) {
+                  if(input.type == 'select-multiple') {
+                  showCount = true
+                  }
+                  values = $(`#${input.id} option:selected`).toArray().map(item => item.text)
+              }
+              else if(input.type == 'checkbox' || input.type == 'radio') {
+                  value = $(`#${input.id}:checked`).val()
+                  if(value == 'on' || value === true) {
+                  showValues = false
+                  values.push(true)
+                  }
+              } else {
+                  values.push($(`#${input.id}`).val())
+              }
+              if(values.filter(value => value).length) {
+                  labels.push({
+                  name: $(`#${input.id}`).attr('name'),
+                  label: $(`[for=${input.id}]`).text(),
+                  showValues: showValues,
+                  showCount: showCount,
+                  values: values,
+                  })
+              }
+              }
+          })
+          return labels
+          },
+        },
+      },
+      methods: {
+        getCriterionValue(applicationStudent) {
+          let subtract = 0
+          if (applicationStudent.answer && applicationStudent.answer.imgAnnotations) {
+            applicationStudent.answer.imgAnnotations.forEach((a) => subtract += a.deviation.score)
+          }
+          return subtract
+        },
+        getMaximumCriterionsScore(applicationStudent) {
+          let total = 0
+          if (applicationStudent.answer && applicationStudent.answer.textCorrection) {
+            applicationStudent.answer.textCorrection.criterions.forEach((a) => total += a.maximumScore)
+          }
+          return total
+        },
+        goTo(url) {
+          window.location.href = url
+        },
+        removeFilter(filter) {
+          const url = new URL(window.location.href);
+          const urlParams = url.searchParams;
+          urlParams.delete(filter.name);
+          url.search = urlParams.toString();
+          window.location.href = url.href;
+        },
+        momentRef(args) {
+          return moment(args)
+        },
+        confirmCancel(url) {
+          document.getElementById('id_confirm_cancel_form').action = url;
+          $("#confirmCancelModal").modal("show");
+        },
+        alertTop(text, icon = 'success') {
+          Swal.fire({
+            position: 'top-end',
+            text: text,
+            icon: icon,
+            showConfirmButton: false,
+            timer: 1500,
+            toast: true,
+            timerProgressBar: true,
+          })
+        },
+        getApplicationsStudent(schoolClass) {
+          this.controls.loading = true
+          axios.get(`{% url 'exams:api-exam-get-applications-student-with-essay-answer' object.id %}?school_class=${schoolClass}`).then((response) => {
+            this.applicationsStudent = response.data
+          }).finally(() => {
+            this.controls.loading = false
+          })
+        },
+      },
+      computed: {
+        
+      },
+      directives: {
+      'click-outside': {
+          bind: function(el, binding, vNode) {
+          // Provided expression must evaluate to a function.
+          if (typeof binding.value !== 'function') {
+              const compName = vNode.context.name
+              let warn = `[Vue-click-outside:] provided expression '${binding.expression}' is not a function, but has to be`
+              if (compName) { warn += `Found in component '${compName}'` }
+
+              console.warn(warn)
+          }
+          // Define Handler and cache it on the element
+          const bubble = binding.modifiers.bubble
+          const handler = (e) => {
+              if (bubble || (!el.contains(e.target) && el !== e.target)) {
+              binding.value(e)
+              }
+          }
+          el.__vueClickOutside__ = handler
+
+          // add Event Listeners
+          document.addEventListener('click', handler)
+          },
+
+          unbind: function(el, binding) {
+          // Remove Event Listeners
+          document.removeEventListener('click', el.__vueClickOutside__)
+          el.__vueClickOutside__ = null
+          }
+        },
+      },
+      watch: {
+        includeExams: function(val) {
+            if(val) {
+            if(!this.loadedPrintDefaults) {
+                this.getPrintDefaults()
+            }
+            this.getExamPrintConfigs(this.selectedApplication.exam_urls.print_configs)
+            }
+        }
+      },
+      mounted() {   
+        if('{{school_class}}') {
+          this.getApplicationsStudent('{{school_class}}')
+        }
+        $('[data-toggle="tooltip"]').tooltip()
+        $("#headlessui-slider-over-button-1").click()
+        $('#filterForm').find('input,select').change(this.filterFormChanged)
+        
+        $('#status_id').select2({
+          placeholder: "Selecione uma opção",
+          closeOnSelect: false,
+        });
+        
+        $('#school_class').select2({
+            placeholder: "Selecione uma opção",
+            closeOnSelect: false,
+        }).on('select2:selecting', function(e) {
+            let cur = e.params.args.data.id;
+            let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+            $(e.target).val(old).trigger('change');
+            $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+            return false;
+        });
+        
+        $('.table-responsive').on('show.bs.dropdown', function () {
+            $('.table-responsive').css( "overflow", "inherit" );
+        });
+        
+        $('.table-responsive').on('hide.bs.dropdown', function () {
+            $('.table-responsive').css( "overflow", "auto" );
+        })
+
+        $('.tw-off-canvas-menu').on('click', function (e) {
+            e.preventDefault();
+            var target = $(this).attr('data-toggle-off-canvas');
+            $(target).addClass('tw-show');
+        });
+    
+        $('.tw-off-canvas .tw-off-canvas-close').on('click', function (e) {
+            e.preventDefault();
+            $(this).closest('.tw-off-canvas').removeClass('tw-show');
+        })
+        
+        $(document).on('click touchstart', function (e) {
+            if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+            return
+            }
+            e.stopPropagation();
+            if (!$(e.target).closest('.tw-off-canvas-menu').length) {
+            var offCanvas = $(e.target).closest('.tw-off-canvas').length;
+            if (!offCanvas) {
+                $('.tw-off-canvas.tw-show').removeClass('tw-show');
+            }
+            }
+        });
+        $(document).ready(function() {
+            $("#mousable").mousemove(function(event) {
+                let containerWidth = $(this).outerWidth();
+                let tableWidth = $("#mousable").outerWidth();
+                let mouseX = event.pageX - $(this).offset().left;
+                if (mouseX < containerWidth * 0.3) {
+                $("#mousable").scrollLeft($("#mousable").scrollLeft() - 20); // Para a esquerda
+                } else if (mouseX > containerWidth * 0.7) {
+                $("#mousable").scrollLeft($("#mousable").scrollLeft() + 20); // Para a direita
+                }
+            });
+        });
+      },
+    })
+</script>
+{% endblock %}

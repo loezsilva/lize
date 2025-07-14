@@ -1,0 +1,635 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+  Lize
+{% endblock %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700;800&display=swap');
+</style>
+<style>
+  form i.togglePassword {
+    cursor: pointer;
+    top: -30px;
+    float: right;
+    margin-right: 17px;
+    font-size: 16px;
+    margin-bottom: p;
+    position: relative;
+  }
+  .linhaComTexto {
+    width: 100%;
+    height: 20px;
+    border-bottom: 1.5px solid rgb(174, 174, 174);
+    text-align: center;
+  }
+
+  .linhaComTexto > span {
+    font-size: 12px;
+    background-color: white;
+    position: relative;
+    top: 9px;
+    padding: 0 14px;
+    color: rgb(131, 131, 131);
+    font-weight: 700;
+  }
+  .content-div{
+    max-width: 65%;
+  }
+  @media only screen and (max-width: 600px) {
+    .content-div{
+      max-width: 85%;
+    }
+  }
+  * {
+    font-family: 'Poppins', sans-serif;
+  }
+  input{
+    padding: 22px 15px 22px 15px !important;
+  }
+
+  .btn{
+    padding-top: 10px !important;
+    padding-bottom: 10px !important; 
+  }
+</style>
+{% endblock css-additional %}
+
+{% block js-header-additional %}
+  
+{% endblock js-header-additional %}
+
+{% block content %}
+  <div class="row mr-0 ml-0" style="min-height: 100%;">
+    <div class="col-12 col-lg-6 d-flex justify-content-center py-4 px-0" 
+      style="box-shadow: -7px 8px 20px 0px #a0a0a0; background-color: #FF8F3E !important;">
+      <div class="content-div">
+        <div class="text-center">
+          {% include 'redesign/includes/logo.html' with width=110  height=110  fill="white" style="text-align:center;" %}
+        </div>
+        <div class="d-none d-lg-block">
+          <div class="mb-5 mt-3">
+          <h3 style="color: white; font-size:27.5px;" class="font-weight-bold">01. Preencha os campos ao lado para ter acesso a nossa ferramenta.</h3>
+          <h6 class="text-white" style="font-weight: 400; font-size: 16px;">
+            Crie sua conta na Plataforma Lize e tenha acesso às mais avançadas ferramentas de criação de questões, provas e simulados. 
+          </h6>
+        </div>
+        <div class="mb-5">
+          <h3 style="color: white; font-size:27.5px;" class="font-weight-bold">02. Crie os seus cadernos de prova de forma prática e eficiente.</h3>
+          <h6 class="text-white" style="font-weight: 400; font-size: 16px;">
+            Crie listas de exercícios e provas exclusivas com questões inéditas de forma prática usando nosso sistema de Inteligência Artificial. Direcione o seu foco no que realmente importa: O crescimento e desenvolvimento dos seus alunos. 
+          </h6>
+        </div>
+        <div class="mb-5">
+          <h3 style="color: white; font-size:27.5px;" class="font-weight-bold">03. Organize de forma prática suas avaliações e cadernos de questões.</h3>
+          <h6 class="text-white" style="font-weight: 400; font-size: 16px;">
+            Reúna todas as suas avaliações em um único ambiente, com a praticidade que só a Lize te oferece. 
+
+          </h6>
+        </div>
+        <div>
+          <h3 style="color: white; font-size:27.5px;" class="font-weight-bold">04. Seja um agente transformador da educação através da tecnologia.</h3>
+          <h6 class="text-white" style="font-weight: 400; font-size: 16px;">
+            Utilize a nossa plataforma para gerar questões e provas através de inteligência artificial, e ajude a aperfeiçoar o mecanismo de forma a gerar cada vez mais uma ferramenta auxiliar na alavancagem pedagógica.
+          </h6>
+        </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-6 bg-white d-flex justify-content-center align-items-center py-4">
+        <form class="content-div" method="POST">
+          {% csrf_token %}
+          <div class="sign-wrapper">
+            <div class="wd-100p py-3">
+
+              <h3 class="mg-b-5">Garanta agora o seu acesso antecipado à mais nova ferramenta que vai te ajudar na elaboração de questões.</h3>
+              <p class="tx-16 mb-3">Inscreva-se abaixo e tenha acesso a nossa poderosa IA, capaz de gerar questões inéditas, agilizando o processo de criação de provas e listas de exercícios.</p>
+
+              {% include 'includes/messages.html' with messages=messages only %}
+              
+              {% if form.non_field_errors %}
+              <p class="text-danger">
+                <em>Seu <strong>usuário</strong> e <strong>senha</strong> não correspondem. Por favor, tente novamente.</em>
+              </p>
+              {% endif %}
+
+                    <div class="card p-5">
+                   
+                    <div class="form-group">
+                      <label for="{{ form.name.id_for_label }}" class="font-weight-medium">{{ form.name.label }}</label>
+                      
+                        {% render_field form.name class="form-control" %}
+                      
+                      {% if form.name.errors %}
+                        {% for error in form.name.errors %}
+                          <div class="text-danger">{{ error|escape }}</div>
+                        {% endfor %}
+                      {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                      <label for="{{ form.email.id_for_label }}" class="font-weight-medium">{{ form.email.label }}</label>
+                      
+                        {% render_field form.email class="form-control" %}
+                      
+                      {% if form.email.errors %}
+                        {% for error in form.email.errors %}
+                          <div class="text-danger">{{ error|escape }}</div>
+                        {% endfor %}
+                      {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                      <label for="{{ form.password1.id_for_label }}" class="font-weight-medium">{{ form.password1.label }}</label>
+                        <input id="{{form.password1.auto_id}}" name="{{form.password1.name}}" :type="controls.showPassword ? 'text':'password'" v-model="form.password1" class="form-control" />
+                        <i :class="controls.showPassword ? 'fa-eye-slash':'fa-eye'" class="far togglePassword" @click="controls.showPassword = !controls.showPassword"></i>
+                      {% if form.password1.errors %}
+                        {% for error in form.password1.errors %}
+                          <div class="text-danger">{{ error|escape }}</div>
+                        {% endfor %}
+                      {% endif %}
+
+                    </div>
+
+                    <div class="form-group">
+                      <label for="{{ form.password2.id_for_label }}" class="font-weight-medium">{{ form.password2.label }}</label>
+                      <input id="{{form.password2.auto_id}}" name="{{form.password2.name}}" :type="controls.showPassword ? 'text':'password'" v-model="form.password2" class="form-control" />
+                      <i :class="controls.showPassword ? 'fa-eye-slash':'fa-eye'" class="far togglePassword" @click="controls.showPassword = !controls.showPassword"></i>
+                      {% if form.password2.errors %}
+                        {% for error in form.password2.errors %}
+                          <div class="text-danger">{{ error|escape }}</div>
+                        {% endfor %}
+                      {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                      <label for="{{ form.schools.id_for_label }}" class="font-weight-medium">{{ form.schools.label }}</label>
+                      {% render_field form.schools class="form-control" %}
+                      {% if form.schools.errors %}
+                        {% for error in form.schools.errors %}
+                          <div class="text-danger">{{ error|escape }}</div>
+                        {% endfor %}
+                      {% endif %}
+                      <small>Você pode informar mais de uma escola, pedimos que separe as escolas por virgula</small>
+                    </div>
+
+                    <div class="form-group">
+                      <label for="{{ form.how_did_you_meet_us.id_for_label }}" class="font-weight-medium">{{ form.how_did_you_meet_us.label }}</label>
+                        {% render_field form.how_did_you_meet_us v-model="form.howDidYouMeetUs" class="form-control" %}
+                      {% if form.how_did_you_meet_us.errors %}
+                        {% for error in form.how_did_you_meet_us.errors %}
+                          <div class="text-danger">{{ error|escape }}</div>
+                        {% endfor %}
+                      {% endif %}
+                    </div>
+
+                    <div :class="{ 'd-none': form.howDidYouMeetUs != 'others' }" class="form-group">
+                      <label for="{{ form.how_did_you_meet_us_form.id_for_label }}" class="font-weight-medium">{{ form.how_did_you_meet_us_form.label }}</label>
+                      
+                        {% render_field form.how_did_you_meet_us_form  class="form-control" %}
+                      {% if form.how_did_you_meet_us_form.errors %}
+                        {% for error in form.how_did_you_meet_us_form.errors %}
+                          <div class="text-danger">{{ error|escape }}</div>
+                        {% endfor %}
+                      {% endif %}
+                    </div>                    
+
+                    <div class="row">
+                      <div class="col-12">
+                        Ao utilizar essa plataforma estou ciente e de acordo com o <a href="{% url 'terms' slug='aviso-privacidade' %}" target="_blank"> Aviso de Privacidade
+                        </a> e
+                        <a href="{% url 'terms' slug='condicoes-uso' %}" target="_blank"> Condições de Uso</a>
+                      </div>
+                    </div>
+                    
+                    <button type="submit" :disabled="!passwordIsValid()" class="btn btn-block btn-orange font-weight-medium">
+                      Criar conta e começar a utilizar a plataforma
+                    </button>
+                    <p class="tx-10 mt-2 text-justify">
+                      Os dados coletados através desse formulário serão utilizados para viabilizar o acesso dos participantes ao criador de questões com uso de IA, desenvolvido pela Lize Edu e seus parceiros, e para o envio de informações comerciais sobre os produtos e serviços destes. Para mais informações sobre a utilização de seus dados pessoais, acesse nosso Aviso de Privacidade.
+                    </p>
+
+                     </div>
+              
+            </div>
+          </div> 
+        </form>
+    </div>
+    
+  </div>
+{% endblock %}
+
+
+{% block js-additional %}
+
+  {% if not disable_support_chat %}
+    {% include 'includes/chatwoot.html' with user_type="anonimo" %}
+  {% endif %}
+  <script src="{% static 'administration/lib/jquery/jquery.min.js' %}"></script>
+  <script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+  <script>
+    var app = new Vue({
+      delimiters: ['${', '}'],
+      el: '#app',
+      data: {
+        controls: {
+          showPassword: false,
+        },
+        form: {
+          password1: '',
+          password2: '',
+          howDidYouMeetUs: '{{form.how_did_you_meet_us.value|default:""}}',
+        }
+      },
+      methods: {
+        passwordIsValid() {
+          if(this.form.password1.length >= 8 && this.form.password2.length >= 8 && this.form.password1 === this.form.password2) {
+            return true
+          }
+          return false
+        },
+      },
+      mounted() {
+
+      }
+    })
+  </script>
+{% endblock js-additional %}
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% comment %}
+{% load static %}
+{% load widget_tweaks %}
+<!DOCTYPE html>
+<html lang="pt-br" class="tw-scroll-smooth tw-antialiased [font-feature-settings:'ss01']">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Twitter -->
+    <meta name="twitter:site" content="@lizeoficial">
+    <meta name="twitter:creator" content="@lizeoficial">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Lize">
+    <meta name="twitter:description" content="Monitoramento e aplicações de provas online">
+    <meta name="twitter:image" content="https://lizeedu.com.br/img/social.png">
+
+    <!-- Facebook -->
+    <meta property="og:url" content="https://lizeedu.com.br">
+    <meta property="og:title" content="Lize">
+    <meta property="og:description" content="Monitoramento e aplicações de provas online">
+
+    <meta property="og:image" content="https://lizeedu.com.br/img/social.png">
+    <meta property="og:image:secure_url" content="https://lizeedu.com.br/img/social.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="600">
+
+    <!-- Meta -->
+    <meta name="description" content="Monitoramento e aplicações de provas online">
+    <meta name="author" content="Lize">
+
+    <!-- Favicon -->
+    <link href="{% static 'favicon/favicon.ico' %}" rel="shortcut icon" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon/apple-touch-icon.png' %}" />
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}" />
+    <link rel="mask-icon" href="{% static 'favicon/safari-pinned-tab.svg' %}" color="#5bbad5" />
+    <meta name="msapplication-TileColor" content="#da532c" />
+    <meta name="theme-color" content="#ffffff" />
+
+    <title>Cadastrar - Lize</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+    
+    <link rel="stylesheet" href="{% static 'tw/tw-reset.css' %}" />
+    <link rel="stylesheet" href="{% static 'tw/tw.css' %}" />
+    <style>
+      body {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      .js-focus-visible :focus:not(.focus-visible) {
+        outline: none;
+      }
+      
+      .tw-prose-emphasis {
+        --tw-shadow: inset 0 -2px 0 0 var(--tw-prose-background,#fff),inset 0 calc(-1 * (var(--tw-prose-underline-size,4px) + 2px)) 0 0 var(--tw-prose-underline,#7dd3fc);
+        --tw-shadow-colored: inset 0 -2px 0 0 var(--tw-shadow-color),inset 0 0 0 var(--tw-shadow-color);
+        box-shadow: var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow);
+        font-weight: 600;
+      }
+    </style>
+    
+    <script src="{% static 'administration/lib/jquery/jquery.min.js' %}"></script>
+
+  </head>
+  <body>
+    <div class="tw-flex tw-min-h-screen">
+      <div class="tw-flex tw-flex-1 tw-flex-col tw-justify-center tw-px-4 tw-py-12 sm:tw-px-6 lg:tw-px-20 xl:tw-px-24">
+        <div class="tw-mx-auto tw-w-full tw-max-w-sm lg:tw-w-96">
+          <div>
+            {% include 'redesign/includes/logo.html' with width=47 height=40 %}
+            <h2 class="tw-mt-8 tw-text-2xl tw-font-semibold tw-leading-9 tw-tracking-tight tw-text-gray-900">
+              Bem-vindo a Lize
+            </h2>
+            <p class="tw-mt-2 tw-text-sm tw-leading-6 tw-text-gray-500">
+              Para continuar precisamos que você crie uma conta em nossa plataforma.
+            </p>
+          </div>
+          <div class="tw-mt-5">
+            <div>
+              {% include 'includes/messages.html' with messages=messages only %}
+              {% if form.errors %}
+                <div class="tw-my-8 tw-flex tw-rounded-2xl tw-p-4 tw-bg-amber-50">
+                  <svg aria-hidden="true" viewBox="0 0 32 32" fill="none" class="tw-h-8 tw-w-8 tw-flex-none [--icon-foreground:theme(colors.amber.900)] [--icon-background:theme(colors.amber.100)]">
+                    <defs>
+                      <radialGradient cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" id=":S5:-gradient" gradientTransform="rotate(65.924 1.519 20.92) scale(25.7391)">
+                        <stop stop-color="#FDE68A" offset=".08"></stop>
+                        <stop stop-color="#F59E0B" offset=".837"></stop>
+                      </radialGradient>
+                    </defs>
+                    <g>
+                      <circle cx="20" cy="20" r="12" fill="url(#:S5:-gradient)"></circle>
+                      <path d="M3 16c0 7.18 5.82 13 13 13s13-5.82 13-13S23.18 3 16 3 3 8.82 3 16Z" fill-opacity="0.5" class="tw-fill-[var(--icon-background)] tw-stroke-[color:var(--icon-foreground)]" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                      <path d="m15.408 16.509-1.04-5.543a1.66 1.66 0 1 1 3.263 0l-1.039 5.543a.602.602 0 0 1-1.184 0Z" class="tw-fill-[var(--icon-foreground)] tw-stroke-[color:var(--icon-foreground)]" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                      <path d="M16 23a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" fill-opacity="0.5" stroke="currentColor" class="tw-fill-[var(--icon-background)] tw-stroke-[color:var(--icon-foreground)]" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </g>
+                  </svg>
+                  <div class="tw-ml-4 tw-flex-auto">
+                    <div class="tw-prose tw-text-amber-800 [--tw-prose-underline:theme(colors.amber.400)] [--tw-prose-background:theme(colors.amber.50)] prose-a:tw-text-amber-900 prose-code:tw-text-amber-900">
+                      <p class="tw-text-sm">
+                        Corrija os <span class="tw-prose-emphasis">erros</span> para continuar com a criação da <span class="tw-prose-emphasis">conta</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+              <form method="POST" class="tw-space-y-6">
+                {% csrf_token %}
+                <div>
+                  <label for="{{ form.email.id_for_label }}" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Seu e-mail</label>
+                  <div class="tw-mt-2">
+                    {% render_field form.email autocomplete="email" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" %}
+                  </div>
+                  {% for error in form.email.errors %}
+                    <div class="tw-text-red-600">{{ error|escape }}</div>
+                  {% endfor %}
+                </div>
+                <div>
+                  <label for="{{ form.name.id_for_label }}" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Seu nome</label>
+                  <div class="tw-mt-2">
+                    {% render_field form.name class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" %}
+                  </div>
+                  {% for error in form.name.errors %}
+                    <div class="tw-text-red-600">{{ error|escape }}</div>
+                  {% endfor %}
+                </div>
+                <div>
+                  <label for="{{ form.schools.id_for_label }}" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">{{ form.schools.label }}</label>
+                  <div class="tw-mt-2">
+                    <select id="{{form.schools.auto_id}}" multiple="multiple" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6"><select>
+                  </div>
+                  {% for error in form.schools.errors %}
+                    <div class="tw-text-red-600">{{ error|escape }}</div>
+                  {% endfor %}
+                </div>
+                <div>
+                  <label for="{{ form.password1.id_for_label }}" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">{{ form.password1.label }}</label>
+                  <div class="tw-mt-2">
+                    <div class="tw-relative tw-w-full">
+                      <div class="tw-absolute tw-inset-y-0 tw-right-0 tw-flex tw-items-center tw-px-2">
+                        <div class="caps_lock" style="display: none;">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 12L12 8M12 8L8 12M12 8V16M7.8 21H16.2C17.8802 21 18.7202 21 19.362 20.673C19.9265 20.3854 20.3854 19.9265 20.673 19.362C21 18.7202 21 17.8802 21 16.2V7.8C21 6.11984 21 5.27976 20.673 4.63803C20.3854 4.07354 19.9265 3.6146 19.362 3.32698C18.7202 3 17.8802 3 16.2 3H7.8C6.11984 3 5.27976 3 4.63803 3.32698C4.07354 3.6146 3.6146 4.07354 3.32698 4.63803C3 5.27976 3 6.11984 3 7.8V16.2C3 17.8802 3 18.7202 3.32698 19.362C3.6146 19.9265 4.07354 20.3854 4.63803 20.673C5.27976 21 6.11984 21 7.8 21Z" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                        </div>
+                        <input class="tw-hidden js-password-toggle" id="toggle" type="checkbox" />
+                        <label class="hover:tw-bg-gray-50 tw-rounded tw-px-1 tw-text-sm tw-text-gray-600 tw-font-mono tw-cursor-pointer js-password-label" for="toggle">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#94a3b8" class="tw-w-6 tw-h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        </label>
+                      </div>
+                      {% render_field form.password1 autocomplete="current-password" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pr-16 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6 js-password" %}
+                    </div>
+                  </div>
+                  {% for error in form.password1.errors %}
+                    <div class="tw-text-red-600">{{ error|escape }}</div>
+                  {% endfor %}
+                </div>
+                <div>
+                  <label for="{{ form.password2.id_for_label }}" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">{{ form.password2.label }}</label>
+                  <div class="tw-mt-2">
+                    <div class="tw-relative tw-w-full">
+                      <div class="tw-absolute tw-inset-y-0 tw-right-0 tw-flex tw-items-center tw-px-2">
+                        <div class="caps_lock" style="display: none;">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 12L12 8M12 8L8 12M12 8V16M7.8 21H16.2C17.8802 21 18.7202 21 19.362 20.673C19.9265 20.3854 20.3854 19.9265 20.673 19.362C21 18.7202 21 17.8802 21 16.2V7.8C21 6.11984 21 5.27976 20.673 4.63803C20.3854 4.07354 19.9265 3.6146 19.362 3.32698C18.7202 3 17.8802 3 16.2 3H7.8C6.11984 3 5.27976 3 4.63803 3.32698C4.07354 3.6146 3.6146 4.07354 3.32698 4.63803C3 5.27976 3 6.11984 3 7.8V16.2C3 17.8802 3 18.7202 3.32698 19.362C3.6146 19.9265 4.07354 20.3854 4.63803 20.673C5.27976 21 6.11984 21 7.8 21Z" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                        </div>
+                        <input class="tw-hidden js-password-toggle" id="toggle" type="checkbox" />
+                        <label class="hover:tw-bg-gray-50 tw-rounded tw-px-1 tw-text-sm tw-text-gray-600 tw-font-mono tw-cursor-pointer js-password-label" for="toggle">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#94a3b8" class="tw-w-6 tw-h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        </label>
+                      </div>
+                      {% render_field form.password2 class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pr-16 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6 js-password" %}
+                    </div>
+                  </div>
+                  {% for error in form.password2.errors %}
+                    <div class="tw-text-red-600">{{ error|escape }}</div>
+                  {% endfor %}
+                </div>
+                <div>
+                  <label for="{{ form.how_did_you_meet_us.id_for_label }}" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">{{ form.how_did_you_meet_us.label }}</label>
+                  <div class="tw-mt-2">
+                    {% render_field form.how_did_you_meet_us class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" %}
+                  </div>
+                  {% for error in form.how_did_you_meet_us.errors %}
+                    <div class="tw-text-red-600">{{ error|escape }}</div>
+                  {% endfor %}
+                </div>
+                <div style="display: none;" id="how_did_you_meet_us_form">
+                  <label for="{{ form.how_did_you_meet_us_form.id_for_label }}" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">{{ form.how_did_you_meet_us_form.label }}</label>
+                  <div class="tw-mt-2">
+                    {% render_field form.how_did_you_meet_us_form class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" %}
+                  </div>
+                  {% for error in form.how_did_you_meet_us_form.errors %}
+                    <div class="tw-text-red-600">{{ error|escape }}</div>
+                  {% endfor %}
+                </div>
+                <div>
+                  <button type="submit" class="tw-flex tw-w-full tw-justify-center tw-rounded-md tw-bg-primary-600 tw-px-3 tw-py-1.5 tw-text-sm tw-font-semibold tw-leading-6 tw-text-white tw-shadow-sm hover:tw-bg-primary-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600">Entrar</button>
+                </div>
+              </form>
+            </div>
+            <div class="tw-mt-10">
+              <div class="tw-relative">
+                <div class="tw-absolute tw-inset-0 tw-flex tw-items-center" aria-hidden="true">
+                  <div class="tw-w-full tw-border-t tw-border-gray-200"></div>
+                </div>
+                <div class="tw-relative tw-flex tw-justify-center tw-text-sm tw-font-medium tw-leading-6">
+                  <span class="tw-bg-white tw-px-6 tw-text-gray-900">Ou entre com sua conta</span>
+                </div>
+              </div>
+              <div class="tw-mt-6 tw-grid tw-grid-cols-1 tw-gap-4">
+                <a href="{% url 'accounts:login' %}" class="tw-flex tw-w-full tw-items-center tw-justify-center tw-gap-3 tw-rounded-md tw-bg-white tw-px-3 tw-py-1.5 tw-text-[#717171] tw-border tw-border-[#dfe1e4] tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-[#24292F]">
+                  <span class="tw-text-sm tw-font-semibold tw-leading-6">Já tenho uma conta</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="https://unpkg.com/focus-visible"></script>
+    <script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+    <script type="text/javascript">
+
+      const iconEye = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#94a3b8" class="tw-w-6 tw-h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>'
+      const iconEyeSlash = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#94a3b8" class="tw-w-6 tw-h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>'
+
+      const passwordToggle = document.querySelector('.js-password-toggle')
+      passwordToggle.addEventListener('change', function() {
+        const password = document.querySelector('.js-password')
+        const passwordLabel = document.querySelector('.js-password-label')
+
+        if (password.type === 'password') {
+          password.type = 'text'
+          passwordLabel.innerHTML = iconEyeSlash
+        } else {
+          password.type = 'password'
+          passwordLabel.innerHTML = iconEye
+        }
+
+        password.focus()
+      })
+
+      const passwordInput = document.getElementById('{{ form.password1.id_for_label }}')
+      const passwordCapsLockIcon = document.querySelectorAll('.caps_lock')
+
+      passwordInput.addEventListener('keyup', function(event) {
+        if (event.getModifierState('CapsLock')) {
+          passwordCapsLockIcon.forEach((element) => {
+            element.style.display = 'block'
+          })
+        } else {
+          passwordCapsLockIcon.forEach((element) => {
+            element.style.display = 'none'
+          })
+        }
+      })
+      passwordInput.addEventListener('keydown', function(event) {
+        if (event.getModifierState('CapsLock')) {
+          passwordCapsLockIcon.forEach((element) => {
+            element.style.display = 'block'
+          })
+        } else {
+          passwordCapsLockIcon.forEach((element) => {
+            element.style.display = 'none'
+          })
+        }
+        
+      })
+      passwordInput.addEventListener('keyup', function(event) {
+        if (event.getModifierState('CapsLock')) {
+          passwordCapsLockIcon.forEach((element) => {
+            element.style.display = 'block'
+          })
+        } else {
+          passwordCapsLockIcon.forEach((element) => {
+            element.style.display = 'none'
+          })
+        }
+      })
+      passwordInput.addEventListener('keydown', function(event) {
+        if (event.getModifierState('CapsLock')) {
+          passwordCapsLockIcon.forEach((element) => {
+            element.style.display = 'block'
+          })
+        } else {
+          passwordCapsLockIcon.forEach((element) => {
+            element.style.display = 'none'
+          })
+        }
+      })
+
+      const howDidYouMeetUsInput = document.getElementById('{{form.how_did_you_meet_us.auto_id}}')
+      const howDidYouMeetUsFormInput = document.getElementById('how_did_you_meet_us_form')
+      
+      howDidYouMeetUsInput.addEventListener('change', (event) => {
+        if(event.target.value == 'others') {
+          howDidYouMeetUsFormInput.style.display = 'block'
+        } else {
+          howDidYouMeetUsFormInput.style.display = 'none'
+        }
+      })
+      $("#{{form.schools.auto_id}}").select2({
+        tags: true
+      });
+      $("#{{form.schools.auto_id}}").on('change', () => {
+        console.log($("#{{form.schools.auto_id}}").val())
+      })
+    </script>
+    {% if not disable_support_chat and not DEBUG %}
+      {% include 'includes/chatwoot.html' with user_type="anonimo" %}
+    {% endif %}
+  </body>
+</html>
+{% endcomment %}

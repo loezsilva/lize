@@ -1,0 +1,1593 @@
+{% extends request.user.get_base_url|default:'redesign/base.html' %}
+{% comment %} {% extends request.user.get_base_url|default:'administration/base.html' %} {% endcomment %}
+
+{% load static %}
+{% load increment %}
+
+{% block title %}Detalhes da prova - Lize{% endblock title %}
+
+{% block css-additional %}
+<link rel="stylesheet" href="{% static 'css/annotorious/annotorious.min.css' %}">
+<style>
+  #line-break{
+    white-space: pre-wrap;
+  }
+</style>
+{% endblock %}
+
+
+{% block js-header-additional %}
+    <script src="{% static 'js/annotorious/openseadragon.min.js' %}"></script>
+    <script src="{% static 'js/annotorious/annotorious.min.js' %}"></script>
+    <script src="{% static 'js/annotorious/openseadragon-annotorious.min.js' %}"></script>
+{% endblock js-header-additional %}
+
+{% block content-fixed %}
+<div class="ard cer dcv tw-mb-16">
+{% if is_external %}
+    <nav class="navbar navbar-dark">
+      <div class="col-md text-center">
+        <h3><i class="fas fa-graduation-cap"></i> {{object.student.name}}</h3>
+      </div>
+    </nav>
+  {% endif %}
+
+  <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+    <nav class="ls" aria-label="Breadcrumb">
+      <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+        <li>
+          <div>
+            <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+              </svg>
+              <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+            </a>
+          </div>
+        </li>
+        {% if not is_external %}
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="{% url 'applications:application_student_list' %}?category=online" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Provas</a>
+            </div>
+          </li>
+        {% endif %}
+        <li>
+          <div class="ls yu">
+            <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+              <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+            </svg>
+            <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal;">
+              {{ object.application.exam }}
+            </a>
+          </div>
+        </li>
+      </ol>
+    </nav>
+    <div class="d-flex">
+      {% if not is_external %}
+      <div class="d-none d-sm-flex">
+        <div class="contact-content-header rounded" style="border: 1px solid rgba(72, 94, 144, 0.16);">
+          <nav class="nav">
+              <a href="{% url 'applications:application_exam_student_detail_v2' pk=object.pk %}" class="nav-link active">Informações gerais</a>
+              {% if not is_external %}
+                <a href="{% url 'applications:application_exam_student_detail_insight' pk=object.pk %}" class="nav-link">Questões para revisar</a>
+              {% endif %}
+          </nav>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  <div>
+    <h4 class="tx-spacing--1">Detalhes da prova</h4>
+  </div>
+  <div class="row row-xs">      
+    {% if is_enem_simulator and user.client_has_sisu_simulator %}
+      <div class="col-12">
+        <div class="alert alert-primary mb-1">
+          <div class="d-flex justify-content-between align-items-center">
+            <span>
+              <i class="fas fa-bullhorn fa-lg mr-2" style="transform: rotate(-15deg);"></i> 
+              <b>Experimente o Simulador do SISU!</b> Clique no botão para utilizar nossa ferramenta de simulação.
+            </span> 
+            <a href="{% url 'students:sisusimulator' %}#{{object.id}}" class="btn btn-primary">
+              <i class="fas fa-pencil-ruler"></i>
+              Ir para o simulador
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 mt-3" v-if="triData.loading || triData.error">
+        <div class="alert" :class="triData.error ? 'alert-danger':'alert-warning'">
+          <template v-if="triData.loading">
+            <b>Aguarde enquanto calculamos sua nota TRI...</b> <template v-if="triData.retry"><span>O processo pode demorar um pouco, estamos atualizando suas notas.</span></template><i class="fas fa-spinner fa-spin"></i>
+          </template>
+          <template v-if="triData.error">
+            <b>Erro ao tentar calcular sua nota TRI, </b> <span>para maiores informações entre em contato com o suporte.</span>
+          </template>
+        </div>
+      </div>
+      <div class="col-12 my-2 mt-3" v-if="knowledgeAreas.length">
+        <div class="row mb-0">
+          <template v-for="knowledgeArea in knowledgeAreas">
+            <div class="col-12 col-lg-3 mb-1">
+                <div class="lize-card p-1">
+                    <div class="lize-card-body">
+                        <div class="row mb-0">
+                          <div class="col-6 d-flex flex-column">
+                              <h1 class="tx-40 mb-0 tx-primary">#{Number(knowledgeArea.grade).toFixed(1)}</h1>
+                              <h6 class="tx-primary mb-0">Acertos: <strong>#{Number(knowledgeArea.correct_count).toFixed(0)}</strong></h6>
+                              <h6 class="tx-muted mt-1 mb-0" v-if="knowledgeArea.ranking">Ranking: #{knowledgeArea.ranking}/#{getAreaTotalStudents(knowledgeArea.id)}</h6>
+                          </div>
+                          <div class="col-6 d-flex justify-content-end">
+                              <div class="rounded-circle tx-32 d-flex justify-content-center align-items-center" style="width: 64px; height: 64px; background-color: #F1F9FC">
+                                  <template v-if="knowledgeArea.name.toUpperCase().includes('HUMANA')">
+                                      <img height="52" src="{% static 'administration/assets/img/icons/earth-globe.png' %}" alt="">
+                                  </template>
+                                  <template v-if="knowledgeArea.name.toUpperCase().includes('MATEM')">
+                                      <img height="52" src="{% static 'administration/assets/img/icons/ruler.png' %}" alt="">
+                                  </template>
+                                  <template v-if="knowledgeArea.name.toUpperCase().includes('NATUREZA')">
+                                      <img height="52" src="{% static 'administration/assets/img/icons/atom.png' %}" alt="">
+                                  </template>
+                                  <template v-if="knowledgeArea.name.toUpperCase().includes('LINGUAGENS')">
+                                      <img height="52" src="{% static 'administration/assets/img/icons/qa.png' %}" alt="">
+                                  </template>
+                              </div>
+                          </div>
+                        </div>
+                        <div class="row mb-0 mt-2">
+                            <div class="col-12">
+                                <h6 class="text-muted text-truncate">#{knowledgeArea.shortName}</h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          </template>
+        </div>
+      </div>
+      {% else %}
+      <div class="col-12">
+        {% if not is_external %}
+        <div class="alert alert-secondary d-flex justify-content-between align-items-center flex-column flex-md-row"  role="alert">
+        <p class="font-weight-bold mb-0 text-justify">
+          <i class="fas fa-lightbulb mg-r-5"></i>
+          Descubra seus pontos fracos e como você poderia melhorar seu desempenho nas próximas provas.
+        </p>
+        <a
+          href="{% url 'applications:application_exam_student_detail_insight' pk=object.pk %}"
+          class="btn btn-outline-primary font-weight-bold btn-sm ml-3 py-1 mt-2 mt-sm-0"
+        >
+          Ver questões para revisar
+        </a>
+      </div>
+      {% endif %}
+        <div class="card">
+          <div class="card-header">
+            <h6 class="mg-b-0">Prova</h6>
+          </div>
+          <div class="card-body pd-0">
+            <div class="row no-gutters">
+              <div class="col-12 col-md">
+                <div class="crypto">
+                  <div class="media mg-b-10">
+                    <div class="crypto-icon bg-primary">
+                      <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <div class="media-body pd-l-8">
+                      <h6 class="tx-11 tx-spacing-1 tx-uppercase tx-semibold mg-b-5">
+                        Questões
+                      </h6>
+                      <div class="d-flex align-items-baseline tx-rubik">
+                        <h5 class="tx-20 mg-b-0">#{(applicationData.questions_count || applicationData.questions_count == 0) ? applicationData.questions_count : "---"}</h5>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="b-5 l-20 tx-medium">
+                    <label class="tx-9 tx-uppercase tx-sans tx-color-03 mb-0">
+                      <span class="link-01 tx-semibold tx-success" style="color: #009ede; font-weight: 700;">
+                        #{(applicationData.correct_count || applicationData.correct_count == 0) ? applicationData.correct_count : "---"}
+                      </span> Acertos
+                    </label>
+                    <label class="tx-9 tx-uppercase tx-sans tx-color-03 mb-0 mg-l-10">
+                      <span class="link-01 tx-semibold tx-warning" style="color: #78bcec; font-weight: 700;">
+                        #{(applicationData.partial_count || applicationData.partial_count == 0) ? applicationData.partial_count : "---"}
+                      </span> Parciais
+                    </label>
+                    <label class="tx-9 tx-uppercase tx-sans tx-color-03 mb-0 mg-l-10">
+                      <span class="link-01 tx-semibold tx-danger" style="color: #960000; font-weight: 700;">
+                        #{(applicationData.incorrect_count || applicationData.incorrect_count == 0) ? applicationData.incorrect_count : "---"}
+                      </span> Erros
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-md bd-t bd-md-t-0 bd-md-l">
+                <div class="crypto">
+                  <div class="media mg-b-10">
+                    <div class="crypto-icon bg-primary" style="background-color: #2e7fa4 !important;">
+                      <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="media-body pd-l-8">
+                      <h6 class="tx-11 tx-spacing-1 tx-uppercase tx-semibold mg-b-5">
+                        Desempenho
+                      </h6>
+                      <div class="d-flex align-items-baseline tx-rubik">
+                        <h5 class="tx-20 mg-b-0">{{ performance }}</h5>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="b-5 l-20 tx-medium">
+                    <label class="tx-9 tx-uppercase tx-sans tx-color-03 mb-0">
+                      <span class="tx-color-01 tx-semibold">Desempenho geral</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-md bd-t bd-md-t-0 bd-md-l">
+                <div class="crypto">
+                  <div class="media mg-b-10">
+                    <div class="crypto-icon bg-primary" style="background-color: #114761 !important;">
+                      <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="media-body pd-l-8">
+                      <h6 class="tx-11 tx-spacing-1 tx-uppercase tx-semibold mg-b-5">
+                        Nota
+                      </h6>
+                      <div class="d-flex align-items-baseline tx-rubik">
+                        <h5 class="tx-20 mg-b-0">{{ score }}</h5>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="b-5 l-20 tx-medium">
+                    <label class="tx-9 tx-uppercase tx-sans tx-color-03 mb-0">
+                      <span class="tx-color-01 tx-semibold">Nota geral</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              {% if show_ranking %}
+              <div class="col-12 col-md bd-t bd-md-t-0 bd-md-l">
+                <div class="crypto">
+                  <div class="media mg-b-10">
+                    <div class="crypto-icon bg-primary" style="background-color: #0083c1 !important;">
+                      <i class="fas fa-award"></i>
+                    </div>
+                    <div class="media-body pd-l-8">
+                      <h6 class="tx-11 tx-spacing-1 tx-uppercase tx-semibold mg-b-5">
+                        Ranking
+                      </h6>
+                      <div class="d-flex align-items-baseline tx-rubik">
+                        <h5 class="tx-20 mg-b-0">{{ rank_class }}&#186;<small class="tx-11 tx-color-03 tx-medium">/ {{ count_class }}</small></h5>
+                        <label class="tx-9 tx-uppercase tx-sans tx-color-01 tx-semibold mg-l-6 mb-0">
+                          Turma
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="b-5 l-20 tx-medium">
+                    <label class="tx-10 tx-uppercase tx-sans tx-color-03 mb-0">
+                      <span class="tx-color-01 tx-semibold">
+                        {{ rank_unity }}&#186;
+                        <small class="tx-color-03 tx-semibold">/ {{ count_unity }}</small>
+                        <small class="tx-color-01 tx-semibold">Unidade</small>
+                      </span>
+                    </label>
+                    <label class="tx-10 tx-uppercase tx-sans tx-color-03 mg-l-10 mb-0">
+                      <span class="tx-color-01 tx-semibold">
+                        {{ rank_client }}&#186;
+                        <small class="tx-color-03 tx-semibold">/ {{ count_client }}</small>
+                        <small class="tx-color-01 tx-semibold">Instituição</small>
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+        
+      <div class="col-12 mg-t-10">
+        <div class="card ht-md-100p">
+          <div class="card-header bd-b-0 d-flex justify-content-between">
+            <h6 class="lh-5 mg-b-0">Disciplinas</h6>
+            <div class="d-flex">
+              <div class="d-flex align-items-center">
+                <div class="wd-10 ht-10 bg-success rounded-circle pos-relative" style="background-color: #009ede !important;"></div>
+                <span class="tx-medium tx-12 mg-l-10">Acertos</span>
+              </div>
+              <div class="d-flex align-items-center ml-2">
+                <div class="wd-10 ht-10 bg-warning rounded-circle pos-relative" style="background-color: #78bcec !important;"></div>
+                <span class="tx-medium tx-12 mg-l-10">Parciais</span>
+              </div>
+              <div class="d-flex align-items-center ml-2">
+                <div class="wd-10 ht-10 bg-danger rounded-circle pos-relative" style="background-color: #960000 !important;"></div>
+                <span class="tx-medium tx-12 mg-l-10">Erros</span>
+              </div>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-dashboard mg-b-0">
+              <thead>
+                <tr class="list-label">
+                  <th>Disciplina</th>
+                  <th class="text-center">Questões</th>
+                  <th class="text-center">Acertos</th>
+                  <th class="text-center">Parciais</th>
+                  <th class="text-center">Erros</th>
+                  <th class="text-center">Desempenho</th>
+                  {% if not is_enem_simulator %}
+                    <th class="text-center">Nota</th>                  
+                  {% endif %}
+                </tr>
+              </thead>
+              <tbody v-if="examTeacherSubjects.length != 0">
+                <tr v-for="(examTeacherSubject, index) in examTeacherSubjects">
+                  <td class="tx-color-03 tx-normal">
+                    <div
+                      class="media align-items-center cursor-pointer"
+                      @click="showSubjectDetail(index, examTeacherSubject.subject_id)"
+                    >
+                      <div class="media-body">
+                        <p class="tx-medium tx-medium tx-primary mb-0" style="cursor: pointer;">
+                          #{examTeacherSubject.subject ? examTeacherSubject.subject : "Sem disciplina"}
+                        </p>
+                        <p class="tx-12 mg-b-0 tx-color-03 mb-0">
+                          #{examTeacherSubject.knowledge_area}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-center align-middle">#{ examTeacherSubject.examquestions_count }</td>
+                  <td class="tx-medium text-center align-middle">
+                    <span style="color: #009ede;">#{ examTeacherSubject.correct_count }</span>
+                  </td>
+                  <td class="tx-medium text-center align-middle">
+                    <span style="color: #78bcec;">#{ examTeacherSubject.partial_count }</span>
+                  </td>
+                  <td class="tx-medium text-center align-middle">
+                    <span style="color: #960000;">#{ examTeacherSubject.incorrect_count }</span>
+                  </td>
+                  <td class="text-center align-middle">
+                    <p class="tx-normal tx-rubik mg-b-0" style="font-variant-numeric: tabular-nums;">#{ examTeacherSubject.performance }</p>
+                  </td>
+                  {% if not is_enem_simulator %}
+                    <td class="tx-medium text-center align-middle">
+                      <h5 class="tx-normal tx-rubik mg-b-0 lh-1" style="font-variant-numeric: tabular-nums;">
+                        #{Number(examTeacherSubject.score).toFixed(2)} <small class="tx-11 tx-color-03 tx-medium">/ #{Number(examTeacherSubject.total_weight).toFixed(2)}</small>
+                      </h5>
+                    </td>
+                  {% endif %}
+                </tr>
+              </tbody>
+              <!-- preview de disciplinas -->
+              <tbody v-else-if="!examTeacherSubjects.length">
+                {% for subject in subjects_preview %}
+                  <tr>
+                    <td class="tx-color-03 tx-normal">
+                      <div
+                        class="media align-items-center cursor-pointer"
+                      >
+                        <div class="media-body">
+                          <p class="tx-medium tx-medium tx-primary mg-b-0 mg-b-0" style="cursor: pointer;">
+                            {{ subject.teacher_subject__subject__name }}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td>---</td>
+                    <td>---</td>
+                    <td>---</td>
+                    <td>---</td>
+                    <td>---</td>
+                    <td>---</td>
+                  </tr>
+                {% endfor %}
+                <tr><td class="tx-color-03 tx-normal" colspan="7">Buscando dados das disciplinas...</td></tr>
+              </tbody>
+              <tbody v-else>
+                <tr><td class="tx-color-03 tx-normal">Não tem disciplinas</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 mg-t-10" v-if="hasFiles()">
+        <div class="card">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h6 class="lh-5 mg-b-0">Arquivos enviados</h6>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-12">
+                <template v-for="(file, index) in files.objectives_urls">
+                  <button class="btn btn-sm m-1" :class="file == selectedFileUrl ? 'btn-primary':'btn-outline-primary'" @click="showAnnotorious(true, true, file), selectedFileUrl = file">Folha de resposta objetiva #{index + 1}</button>
+                </template>
+                <template v-for="(file, index) in files.discursive_urls">
+                  <button class="btn btn-sm m-1" :class="file == selectedFileUrl ? 'btn-primary':'btn-outline-primary'" @click="showAnnotorious(true, true, file), selectedFileUrl = file">Folha de resposta discursiva #{index + 1}</button>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 mg-t-10">
+        <div class="card">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h6 class="lh-5 mg-b-0">Questões</h6>
+          </div>
+          <div v-if="applicationData.questions_data && applicationData.questions_data.length > 0" class="card-body">
+            <div class="row card-events">
+              <div
+                class="col-4 col-sm-3 col-md-2 col-xl-1/2"
+                v-for="(question, index) in applicationData.questions_data"
+                :data-question="question.id"
+                :data-index="index"
+              >
+                  <div
+                    v-if="question.give_score"
+                    class="media-body event-panel-gray rounded ml-0 mb-2"
+                    @click="showQuestionDetail(question.number_print, question.id)"
+                    style="cursor: pointer;"
+                  >
+                    <span
+                      class="event-time"
+                      title="A questão foi anulada após a aplicação"
+                    >
+                      Anulada e pontuação completa dada
+                    </span>
+                    <div class="d-flex align-items-end justify-content-between">
+                      <h6 class="event-title">
+                        #{question.number_print ? question.number_print + '&#170' : '-'}
+                      </h6>
+                      <div>
+                        <i data-feather="x-circle" style="width: 14px; height: 14px;"></i>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    v-else-if="question.annuled"
+                    class="media-body event-panel-gray rounded ml-0 mb-2"
+                    @click="showQuestionDetail(question.number_print, question.id)"
+                    style="cursor: pointer;"
+                  >
+                    <span
+                      class="event-time"
+                      title="A questão foi anulada após a aplicação"
+                    >
+                      Anulada
+                    </span>
+                    <div class="d-flex align-items-end justify-content-between">
+                      <h6 class="event-title">
+                        #{question.number_print ? question.number_print + '&#170' : '-'}
+                      </h6>
+                      <div>
+                        <i data-feather="x-circle" style="width: 14px; height: 14px;"></i>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    v-else
+                    class="media-body rounded ml-0 mb-2"
+                    :class="getQuestionTemplateData(question, 'class')"
+                    @click="showQuestionDetail(question.number_print, question.id)"
+                    style="cursor: pointer;"
+                  >
+                    <span
+                      class="event-time"
+                      :title="getQuestionTemplateData(question, 'title')"
+                    >
+                      #{getQuestionTemplateData(question, 'title')}
+                    </span>
+                    <div class="d-flex align-items-end justify-content-between">
+                      <h6 class="event-title">
+                        #{question.number_print ? question.number_print + '&#170' : '-'}
+                      </h6>
+                      <div
+                        :title="getQuestionTemplateData(question, 'category_title')"
+                      >
+                        <span v-html="getQuestionTemplateData(question, 'feather')"></span>
+                      </div>
+                    </div>
+                  </div>
+              </div>
+            </div>
+          </div>
+          <!-- preview de questões -->
+          <div v-else-if="!applicationData.questions_data" class="card-body">
+            Carregando Questões...
+            <div class="row card-events">
+              {% for question in questions_preview %}
+                <div class="col-4 col-sm-3 col-md-2 col-xl-1/2">
+                    <div class="media-body event-panel-gray rounded ml-0 mb-2" style="cursor: pointer;">
+                      <div class="d-flex align-items-end justify-content-between">
+                        <h6 class="event-title">
+                          {{ question.number_print }}
+                        </h6>
+                      </div>
+                    </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div v-else class="card-body">
+            Não tem questões
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalSubject" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-body pd-x-25 pd-sm-x-30 pd-t-40 pd-sm-t-20 pd-b-15 pd-sm-b-20">
+          <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </a>
+
+          <div
+            class="d-flex justify-content-center align-items-center"
+            :style="{
+              visibility: modalSubject.status === 'loading' ? 'visible' : 'hidden',
+              minHeight: modalSubject.status === 'loading' ? '150px' : '0px',
+              height: modalSubject.status === 'loading' ? 'unset' : '0px',
+              marginTop: modalSubject.status === 'loading' ? '20px' : '0px',
+            }"
+          >
+            <div class="spinner-border text-primary" role="status">
+              <span class="sr-only">Carregando...</span>
+            </div>
+          </div>
+          <div :style="{visibility: modalSubject.status === 'loading' ? 'hidden' : 'visible'}">
+            <div>
+              <h3 class="tx-16 tx-sm-20 tx-md-24">#{ modalSubject.data.name }</h3>
+              <p class="tx-14 tx-md-16 tx-color-02">#{ modalSubject.data.knowledgeArea }</p>
+            </div>
+            <div class="d-block d-sm-flex justify-content-between">
+              <div>
+                <h6 class="tx-uppercase tx-spacing-1 tx-semibold tx-10 tx-color-02 mg-b-15">Nota</h6>
+                <div class="d-flex align-items-baseline tx-rubik">
+                  <h1 class="tx-40 lh-1 tx-normal tx-spacing--2 mg-b-5 mg-r-5">
+                    #{ modalSubject.data.score }
+                  </h1>
+                  <p class="tx-11 tx-color-03 mg-b-0">
+                    <span class="tx-medium">
+                      - #{ modalSubject.data.performance }
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <div v-if="modalSubject.data.rank" class="mt-4 mt-sm-0">
+                <h6 class="tx-uppercase tx-spacing-1 tx-semibold tx-10 tx-color-02 mg-b-15">Ranking</h6>
+                <div class="d-flex" style="gap: 2.5rem;">
+                  <div>
+                    <h5 class="tx-20 mg-b-0">#{ modalSubject.data.rank.class.value }&#186;<small class="tx-11 tx-color-03 tx-medium">/ #{ modalSubject.data.rank.class.total }&#186;</small></h5>
+                    <label class="tx-9 tx-uppercase tx-sans tx-color-01 tx-semibold mg-l-6 mb-0">
+                      Turma
+                    </label>
+                  </div>
+                  <div>
+                    <h5 class="tx-20 mg-b-0">#{ modalSubject.data.rank.unity.value }&#186;<small class="tx-11 tx-color-03 tx-medium">/ #{ modalSubject.data.rank.unity.total }&#186;</small></h5>
+                    <label class="tx-9 tx-uppercase tx-sans tx-color-01 tx-semibold mg-l-6 mb-0">
+                      Unidade
+                    </label>
+                  </div>
+                  <div>
+                    <h5 class="tx-20 mg-b-0">#{ modalSubject.data.rank.client.value }&#186;<small class="tx-11 tx-color-03 tx-medium">/ #{ modalSubject.data.rank.client.total }&#186;</small></h5>
+                    <label class="tx-9 tx-uppercase tx-sans tx-color-01 tx-semibold mg-l-6 mb-0">
+                      Instituição
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <hr />
+            <label class="tx-uppercase tx-sans tx-10 tx-medium tx-spacing-1 tx-color-03 mg-b-0">Veja seu desempenho por:</label>
+
+            <div class="nav-wrapper tx-13">
+              <div>
+                <nav class="nav nav-line tx-medium">
+                  <a href="#topics" class="nav-link active" data-toggle="tab">Assuntos</a>
+                  <a href="#abilities" class="nav-link" data-toggle="tab">Habilidades</a>
+                  <a href="#competences" class="nav-link" data-toggle="tab">Competências</a>
+                  <a
+                    href="#performance"
+                    class="nav-link"
+                    data-toggle="tab"
+                    @click="handleSubject(modalSubject.data.id)"
+                  >
+                    Histórico de desempenho
+                  </a>
+                </nav>
+              </div>
+            </div>
+            <div class="tab-content">
+              <div id="topics" class="tab-pane fade active show">
+                <table class="table table-sm tx-13 mg-b-0">
+                  <tbody>
+                    <tr v-for="(topic, index) in modalSubject.data.topics">
+                      <td
+                        class="tx-medium pl-0"
+                        :class="index === 0 ? 'border-top-0' : ''"
+                      >
+                        #{ topic.name }
+                      </td>
+                      <td
+                        class="text-right pd-r-0-f"
+                        :class="index === 0 ? 'border-top-0' : ''"
+                      >
+                        #{ topic.performance }
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div id="abilities" class="tab-pane fade">
+                <table class="table table-sm tx-13 mg-b-0">
+                  <tbody>
+                    <tr v-for="(ability, index) in modalSubject.data.abilities">
+                      <td
+                        class="tx-medium pl-0"
+                        :class="index === 0 ? 'border-top-0' : ''"
+                      >
+                        #{ ability.name }
+                      </td>
+                      <td
+                        class="text-right pd-r-0-f"
+                        :class="index === 0 ? 'border-top-0' : ''"
+                      >
+                        #{ ability.performance }
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div id="competences" class="tab-pane fade">
+                <table class="table table-sm tx-13 mg-b-0">
+                  <tbody>
+                    <tr v-for="(competence, index) in modalSubject.data.competences">
+                      <td
+                        class="tx-medium pl-0"
+                        :class="index === 0 ? 'border-top-0' : ''"
+                      >
+                        #{ competence.name }
+                      </td>
+                      <td
+                        class="text-right pd-r-0-f"
+                        :class="index === 0 ? 'border-top-0' : ''"
+                      >
+                        #{ competence.performance }
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div id="performance" class="tab-pane fade">
+                <div id="app-chart" class="row align-items-center">
+                  <div class="col-12">
+                    <div 
+                      class="text-center"
+                      :style="{ opacity: modalSubject.chart.status === 'loading' ? 1 : 0 }"
+                    >
+                      <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Carregando...</span>
+                      </div>
+                    </div>
+                    <div
+                      class="chart-one"
+                      :style="{
+                        opacity: modalSubject.chart.status === 'loading' ? 0.25 : 1,
+                        filter: modalSubject.chart.status === 'loading' ? 'grayscale(1)' : 'none',
+                      }"
+                    >
+                      <div id="subjectChart" style="width: 720px; height: 320px;" class="flot-chart"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="overlay text-center d-none"
+    style="overflow: hidden; z-index: 1000; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; transition: 0.5s ease; background: rgba(0, 0, 0, 0.8);"
+  >
+    <div class="row m-0 shadow bg-secondary fixed-top">
+      <div class="col">
+        <h4 class="text-white pt-3 m-0 pb-1">
+          <i class="fas fa-times text-white fa-2x float-right" @click="showAnnotorious(true, true, modalQuestion.data.fileAnswer, 'modalQuestion')"></i>
+        </h4>
+      </div>
+      <div class="col-12 pb-2">
+        <div id="toolbarDiv">
+          <div class="row m-0 d-flex justify-content-center">
+            <i
+              class="fas fa-home m-2 text-white"
+              style="font-size: 1.1rem"
+              id="home"
+            ></i>
+            <i
+              class="fas fa-search-plus m-2 text-white"
+              style="font-size: 1.1rem"
+              id="zoom-in"
+            ></i>
+            <i
+              class="fas fa-search-minus m-2 text-white"
+              style="font-size: 1.1rem"
+              id="zoom-out"
+            ></i>
+            <i
+              class="fas fa-undo m-2 text-white"
+              style="font-size: 1.1rem"
+              id="rotate-left"
+            ></i>
+            <i
+              class="fas fa-undo m-2 text-white"
+              style="
+                transform: rotate(-90deg);
+                transform: scaleX(-1);
+                font-size: 1.1rem;
+              "
+              id="rotate-right"
+            ></i>
+            <i
+              class="fas fa-expand-arrows-alt m-2 text-white"
+              style="font-size: 1.1rem"
+              id="full-page"
+            ></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row m-0" style="padding-top: 100px">
+      <div class="container p-0">
+        <div class="row d-flex justify-content-center">
+          <div class="col">
+            <div 
+              class="overlay-content"
+              id="img-content"
+              style="height: 720px"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalQuestion" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered mx-wd-sm-650" role="document">
+      <div class="modal-content">
+        <div class="modal-body pd-x-25 pd-sm-x-30 pd-t-40 pd-sm-t-20 pd-b-15 pd-sm-b-20">
+          <a href="" role="button" class="close pos-absolute t-15 r-15 z-index-10" data-dismiss="modal" aria-label="Fechar">
+            <span aria-hidden="true">&times;</span>
+          </a>
+
+          <div
+            class="d-flex justify-content-center align-items-center"
+            :style="{
+              visibility: modalQuestion.status === 'loading' ? 'visible' : 'hidden',
+              minHeight: modalQuestion.status === 'loading' ? '150px' : '0px',
+              height: modalQuestion.status === 'loading' ? 'unset' : '0px',
+              marginTop: modalQuestion.status === 'loading' ? '20px' : '0px',
+            }"
+          >
+            <div class="spinner-border text-primary" role="status">
+              <span class="sr-only">Carregando...</span>
+            </div>
+          </div>
+
+          <div :style="{visibility: modalQuestion.status === 'loading' ? 'hidden' : 'visible'}">
+            <div>
+              <h4>#{ modalQuestion.index ? modalQuestion.index + '&#170; Questão':'A questão não possui numeração.' }</h4>
+              <p class="mb-2">#{ modalQuestion.data.subject }</p>
+            </div>
+            <div class="nav-wrapper mg-b-5 tx-13">
+              <div>
+                <nav class="nav nav-line tx-medium">
+                  <a href="#question" class="nav-link active" data-toggle="tab">Questão</a>
+                  <a href="#question-answer" class="nav-link" data-toggle="tab">Resposta comentada</a>
+                  <a href="#info-topics" class="nav-link" data-toggle="tab">Assuntos abordados</a>
+                  <a href="#info-abilities" class="nav-link" data-toggle="tab">Habilidades</a>
+                  <a href="#info-competences" class="nav-link" data-toggle="tab">Competências</a>
+                </nav>
+              </div>
+            </div>
+
+            <div class="tab-content">
+              <div id="question" class="tab-pane fade active show">
+                <div class="row no-gutters">
+                  <div class="col-12 bg-white rounded-right">
+                    <div class="ht-100p d-flex flex-column justify-content-center">
+                      <div
+                        class="tx-14 tx-md-16 tx-color-02 clean-v-html"
+                        v-html="modalQuestion.data.enunciation"
+                        style="display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;"
+                        :style="{
+                          '-webkit-line-clamp': modalQuestion.showFullEnunciation ? 'unset' : '3'
+                        }"
+                      ></div>
+                      <button
+                        v-if="modalQuestion.data.enunciation"
+                        type="button"
+                        class="btn btn-link d-inline-flex align-items-center justify-content-center p-0 my-2"
+                        @click="toggleShowFullEnunciation()"
+                      >
+                        <template v-if="modalQuestion.showFullEnunciation">
+                          Fechar enunciado
+                        </template>
+                        <template v-else>
+                          Mostrar enunciado completo
+                        </template>
+                        <i class="icon mg-l-5 mg-t-3 tx-12" :class="modalQuestion.showFullEnunciation ? 'ion-ios-arrow-up' : 'ion-ios-arrow-down'"></i>
+                      </button>
+                      <template v-if="!modalQuestion.data.enunciation">
+                        <div class="tx-14 tx-md-16 tx-color-02">
+                          <p>Esta questão não possui enunciado</p>
+                        </div>
+                      </template>
+                
+                      <h6 class="tx-uppercase tx-spacing-1 tx-semibold tx-10 tx-color-03 mg-b-0">
+                        Valor da questão: <span class="tx-12 tx-color-02">#{ modalQuestion.data.weight }</span>
+                      </h6>
+                
+                      <div v-if="modalQuestion.data.category == 'Discursiva' || modalQuestion.data.category == 'Arquivo anexado'"><hr /></div>
+                
+                      <template v-if="modalQuestion.data.category == 'Arquivo anexado'">
+                        <template v-if="modalQuestion.data.fileAnswer && checkAnswerType(modalQuestion.data.fileAnswer)">
+                          <a
+                            href="javascript:void(0)"
+                            class="btn btn-primary btn-sm"
+                            data-animation="effect-scale"
+                            @click="showAnnotorious(false, true, modalQuestion.data.fileAnswer, 'modalQuestion')"
+                          >
+                            <i class="fas fa-image"></i> Ver arquivo enviado
+                          </a>
+                        </template>
+                        <template v-else>
+                            <a
+                              v-if="modalQuestion.data.fileAnswer"
+                              :href="modalQuestion.data.fileAnswer"
+                              class="btn btn-primary btn-sm"
+                              target="_blank"
+                            >
+                              Ver arquivo enviado
+                            </a>
+                        </template>
+                        <span v-else class="text-danger">Sem arquivo anexado</span>
+                      </template>
+                
+                      <template v-if="modalQuestion.data.category == 'Discursiva'">
+                        <span class="font-weight-bold">Sua resposta:</span>
+                        <p v-if="modalQuestion.data.textualAnswer" class="mb-0">#{ modalQuestion.data.textualAnswer }</p>
+                        <span v-else class="text-danger">Sem resposta</span>
+                      </template>
+                
+                      <table
+                        v-if="modalQuestion.data.alternatives.length > 0"
+                        class="table table-sm tx-13 my-4 mg-b-0"
+                      >
+                        <tbody v-if="!modalQuestion.data.annuled">
+                          <tr v-for="(alternative, index) in modalQuestion.data.alternatives">
+                            
+                            <td
+                              :class="{ 'tx-medium': alternative.id == modalQuestion.data.answer }"
+                              style="border-radius: 0.375rem;"
+                              :style="{
+                                backgroundColor: alternative.isCorrect ? '#8ddbad' : (alternative.id == modalQuestion.data.answer || modalQuestion.data.checkedAnswers.includes(alternative.id)) && !alternative.isCorrect ? '#ed9aa3' : '',
+                                borderBottom: modalQuestion.data.alternatives.length - 1 === index ? '1px solid rgba(72, 94, 144, 0.16)' : 'unset',
+                              }"
+                            >
+                              <div class="d-flex align-items-center">
+                                <div
+                                  v-if="modalQuestion.data.category == 'Objetiva'"
+                                  class="wd-15 ht-15 rounded-circle bd bd-3 mr-2"
+                                  :class="{
+                                    'bd-success': alternative.id == modalQuestion.data.answer && alternative.isCorrect,
+                                    'bd-danger': alternative.id == modalQuestion.data.answer && !alternative.isCorrect
+                                  }"
+                                ></div>
+                                <div
+                                  v-else-if="modalQuestion.data.category == 'Somatório'"
+                                  class="wd-15 ht-15 rounded-circle bd bd-3 mr-2"
+                                  :class="{
+                                    'bd-success': modalQuestion.data.checkedAnswers.includes(alternative.id) && alternative.isCorrect,
+                                    'bd-danger': modalQuestion.data.checkedAnswers.includes(alternative.id) && !alternative.isCorrect
+                                  }"
+                                ></div>
+                                <div class="w-100 clean-v-html" v-html="alternative.text"></div>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                        <tbody v-else>
+                          <tr v-for="(alternative, index) in modalQuestion.data.alternatives">
+                            
+                            <td
+                              :class="{ 'tx-medium': alternative.id == modalQuestion.data.answer }"
+                              style="border-radius: 0.375rem;"
+                              :style="{
+                                backgroundColor: '#f3f3f3',
+                              }"
+                            >
+                              <div class="d-flex align-items-center">
+                                <div
+                                  class="wd-15 ht-15 rounded-circle bd bd-3 mr-2"
+                                ></div>
+                                <div class="w-100 clean-v-html" v-html="alternative.text"></div>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+
+                      </table>
+                
+                      <div v-if="modalQuestion.data.category == 'Discursiva' || modalQuestion.data.category == 'Arquivo anexado'"><hr /></div>
+              
+                
+                      <h6 v-if="modalQuestion.data.teacherFeedback" class="tx-uppercase tx-spacing-1 tx-semibold tx-10 tx-color-02 mg-b-5">Correção do professor</h6>
+                      <div v-if="modalQuestion.data.teacherFeedback" class="tx-12 tx-md-13 tx-color-03 mg-b-15 clean-v-html">
+                        <p>#{ modalQuestion.data.teacherFeedback }</p>
+                      </div>
+                      <div class="media bg-ui-01 rounded pd-y-10 pd-x-15 mg-b-20">
+                        <div class="media-body d-flex justify-content-between align-items-center">
+                          <div>
+                            <label style="text-transform: uppercase;
+                            font-size: 10px;
+                            font-weight: 600;
+                            margin-bottom: 0;
+                            letter-spacing: 1px;
+                            color: #8392a5;"
+                          >
+                            Sua nota
+                          </label>
+                          <p v-if="!modalQuestion.data.annuled" style="margin-bottom: 0;
+                          font-family: 'Rubik', sans-serif;
+                          font-size: 24px;
+                          line-height: 1;
+                          letter-spacing: -1px;"
+                          >
+                            #{ modalQuestion.data.percentGrade !== null ? (modalQuestion.data.percentGrade * modalQuestion.data.weight).toFixed(6) : 'Não corrigida' }
+                            <small class="tx-16 tx-color-03 tx-medium"> / #{ modalQuestion.data.weight }</small>
+                            
+                          </p>
+                          <p v-else style="margin-bottom: 0;
+                          font-family: 'Rubik', sans-serif;
+                          font-size: 24px;
+                          line-height: 1;
+                          letter-spacing: -1px;"
+                          >
+                            #{ modalQuestion.data.annuledGiveScore ? modalQuestion.data.weight : 0 }
+                            <small class="tx-16 tx-color-03 tx-medium"> / #{ modalQuestion.data.weight }</small>
+                          </p>
+                          </div>
+                          <div>
+                            <button v-if="modalQuestion.data.haveCorrectionAnswer" v-on:click="showCompetenceModal" type="button" class="btn btn-secondary btn-sm float-right">
+                              <i id="icon-add-remove" class="icon ion-md-add"></i>
+                              Detalhes da Correção
+                            </button>
+                          </div>
+                          
+                        </div>
+                      </div>
+                      <table v-if="showCompetence && modalQuestion.data.haveCorrectionAnswer" class="table table-striped">
+                        <thead class="thead-dark">
+                          <tr>
+                            <th scope="col">Competências</th>
+                            <th scope="col">Pontos</th>
+                          </tr>
+                        </thead>
+                        <tbody v-for="correction in modalQuestion.data.textCorrectionAnswer">
+                          <tr>
+                            <td>
+                              <a id="line-break" >
+                                #{correction.correctionCriterion_Name}
+                              </a>
+                            </td>
+                            <td>
+                              <div class="ht-40 rounded bd bd-2 bd-gray-500 d-flex flex-shrink-0 align-items-center justify-content-center op-6">
+                                #{correction.point.toFixed(2).toString().replace('.',',')}
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <a href="" role="button" class="btn btn-secondary btn-block btn-uppercase" data-dismiss="modal" aria-label="Fechar">Fechar</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="question-answer" class="tab-pane fade">
+                <h6 v-if="modalQuestion.data.embbededAnswerVideo" class="mt-3 tx-uppercase tx-spacing-1 tx-semibold tx-10 tx-color-02 mg-b-5">Resposta em vídeo</h6>
+                <div style="position: relative; overflow: hidden; width: 100%; padding-top: 56.25%;" v-if="modalQuestion.data.embbededAnswerVideo" v-html="modalQuestion.data.embbededAnswerVideo"></div>
+                
+                <h6 v-if="modalQuestion.data.commentedAwnser" class="tx-uppercase tx-spacing-1 tx-semibold mt-3 tx-10 tx-color-02 mg-b-5">Resposta comentada</h6>
+                <div v-if="modalQuestion.data.commentedAwnser" class="tx-12 tx-md-13 tx-color-03 mg-b-15 clean-v-html" v-html="modalQuestion.data.commentedAwnser"></div>
+          
+                <h6 v-if="modalQuestion.data.feedback" class="tx-uppercase tx-spacing-1 tx-semibold mt-3 tx-10 tx-color-02 mg-b-5">Feedback do professor</h6>
+                <div v-if="modalQuestion.data.feedback" class="tx-12 tx-md-13 tx-color-03 mg-b-15 clean-v-html" v-html="modalQuestion.data.feedback"></div>
+                
+              </div>
+              <div id="info-topics" class="tab-pane fade">
+                <div v-if="modalQuestion.data.topics.length == 0">
+                  <p class="mg-t-10 mb-0">Esta questão não tem assuntos definidos.</p>
+                </div>
+                <div v-if="modalQuestion.data.topics.length > 0">
+                  <table class="table table-sm tx-13 mg-b-0">
+                    <tbody>
+                      <tr v-for="(topic, index) in modalQuestion.data.topics">
+                        <td
+                          class="tx-medium pl-0"
+                          :class="index === 0 ? 'border-top-0' : ''"
+                        >
+                          #{ topic.name }
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div id="info-abilities" class="tab-pane fade">
+                <div v-if="modalQuestion.data.abilities.length == 0">
+                  <p class="mg-t-10 mb-0">Esta questão não tem habilidades definidas.</p>
+                </div>
+                <div v-if="modalQuestion.data.abilities.length > 0">
+                  <table class="table table-sm tx-13 mg-b-0">
+                    <tbody>
+                      <tr v-for="(ability, index) in modalQuestion.data.abilities">
+                        <td
+                          class="tx-medium pl-0"
+                          :class="index === 0 ? 'border-top-0' : ''"
+                        >
+                          #{ ability.text }
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div id="info-competences" class="tab-pane fade">
+                <div v-if="modalQuestion.data.competences.length == 0">
+                  <p class="mg-t-10 mb-0">Esta questão não tem competências definidas.</p>
+                </div>
+                <div v-if="modalQuestion.data.competences.length > 0">
+                  <table class="table table-sm tx-13 mg-b-0">
+                    <tbody>
+                      <tr v-for="(competence, index) in modalQuestion.data.competences">
+                        <td
+                          class="tx-medium pl-0"
+                          :class="index === 0 ? 'border-top-0' : ''"
+                        >
+                          #{ competence.text }
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="{% static 'new/administration/lib/jquery.flot/jquery.flot.js' %}"></script>
+
+<script>
+const app_student = new Vue({
+  delimiters: ["#{", "}"],
+  el: "#app",
+  data: {
+    showCompetence: false,
+    modalSubject: {
+      open: false,
+      status: 'idle',
+      index: 0,
+      data: {
+        category: '',
+        feedback: '',
+        rank: {
+          class: { value: null, total: null },
+          unity: { value: null, total: null },
+          client: { value: null, total: null },
+        },
+      },
+      chart: {
+        status: 'idle',
+      }
+    },
+    examTeacherSubjects: [],
+    applicationData: {},
+    imgLoading: true,
+    files: {{object.get_files_urls|safe}},
+    selectedFileUrl: null,
+    modalQuestion: {
+      open: false,
+      status: 'idle',
+      index: 0,
+      data: {
+        category: '',
+        feedback: '',
+        topics: [],
+        abilities: [],
+        competences: [],
+        alternatives: [],
+        haveCompetence: false,
+      },
+      viewer: '',
+      showFullEnunciation: false,
+    },
+    knowledgeAreas: [],
+    knowledgeAreasAgg: [],
+    triData: {
+      loading: true,
+      retry: false,
+      error: false,
+    }
+  },
+  mounted() {
+    
+    {% if user.client_has_sisu_simulator %}
+      if(Boolean("{{is_enem_simulator|default:''}}")) {
+        this.getTRIDataWithRetry()
+      }
+    {% endif %}
+
+    $('<div id="tooltip"></div>').css({
+      position: 'absolute',
+      display: 'none',
+      padding: '0.25rem 0.5rem',
+      'background-color': '#656565',
+      border: '1px solid #606060',
+      'border-radius': '3px',
+      color: '#ffffff',
+      opacity: 0.8,
+      'z-index': 1050,
+    }).appendTo('body');
+
+    $('#subjectChart').bind('plothover', function (event, pos, item) {
+      if (!pos.x || !pos.y) {
+        return;
+      }
+
+      if (item) {
+        const performance = item.datapoint[1];
+
+        $('#tooltip')
+          .html(`${performance}%`)
+          .css({ top: item.pageY + 5, left: item.pageX + 5 })
+          .fadeIn(200);
+      } else {
+        $('#tooltip').stop().hide();
+      }
+    });
+
+    $('#subjectChart').bind('plothovercleanup', function (event, pos, item) {
+      $('#tooltip').hide();
+    });
+
+    $('[data-toggle="tooltip"]').tooltip();
+
+    {% if open_question %}
+      this.showQuestionDetail($("[data-question='{{ open_question }}']").attr('data-index'), "{% url 'api:applications-student:question-detail' application_student_id=object.pk question_id=open_question %}")
+    {% endif %}
+
+    this.getExamTeacherSubjects();
+    this.getQuestionsData();
+    setTimeout(() => {
+      axios.post("{% url 'notifications:api-especial-notification' %}", { where: "after_view_student_application_results" })
+    }, 8000)
+
+  },
+  updated() {
+    MathJax.typeset();
+  },
+  methods: {
+    async showSubjectDetail(index, subjectId) {
+      let url = ''
+      if (subjectId) {
+        url = `{% url 'api:applications-student:subject-detail' application_student_id=object.pk subject_id='00000000-0000-0000-0000-000000000000' %}`
+        url = url.replace('00000000-0000-0000-0000-000000000000', subjectId)
+      }
+      if (!url) return
+
+      $('#modalSubject a[href="#topics"]').tab('show');
+      $('#modalSubject').modal('show');
+
+      this.modalSubject.open = true;
+      this.modalSubject.index = index;
+      this.modalSubject.status = 'loading';
+
+      {% if is_external %}
+        const res = await fetch(url, {
+          headers: {
+            'Content-Type': 'application/json',
+            'hash': '{{ object.hash_access }}'
+          }
+        });
+      {% else %}
+        const res = await fetch(url);   
+      {% endif %}
+        
+      const data = await res.json();
+
+      this.modalSubject.status = 'success';
+      this.modalSubject.data = data;
+    },
+    async showQuestionDetail(index, question_id) {
+      let url = ''
+      if (question_id) {
+        url = `{% url 'api:applications-student:question-detail' application_student_id=object.pk question_id='00000000-0000-0000-0000-000000000000' %}`
+        url = url.replace('00000000-0000-0000-0000-000000000000', question_id)
+      }
+      $('#modalQuestion a[href="#question"]').tab('show');
+      $('#modalQuestion').modal('show');
+      this.showCompetence = false;
+      $('#icon-add-remove').addClass('ion-md-add');
+      $('#icon-add-remove').removeClass('ion-md-remove');
+
+      this.modalQuestion.open = true;
+      this.modalQuestion.index = index;
+      this.modalQuestion.status = 'loading';
+
+      {% if is_external %}
+        const res = await fetch(url, {
+          headers: {
+            'Content-Type': 'application/json',
+            'hash': '{{ object.hash_access }}'
+          }
+        });
+      {% else %}
+        const res = await fetch(url);   
+      {% endif %}
+
+      const data = await res.json();
+
+      this.modalQuestion.status = 'success';
+      this.modalQuestion.data = data;
+
+    },
+    async handleSubject(subject) {
+      this.modalSubject.chart.status = 'loading';
+      const url = '{% url "api:applications-student:subject-detail-chart" application_student_id=object.pk subject_id="00000000-0000-0000-0000-000000000000" %}'.replace('00000000-0000-0000-0000-000000000000', subject);
+      
+      {% if is_external %}
+        const res = await fetch(url, {
+          headers: {
+            'Content-Type': 'application/json',
+            'hash': '{{ object.hash_access }}'
+          }
+        });
+      {% else %}
+        const res = await fetch(url);   
+      {% endif %}
+
+      const data = await res.json();
+      this.modalSubject.chart.status = 'success';
+      const maxValue = Math.max.apply(0, data.applicationsStudent.map(
+        applicationStudent => (Math.ceil(Number(applicationStudent.performance) / 5) * 5) + 5
+      ));
+
+      $.plot(
+        '#subjectChart',
+        [
+          {
+            data: data.applicationsStudent.map(
+              (applicationStudent, index) => [index, Number(applicationStudent.performance)]
+            ),
+            color: '#009ede',
+            lines: {
+              lineWidth: 1,
+              fill: true,
+              fillColor: { colors: [{ opacity: 0 }, { opacity: 0.2 }] },
+            },
+          }
+        ],
+        {
+          series: {
+            shadowSize: 0,
+            lines: { show: true },
+            points: { show: true },
+          },
+          grid: {
+            borderWidth: 0,
+            labelMargin: 10,
+            aboveData: true,
+            clickable: true,
+            hoverable: true,
+          },
+          yaxis: {
+            show: false,
+            max: maxValue,
+          },
+          xaxis: {
+            show: true,
+            tickColor: 'rgba(72, 94, 144, 0.07)',
+            ticks: data.applicationsStudent.map(
+              (applicationStudent, index) => [index, applicationStudent.name]
+            ),
+          },
+        }
+      );
+    },
+    toggleShowFullEnunciation() {
+      this.modalQuestion.showFullEnunciation = !this.modalQuestion.showFullEnunciation;
+    },
+    getAnnotationsList() {
+      this.annotationsList = [];
+      if (this.modalQuestion.data && this.modalQuestion.data.imgAnnotations) {
+        this.modalQuestion.data.imgAnnotations.forEach((annotation) => {
+          let obj = {
+            id: annotation.id,
+            comments: [],
+            tags: [],
+          };
+          annotation.body.forEach((body) => {
+            if (body.purpose == 'commenting') obj.comments.push(body.value);
+            if (body.purpose == 'tagging') {
+              obj.tags.push(body.value);
+            }
+          });
+          this.annotationsList.push(obj);
+          console.log('annotationsList', obj)
+        });
+      } else {
+        return [];
+      }
+    },
+    checkAnswerType(fileAnswer) {
+      if (fileAnswer) {
+        const types = [
+          '.jpeg',
+          '.jpg',
+          '.jpe',
+          '.jfif',
+          '.png',
+          '.bmp',
+          '.gif',
+          '.tif',
+          '.psd',
+          '.tiff',
+          '.exif',
+          '.raw',
+          '.crw',
+          '.cr2',
+          '.nef',
+          '.nrw',
+          '.eps',
+          '.svg',
+          '.webp',
+        ];
+
+        if (types.find((type) => fileAnswer.toLowerCase().includes(type))) return true;
+      }
+
+      return false;
+    },
+    showAnnotorious(close = false, readOnly = true, imgUrl = this.modalQuestion.data.fileAnswer, modalName = 'detailModal') {
+        $(`#${modalName}`).modal('hide');
+        if (this.modalQuestion.viewer) {
+          this.modalQuestion.viewer.forceRedraw();
+          this.modalQuestion.viewer.destroy();
+          if (close) {
+            this.modalQuestion.viewer.close();
+            $('.overlay').addClass('d-none');
+            if(!this.selectedFileUrl) {
+              $(`#${modalName}`).modal('show');
+            }
+            this.modalQuestion.viewer = '';
+            this.selectedFileUrl = null
+            return
+          }
+        }
+        $('.overlay').removeClass('d-none');
+        this.getAnnotationsList();
+        this.modalQuestion.viewer = new OpenSeadragon.Viewer({
+          id: 'img-content',
+          showRotationControl: true,
+          toolbar: 'toolbarDiv',
+          homeButton: 'home',
+          zoomInButton: 'zoom-in',
+          zoomOutButton: 'zoom-out',
+          rotateLeftButton: 'rotate-left',
+          rotateRightButton: 'rotate-right',
+          fullPageButton: 'full-page',
+          prefixUrl: 'https://cdn.jsdelivr.net/npm/openseadragon@3.0/build/openseadragon/images/',
+          tileSources: { 
+            type: 'image', 
+            url: `${imgUrl}` 
+          },
+        });
+
+        var formatter = function (annotation) {
+          let error = [];
+          let warning = [];
+
+          annotation.bodies.forEach(function (body) {
+            if (body.purpose == 'tagging' && body.value.toLowerCase() == 'erro') {
+              error.push(body.value);
+            }
+            if (body.purpose == 'tagging' && body.value.toLowerCase() == 'atenção') {
+              warning.push(body.value);
+            }
+          });
+
+          if (error.length > 0) {
+            return { style: 'stroke-width: 3; stroke: red' };
+          }
+
+          if (warning.length > 0) {
+            return { style: 'stroke-width: 3; stroke: yellow' };
+          }
+
+        };
+
+        this.anno = OpenSeadragon.Annotorious(this.modalQuestion.viewer, {
+          readOnly: readOnly,
+          locale: 'auto',
+          formatter: formatter,
+        });
+
+        this.anno.setAnnotations(this.modalQuestion.data.imgAnnotations ? this.modalQuestion.data.imgAnnotations : []);
+
+        this.anno.on('createAnnotation', (annotation) => {
+          this.updateAnnotations(this.anno.getAnnotations());
+          this.modalQuestion.data.imgAnnotations = this.anno.getAnnotations();
+          this.getAnnotationsList();
+        });
+
+        this.anno.on('updateAnnotation', (annotation) => {
+          this.updateAnnotations(this.anno.getAnnotations());
+          this.modalQuestion.data.imgAnnotations = this.anno.getAnnotations();
+          this.getAnnotationsList();
+        });
+
+        this.anno.on('deleteAnnotation', (annotation) => {
+          this.updateAnnotations(this.anno.getAnnotations());
+          this.modalQuestion.data.imgAnnotations = this.anno.getAnnotations();
+          this.getAnnotationsList();
+        });
+    },
+    showCompetenceModal() {
+      this.showCompetence = !this.showCompetence
+      if(this.showCompetence){
+        $('#icon-add-remove').addClass('ion-md-remove');
+        $('#icon-add-remove').removeClass('ion-md-add');
+      }
+      if(!this.showCompetence){
+        $('#icon-add-remove').addClass('ion-md-add');
+        $('#icon-add-remove').removeClass('ion-md-remove');
+      }
+    },
+    hasFiles() {
+      return this.files.objectives_urls.length || this.files.discursive_urls.length
+    },
+    getAreas(student) {
+      this.knowledgeAreas = student.knowledge_areas.map(knowledgeArea => ({ ...knowledgeArea, shortName: knowledgeArea.name.split(" - ")[0] }))
+    },
+    getAreaTotalStudents(id) {
+      selectedArea = this.knowledgeAreasAgg.filter(item => item.id === id)
+      return selectedArea ? selectedArea[0].total_students : ''
+    },
+    getQuestionTemplateData(question, type) {
+      switch(type) {
+        case 'class':
+          if(question.is_correct) {
+            return "event-panel-green"
+          } else if(question.is_partial) {
+            return "event-panel-yellow"
+          } else if(question.is_incorrect) {
+            return "event-panel-red"
+          } else {
+            return "event-panel-gray"
+          }
+        case 'title':
+          if(question.is_correct) {
+            return "Acertou"
+          } else if(question.is_partial) {
+            return "Parcial"
+          } else if(question.is_incorrect) {
+            return "Errou"
+          } else if (!question.teacher_grade) {
+            return "Aguardando correção"
+          } else {
+            return "Sem resposta"
+          }
+        case 'category_title':
+          switch(question.category) {
+            case 0:
+              return "Questão textual"
+            case 1:
+              return "Questão objetiva"
+            case 2:
+              return "Questão anexo"
+          }
+        case 'feather':
+          switch(question.category) {
+            case 0:
+              return '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-3"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>'
+            case 1:
+              return '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check-circle"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'
+            case 2:
+              return '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-paperclip"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>'
+          }
+      }
+    },
+    async getTRIDataWithRetry() {
+      await this.getTRIData().then((response) => { 
+        let student = response.data.students.at(0)
+        if(student) {
+          this.getAreas(student)
+          this.knowledgeAreasAgg = response.data.knowledge_areas_agg
+        } else {
+          this.triData.retry = true
+          setTimeout(() => {
+            this.triData.loading = true
+            this.triData.error = false
+          }, 300)
+          this.getTRIData(ignoreCache = this.triData.retry).then((response) => {
+            let student = response.data.students.at(0)
+            if(student) {
+              this.getAreas(student)
+              this.knowledgeAreasAgg = response.data.knowledge_areas_agg
+            } else {
+              this.triData.error = true
+            }
+          }).catch(() => {
+            this.triData.error = true
+          }).finally(() => {
+            this.triData.loading = false
+            this.triData.retry = false
+          })
+        }
+      }).catch(() => {
+        this.triData.error = true
+      }).finally(() => {
+        this.triData.loading = false
+      })
+    },
+    async getTRIData(ignoreCache = false) {
+      const data = {
+        exams: ['{{object.application.exam.id}}'],
+        year: 2022,
+        students: ['{{object.student.id}}'],
+        ignore_cache: ignoreCache,
+      }
+      return axios.post("{% url 'analytics:exams_tri' %}", data)
+    },
+    async getExamTeacherSubjects() {
+      // request para pegar resultados por disciplina
+      axios.get("{% url 'applications:teacher_subject_list_from_application' pk=object.pk %}").then((response) => {
+        this.examTeacherSubjects = response.data
+      })
+    },
+    async getQuestionsData() {
+      // request para pegar os resultados relacionados às questões
+      axios.get("{% url 'applications:questions_report_from_application' pk=object.pk %}").then((response) => {
+        this.applicationData = response.data
+      })
+    }
+  },
+});
+</script>
+{% endblock js-additional %}
+

@@ -1,0 +1,463 @@
+{% load static %}
+{% load increment %}
+{% load exam_question_tags %}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8">
+
+    <link rel="stylesheet" href="{% static 'administration/assets/css/app.css' %}">
+    <link rel="stylesheet" href="{% static 'administration/assets/css/app-extra.css' %}">
+
+    <style>
+        
+        @-moz-document url-prefix() {
+            .omr-content {
+                min-height: 225mm !important;
+                max-height: 225mm !important;
+            }
+        }
+
+        body {
+            -webkit-print-color-adjust: exact;
+            font-family: "IBM Plex Sans", sans-serif !important;
+            background-color: #FFF !important;
+            margin: 0 auto !important;
+            width: 280mm;
+            height: 297mm;
+        }
+
+        img {
+            max-width: 100%;
+        }
+
+        table tr td.cell-h-30{
+            height: 30px;
+        }
+        table tr td{
+            min-width: 60px;
+        }
+
+        .table-border > tbody > tr > td {
+            border: 1px solid rgba(72, 94, 144, 0.16) !important;
+        }
+
+        .td-border {
+            border: 2px solid #999999 !important;
+        }
+
+        .table-image {
+            max-height: 20mm;
+            max-width: 50mm;
+        }
+
+        .td-fit {
+            width: 1%;
+            white-space: nowrap;
+        }
+
+        tr.tr-borderless, tr.tr-borderless > td {
+            border-right: 1px solid white !important;
+            border-left: 1px solid white !important;
+        }
+
+        tr.tr-borderless-bottom, tr.tr-borderless-bottom > td {
+            border-bottom: 1px solid white !important;
+        }
+
+        tr.tr-borderless-top, tr.tr-borderless-top > td {
+            border-top: 1px solid white !important;
+        }
+
+        td.td-borderless-top {
+            border-top: 1px solid white !important;
+        }
+        
+        .bg-grey-instructions {
+            background-color: #DEDEDE;
+            font-size: 11pt;
+        }
+        
+        .fill-instructions-text {
+            max-width: 170mm;
+        }
+
+        .fill-img-example {
+            max-height: 13mm;
+        }
+
+        .randomization-version {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .qr-code {
+            position: relative;
+        }
+
+        .qrcontent {
+            letter-spacing: 0.05em;
+            font-size: 12pt;
+        }
+
+        .essay-area {
+            min-height: 360mm;
+            max-height: 360mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .correction-area {
+            width: 100%;
+            min-height: 50mm;
+            padding-top: 15mm;
+            /* border-top: 2px dotted black; */
+        }
+
+        .qr-container {
+            display: flex;
+            flex-flow: column;
+            float: right;
+            margin-right: 3mm;
+        }
+
+        .enrollment-index{
+            padding: 0 !important;
+            color: white;
+            text-align: center;
+            min-width: 0 !important;
+            border-width: 2px !important;
+        }
+
+        .enrollment-table {
+            border: 2px solid #e1e5ed;
+        }
+
+        .enrollment-table tr.tr-borderless, .enrollment-table tr.tr-borderless > td {
+            border-right: 1px solid #999999 !important;
+            border-left: 1px solid #999999 !important;
+        }
+
+        .enrollment-box {
+            margin-top: 4mm;
+            padding-right: 2.3mm;
+        }
+
+        {% if is_draft %}
+        .essay-area::before {
+            content: "RASCUNHO";
+            position: absolute;
+            top: 225mm;
+            left: 53mm;
+            transform: rotate(-45deg);
+            transform-origin: top left;
+            font-size: 128px;
+            color: rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+        {% else %}
+        .omr-marker-bg {
+            background: 
+                url({% static 'omr_marker.jpg' %}) left 1mm top 1mm no-repeat,
+                url({% static 'omr_marker.jpg' %}) right 1mm top 1mm no-repeat,
+                url({% static 'omr_marker.jpg' %}) left 1mm bottom 1mm no-repeat,
+                url({% static 'omr_marker.jpg' %}) right 1mm bottom 1mm no-repeat,
+                white;
+            background-size: 8mm;
+        }
+        {% endif %}
+
+        .omr-td {
+            border-top: 1px solid #adb0b8;
+        }
+
+        .omr-question:last-child .omr-row {
+            border-bottom: 1px solid #adb0b8;
+        }
+
+        .enrollment-table tr.solid-bottom {
+            border-bottom: 1px solid #adb0b8;
+        }
+
+        .enrollment-table .enrollment-index,
+        .enrollment-table .omr-td {
+            border-right: 1px solid #adb0b8 !important;
+        }
+
+        .omr-question {
+            padding: 0 2.15mm;
+        }
+
+        .omr-question .omr-td {
+            font-size: 8pt;
+            text-align: center;
+            min-width: 2mm !important;
+            border: none !important;
+            padding: 1mm 0.5mm !important; 
+        }
+
+        .omr-question .omr-grade-td {
+            font-size: 7pt;
+            text-align: center;
+            min-width: 2mm !important;
+            border: none !important;
+            padding: 1mm 0.5mm !important; 
+        }
+
+        .omr-question .omr-vertical-aligned {
+            display: flex;
+            align-items: center;
+        }
+
+        .omr-question .index {
+            font-weight: bold;
+            text-align: center;
+            vertical-align: middle;
+            margin-left: 1mm;
+            min-width: 10mm !important;
+        }
+
+        .omr-question .omr-td span.omr-circle {
+            border: solid 0.5mm #464646;
+            padding: 0.25mm 0.8mm;
+            border-radius: 5mm;
+            width: 5mm;
+            height: 5mm;
+            display: inline-block;
+            {% if complete_fill %}
+            background-color: #000;
+            {% endif %}
+        }
+
+        .omr-question .omr-grade-td span.omr-circle {
+            border: solid 0.5mm #0d1605;
+            padding: 0.6mm 0.4mm;
+            border-radius: 5mm;
+            width: 5mm;
+            height: 5mm;
+            display: inline-block;
+        }
+
+        .signature {
+            text-align: center;
+            border-top: solid 1px;
+            margin: 10mm auto 5mm auto;
+            min-width: 50%;
+            max-width: 50%;
+            {% if is_draft %}
+            display: none;
+            {% endif %}
+        }
+
+        .essay-tr {
+            border: 1px solid black !important;
+        }
+
+        .essay-td {
+            border-top: 1px solid black !important;
+            border-bottom: 1px solid black !important;
+            height: 7mm;
+            text-align: left;
+            font-size: 8pt;
+        }
+
+        @media all {
+            .pagebreak { display: none; }
+        }
+        
+        .pagebreak { 
+            display: block; 
+            page-break-before: always; 
+            break-before: always;
+        }
+
+        .no-break,
+        table {
+            break-inside: avoid;
+            page-break-after: avoid;
+        }
+
+
+        html, body {
+            height: auto;
+        }
+
+        @page {
+            size: A4;
+            margin-left: 8mm;
+            margin-top: 5mm;
+            margin-right: 8mm;
+            margin-bottom: 0mm;
+        }
+
+        .qrcode {
+            padding-bottom: 5px;
+        }
+
+        .qr-text {
+            font-size: 10pt;
+        }
+
+        .border-white-top {
+            border-top: solid white !important;
+        }
+
+    </style>
+
+  </head>
+  <body class="df-roboto">  
+    <div id="app" style="min-height:100%;">
+        <header>
+            <div class="row m-0">
+                <div class="col-12">
+                    {% if not is_draft %}<p class="text-center mb-0 qrcontent">#${qrContent}#</p>{% endif %}
+                </div>
+                <div class="col-3 p-0 border d-flex justify-content-center align-items-center">
+                    <div style="height: 100px;" class="d-flex align-items-center">
+                        {% if client.logo %}
+                        <img src="{{ client.logo.url }}" class="img-fluid border-0" style="max-width: 150px !important;" alt="">
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col m-0 p-0 border d-flex flex-column justify-content-between">
+                    <div class="row m-0" style="height: 100%;">
+                        <div class="col-12 border d-flex align-items-center text-uppercase">
+                            {{ client.name }}
+                        </div>
+                    </div>
+                    <div class="row m-0" style="height: 100%;">
+                        <div class="col-12 border d-flex align-items-center">
+                            PROVA:&nbsp;<span class="font-weight-bold"> {{object.exam.name|upper}}
+                            {% if application_randomization_version %} - V{{application_randomization_version.version_number}}{% endif %}
+                        </div>
+                    </div>    
+                    <div class="row m-0" style="height: 100%;">
+                        <div class="col-12 border d-flex align-items-center">
+                            ALUNO:&nbsp;
+                            {% if not is_detached and not is_draft %}
+                            <span class="font-weight-bold text-uppercase">
+                                {% if application_student %}
+                                    {{ application_student.student.name }}
+                                    {% if application_student.student.name %} (Mat. {{application_student.student.enrollment_number}}){% endif %}
+                                {% else %}
+                                    #NomeDoAluno
+                                {% endif %}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>    
+                </div>
+                <div class="col-2 border border-left-0 d-flex justify-content-center align-items-center">
+                    <div>
+                        {% if is_draft %}
+                            <span>RASCUNHO</span>
+                        {% else %}
+                            <div class="randomization-version">
+                                {% if application_randomization_version %}V{{application_randomization_version.version_number}}{% endif %}
+                            </div>
+                            <div class="qrcode" id="qrcode"></div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <table class="table table-border table-header mb-0 mt-0">
+            <tr>
+                <td class="omr-marker-bg" colspan="3">
+                    <p class="text-center font-weight-bold m-0 p-0">REDAÇÃO</p>
+                    <div class="essay-area">
+                        <div>
+                            <div class="signature">
+                                Assinatura do aluno
+                            </div>
+                            <table class="essay-table" v-if="examQuestion.rowsCount > 0 && examQuestion.rowsCount <= 33">
+                                <tr class="essay-tr" v-for="index in examQuestion.rowsCount">
+                                    <td class="essay-td">${index}</td>
+                                    <td class="essay-td w-100"></td>
+                                </tr>
+                            </table>
+                            <table class="essay-table" v-else>
+                                <tr class="essay-tr" v-for="index in 33">
+                                    <td class="essay-td">${index}</td>
+                                    <td class="essay-td w-100"></td>
+                                </tr>
+                            </table>
+                        </div>
+                        {% if not is_draft %}
+                        <div class="correction-area">
+                            <div class="qr-container mt-1">
+                                <span class="font-weight-bold">#${examQuestion.shortCode}#</span>
+                                <div id="question-code"></div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+        </table> 
+
+        <p class="text-center m-0">Lize - {% now "Y" %} <span class="text-muted">({% now "U" %})</span></p>
+    </div>
+
+    <script src="{% static 'js/vue.min.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+    <script src="{% static 'administration/lib/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'js/qrcode.js' %}"></script>
+    <script src="{% static 'administration/lib/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+    <script type="application/javascript">
+
+        var app_question = new Vue({
+            delimiters: ['${', '}'],
+            el: '#app',
+            data: {
+                qrContent: {% if qr_code_text %} "{{qr_code_text}}" {% else %} "###QR_CONTENT###" {% endif %},
+                examQuestion: {
+                    shortCode: "{{exam_question.short_code}}",
+                    rowsCount: {{exam_question.question.quantity_lines|default:30}},
+                }
+            },
+            methods: {
+                generateQRCode() {
+                    const element = $("#qrcode")[0]
+                    var qrcode = new QRCode(element, {
+                        text: this.qrContent,
+                        width: 90,
+                        height: 90,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.M
+                    });
+                    
+                    const questionElement = $("#question-code")[0]
+                    var qrcodeQuestion = new QRCode(questionElement, {
+                        text: this.examQuestion.shortCode,
+                        width: 60,
+                        height: 60,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.M
+                    });
+                },
+            },
+            mounted() {
+                window.onload = () => {
+                    this.generateQRCode()
+                }
+            }
+        })
+    </script>
+
+    <script defer>
+        document.addEventListener('DOMContentLoaded', function() {
+            let loadedElement = document.createElement('div')
+            loadedElement.id = 'loaded'
+            document.body.appendChild(loadedElement)
+        });
+    </script>
+
+  </body>
+</html>

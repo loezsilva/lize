@@ -1,0 +1,138 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Configurações de tags de revisão - Lize{% endblock title %}
+
+{% block css-additional %}
+
+{% endblock css-additional %}
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+      <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+        <nav class="ls" aria-label="Breadcrumb">
+          <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+            <li>
+              <div>
+                <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                    <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+                </a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="{% url 'exams:deviations_list' %}" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Devios de correção</a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">{% if not object %}Cadastrar{% else %}Editar{% endif %}</a>
+              </div>
+            </li>
+          </ol>
+        </nav>
+        <div class="d-none d-md-block">
+          <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+          </a>
+        </div>
+      </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card mg-b-10">
+                <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+                    <div>
+                        <h6 class="mg-b-5">{% if not object %}Cadastrar uma nova{% else %}Editar a{% endif %} tag</h6>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-row">
+                            <div class="col-md-6 mt-1 mb-2">
+                                <label for="{{form.criterion.auto_id}}">Critério de correção</label>
+                                {% render_field form.criterion placeholder="" class="form-control" %}
+                                {% for error in form.criterion.errors %}
+                                  <small class="text-danger">{{error}}</small>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-6 mt-1 mb-2">
+                                <label for="{{form.short_name.auto_id}}">Título do desvio</label>
+                                {% render_field form.short_name placeholder="" class="form-control" %}
+                                {% for error in form.short_name.errors %}
+                                <small class="text-danger">{{error}}</small>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-6 mt-1 mb-2">
+                                <label for="{{form.description.auto_id}}">Descrição</label>
+                                {% render_field form.description placeholder="" class="form-control" %}
+                                {% for error in form.description.errors %}
+                                <small class="text-danger">{{error}}</small>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-6 mt-1 mb-2">
+                                <label for="{{form.score.auto_id}}">Pontos</label>
+                                {% render_field form.score placeholder="" class="form-control" %}
+                                {% for error in form.score.errors %}
+                                <small class="text-danger">{{error}}</small>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <button class="btn btn-primary" type="submit">Criar</button>
+                            </div>
+                        </div>
+                        <input type="hidden" name="client" value="{{user.get_clients_cache.0}}">
+                    </form>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+
+{% endblock extra-modal %}
+
+{% block js-additional %}
+
+<script type="text/javascript" src="{% static 'tinymce/tinymce.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.20/lodash.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    var app = new Vue({
+        el: '#app',
+        delimiters: ['${', '}'],
+        data: {
+        },
+        watch:{
+        },
+        methods: {
+        },
+        mounted() {
+            
+        }
+    });
+</script>
+{% endblock js-additional %}

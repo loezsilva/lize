@@ -1,0 +1,289 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    <!-- Twitter -->
+    <meta name="twitter:site" content="https://app.lizeedu.com.br">
+    <meta name="twitter:creator" content="Fiscallize">
+    <meta name="twitter:card" content="Monitoramento e aplicações de provas online">
+    <meta name="twitter:title" content="Fiscallize Remote">
+    <meta name="twitter:description" content="Monitoramento e aplicações de provas online">
+    <!-- <meta name="twitter:image" content="#"> -->
+
+    <!-- Facebook -->
+    <meta property="og:url" content="https://app.lizeedu.com.br">
+    <meta property="og:title" content="Fiscallize Remote">
+    <meta property="og:description" content="Monitoramento e aplicações de provas online">
+
+    <!-- Meta -->
+    <meta name="description" content="Monitoramento e aplicações de provas online">
+    <meta name="author" content="Fiscallize Remote">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}" />
+    <title>Lize - Envio de questões via QR Code</title>
+    <!-- vendor css -->
+    <link href="{% static 'administration/lib/@fortawesome/fontawesome-free/css/all.min.css' %}" rel="stylesheet">
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="{% static 'administration/assets/css/app.css' %}">
+
+    <script src="{% static 'js/vue.min.js' %}"></script>
+    
+    <script src="{% static 'administration/lib/jquery/jquery.min.js' %}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <style>
+        
+        img {
+            max-height: 420px;
+            max-width: 100%;
+        }
+        .fiscallize-exemple {
+            font-size: 0.875rem;
+            letter-spacing: normal;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid rgba(72, 94, 144, 0.16);
+            position: relative; }
+            @media (min-width: 992px) {
+              .fiscallize-exemple {
+                padding: 20px; } }
+            @media (min-width: 1200px) {
+              .fiscallize-exemple {
+                padding: 25px; 
+              } 
+          }
+          .fiscallize-exemple::before {
+            content: attr(data-label);
+            display: block;
+            position: absolute;
+            top: -6px;
+            left: 5px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: -apple-system, BlinkMacSystemFont, "Inter UI", Roboto, sans-serif;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            background-color: inherit;
+            color: #8392a5;
+            padding: 0 6px; 
+          }
+          .fiscallize-exemple.df-inverse {
+            background-color: #1c273c;
+            color: rgba(255, 255, 255, 0.7);
+            border-width: 0; 
+          }
+          .fiscallize-exemple.df-inverse::before {
+            background-color: #3b4863;
+            top: -16px;
+            left: 0; 
+          }
+    </style>
+  </head>
+  <body class="d-flex flex-column h-100">    
+      
+    <main id="app" class="pt-2">
+        <div class="container pb-5">
+            <div class="card border-0">
+                <div class="card-body">
+                    <template v-if="!answerSend">
+
+                        <div class="row m-0">
+                            <div class="col-12">
+                                <h4>{{application_student.application.exam.name}}</h4>
+                                <span class="bg-primary text-white rounded p-2 text-truncate">Você está respondendo a um grupo de questões</span>
+                            </div>
+                            <div class="col-12 py-3">
+                                <h5>
+                                    Aluno: {{application_student.student}}
+                                </h5>
+                            <hr>
+                            </div>
+                            <div class="col-12 text-center p-2">
+                                {% if not question_response.arquivo.url %}
+                                <ol class="text-left">
+                                    <li>
+                                        Clique no botão <kbd class="bg-primary text-truncate">ABRIR CÂMERA <i class="fas fa-camera"></i></kbd>
+                                    </li>
+                                    <li>
+                                        Tire uma foto da resposta
+                                    </li>
+                                    <li>
+                                        Aguarde o carregamento da imagem
+                                    </li>
+                                    <li>
+                                        Clique no botão <kbd class="bg-success text-truncate">CONFIRMAR O ENVIO <i class="fas fa-paper-plane"></i></kbd>
+                                    </li>
+                                </ol>
+                                {% else %}
+                                <ol class="text-left">
+                                    <li>
+                                        Clique no botão <kbd class="bg-dark text-truncate"><i class="fas fa-camera"> ALTERAR RESPOSTA </i></kbd>
+                                    </li>
+                                    <li>
+                                        Tire uma foto da resposta
+                                    </li>
+                                    <li>
+                                        Aguarde o carregamento da imagem
+                                    </li>
+                                    <li>
+                                        Clique no botão <kbd class="bg-success text-truncate">CONFIRMAR O ENVIO <i class="fas fa-paper-plane"></i></kbd>
+                                    </li>
+                                </ol>
+                                {% endif %}
+                                <input class="d-none" id="input-file" type="file" @change="readImage($event)" value="ABRIR CÂMERA" name="image" accept="image/*" capture="environment">
+                                <figure v-show="showPreview" class="pos-relative mg-b-0 wd-lg-50p">
+                                    <img id="preview" src="{{question_response.arquivo.url}}" class="img-fit-cover mt-4 img-thumbnail" alt="Responsive image">
+                                    <figcaption class="pos-absolute b-0 l-0 wd-100p pd-20 d-flex justify-content-center">
+                                        <div class="btn-group">
+                                            <label v-if="!(!file || attachment.saving && !attachment.error)"
+                                                class="btn btn-dark btn-icon" for="input-file">
+                                                <i class="fa fa-camera"></i> ALTERAR RESPOSTA
+                                            </label>
+                                        </div>
+                                    </figcaption>
+                                </figure>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <template v-else>
+                        <div class="row m-0">
+                            <div class="col-12 text-center">
+                                <blockquote class="blockquote text-center">
+                                    <img style="max-width: 150px;" src="{% static 'success.gif' %}" class="mt-2">
+                                    <h4 class="pb-3">Resposta enviada com sucesso!</h4>
+                                    <p style="line-height: 17px;" class="mb-0 font-weight-bold">
+                                        Para validar sua resposta clique no botão <span class="tx-primary text-nowrap"> Validar Resposta</span> abaixo do grupo de questões.</span>
+                                        <br>
+                                    </p>
+                                </blockquote>
+                                <h4>Siga o exemplo abaixo</h4>
+                                <div data-label="Exemplo na sua prova" class="shadow fiscallize-exemple">
+                                    <img src="{% static 'attachment_qrcode.gif' %}" class="mt-2 px-4">
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+        <footer class="bg-light shadow fixed-bottom text-center" >
+            <div class="container">
+                <div class="row m-0" v-if="!answerSend">
+                    <div class="col-12 py-2" v-if="showPreview">
+                        <button type="button" class="btn btn-primary" disabled v-if="attachment.saving">
+                            <div class="spinner-border text-info spinner-border-sm" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            ENVIANDO RESPOSTA
+                        </button>
+                        
+                        <button type="button" @click="saveAttachment()"
+                            class="btn btn-success animate__animated animate__pulse animate__infinite"  v-if="((!attachment.error && !attachment.saving) && !(!file || attachment.saving && !attachment.error))">CONFIRMAR
+                            O ENVIO <i class="fas fa-paper-plane"></i></button>
+
+                        <label v-if="(!file && !attachment.error) && !attachment.saving" class="btn btn-dark btn-icon" for="input-file"> <i class="fa fa-camera"></i> ALTERAR RESPOSTA
+                        </label>
+
+
+                        <button type="button" @click="saveAttachment()" class="btn btn-danger" v-if="!attachment.saving && attachment.error" :disabled="!file">TENTAR NOVAMENTE <i class="fas fa-paper-plane"></i></button>
+                    </div>
+                    <div class="col-12 py-2" v-else>
+                        <label for="input-file" class="btn btn-large btn-primary my-1 animate__animated animate__pulse animate__infinite">ABRIR CÂMERA <i class="fas fa-camera"></i></label>
+                    </div>
+                </div>
+                <div class="row m-0" v-else>
+                    <div class="col-12 py-2">
+                        <button class="btn btn-lg btn-primary m-1" @click="window.close()">Ok, Entendi, fechar esta janela</button>
+                        <button class="btn btn-lg btn-secondary m-1" @click="window.location.reload()">Enviar uma nova resposta</button>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+
+    <script src="{% static 'administration/lib/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+
+    <script>
+
+
+        var app = new Vue({
+            delimiters: ['${', '}'],
+            el: '#app',
+            data: {
+                showPreview: false,
+                answerSend: false,
+                attachment: {
+                    exam_teacher_subject: '{{exam_teacher_subject.id}}',
+                    application_student: '{{application_student.id}}',
+                    file: null,
+                    saving: false,
+                    error: false,
+                },
+                file: null,
+            },
+            watch:{
+
+            },
+            methods: {
+                readImage(event) {
+                    if (event.target.files && event.target.files[0]) {
+                        var file = new FileReader();
+                        this.file = event.target.files[0]
+                        file.onload = function(e) {
+                            $("#preview").attr('src', e.target.result) 
+                        };       
+                        file.readAsDataURL(event.target.files[0]);
+                        this.showPreview = true
+                    }
+                },
+                saveAttachment() {
+                    this.attachment.saving = true
+                    let formData = new FormData()
+                    formData.append('exam_teacher_subject', this.attachment.exam_teacher_subject)
+                    formData.append('application_student', this.attachment.application_student)
+                    formData.append('send_on_qrcode', true)
+                    formData.append('file', this.file)
+                    axios.post("{% url 'answers:api-attachments-list' %}", formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    }).then((response) => {
+                            this.attachment.answerContent = response.data.file
+                            this.attachment.saving = false
+                            this.attachment.error = false
+                            this.answerSend = true
+                            this.resetAttachment()
+                    }).catch((err) => {
+                        this.attachment.error = true
+                        this.attachment.saving = false
+                    })
+                },
+                resetAttachment() {
+                    this.attachment.saving = false
+                    this.attachment.error = false
+                    this.attachment.answerContent = null
+                    this.file = null
+                    this.showPreview = false
+                },
+            },
+            mounted: function() {
+                var self = this;
+                if('{{question_response.arquivo}}'.length > 0) {
+                    this.showPreview = true
+                }
+            }
+        })
+    </script>
+
+  </body>
+</html>

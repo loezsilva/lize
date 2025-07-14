@@ -1,0 +1,105 @@
+{% load static %}
+
+{% block css-additional %}
+<style>
+    @media print {
+        @page {
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+        body {
+            padding-top: 72px;
+            padding-bottom: 72px ;
+        }
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+            break-before: page;
+            padding-top: 72px;
+        }
+        td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+            background-color: red;
+            color: white;
+        }
+    }
+    table {
+        font-family: arial, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+    }
+        
+    td {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+    }
+    th {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+        background-color: red;
+        color: white;
+    }
+</style>
+{% endblock css-additional %}
+{% regroup classes_context by coordination.unity.name as grouped_classes %}
+{% for unity, classes in grouped_classes %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nome do caderno</th>
+                <th>Sistema</th>
+                <th>Unidade</th>
+                <th>Série</th>
+                <th>Turma</th>
+                <th>Disciplina</th>
+                <th>Sigla</th>
+                <th>Alunos</th>
+                <th>Check</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for class in classes %}
+                {% for application in object_list %}
+                    {% if class in application.school_classes.all %}
+                        <tr>
+                            <td>{{ application.exam.name }}</td>
+                            <td>{{ application.exam.education_system|default:'-' }}</td>
+                            <td>{{ class.coordination.unity.name }}</td>
+                            <td>{{ class.name|slice:"2" }}</td>
+                            <td>{{ class.name }}</td>
+                            <td>
+                                {% for subject in application.exam.get_initials_subjects %}
+                                    {{ subject.name|default:'-' }}
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% for subject in application.exam.get_initials_subjects %}
+                                    {{ subject.initial|default:'-'|upper }}
+                                {% endfor %}
+                            </td>
+                            <td>{{ class.students_count }}</td>
+                            <td></td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+{% endfor %}
+{% block js-additional %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        window.print()
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,161 @@
+{% extends 'redesign/base.html' %}
+{% load permissions %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Configurações de tags de revisão - Lize{% endblock title %}
+
+{% block css-additional %}
+
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+    <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                    <li class="breadcrumb-item"><a href="#">CONFIGURAÇÕES</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        {% if object %}
+                            ATUALIZAR
+                        {% else %}
+                            CADASTRAR
+                        {% endif %}
+                        
+                    </li>
+                </ol>
+            </nav>
+            <h4>
+                Gerenciar tags de revisão
+            </h4>
+        </div>
+        <div class="d-none d-md-block">
+            <button class="btn btn-sm pd-x-15 btn-white btn-uppercase" onclick="history.back();">
+                <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+            </button>
+            <a href="{% url 'clients:question_tag_create' %}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+                <i data-feather="plus" class="wd-10 mg-r-5"></i> Cadastrar nova tag
+            </a>
+        </div>
+    </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+      <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1rem; justify-content: space-between;">
+        <div style="flex: 1;">
+          <!-- Empty -->
+        </div>
+        {% if user|has_perm:'clients.add_questiontag' %}
+            <div>
+            <a href="{% url 'clients:question_tag_create' %}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+                <i data-feather="plus" class="wd-10 mg-r-5"></i> Cadastrar nova tag
+            </a>
+            </div>
+        {% endif %}
+      </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card mg-b-10">
+                <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+                    <div>
+                        <h6 class="mg-b-5">
+                            Suas Tags
+                        </h6>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dashboard mg-b-1">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Tipo</th>
+                                    <th class="text-wrap text-right"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tag in object_list %}
+                                <tr>
+                                    <td class="tx-medium">
+                                        {{tag.name}}
+                                    </td>
+                                    <td class="tx-medium">
+                                        {{tag.get_type_display}}
+                                    </td>
+                                    <td class="text-wrap">
+                                        {% if user|has_perm:'clients.change_questiontag' or user|has_perm:'clients.delete_questiontag' %}
+                                            <div class="d-flex float-right">
+                                                <div class="dropdown">
+                                                    <button class="btn btn-secondary dropdown-toggle" type="button"
+                                                        id="dropdownMenuButtonReport" data-toggle="dropdown"
+                                                        aria-haspopup="true" aria-expanded="false">
+                                                        Opções
+                                                    </button>
+                                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButtonReport">
+                                                        {% if user|has_perm:'clients.change_questiontag' %}
+                                                            <a href="{% url 'clients:question_tag_update' tag.pk %}"
+                                                                class="dropdown-item nav-link"><i class="fas fa-edit"></i>
+                                                                Editar</a>
+                                                        {% endif %}
+                                                        {% if user|has_perm:'clients.delete_questiontag' %}
+                                                            <a href="javascript:void(0)" class="dropdown-item nav-link"
+                                                                onClick="confirmCancel('{% url "clients:question_tag_delete" tag.pk %}')"
+                                                                data-toggle="tooltip" data-placement="top" title="Deletar">
+                                                                <i class="fas fa-trash"></i> Deletar
+                                                            </a>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4">
+                                        Você ainda não cadastrou nenhuma tag
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div><!-- table-responsive -->
+                </div>
+                
+            </div>
+            {% include 'includes/pagination.html' with objects=object_list %}
+        </div>
+    </div>
+  </div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+{% include 'includes/confirm_modal.html' %}
+{% endblock extra-modal %}
+
+{% block js-additional %}
+
+<script type="text/javascript" src="{% static 'tinymce/tinymce.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.20/lodash.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    var app = new Vue({
+        el: '#app',
+        delimiters: ['${', '}'],
+        data: {
+        },
+        watch:{
+        },
+        methods: {
+        },
+        mounted() {
+            
+        }
+    });
+</script>
+{% endblock js-additional %}

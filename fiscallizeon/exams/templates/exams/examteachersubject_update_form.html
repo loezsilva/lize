@@ -1,0 +1,1468 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+
+{% block title %}Banco de questões - Lize{% endblock title %}
+
+{% block css-additional %}
+
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<link rel="stylesheet" href="{% static 'new/administration/assets/fonts/feather/feather.css' %}" />
+<style>
+  #myUL, #myUL ul {
+    list-style-type: none;
+    padding-inline-start: 1.4rem;
+  }
+  
+  /* Remove margins and padding from the parent ul */
+  #myUL {
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Style the caret/arrow */
+  .tree-caret {
+    cursor: pointer;
+    user-select: none; /* Prevent text selection */
+  }
+  
+  /* Create the caret/arrow with a unicode, and style it */
+  .tree-caret::before {
+    content: "\25B6";
+    color: black;
+    display: inline-block;
+    margin-right: 6px;
+  }
+  
+  /* Rotate the caret/arrow icon when clicked on (using JavaScript) */
+  .tree-caret-down::before {
+    transform: rotate(90deg);
+  }
+  
+  /* Hide the nested list */
+  .tree-nested {
+    display: none;
+  }
+  
+  /* Show the nested list when the user clicks on the caret/arrow (with JavaScript) */
+  .tree-active {
+    display: block;
+    margin-left: 10px;
+    border-left: 1px solid #CBD5DD;
+    margin-bottom: 8px;
+  }
+  .cp {
+    cursor: pointer !important;
+  }
+  .hover:hover {
+    background-color: #eef3f6
+  }
+  .alternatives p {
+    margin: 0px;
+  }
+  img {
+    max-width: 100%;
+  }
+  .rounded-lg {
+    border-radius: 12px !important;
+  }
+  .border-primary-fz {
+    border-width: 2px;
+    border-color: #009EDD !important;
+  }
+  .hover-primary-fz:hover {
+    border-color: #009EDD !important;
+  }
+  .text-robot {
+    font-family: "Roboto";
+  }
+  .text-gray {
+    color: #CBD5DD !important;
+  }
+</style>
+{% endblock css-additional %}
+
+{% block content-fixed %}
+<div class="ard cer dcv tw-mb-16">
+  <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+    <!-- Empty -->
+  </div>
+<div id="app" style="min-height: calc(100vh - 110px);">
+  <div class="mg-b-100">
+    <template v-if="page == 'filters'">
+      <div class="d-sm-flex align-items-end justify-content-between mb-2">
+        <div>
+          <h4 class="mg-b-5">Encontre os temas</h4>
+          <p class="mg-b-0 tx-color-03">Filtre abaixo os temas que deseja adicionar à sua prova.</p>
+        </div>
+        <div>
+          <nav class="nav nav-with-icon" v-if="selectedSegment">
+            <a href="javascript:;"  class="nav-link active" data-toggle="modal" data-target="#modalSegmentSelection" style="text-decoration: underline;">
+              #{selectedSegment.name} <i class="ml-2 fe fe-repeat"></i>
+            </a>
+          </nav>
+        </div>
+      </div>
+      <div class="d-flex mg-b-15 mg-lg-b-25">
+        <div class="flex-1">
+          <div class="card mb-5" style="height: 620px;">
+            <div class="card-header pd-t-20 pb-2">
+              <div>
+                <p class="mg-b-10"><strong>Categorias de conteúdos</strong></p>
+              </div>
+            </div>
+            <div class="card-body" style="overflow-y: scroll;">
+              <ul v-if="status === 'success'" id="myUL">
+                <li v-for="subject in subjects">
+                  <div class="d-flex justify-content-between align-items-center py-0 hover">
+                    <div class="d-flex align-items-center">
+                      <div v-on:click.stop="handleTree(subject)">
+                        <template v-if="subject.expanded">
+                          <i class="far fa-folder-open tx-22 text-gray cp"></i>
+                        </template>
+                        <template v-else>
+                          <i class="far fa-folder tx-22 text-gray cp"></i>
+                        </template>
+                      </div>
+                      <div>
+                        <input type="checkbox" style="display: none;" :id="`check-${subject.id}`" v-model="subject.checked" @change="getChecked(subject)" :indeterminate.prop="subject.indeterminate" />
+                        <label class="mb-0 mx-2 text-dark py-1" v-on:click.stop="handleTree(subject)" style="font-weight: 500;">#{ subject.text }</label>
+                      </div>
+                    </div>
+                    <div class="d-flex align-items-center pr-1">
+                      <label :for="`check-${subject.id}`" class="m-0">
+                        <i class="fas fa-check-circle tx-18 text-gray cp" v-if="subject.checked"></i>
+                        <i class="fas fa-plus-circle tx-18 text-primary cp" v-else></i>
+                      </label>
+                    </div>
+                  </div>
+                  <ul class="tree-nested pl-2" :class="{ 'tree-active': subject.expanded }">
+                    <li v-if="subject.status === 'loading'">
+                      <div class="spinner-border text-primary mr-2" style="width: 15px; height: 15px;" role="status">
+                        <span class="sr-only">Loading...</span>
+                      </div>...
+                    </li>
+                    <li
+                      v-if="subject.status === 'success'"
+                      v-for="theme in subject.children"
+                    >
+                      <div class="d-flex justify-content-between align-items-center py-0 hover">
+                        <div class="d-flex align-items-center">
+                          <div class="px-1" v-on:click.stop="theme.leaf ? () => {} : handleTree(theme)">
+                            <template v-if="theme.expanded">
+                              <i class="fas fa-chevron-down text-gray cp"></i>
+                            </template>
+                            <template v-else>
+                              <i class="fas fa-chevron-right text-gray cp"></i>
+                            </template>
+                          </div>
+                          <div class="d-flex align-items-center">
+                            <input type="checkbox" class="d-none" :id="`check-${theme.id}`" v-model="theme.checked" @change="getCheckedLevelTwo(theme, subject)" :indeterminate.prop="theme.indeterminate" />
+                            <label class="mb-0 px-2 text-truncate py-1" v-on:click.stop="theme.leaf ? () => {} : handleTree(theme)" style="color: #8997A3; font-weight: 500;">#{ theme.text }</label>
+                          </div>
+                        </div>
+                        <div class="d-flex align-items-center pr-1">
+                          <label :for="`check-${theme.id}`" class="m-0">
+                            <i class="fas fa-check-circle tx-18 text-gray cp" v-if="theme.checked"></i>
+                            <i class="fas fa-plus-circle tx-18 text-primary cp" v-else></i>
+                          </label>
+                        </div>
+                      </div>
+                      <ul class="tree-nested pl-2" :class="{ 'tree-active': theme.expanded }">
+                        <li v-if="theme.status === 'loading'">
+                          <div class="spinner-border text-primary mr-2" style="width: 15px; height: 15px;" role="status">
+                            <span class="sr-only">Loading...</span>
+                          </div>...
+                        </li>
+                        <li
+                          v-if="theme.status === 'success'"
+                          v-for="mainTopic in theme.children"
+                        >
+                          <div class="d-flex justify-content-between align-items-center py-0 hover">
+                            <div class="d-flex align-items-center">
+                              <div class="px-1" v-on:click.stop="mainTopic.leaf ? () => {} : handleTree(mainTopic)">
+                                <template v-if="mainTopic.leaf">
+                                  <i class="fa fa-minus text-gray tx-10 cp"></i>
+                                </template>
+                                <template v-else>
+                                  <template v-if="mainTopic.expanded">
+                                    <i class="fas fa-chevron-down text-gray cp"></i>
+                                  </template>
+                                  <template v-else>
+                                    <i class="fas fa-chevron-right text-gray cp"></i>
+                                  </template>
+                                </template>
+                              </div>
+                              <div class="d-flex align-items-center">
+                                <input type="checkbox" class="d-none" :id="`check-${mainTopic.id}`" v-model="mainTopic.checked" @change="getCheckedLevelThree(mainTopic, theme, subject)" :indeterminate.prop="mainTopic.indeterminate" />
+                                <label class="mb-0 px-2 text-truncate py-1" v-on:click.stop="mainTopic.leaf ? () => {} : handleTree(mainTopic)" style="color: #8997A3; font-weight: 500;">#{ mainTopic.text }</label>
+                              </div>
+                            </div>
+                            <div class="d-flex align-items-center pr-1">
+                              <label :for="`check-${mainTopic.id}`" class="m-0">
+                                <i class="fas fa-check-circle tx-18 text-gray cp" v-if="mainTopic.checked"></i>
+                                <i class="fas fa-plus-circle tx-18 text-primary cp" v-else></i>
+                              </label>
+                            </div>
+                          </div>
+                          <ul class="tree-nested pl-2" :class="{ 'tree-active': mainTopic.expanded }">
+                            <li
+                              v-for="topic in mainTopic.children"
+                              v-on:click.stop="() => {}"
+                            >
+                              <div class="d-flex justify-content-between align-items-center hover">
+                                <div class="d-flex align-items-center">
+                                  <input type="checkbox" class="d-none" :id="`check-${topic.id}`" v-model="topic.checked" @change="getCheckedLevelFour(topic, mainTopic, theme, subject)" :indeterminate.prop="topic.indeterminate" />
+                                  <label class="mb-0 px-2 text-truncate py-1" :for="`check-${topic.id}`" style="color: #8997A3; font-weight: 500;">#{ topic.text }</label>
+                                </div>
+                                <div class="d-flex align-items-center pr-1">
+                                  <label :for="`check-${topic.id}`" class="m-0">
+                                    <i class="fas fa-check-circle tx-18 text-gray cp" v-if="topic.checked"></i>
+                                    <i class="fas fa-plus-circle tx-18 text-primary cp" v-else></i>
+                                  </label>
+                                </div>
+                              </div>
+                            </li>
+                          </ul>
+                        </li>
+                      </ul>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+              <template v-if="status === 'loading'">
+                <h5 class="text-center py-5 d-flex align-items-center">Carregando dados das disciplinas, aguarde... 
+                  <div class="spinner-border text-primary mx-2" role="status">
+                    <span class="sr-only">Loading...</span>
+                  </div>
+                </h5>
+              </template>
+            </div>
+          </div>
+        </div>
+        <div class="divider-text divider-vertical" data-text="and"><i class="fas fa-exchange-alt tx-18 text-gray py-3"></i></div>
+        <div class="flex-1">
+          <div class="card mb-5" style="height: 620px; max-width: 560px;">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between">
+              <div>
+                <p class="mb-0"><strong>Assuntos pré-selecionados</strong></p>
+              </div>
+              <div class="d-flex mg-t-20 mg-sm-t-0">
+                <nav class="nav nav-with-icon">
+                  <button type="button" class="nav-link" @click="unselectAll" style="border: 0; background: transparent;">
+                    Limpar <i data-feather="x" class="mg-l-5 mg-t-4" style="opacity: 0.4;"></i>
+                  </button>
+                </nav>
+              </div>
+            </div>
+            <div class="card-body" style="overflow-y: scroll;">
+              <div
+                v-if="onlySelectedItems.length === 0"
+                class="d-flex align-items-center justify-content-center"
+                style="height: 100%;"
+              >
+                <p class="mb-0 tx-medium tx-color-03">Nenhum assunto selecionado</p>
+              </div>
+              <div v-for="item in onlySelectedItems" class="d-flex align-items-center justify-content-between mg-b-10">
+                <div v-if="item">
+                  <p class="mb-0 tx-medium" v-if="item.model == 'Subject'">Todos os assuntos da disciplina: #{ item.text }</p>
+                  <p class="mb-0 tx-medium" v-if="item.model == 'Theme'">Todos os assuntos do tema: #{ item.text } <span class="tx-12 tx-color-04 mg-l-10">#{ item.subjectName }</span></p>
+                  <p class="mb-0 tx-medium" v-if="item.model == 'MainTopic'">Todos os assuntos do tópico principal: #{ item.text } <span class="tx-12 tx-color-04 mg-l-10">#{ item.subjectName }</span></p>
+                  <p class="mb-0 tx-medium" v-if="item.model == 'Topic'">#{ item.text } <span class="tx-12 tx-color-04 mg-l-10">#{ item.subjectName }</span></p>
+                </div>
+                <div class="d-flex">
+                  <div>
+                    <!-- <p class="mg-t-2 mb-0 tx-12 tx-color-04 mg-r-10">(123)</p> -->
+                  </div>
+                  <div>
+                    <span class="rounded-circle bg-danger d-flex aling-items-center justify-content-center cp" @click="unselectItem(item)"><i class="fa fa-minus text-white tx-8 p-1"></i></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer pd-20">
+              <template v-if="filters.labels">
+                <div>
+                  <p class="mb-0"><strong>Filtros avançados</strong></p>
+                </div>
+                <div class="mg-t-5 mg-b-25">
+                  <div class="d-flex flex-wrap">
+                    <kbd v-for="label in filters.labels" v-if="label.list.length || label.onlyOneValue" class="rounded bg-primary m-1 text-robot">
+                      #{label.label}#{label.list.length ? ':':''} #{label.list.join(', ')} <i data-feather="x" style="width: 18px; height: 18px;"></i>
+                    </kbd>
+                  </div>
+                </div>
+              </template>
+              <div>
+                <button class="btn btn-sm pd-x-15 btn-outline-primary btn-block" data-toggle="modal" data-target="#advancedFilters">
+                  Filtro avançado <i data-feather="plus"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+    <template v-else>
+      <div class="d-sm-flex align-items-end justify-content-between mg-b-10">
+        <div>
+          <h4 class="mg-b-5">Selecione suas questões!</h4>
+          <p class="mg-b-0 tx-color-03">Marque abaixo as questões desejadas.</p>
+        </div>
+        <div>
+          <nav class="nav nav-with-icon">
+            <a href="javascript:;" @click="page = 'filters'" class="nav-link active" style="text-decoration: underline;">
+              Editar filtros <i class="ml-1 fe fe-edit"></i>
+            </a>
+          </nav>
+        </div>
+      </div>
+      <template v-if="questions && examTeacherSubject">
+        <div class="d-flex mg-b-15 mg-lg-b-25" style="height: 70vh;">
+          <div class="flex-1" style="min-width: 350px;">
+            <div class="card h-100">
+              <div class="card-header pd-t-20">
+                <div>
+                  <div class="search-form">
+                    <button class="btn" type="button" style="border-right-width: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; border-left-width: 1px; border-top-left-radius: 0.25rem; border-bottom-left-radius: 0.25rem;"><i class="fe fe-search"></i></button>
+                    <input type="search" class="form-control" v-model="inputSearch" @keyup="searchQuestions" placeholder="Enunciado" style="border-top-left-radius: 0; border-bottom-left-radius: 0; border-left-width: 0; border-top-right-radius: 0.25rem; border-bottom-right-radius: 0.25rem; border-right-width: 1px;">
+                  </div>
+                  <p class="mb-0 tx-12 tx-medium tx-color-03 mg-t-10">#{shownQuestions().count} encontradas</p>
+                </div>
+              </div>
+              <div class="card-body p-0" id="infinity-scroll" style="overflow-y: scroll;">
+                <template v-if="!awaitForSearch">
+                  <div 
+                    class="d-flex align-items-start p-2 cp hover border-bottom text-break" 
+                    :id="question.id" 
+                    :class="{'bg-light': checkSelection(question.id) || selectedQuestion == question}" 
+                    @click.prevent="selectedQuestion = question" 
+                    v-for="question in shownQuestions().results" 
+                  >
+                    <div class="mg-r-10">
+                      <div class="custom-control custom-checkbox">
+                        <template v-if="!getExamQuestion(question) || (getExamQuestion(question) && getExamQuestion(question).can_be_remove)">
+                          <input type="checkbox" :checked="checkSelection(question.id)" class="custom-control-input" :id="'addQuestion-'+question.id" :disabled="awaitQuestionResult">
+                          <label class="custom-control-label" :for="'addQuestion-'+question.id" @click.prevent="selectQuestion(question)"></label>
+                        </template>
+                        <template v-else>
+                          <input type="checkbox" class="custom-control-input" checked disabled>
+                          <label class="custom-control-label"></label>
+                        </template>
+                      </div>
+                    </div>
+                    <div>
+                      <p v-html="question.enunciation_str"></p>
+                      <div>
+                        <span class="badge badge-pill badge-primary tx-13" style="border-radius: 9999px; background-color: #fff; color: #000; border: 1px solid #cecece;">#{question.category}</span>
+                        <span class="badge badge-pill badge-primary tx-13" style="border-radius: 9999px; background-color: #fff; color: #000; border: 1px solid #cecece;">#{question.level}</span>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+                <template v-else>
+                  <div class="p-2 text-center">
+                    <a href="javascript:;" class="tx-medium">Pesquisando questões aguarde...</a>
+                  </div>
+                </template>
+                <template v-if="!waitForQuestions && infinityScrollConfig.type == 'clickToLoad'">
+                  <div class="p-2 text-center">
+                    <a href="javascript:;" class="tx-medium" @click="getQuestionsFromNextPage()">Carregar mais questões</a>
+                  </div>
+                </template>
+                <div v-if="waitForQuestions" class="p-2 text-center">
+                  <p class="tx-medium tx-color-03"> Carregando questões, aguarde...</p>
+                </div>
+                <div v-if="!shownQuestions().results.length" class="p-2 text-center">
+                  <p class="tx-medium tx-color-03"> Nenhuma questão encontrada...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="flex-2 w-100">
+            <div class="card h-100">
+              <template v-if="!loadingQuestions.includes(selectedQuestion.id)">
+                <div class="card-header pd-t-20 d-flex align-items-center justify-content-between">
+                  <div class="custom-control custom-checkbox">
+                    <template v-if="!getExamQuestion(selectedQuestion) || (getExamQuestion(selectedQuestion) && getExamQuestion(selectedQuestion).can_be_remove)">
+                      <input type="checkbox" :checked="checkSelection(selectedQuestion.id)" class="custom-control-input" @click.prevent="selectQuestion(selectedQuestion)" :id="'selectQuestion-'+selectedQuestion.id" :disabled="awaitQuestionResult">
+                      <label class="custom-control-label tx-medium tx-color-03" :for="'selectQuestion-'+selectedQuestion.id"><span class="cp">#{checkSelection(selectedQuestion.id) ? 'Questão selecionada':'Selecionar Questão'}</span></label>
+                    </template>
+                    <template v-else>
+                      <input type="checkbox" class="custom-control-input" checked disabled>
+                      <label class="custom-control-label tx-medium tx-color-03">Questão selecionada</label>
+                    </template>
+                  </div>
+                  <div class="pl-3">
+                    <button type="button" @click="changeQuestion()" class="btn p-0" :disabled="!questions.results.indexOf(this.selectedQuestion)"><i class="fe fe-chevron-left tx-20 tx-color-03 tx-bold"></i></button>
+                    <button type="button" @click="changeQuestion('next')" class="btn p-0" :disabled="questions.results.indexOf(this.selectedQuestion) == questions.results.length"><i class="fe fe-chevron-right tx-20 tx-color-03 tx-bold"></i></button>
+                  </div>
+                </div>
+                <div class="card-body" style="overflow-y: scroll;">
+                  <div class="d-flex align-items-center justify-content-between mg-b-10" style="border-bottom: 1px solid #cecece; padding-bottom: 1rem;">
+                    <div style="max-width: 70%;">
+                      <p class="mb-0 tx-color-03">#{selectedQuestion.subject_name}</p>
+                    </div>
+                    <div>
+                      <span class="badge badge-pill badge-primary tx-13" style="border-radius: 9999px; background-color: #fff; color: #000; border: 1px solid #cecece;">#{selectedQuestion.category}</span>
+                      <span class="badge badge-pill badge-primary tx-13" style="border-radius: 9999px; background-color: #fff; color: #000; border: 1px solid #cecece;">#{selectedQuestion.level}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <ul class="nav nav-line" id="myTab5" role="tablist" style="border-bottom: unset;">
+                      <li class="nav-item">
+                        <a class="nav-link active" id="home-tab5" data-toggle="tab" href="#home5" role="tab" aria-controls="home" aria-selected="true">Enunciado</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="profile-tab5" data-toggle="tab" href="#profile5" role="tab" aria-controls="profile" aria-selected="false">Dados pedagógicos</a>
+                      </li>
+                    </ul>
+                    <div class="tab-content mg-t-20" id="myTabContent5">
+                      <div class="tab-pane fade show active" id="home5" role="tabpanel" aria-labelledby="home-tab5">
+                        <p class="mg-b-0" v-html="selectedQuestion.enunciation"></p>
+                        <div v-if="selectedQuestion.alternatives.length">
+                          <hr>
+                          <div class="custom-control custom-radio" v-for="alternative in selectedQuestion.alternatives">
+                            <input type="radio" :checked="alternative.is_correct" class="custom-control-input" onclick="return false" :id="alternative.id">
+                            <label class="custom-control-label tx-medium tx-color-03 alternatives" :for="alternative.id" v-html="alternative.text"></label>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="tab-pane fade" id="profile5" role="tabpanel" aria-labelledby="profile-tab5">
+                        <div class="row">
+                          <div class="col-12">
+                            <div class="card">
+                              <div class="card-header p-2 font-weight-bold">
+                                Assuntos Abordados
+                              </div>
+                              <ul class="list-group list-group-flush">
+                                <template v-if="selectedQuestion.topics">
+                                  <li v-if="!selectedQuestion.topics.length" class="list-group-item  p-1">Não há assuntos
+                                    cadastrados nessa questão</li>
+                                  <li v-else v-for="topic in selectedQuestion.topics" class="list-group-item  p-2">
+                                    #{topic.name}</li>
+                                </template>
+                              </ul>
+                            </div>
+                          </div>
+                          <div class="col-12">
+                            <div class="card mt-2">
+                              <div class="card-header p-2 font-weight-bold">
+                                Habilidades
+                              </div>
+                              <ul class="list-group list-group-flush">
+                                <template v-if="selectedQuestion.abilities">
+                                  <li v-if="!selectedQuestion.abilities.length" class="list-group-item  p-1">Não há habilidades
+                                    cadastradas nessa questão</li>
+                                  <li v-else v-for="abilitie in selectedQuestion.abilities" class="list-group-item  p-2">
+                                    #{abilitie.text}</li>
+                                </template>
+                              </ul>
+                            </div>
+                          </div>
+                          <div class="col-12">
+                            <div class="card mt-2">
+                              <div class="card-header p-2 font-weight-bold">
+                                Competências
+                              </div>
+                              <ul class="list-group list-group-flush">
+                                <template v-if="selectedQuestion.competences">
+                                  <li v-if="!selectedQuestion.competences.length" class="list-group-item  p-1">Não há competências
+                                    cadastradas nessa questão</li>
+                                  <li v-else v-for="competence in selectedQuestion.competences" class="list-group-item  p-2">
+                                    #{competence.text}</li>
+                                </template>
+                              </ul>
+                            </div>
+                          </div>
+                          <div class="col-12">
+                            <div class="card mt-2">
+                            <div class="card-header p-2 font-weight-bold">
+                                Banca
+                            </div>
+                            <div class="">
+                                <template v-if="selectedQuestion.board">
+                                <span v-if="!selectedQuestion.board" class="p-1">Não há uma banca
+                                    cadastrada nessa questão</span>
+                                <span v-else class="p-2">
+                                    #{selectedQuestion.board}</span>
+                                </template>
+                            </div>
+                          </div>
+                        </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+              <template v-else>
+                <div class="row">
+                  <div class="col-12">
+                    <h5 class="text-center py-5">Carregando detalhes da questão 
+                      <div class="spinner-border text-primary" role="status">
+                      <span class="sr-only">Loading...</span>
+                    </div></h5>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </template>
+      <template v-else>
+        <hr>
+        <div class="row" v-if="!questions">
+          <div class="col-12 text-center">
+            <h4>Aguarde enquanto procuramos as questões... 
+              <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+              </div>
+            </h4>
+          </div>
+        </div>
+        <div class="row" v-if="questions && !shownQuestions().results.length">
+          <div class="col-12 text-center">
+            <h4>Nenhuma questão encontrada com o filtro selecionado</h4>
+          </div>
+        </div>
+      </template>
+    </template>
+  </div>
+
+  <div class="modal fade" id="advancedFilters" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-body h-100 pd-20 pd-sm-40">
+          <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </a>
+          <form method="get">
+            <div>
+              <h4 class="tx-color-03">Selecione os filtros desejados</h4>
+              <div class="form-group">
+                <label for="questionsCategoryID">Tipo de questão</label>
+                <select name="q_category" id="questionsCategoryID" multiple>
+                  <option value="0">Discursiva</option>
+                  <option value="1">Objetiva</option>
+                  <option value="2">Arquivo anexado</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="questionsDifficultID">Dificuldade</label>
+                <select name="q_level" id="questionsDifficultID" multiple>
+                  <option value="0">Fácil</option>
+                  <option value="1">Médio</option>
+                  <option value="2">Difícil</option>
+                  <option value="3">Indefinida</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="questionsSerieID">Série</label>
+                <select name="q_grade" id="questionsSerieID" multiple></select>
+              </div>
+              <div class="form-group">
+                <label for="questionsBoardID">Banca</label>
+                <select name="q_board" id="questionsBoardID" multiple></select>
+              </div>
+              <div class="custom-control custom-checkbox">
+                  <input type="checkbox" id="onlyMyQuestions" class="custom-control-input">
+                  <label class="custom-control-label" for="onlyMyQuestions">Mostrar apenas questões autorais</label>
+                </div>
+              <button type="button" class="btn btn-primary btn-block mt-3" @click="applyFilters()">Aplicar filtros</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="modalViewQuestion" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-body p-0" v-if="examTeacherSubject">
+          <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </a>
+          <div class="content content-fixed m-0" style="background-color: #f5f6fa; min-height: calc(100vh - 110px);">
+            {% include 'exams/includes/view_questions_template.html' %}
+            <button class="btn btn-primary btn-block" data-dismiss="modal">Fechar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="modalSegmentSelection" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-md" role="document">
+      <div class="modal-content">
+        <div class="modal-body p-0 h-100" style="background-color: #f5f6fa;">
+          <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </a>
+          <div class="content content-fixed m-0">
+            <h4 class="tx-color-03">Escolha o segmento</h4>
+            <div class="row mt-4">
+              <div class="col-12" v-for="_segment in segments" v-if="selectedSegment">
+                <div class="p-1">
+                  <div class="card rounded-lg cp hover-primary-fz" @click="segment = _segment" :class="{'border-primary-fz': segment.id == _segment.id }">
+                    <div class="card-body">
+                      <h3 class="tx-normal tx-rubik tx-spacing--2 mg-b-5">#{_segment.name}</h3>
+                      <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-04 tx-semibold mg-b-10">#{_segment.levels}</h6>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-div-footer mt-4">
+              <button class="btn btn-primary btn-block" @click="applySegment()" data-dismiss="modal">Selecionar Segmento</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="footer fixed-bottom pb-0">
+    <div class="container">
+      <template v-if="page == 'filters'">
+        <div class="row">
+          <div class="col-12">
+            <div class="d-sm-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center">
+                <h4 v-if="statusQuantityOfQuestions === 'loading'" class="mg-b-0">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                  </div>
+                </h4>
+                <h4 v-if="statusQuantityOfQuestions !== 'loading'" class="mg-b-0">
+                  <template v-if="quantityOfQuestions">
+                    #{ quantityOfQuestions }
+                    <span class="tx-12 tx-color-03 tx-semibold mg-l-5">questões encontradas</span>
+                  </template>
+                  <template v-else>
+                    <span class="tx-12 tx-color-03 tx-semibold mg-l-5">Selecione pelo menos um tema acima</span>
+                  </template>
+                </h4>
+              </div>
+              <div>
+                <form method="GET" onsubmit="return false" @submit="goToNextPage()" class="d-flex align-items-center">
+                  <!-- <div class="custom-control custom-checkbox">
+                    <input type="checkbox" id="saveFavoriteID" class="custom-control-input">
+                    <label class="custom-control-label" for="saveFavoriteID">Salvar filtro como favorito</label>
+                  </div> -->
+                  <button class="btn btn-sm pd-x-20 btn-primary mg-l-5" :disabled="!quantityOfQuestions">
+                    Aplicar filtro
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+      <template v-else>
+        <div class="row">
+          <div class="col-12">
+            <div class="d-sm-flex align-items-center justify-content-between">
+              <div>
+                <button class="btn btn-sm pd-x-0 btn-link tx-bold tx-14" @click="page = 'filters'" style="text-decoration: underline;">
+                  <i class="fe fe-arrow-left" class="mg-r-5"></i> Voltar
+                </button>
+              </div>
+              <div>
+                <button data-target="#modalViewQuestion" data-toggle="modal" class="btn btn-outline-primary mg-l-5 tx-13" :disabled="!examTeacherSubject.questions.length">
+                  Ver selecionadas (#{examTeacherSubject.questions.length})
+                </button>
+                <button @click="finish()" class="btn btn-primary mg-l-5 tx-13">
+                  Concluir seleção
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+  </footer>
+</div>
+</div>
+{% endblock content-fixed %}
+{% block footer %}
+{% endblock footer %}
+
+{% block js-additional %}
+
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="{% static 'new/administration/lib/feather-icons/feather.min.js' %}"></script>
+
+<script>
+  const app = new Vue({
+    delimiters: ["#{", "}"],
+    el: "#app",
+    data: {
+      search: '',
+      status: 'idle',
+      subjects: [],
+      themes: [],
+      mainTopics: [],
+      topics: [],
+      selectedItems: [],
+      statusQuantityOfQuestions: 'idle',
+      quantityOfQuestions: 0,
+      grades: [
+        {% for grade in grades %}
+          {
+            id: '{{grade.id}}',
+            name: '{{grade}}',
+            level: {{grade.level}}
+          },
+        {% endfor %}
+      ],
+      segment: {
+        id: "0",
+        name: "Ensino Médio",
+        levels: "1ª Série, 2ª Série e 3ª Série",
+      },
+      boards: [
+          {% for board in boards %}
+            "{{board}}",
+          {% endfor %}
+      ],
+      segments: [
+        {
+          id: "1",
+          name: "Anos iniciais",
+          levels: "1º ano, 2º ano, 3º ano, 5º ano e 5º ano",
+        },
+        {
+          id: "2",
+          name: "Anos Finais",
+          levels: "6º ano, 7º ano, 8º ano e 9º ano",
+        },
+        {
+          id: "0",
+          name: "Ensino Médio",
+          levels: "1ª Série, 2ª Série e 3ª Série",
+        },
+      ],
+      page: 'filters',
+      examTeacherSubject: null,
+      questions: null,
+      foundQuestions: null,
+      selectedQuestion: null,
+      waitForQuestions: false,
+      awaitForSearch: false,
+      infinityScrollConfig: {
+        type: 'infinity',
+        availablesTypes: ['clickToLoad', 'infinity']
+      },
+      isSearch: false,
+      inputSearch: '',
+      loadingQuestions: [],
+      filters: {
+        labels: [],
+      },
+      params: '',
+      selectedSegment: null,
+      onlySelectedItems: [],
+      awaitQuestionResult: false,
+    },
+    watch: {
+      search(newSearch, oldSearch) {
+        if(newSearch.length === 0) this.getSubjects(newSearch);
+        if (newSearch.length < 3 || this.status === 'loading') return;
+        this.getSubjects(newSearch);
+      },
+      inputSearch: function(val){
+        if(!val.length) {
+          this.foundQuestions = null
+        }
+      },
+      selectedQuestion: function(val) {
+        if(!val.detailLoaded) {
+          this.getQuestionDetail(val)
+        }
+      },
+      selectedSegment: function(val) {
+        $('#questionsBoardID').empty()
+        this.boards.forEach((board) => {
+          let newOption = new Option(board, board, false, false);
+          $('#questionsBoardID').append(newOption).trigger('change');
+        })
+      }
+    },
+    methods: {
+      finish() {
+        const url = new URL(window.location.href);
+        let isExerciseList = url.searchParams.has('is_exercise_list')
+        if(isExerciseList) {
+          window.location.href = "{{request.META.HTTP_REFERER}}"
+        } else {
+          window.location.href = `{% url 'exams:exam_teacher_subject_edit_questions' object.id %}`
+        }
+      },
+      goToNextPage() {
+        this.questions = null
+        this.getQuestions();
+        this.page = 'selectQuestions'
+      },
+      unselectItem(item) {
+        this.checkItems(item, false)
+        this.getItemChecked();
+        this.generateUrlParams();
+        this.getQuantityOfQuestions();
+      },
+      unselectAll() {
+        this.subjects.forEach((item) => {
+          this.checkItems(item, false);
+        });
+        this.getItemChecked();
+        this.generateUrlParams();
+        this.getQuantityOfQuestions();
+      },
+      getSeparatedItems() {
+        this.subjects.forEach((subject) => {
+          subject.children.forEach((theme) => {
+            if(theme.model == 'Theme') {
+              this.themes.push(theme)
+            } else if(theme.model == 'MainTopic') {
+              this.mainTopics.push(theme)
+            } else if(theme.model == 'Topic') {
+              this.topics.push(theme)
+            }
+            theme.children.forEach((mainTopic) => {
+              if(mainTopic.model == 'MainTopic') {
+                this.mainTopics.push(mainTopic)
+              } else if(mainTopic.model == 'Topic') {
+                this.topics.push(mainTopic)
+              }
+              mainTopic.children.forEach((topic) => {
+                if(topic.model == 'MainTopic') {
+                  this.mainTopics.push(topic)
+                } else if(topic.model == 'Topic') {
+                  this.topics.push(topic)
+                }
+              })
+            })
+          })
+        })
+      },
+      checkItems(item, value) {
+        item.checked = value;
+        if (item.children.length > 0) {
+          item.children.forEach((child) => {
+            this.checkItems(child, value);
+          });
+        }
+        this.getSelectedLabels();
+      },
+      getAllChecked() {
+        const allChecked = [];
+        this.subjects.forEach(child => {
+          if (child.checked && !child.indeterminate) {
+            allChecked.push(child);
+          }
+          if (child.children.length) {
+            child.children.forEach(child => {
+              if (child.checked && !child.indeterminate) {
+                allChecked.push(child);
+              }
+              if (child.children.length) {
+                child.children.forEach(child => {
+                  if (child.checked && !child.indeterminate) {
+                    allChecked.push(child);
+                  }
+                  if (child.children.length) {
+                    child.children.forEach(child => {
+                      if (child.checked && !child.indeterminate) {
+                        allChecked.push(child);
+                      }
+                    })
+                  }
+                })
+              }
+            })
+          }
+        });
+
+        return allChecked;
+      },
+      getItemChecked() {
+        const checkedItems = [];
+        this.subjects.forEach(child => {
+          if (child.leaf && child.checked) {
+            checkedItems.push(child);
+          } else if (child.children.length) {
+            child.children.forEach(child => {
+              if (child.leaf && child.checked) {
+                checkedItems.push(child);
+              } else if (child.children.length) {
+                child.children.forEach(child => {
+                  if (child.leaf && child.checked) {
+                    checkedItems.push(child);
+                  } else if (child.children.length) {
+                    child.children.forEach(child => {
+                      if (child.leaf && child.checked) {
+                        checkedItems.push(child);
+                      }
+                    })
+                  }
+                })
+              }
+            })
+          }
+        });
+        this.selectedItems = checkedItems;
+      },
+      getChecked(item) {
+        this.checkItems(item, item.checked);
+        this.getItemChecked();
+        this.generateUrlParams();
+        this.getQuantityOfQuestions();
+      },
+      getCheckedLevelTwo(item, parent) {
+        this.checkItems(item, item.checked);
+
+        if (
+          parent.children.some(child => child.checked)
+          && !parent.children.every(child => child.checked)
+        ) {
+          parent.indeterminate = true;
+        } else {
+          parent.indeterminate = false;
+        }
+
+        if (parent.children.every(child => child.checked)) {
+          parent.checked = true;
+        } else if (parent.children.every(child => !child.checked)) {
+          parent.checked = false;
+        }
+
+        this.getItemChecked();
+        this.generateUrlParams();
+        this.getQuantityOfQuestions();
+      },
+      getCheckedLevelThree(item, parent, grandParent) {
+        this.checkItems(item, item.checked);
+
+        if (
+          parent.children.some(child => child.checked)
+          && !parent.children.every(child => child.checked)
+        ) {
+          parent.indeterminate = true;
+          grandParent.indeterminate = true;
+        } else {
+          parent.indeterminate = false;
+          grandParent.indeterminate = false;
+        }
+
+        if (parent.children.every(child => child.checked)) {
+          parent.checked = true;
+        } else if (parent.children.every(child => !child.checked)) {
+          parent.checked = false;
+        }
+
+        if (
+          grandParent.children.some(child => child.checked)
+          && !grandParent.children.every(child => child.checked && !child.indeterminate)
+        ) {
+          grandParent.indeterminate = true;
+        } else {
+          grandParent.indeterminate = false;
+        }
+
+        this.getItemChecked();
+        this.generateUrlParams();
+        this.getQuantityOfQuestions();
+      },
+      getCheckedLevelFour(item, parent, grandParent, greatGrandParent) {
+        this.checkItems(item, item.checked);
+
+        if (
+          parent.children.some(child => child.checked)
+          && !parent.children.every(child => child.checked)
+        ) {
+          parent.indeterminate = true;
+          grandParent.indeterminate = true;
+          greatGrandParent.indeterminate = true;
+        } else {
+          parent.indeterminate = false;
+          grandParent.indeterminate = false;
+          greatGrandParent.indeterminate = false;
+        }
+
+        if (parent.children.every(child => child.checked)) {
+          parent.checked = true;
+        } else if (parent.children.every(child => !child.checked)) {
+          parent.checked = false;
+        }
+
+        if (
+          grandParent.children.some(child => child.checked)
+          && !grandParent.children.every(child => child.checked)
+        ) {
+          grandParent.indeterminate = true;
+          greatGrandParent.indeterminate = true;
+        } else {
+          grandParent.indeterminate = false;
+          greatGrandParent.indeterminate = false;
+        }
+
+        this.getItemChecked();
+        this.generateUrlParams();
+        this.getQuantityOfQuestions();
+      },
+      async handleTree(clickedItem) {
+        try {
+          clickedItem.status = 'loading';
+          clickedItem.expanded = !clickedItem.expanded;
+          if (clickedItem.children.length === 0) {
+            const data = await this.getDataRelated(clickedItem);
+            clickedItem.children = data;
+
+            this.checkItems(clickedItem, clickedItem.checked);
+            this.getItemChecked();
+          }
+          clickedItem.status = 'success';
+        } catch (err) {
+          console.error(err);
+          clickedItem.status = 'error';
+        }
+      },
+      async getInitialSubjects() {
+        this.status = 'loading';
+        try {
+          const res = await fetch(`{% url 'api:subject-tree-list-view' %}?${this.params}`);
+          const data = await res.json();
+          this.subjects = data.map((item) => {
+            return { ...item, children: [], status: 'idle', subjectName: item.subject_name };
+          });
+          this.status = 'success';
+        } catch (err) {
+          console.error(err);
+          this.status = 'error';
+        }
+      },
+      async getDataRelated(item) {
+        try {
+          const res = await fetch(`/api/v1/subjects/tree/${item.id}/?app=subjects&cls=${item.model}`);
+          const data = await res.json();
+          if (!res.ok) throw data;
+          return data.map((item) => {
+            return { ...item, children: [], status: 'idle', subjectName: item.subject_name };
+          });
+        } catch (err) {
+          throw err;
+        }
+      },
+      async getSubjects(search) {
+        this.status = 'loading';
+        try {
+          const res = await fetch(`{% url 'api:subject-tree-list-view' %}?search=${search}${this.params}`);
+          const data = await res.json();
+          this.subjects = data.map((item) => {
+            return { ...item, children: [] };
+          });
+          this.status = 'success';
+        } catch (err) {
+          console.error(err);
+          this.status = 'error';
+        }
+      },
+      async getQuantityOfQuestions() {
+        this.statusQuantityOfQuestions = 'loading';
+        try {
+          const res = await fetch(`{% url 'api2:count-questions' %}?${this.params}`);
+          const data = await res.json();
+          if (!res.ok) throw data;
+          this.quantityOfQuestions = data.count;
+          this.statusQuantityOfQuestions = 'success';
+        } catch (err) {
+          console.error(err);
+          this.statusQuantityOfQuestions = 'error';
+        }
+      },
+      checkIfCanIncludeInParams(item) {
+        if (item) {
+          return item.checked && !item.children.some((c) => !c.checked)
+        }
+        return false
+      },
+      existParam(text) {
+        params = '{{ request.GET.urlencode|safe }}'
+        return params.includes(text)
+      },
+      getItem(id, model) {
+        if(model == 'Subject') {
+          return this.subjects.find(subject => subject.id == id)
+        } else if(model == 'Theme') {
+          return this.themes.find(theme => theme.id == id)
+        } else if(model == 'MainTopic') {
+          return this.mainTopics.find(mainTopic => mainTopic.id == id)
+        } else {
+          return this.topics.find((topic) => topic.id == id)
+        }
+      },
+      getSelectedLabels() {
+        this.getSeparatedItems()
+        this.onlySelectedItems = []
+
+        items = []
+
+        this.subjects.forEach((subject) => {
+          if(this.checkIfCanIncludeInParams(subject)) {
+            if (subject.model == 'Subject') {
+              items.push(this.getItem(subject.id, 'Subject'))
+            }
+          } else {
+            // Themes
+            subject.children.forEach((theme) => {
+              if(this.checkIfCanIncludeInParams(theme)) {
+                if(theme.model == 'Theme') {
+                  items.push(this.getItem(theme.id, 'Theme'))
+                } else if(theme.model == 'MainTopic') {
+                  items.push(this.getItem(theme.id, 'MainTopic'))
+                } else if(theme.model == 'Topic') {
+                  items.push(this.getItem(theme.id, 'Topic'))
+                }
+              } else {
+                // MainTopics
+                theme.children.forEach((mainTopic) => {
+                  if(this.checkIfCanIncludeInParams(mainTopic)) {
+                    if(mainTopic.model == 'MainTopic') {
+                      items.push(this.getItem(mainTopic.id, 'MainTopic'))
+                    } else if(mainTopic.model == 'Topic') {
+                      items.push(this.getItem(mainTopic.id, 'Topic'))
+                    }
+                  } else {
+                    // Topic
+                    mainTopic.children.forEach((topic) => {
+                      if(this.checkIfCanIncludeInParams(topic)) {
+                        items.push(this.getItem(topic.id, 'Topic'))
+                      }
+                    })
+                  }
+                })
+              }
+            })
+          }
+        })
+        this.onlySelectedItems = items
+      },
+      generateUrlParams() {
+        params = ''
+
+        this.subjects.forEach((subject) => {
+          if(this.checkIfCanIncludeInParams(subject)) {
+            if (subject.model == 'Subject') {
+              params += `&subjects=${subject.id}`
+            } else if(subject.model == 'Theme') {
+              params += `&themes=${subject.id}`
+            } else if(subject.model == 'MainTopic') {
+              params += `&main_topics=${subject.id}`
+            } else if(subject.model == 'Topic') {
+              params += `&topics=${subject.id}`
+            }
+          } else {
+            subject.children.forEach((theme) => {
+              if(this.checkIfCanIncludeInParams(theme)) {
+                if(theme.model == 'Theme') {
+                  params += `&themes=${theme.id}`
+                } else if(theme.model == 'MainTopic') {
+                  params += `&main_topics=${theme.id}`
+                } else if(theme.model == 'Topic') {
+                  params += `&topics=${theme.id}`
+                }
+              } else {
+                theme.children.forEach((mainTopic) => {
+                  if(this.checkIfCanIncludeInParams(mainTopic)) {
+                    if(mainTopic.model == 'MainTopic') {
+                      params += `&main_topics=${mainTopic.id}`
+                    } else if(mainTopic.model == 'Topic') {
+                      params += `&topics=${mainTopic.id}`
+                    }
+                  } else {
+                    mainTopic.children.forEach((topic) => {
+                      if(this.checkIfCanIncludeInParams(topic)) {
+                        params += `&topics=${topic.id}`
+                      }
+                    })
+                  }
+                })
+              }
+            })
+          }
+        })
+        if('{{ request.GET.urlencode|safe }}') {
+          params += '&{{ request.GET.urlencode|safe }}' 
+        }
+
+        params += `&segment=${this.selectedSegment.id}`
+        
+        this.params = `${params + this.generateFiltersParams()}`.replace("//", "/").replace("?&", "?").replace("&&", "&")
+        
+      },
+      generateFiltersParams() {
+        let params = ""
+        this.filters.labels = []
+        let categoryObject = { label: "Categoria(s)", list: [] }, difficultObject = { label: "Dificuldade(s)", list: [] }, serieObject = { label: "Série(s)", list: [] }, boardObject = { label: "Banca(s)", list: [] }
+        
+        $("#questionsCategoryID :selected").each(function() {
+          params += `&q_category=${this.value}`
+          categoryObject['list'].push(this.text)
+        });
+        $("#questionsDifficultID :selected").each(function() {
+          params += `&q_level=${this.value}`
+          difficultObject['list'].push(this.text)
+        })
+        $("#questionsSerieID :selected").each(function() {
+          params += `&q_grade=${this.value}`
+          serieObject['list'].push(this.text)
+        })
+        $("#questionsBoardID :selected").each(function() {
+          params += `&q_board=${this.value}`
+          boardObject['list'].push(this.text)
+        })
+        if($("#onlyMyQuestions").prop('checked')) {
+          params += `&only_my_questions=true`
+          this.filters.labels.push({ label: "Questões autorais", list: [], onlyOneValue: true })
+        }
+        this.filters.labels.push(categoryObject)
+        this.filters.labels.push(difficultObject)
+        this.filters.labels.push(serieObject)
+        this.filters.labels.push(boardObject)
+
+        return params
+      },
+      applyFilters() {
+        this.questions = []
+        $("#advancedFilters").modal("hide");
+        this.generateUrlParams();
+        this.getQuantityOfQuestions();
+      },
+      startSelect2Inputs() {
+        $("#questionsCategoryID").select2({
+          closeOnSelect : false,
+          placeholder : "Selecione o tipo",
+          allowHtml: true,
+          allowClear: true,
+          tags: true,
+          width: '100%',
+        })
+        $("#questionsDifficultID").select2({
+          closeOnSelect : false,
+          placeholder : "Selecione a dificuldade",
+          allowHtml: true,
+          allowClear: true,
+          tags: true,
+          width: '100%',
+        })
+        $("#questionsSerieID").select2({
+          closeOnSelect : false,
+          placeholder : "Selecione a série",
+          allowHtml: true,
+          allowClear: true,
+          tags: true,
+          width: '100%',
+        })
+        $("#questionsBoardID").select2({
+          closeOnSelect : false,
+          placeholder : "Selecione a banca",
+          allowHtml: true,
+          allowClear: true,
+          tags: true,
+          width: '100%',
+        })
+      },
+
+      goTo(element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+      },
+      shownQuestions() {
+        return this.foundQuestions ? this.foundQuestions : this.questions
+      },
+      checkSelection(questionID) {
+        return this.examTeacherSubject.questions.find(examQuestion => examQuestion.question.id == questionID || examQuestion.question.source_question_id == questionID)
+      },
+      getExamQuestion(question) {
+        return this.examTeacherSubject.questions.find((examQuestion) => examQuestion.question.id == question.id)
+      },
+      changeQuestion(action) {
+        action == 'next' ? this.selectedQuestion = this.questions.results.at(this.questions.results.indexOf(this.selectedQuestion) + 1) : this.selectedQuestion = this.questions.results.at(this.questions.results.indexOf(this.selectedQuestion) - 1)
+        this.goTo(document.getElementById(this.selectedQuestion.id))
+      },
+      findQuestion(questionID) {
+        return this.questions.results.find((question) => question.id == questionID)
+      },
+      async selectQuestion(question) {
+        this.awaitQuestionResult = true
+        if(this.checkSelection(question.id)) {
+          await this.removeExamQuestion(this.getExamQuestion(question)).finally(() => this.awaitQuestionResult = false)
+        } else {
+          await this.createExamQuestion(question).then((response) => {
+            response['question'] = question
+            this.examTeacherSubject.questions.push(response)
+            this.alertTop('Questão adiciona a lista')
+            return true
+          }).catch((e) => {
+            this.alertTop(e, 4000, 'error')
+            return false
+          }).finally(() => this.awaitQuestionResult = false)
+        }
+      },
+      startIntiniteScroll() {
+        $('#infinity-scroll').scroll(() => {
+          let scrollHeight = document.getElementById('infinity-scroll').scrollHeight - $('#infinity-scroll').height() - 100
+          let currentScrollHeight = $('#infinity-scroll').scrollTop()
+          if(currentScrollHeight >=  scrollHeight) {
+            this.getQuestionsFromNextPage()
+          }
+        });
+      },
+      async callAPI(url, method="GET", body) {
+        try {
+          const res = await fetch(url, {
+            method: method, 
+            body: JSON.stringify(body),
+            headers: {
+              'Content-Type': 'application/json'
+              // 'Content-Type': 'application/x-www-form-urlencoded',
+            },
+          });
+          const data = await res.json();
+          if (!res.ok) throw data;
+          return data
+        } catch (err) {
+          throw err;
+        }
+      },
+      async getQuestionDetail(question) {
+
+        this.loadingQuestions.push(question.id)
+        
+        this.callAPI(question.detail_url).then((data) => { 
+
+          _question = this.findQuestion(data.id)
+
+          _question['alternatives'] = data.alternatives
+          _question['topics'] = data.topics
+          _question['abilities'] = data.abilities
+          _question['competences'] = data.competences
+          _question['detailLoaded'] = true
+
+          this.$forceUpdate()
+
+        }).finally(() => this.loadingQuestions.splice(question.id, 1))
+      
+      },
+      async getQuestions() {
+        this.callAPI(`{% url 'api2:select-questions' %}?${this.params}&limit=20`).then((data) => {
+          this.questions = data
+          this.questions.results = data.results.map((question) => ({...question, detailLoaded: false }))
+          this.selectedQuestion = data.results.at(0)
+          if(this.infinityScrollConfig.type == 'infinity') {
+            setTimeout(() => {
+              this.startIntiniteScroll()
+            }, 1000)
+          }
+        })
+      },
+      async getExamTeacherSubject() {
+        this.callAPI(`{% url 'api2:exam-teacher-data' object.id %}`).then((data) => {
+          this.examTeacherSubject = data
+        })
+      },
+      async getQuestionsFromNextPage() {
+        try {
+          if(this.shownQuestions().next && !this.waitForQuestions) {
+            this.waitForQuestions = true
+
+            let url = this.shownQuestions().next
+            let protocol = window.location.protocol
+              
+            url = protocol == 'http:' ? url.replace('https:', 'http:') : url.replace('http:', 'https:')
+
+            const res = await fetch(url);
+            const data = await res.json();
+            if (!res.ok) throw data;
+            
+            let nextUrl = data.next
+            let previousUrl = data.previous
+            
+            nextUrl = protocol == 'http:' ? nextUrl.replace('https:', 'http:') : nextUrl.replace('http:', 'https:')
+            previousUrl = protocol == 'http:' ? previousUrl.replace('https:', 'http:') : previousUrl.replace('http:', 'https:')
+            
+            this.shownQuestions().previous = previousUrl
+            this.shownQuestions().next = nextUrl
+            this.shownQuestions().results = this.shownQuestions().results.concat(data.results)
+            this.waitForQuestions = false
+          }
+        } catch (err) {
+          throw err;
+        }
+      },
+      async removeExamQuestion(examQuestion) {
+        url  = "{% url 'exams:api-exam-delete-exam-question' pk='00000000-0000-0000-0000-000000000000' %}"
+        return await this.callAPI(url.replace('00000000-0000-0000-0000-000000000000', examQuestion.id), 'post').then((response) => {
+          this.examTeacherSubject.questions.splice(this.examTeacherSubject.questions.indexOf(examQuestion), 1)
+          this.alertTop('Questão removida do caderno.')
+        }).catch((e) => {
+          this.alertTop(e, 4000, 'error')
+        })
+      },
+      async createExamQuestion(question) {
+        url = "{% url 'exams:api-exam-create-exam-question' pk='00000000-0000-0000-0000-000000000000' %}"
+        question['order'] = this.examTeacherSubject.questions.length 
+        question['weight'] = 1.0000 
+        const body = question
+        return this.callAPI(url.replace('00000000-0000-0000-0000-000000000000', this.examTeacherSubject.id), 'POST', body)
+      },
+      searchQuestions: _.debounce(function() {
+        self = this
+        const term = self.inputSearch
+        if(term.length > 2) {
+          self.isSearch = true
+          self.awaitForSearch = true
+          self.callAPI(`{% url 'api2:select-questions' %}?${this.params}&search=${term}`).then(data => {
+            self.foundQuestions = data
+          }).finally(() => {
+            self.awaitForSearch = false
+          })
+        }
+      }, 800),
+      alertTop(text, timer=1000, icon='success') {
+        Swal.fire({
+            position: 'top-end',
+            text: text,
+            icon: icon,
+            toast: true,
+            showConfirmButton: false,
+            timer: timer,
+            timerProgressBar: true,
+            width: '450px',
+        })
+      },
+      applySegment() {
+        this.selectedSegment = Object.assign({}, this.segment)
+        this.questions = []
+        this.subjects = []
+        this.getSelectedLabels()
+        this.generateUrlParams();
+        this.getInitialSubjects();
+        this.getQuantityOfQuestions();
+      },
+      initializeGrades(){
+        $('#questionsSerieID').empty()
+        this.grades.filter((grade) => parseInt(grade.level) === this.segment).forEach((grade) => {
+          let newOption = new Option(grade.name, grade.id, false, false);
+          $('#questionsSerieID').append(newOption).trigger('change');
+        })
+      }
+    },
+    mounted() {
+      this.startSelect2Inputs();
+      this.getExamTeacherSubject();
+      this.initializeGrades()
+      this.applySegment()
+    },
+  });
+</script>
+{% endblock js-additional %}

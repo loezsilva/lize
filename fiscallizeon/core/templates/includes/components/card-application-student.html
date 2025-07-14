@@ -1,0 +1,166 @@
+'application-card': Vue.component('application-card', {
+  delimiters: ["#{", "}"],
+  props: ['application', 'index', 'property'],
+  template: `
+    <div class="card-container mb-4">
+      <div class="media-body event-panel-border rounded ml-0 mb-2" :class="{'event-panel-primary': application.category == 2 || application.automaticCreation, 'event-panel-green': application.category == 4}">
+        <span v-if="application.category == 2" class="event-time">
+          das #{ application.start } até às #{ application.end }
+        </span>
+        <span v-else-if="application.category == 4" class="event-time">
+          Encerra: #{ application.dateEnd } às #{ application.end }
+        </span>
+        <span class="badge-custom badge-custom-blue" v-if="application.category == 2">
+          Prova
+        </span>
+        <span class="badge-custom badge-custom-green" v-if="application.category == 4">
+          Lista de exercício
+        </span>
+        <span class="badge-custom badge-custom-blue" v-if="application.automaticCreation">
+          Lista de nivelamento
+        </span>
+        <h6 class="event-title text-truncate" :title="application.examName">#{ application.examName }</h6>
+        <div class="card-todo">
+
+            <div class="card-progress pt-2 pb-0" v-if="application.category == 4">
+              <label class="content-label mg-b-0">Progresso</label>
+              <div class="progress">
+                <div class="progress-bar" :class="{'bg-r-blue': application.category == 2, 'bg-r-green': application.category == 4}" role="progressbar" :aria-valuenow="application.progress" aria-valuemin="0" aria-valuemax="100" :style="{ width: application.progress + '%' }"></div>
+              </div>
+              <label class="content-label mg-b-0">#{ application.progress }%</label>
+            </div>
+
+            <div :class="{'btn btn-block d-none': !application.isHappening }" v-if="application.category == 2  && application.endTime == 'None' && !application.isBlockedByTolerance && !application.isTimeFinished" class="card-footer card-footer-blue bg-transparent bd-t-0 pt-2 px-0 pb-0">
+              <a :id="'button-'+property+application.pk+'-'+ index" class="btn btn-block" href="#" @click="startApplication()">&plus; Começar</a>
+            </div>
+
+            <div :class="{'btn btn-block d-none': !application.isHappening }" v-if="application.category == 4 && application.endTime == 'None' && !application.isTimeFinished && !application.alreadyReachedMaxTimeFinish" class="card-footer card-footer-green bg-transparent bd-t-0 pt-2 px-0 pb-0">
+              <a :id="'button-'+property+application.pk+'-'+ index" class="btn btn-block" href="#" @click="startHomework()">&plus; Começar</a>
+            </div>
+            
+            <div v-if="application.alreadyReachedMaxTimeFinish" class="card-footer card-footer-red bg-transparent bd-t-0 pt-2 px-0 pb-0">
+              <a class="btn btn-block" href="#">
+                O tempo máximo para finalizar essa lista de exercício foi atingido.
+              </a>
+            </div>
+
+            <a v-if="application.category == 2 && application.endTime != 'None' && application.releaseResultAtEnd && application.studentStatsPermissionDate" href='#' @click="seeResult()" class="btn btn-primary mt-2 btn-block font-weight-bold">
+              <i class="fas fa-search"></i> Ver Resultado
+            </a>
+            
+            <button v-if="application.category == 2 && application.endTime != 'None' && !application.releaseResultAtEnd" type="button" disabled="disabled" class="btn btn-danger disabled btn-block font-weight-bold  mt-2 mb-2">Aplicação já realizada</button>
+            <button v-else-if="application.category == 2 && application.endTime == 'None' && application.isTimeFinished" type="button" disabled="disabled" class="btn btn-danger disabled btn-block font-weight-bold mt-2 mb-2">Horário de prova encerrado!</button>
+            <button v-else-if="application.category == 2 && application.endTime == 'None' && application.isBlockedByTolerance" type="button" disabled="disabled" class="btn btn-danger disabled btn-block font-weight-bold  mt-2 mb-2">Tempo de tolerância esgotado!</button>
+            <div :class="{'d-none': application.isHappening}" v-else-if="application.category == 2 && application.endTime == 'None'" :id="'span-count-down-'+property+application.pk+'-'+index">
+              <p style="font-size: 12px; margin-bottom: 0; color: #8392a5;">Liberação em:</p>
+              <p :id="'count-down-'+property+application.pk+'-'+index"style="margin-bottom: 0; font-family: 'Rubik', sans-serif; font-size: 20px; line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums;">-</p>
+            </div>
+            valores retornados
+            <button v-if="application.category == 4 && application.allowStudentRedoList && application.endTime != 'None' && !application.isTimeFinished && !application.alreadyReachedMaxTimeFinish " type="button"  
+            class="card-footer card-footer-blue bg-transparent bd-t-0 pt-2 px-0 pb-0" @click="confirmAndRedirect(application.applicationStudentPk)">
+              Refazer lista
+            </button>
+
+            <button v-else-if="application.category == 4 && application.endTime != 'None'" type="button" disabled="disabled" class="btn btn-danger disabled btn-block font-weight-bold">Aplicação já realizada</button>
+            <button v-else-if="application.category == 4 && application.isTimeFinished" type="button" disabled="disabled" class="btn btn-danger disabled btn-block font-weight-bold">Horário de prova encerrado!</button>
+            <button :class="{'d-none': application.isHappening}" v-else-if="application.category == 4 && application.endTime == 'None'" type="button" disabled="disabled" class="btn btn-light disabled btn-block font-weight-bold">Aguardando liberação.</button>
+          </div>
+      </div>
+    </div>
+  `,
+  methods: {
+    startCountdown() {
+      console.log( "emtra")
+      var time = '';
+      const spanCountDownId = `#span-count-down-${this.property}${this.application.pk}-${this.index}`
+      const buttonStartId = `#button-${this.property}${this.application.pk}-${this.index}`
+      const countDownId = `#count-down-${this.property}${this.application.pk}-${this.index}`
+
+      const countDownDate = moment(this.application.dateTimeTz, 'YYYY-MM-DD HH:mm:ss').toDate().getTime();
+      let nowDatetime = moment();
+      
+      var x = setInterval(function (){
+        var now = nowDatetime.toDate().getTime();
+        var distance = countDownDate - now;
+
+        if (distance < 0) {
+          clearInterval(x);
+          $(spanCountDownId).toggleClass('d-none');
+          $(buttonStartId).toggleClass('d-none');
+        } else {
+          var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+          var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+          time = ('0' + hours).slice(-2) + ':' + ('0' + minutes).slice(-2) + ':' + ('0' + seconds).slice(-2);
+          $(countDownId).html(time);
+          nowDatetime = nowDatetime.add(1, 'seconds');
+
+        }
+      }, 1000)
+    },
+    getBadgeText() {
+      if (this.application.automaticCreation) {
+        return 'Prova de nivelamento';
+      } else if (this.application.category === 2) {
+        return 'Prova';
+      } else if (this.application.category === 4) {
+        return 'Lista de Exercício';
+      }
+      return '';
+    },
+    startApplication() {
+      window.location.href = this.application.startApplicationUrl;
+    },
+    startHomework() {
+      window.location.href = this.application.startHomeworkUrl;
+    },
+    seeResult() {
+      window.location.href = this.application.seeResultUrl;
+    },
+    getCSRFToken() {
+      const name = 'csrftoken';
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+      return null;
+    },
+    confirmAndRedirect(applicationStudentPk){
+      const textConfirm = "Todas as respostas das questões serão apagadas e você reiniciará a prova. Deseja continuar?";
+      const confirmButton = "Sim, quero refazer!";
+      
+      Swal.fire({
+          title: "Tem certeza?",
+          text: textConfirm,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: confirmButton,
+      }).then((result) => {
+          if (result.isConfirmed) {
+            const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken=')).split('=')[1];
+            const url = "{% url 'applications:clear_all_answers' pk='00000000-0000-0000-0000-000000000000' %}"
+            .replace('00000000-0000-0000-0000-000000000000', applicationStudentPk);
+            axios.post(url, {}, {
+              headers: {
+                'X-CSRFToken':  '{{ csrf_token }}'
+              }
+            })
+            .then(response => {
+              window.location.href = response.data.redirect_url; 
+  
+            })
+            .catch(error => {
+              console.error("Erro ao limpar as respostas:", error);
+            });   
+          }       
+  
+      });
+    }
+  },
+  mounted() {
+    if (!this.application.isHappening) {
+      this.startCountdown();
+    }
+  }
+})

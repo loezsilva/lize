@@ -1,0 +1,111 @@
+{% extends 'dashboard/base_fixed.html' %}
+{% load static %}
+{% load proportion %}
+
+{% block title %}
+  LizeEdu - Detalhes da prova do aluno
+{% endblock title %}
+
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">PROVAS</a></li>
+          <li class="breadcrumb-item active" aria-current="page">DETALHES</li>
+        </ol>
+      </nav> 
+      <h4>{{ object }}</h4>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+
+
+{% block content-fixed %}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mg-b-10">
+          {{ object }}
+        </div>
+    </div>
+</div>
+
+{% endblock content-fixed %}
+
+
+{% block extra-modal %}
+<div class="modal pr-0" tabindex="-1" role="dialog" id="detailModal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+        <div class="modal-header bg-white">
+            <h5 class="modal-title">
+              <i class="fas fa-user mr-2"></i>
+              ${applicationStudent.fullname}
+              <span 
+                class="text-muted" 
+                v-if="applicationStudent.start_time"> de ${moment(applicationStudent.start_time).format('H:mm:ss')} 
+                <template v-if="applicationStudent.end_time">às ${moment(applicationStudent.end_time).format('H:mm:ss')}</template>
+              </span>
+            </h5>
+            <button @click="openedChat=false;" type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <i class="fas fa-times-circle"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <h6>Respostas do aluno</h6>
+            <table class="table table-responsive table-bordered" id="student-responses">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th v-for="(question, index) in applicationStudent.questions" class="text-center">${index+1}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Resp.</td>
+                        <td 
+                            v-for="answer in applicationStudent.questions" 
+                            data-toggle="popover" 
+                            data-content="<b>Tempo:</b> 12<br><b>Num. repostas: 12</b>" 
+                            data-placement="right"
+                            data-html="true"
+                            :class="getAnswerClass(answer)"
+                            @click="getEnunciation(answer)"
+                        >
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Tempo</td>
+                        <td v-for="answer in applicationStudent.questions">${answer.duration ? answer.duration.substring(3) : ''}</td>
+                    </tr>
+                    <tr>
+                        <td>Alterações</td>
+                        <td v-for="answer in applicationStudent.questions" class="text-center">${answer.total_answers}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div 
+                id="question-details"
+                class="mt-5 mb-3 p-2"
+                v-show="selectedQuestion.enunciation"
+            >
+                <div v-html="selectedQuestion.enunciation" class="mb-2"></div>
+                <div class="form-check" v-for="alternative in selectedQuestion.alternatives">
+                    <input class="form-check-input" type="radio" disabled="disabled" :checked="alternative.id == selectedQuestion.answer">
+                    <label class="form-check-label" v-html="alternative.text" :class="getOptionClass(alternative, selectedQuestion.answer)"></label>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock extra-modal %}
+
+
+{% block js-additional %}
+<script>
+</script>
+{% endblock js-additional %}

@@ -1,0 +1,44 @@
+{% load get_object_attr %}
+{% load tooltip_tags %}
+
+{% comment %}
+    #### Mini Documentation ###
+
+    #### Use o atributo (with) para personalizer as configurações do tooltip        ###
+    #### Adicione $('[data-toggle="tooltip"]').tooltip(); no bloco de javascript    ###
+    #### a cor do tooltip é definida pelo atributo data-color="primary|secondary|success|danger|warning|info|light|dark" ###
+    
+
+    # Parameters:
+    list                        # queryset ou lista de objetos  | * queryset | array | list * -- required -- 
+    shown_number                # quantidade de itens a serem mostrados | *number* -- required -- 
+    object_attr                 # atributo do objeto que será mostrado no tooltip | *string* -- optional -- 
+    object_class                # classe que irá se repetir para cada objeto da lista, "o padrão é o (badge badge-primary)" | *string* -- optional --
+    more_objects_class          # classe do tooltip , "o padrão é o (badge badge-secondary)" | *string* -- optional --
+    more_objects_text           # texto do tooltip, "o padrão é o (...mais)" | *string* -- optional --
+    object_total_attr           # badge da quantidade total | *number* -- optional --
+    object_total_count_class    # classe do badge que mostra o total , "o padrão é o (badge badge-secondary)" | *string* -- optional --
+{% endcomment %}
+
+{% for object in list|slice:shown_number %}
+    <span class="{{object_class|default:'mx-1 badge badge-primary'}}">
+        {% if object_attr %}
+            {{object|get_attr:object_attr}}
+        {% else %}
+            {{object}}
+        {% endif %}
+        {% if object_total_attr %}
+            <span style="width: 20px; height: 20px;" class="{{object_total_count_class|default:'mx-1 badge badge-secondary'}}">{{object|get_attr:object_total_attr}}</span>
+        {% endif %}
+    </span>
+{% endfor %}
+
+{% if list|length > shown_number %}
+    <span 
+        class="{{more_objects_class|default:'badge badge-secondary'}} tooltips" 
+        style="cursor: pointer;" 
+        data-tippy-content='{% for object in list|get_rest_of_list:shown_number %} <span class="badge badge-primary">{% if object_attr %} {{object|get_attr:object_attr}} {% else %} {{object.name}}{% endif %}</span>{% endfor %}'
+    >
+        {{more_objects_text|default:"...mais"}} {{list|get_rest_of_list:shown_number|length}}
+    </span>
+{% endif %}

@@ -1,0 +1,2159 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load questions_tags %}
+{% load round_to %}
+{% load math %}
+{% load proportion %}
+{% load static %}
+{% load exams_tags %}
+{% load remove_line_break %}
+{% load applications_student %}
+
+{% block css-additional %}
+  <link rel="stylesheet" href="{% static 'administration/lib/datatables.net-responsive-dt/css/responsive.dataTables.min.css' %}">
+  <link rel="stylesheet" href="{% static 'dashboard/lib/apexcharts/apexcharts.css' %}">  
+  <link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+  <style>
+    .hover-effect:hover {
+      color: #1D9EDE;
+    }
+    .blur-text {
+      background-color: rgba(87,160,230, 0.61); /* Black w/opacity/see-through */
+      font-size: 1.5rem;
+      border: 3px solid #f1f1f1;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+      width: 80%;
+      text-align: center;
+    }
+    .sorting_1 {
+      background-color: inherit !important;
+    }
+  </style>
+{% endblock css-additional %}
+  
+{% block content %}
+
+<main id="app">
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+      <nav class="ls" aria-label="Breadcrumb">
+        <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+          <li>
+            <div>
+              <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                  <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+              </a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="{% url 'exams:exams_list' %}?category=exam" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Cadernos</a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Detalhes</a>
+            </div>
+          </li>
+        </ol>
+      </nav>
+      {% include "dashboard/exams/includes/exam/exam-nav-links.html" with page="general" %}
+    </div>
+    
+    {% if object.last_performance.exists %}
+      <template v-if="recalculate.yesno || recalculate.hasProcessTime || moment(recalculate.processTime) > moment()">
+        <div class="alert alert-warning" v-if="recalculate.hasProcessTime">
+          <p class="mb-0">
+            <template v-if="moment(recalculate.processTime) > moment()">
+              O calculo de desempenho foi iniciado, o processo finaliza em aproximadamente #{moment(recalculate.processTime).fromNow(true)}
+            </template>
+            <template v-else>
+              O calculo de desempenho está demorando mais do que o esperado, mas não se preocupe, em breve você será avisado da finalização do processo!
+            </template>
+          </p>
+        </div>
+        <div class="alert alert-warning" v-else-if="recalculate.yesno && !recalculate.processFinished">
+          <p class="mb-0">O calculo de desempenho foi iniciado, mas não foi possível gerar uma estimativa, em breve concluiremos sua solicitação.</p>
+        </div>
+      </template>
+      <template v-if="!widgets.loads.optionAnswers && !widgets.loads.discursiveAnswers">
+        <div class="row row-xs">
+          <div class="col-12 mg-t-10">
+            <div class="card">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mg-b-0">CADERNO: {{ object.name }} <span class="badge badge-primary align-middle ml-2">Utilizado {{object.count_applications_count}} vez(es)</span></h6>
+                <div class="float-right text-right">
+                  <button data-toggle-off-canvas="#right-off-canvas"
+                    class="btn btn-sm btn-info m-1 btn-icon rounded-pill off-canvas-menu">
+                    <i class="fas fa-search"></i> Filtrar Resultados           
+                    {% if count_filters > 0 %}
+                    <span class="badge badge-danger">{{count_filters}} Aplicado(s)</span>
+                    {% endif %}
+                  </button>
+                  {% if count_filters > 0 %}
+                    <a href="{% url 'exams:dash_exam_teacher_detail_general' pk=object.pk %}"
+                      class="btn btn-sm btn-info m-1 btn-icon rounded-pill">
+                      <i class="fas fa-eraser"></i> Apagar filtro(s)
+                    </a>
+                  {% endif %}
+                  {% comment %} 
+                    <button title="Recalcular todos os desempenhos do caderno" v-if="!recalculate.hasProcessTime" data-toggle="modal" data-target="#modalRecalculateConfirm" class="btn btn-sm btn-info btn-icon rounded-pill">
+                      <i class="fas fa-sync"></i>
+                    </button> 
+                  {% endcomment %}
+                </div>
+              </div>
+              <div class="card-body pd-0">
+                <div class="row no-gutters">
+                  <div class="col col-sm-6 col-lg">
+                    <div class="crypto">
+                      <div class="media mg-b-10">
+                        <div class="crypto-icon bg-primary">
+                          <i class="fas fa-users"></i>
+                        </div>
+                        <div class="media-body pd-l-8">
+                          <h6 class="tx-11 tx-spacing-1 tx-uppercase tx-semibold mg-b-5">
+                            Alunos
+                          </h6>
+                          <div class="d-flex align-items-baseline tx-rubik">
+                            <h5 class="tx-20 mg-b-0">{{ total_students }} 
+                              {% with total_students_start_application|proportion:total_students as students_start %}
+                                <span class="{% if students_start > 50 %} text-success {% else %} text-danger {% endif %}text-primary op-4" style="cursor: pointer;" data-toggle="tooltip" data-placement="right" title="{% if students_start > 50%} Média de alunos que iniciaram as provas {% else %} Menos da metade dos alunos iniciaram a prova {% endif %}">({{students_start|floatformat:2}})</span></h5>                              
+                              {% endwith %}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="b-5 l-20 tx-medium">
+                        <label class="tx-9 tx-uppercase tx-sans mb-0">
+                          <span class="link-01 tx-semibold tx-success">
+                            {{ total_students_start_application }}
+                          </span> Iniciaram a prova
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col col-sm-6 col-lg bd-t bd-sm-t-0 bd-sm-l">
+                    <div class="crypto">
+                      <div class="media mg-b-10">
+                        <div class="crypto-icon bg-primary">
+                          <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <div class="media-body pd-l-8">
+                          <h6 class="tx-11 tx-spacing-1 tx-uppercase tx-semibold mg-b-5">
+                            Questões
+                          </h6>
+                          <div class="d-flex align-items-baseline tx-rubik">
+                            <h5 class="tx-20 mg-b-0">{{ total_questions_exam }}</h5>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="b-5 l-20 tx-medium">
+                        {% if total_objective_questions %}
+                          <label class="tx-9 tx-uppercase mb-0" data-toggle="tooltip" data-placement="bottom" title="Total de questões objetivas">
+                            <span class="link-01 tx-medium">
+                              {{ total_objective_questions }}
+                            </span> Questões Objetivas
+                          </label>
+                        {% endif %}
+                        
+                        {% if total_discursive_questions %}
+                          <label class="tx-9 tx-uppercase mb-0 mg-l-10" data-toggle="tooltip" data-placement="bottom" title="Total de questões discursivas">
+                            <span class="link-01 tx-medium">
+                              {{ total_discursive_questions }}
+                            </span> Questões Discursivas
+                          </label>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                  {% if not question_category or question_category == '1' %}
+                    <div class="col col-sm-6 col-lg bd-t bd-sm-t-0 bd-sm-l">
+                      <div class="crypto">
+                        <div class="media mg-b-10">
+                          <div class="crypto-icon bg-primary">
+                            <i class="far fa-dot-circle"></i>
+                          </div>
+                          <div class="media-body pd-l-8">
+                            <h6 class="tx-11 tx-spacing-1 tx-uppercase tx-semibold mg-b-5">
+                              Respostas Objetivas
+                            </h6>
+                            <div class="d-flex align-items-baseline tx-rubik">
+                              <h5 class="tx-20 mg-b-0">#{widgets.optionAnswers.total_objective_answers}  <span class="text-success op-4" style="cursor: pointer;" data-toggle="tooltip" data-placement="right" title="Média de acertos">(#{widgets.optionAnswers.total_objective_answers > 0 ? ((widgets.optionAnswers.total_correct_objective_answers / widgets.optionAnswers.total_objective_answers) * 100).toFixed(2):0} %)</span></h5>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="b-5 l-20 tx-medium">
+                          <label class="tx-9 tx-uppercase tx-sans mb-0">
+                            <span class="link-01 tx-semibold tx-success">
+                              #{widgets.optionAnswers.total_correct_objective_answers}
+                            </span> Acertos
+                          </label>
+                          <label class="tx-9 tx-uppercase tx-sans mb-0 mg-l-10">
+                            <span class="link-01 tx-semibold tx-danger">
+                              #{widgets.optionAnswers.total_incorrect_objective_answers}
+                            </span> Erros
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  {% endif %}
+                  {% if not question_category or question_category != '1' %}
+                    <div class="col col-sm-6 col-lg bd-t bd-sm-t-0 bd-sm-l">
+                      <div class="crypto">
+                        <div class="media mg-b-10">
+                          <div class="crypto-icon bg-primary">
+                            <i class="fas fa-pen"></i>
+                          </div>
+                          <div class="media-body pd-l-8">
+                            <h6 class="tx-11 tx-spacing-1 tx-uppercase tx-semibold mg-b-5">
+                              Respostas Discursivas
+                            </h6>
+                            <div class="d-flex align-items-baseline tx-rubik">
+                              <h5 class="tx-20 mg-b-0">#{widgets.discursiveAnswers.total_discursive_answers}</h5>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="b-5 l-20 tx-medium">
+                          <label class="tx-9 tx-uppercase tx-sans mb-0" data-toggle="tooltip" data-placement="right" title="Acertos">
+                            <span class="link-01 tx-semibold tx-success">
+                              #{widgets.discursiveAnswers.total_correct_discursive_answers} <span class="text-muted op-4">(#{widgets.discursiveAnswers.total_correct_discursive_answers > 0 ? ((widgets.discursiveAnswers.total_correct_discursive_answers / widgets.discursiveAnswers.total_discursive_answers) * 100).toFixed(2) : 0} %)</span>
+                            </span> Acertos
+                          </label>
+                          <label class="tx-9 tx-uppercase tx-sans mb-0" data-toggle="tooltip" data-placement="right" title="Acertos parciais">
+                            <span class="link-01 tx-semibold tx-warning">
+                              #{widgets.discursiveAnswers.total_partial_correct_discursive_answers} <span class="text-muted op-4">(#{widgets.discursiveAnswers.total_partial_correct_discursive_answers > 0 ? ((widgets.discursiveAnswers.total_partial_correct_discursive_answers / widgets.discursiveAnswers.total_discursive_answers) * 100).toFixed(2) : 0} %)</span>
+                            </span> Parcial
+                          </label>
+                          <label class="tx-9 tx-uppercase tx-sans mb-0">
+                            <span class="link-01 tx-semibold tx-danger">
+                              #{widgets.discursiveAnswers.total_discursive_answers - widgets.discursiveAnswers.total_correct_discursive_answers - widgets.discursiveAnswers.total_partial_correct_discursive_answers}
+                            </span> Erros
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% if applied_filters %}
+            <div class="col-12 mg-t-10">
+              <div class="card">
+                <div class="card-body py-2">
+                  <span class="d-block">{{count_filters}} filtro(s) aplicado(s):</span>
+                  {% for applied_filter in applied_filters %}
+                    <span class="badge badge-primary">{{applied_filter}}</span>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          {% endif %}
+          <div class="col-12 mg-t-10">
+            <div class="card">
+              <div class="card-header d-flex align-items-center justify-content-between">
+                <h6 class="lh-5 mg-b-0">Lista de alunos e desempenho</h6>
+                <div v-if="subjects.length || topics.length || abilities.length || competences.length">
+                  <button type="button" @click="list_type = 'grouped'" class="btn btn-sm pd-x-15 btn-uppercase" :class="list_type == 'grouped' ? 'btn-primary':'btn-white'"> <i class="fas fa-th"></i> DADOS AGRUPADOS</button>
+                  <!-- <button type="button" @click="list_type = 'histogram'" class="btn btn-sm pd-x-15 btn-uppercase mg-l-5" :class="list_type == 'histogram' ? 'btn-primary':'btn-white'"><i class="fas fa-list"></i> HISTOGRAMA</button> -->
+                </div>
+              </div>
+              <div class="card-body pt-0 pb-5">
+                <div v-show="list_type == 'grouped'">
+                  <div class="row m-0">
+                    <div class="col-12">
+                      <div class="nav-wrapper mg-b-20">
+                        <div>
+                          <nav class="nav nav-line tx-medium">
+                            <a href="#group-subjects" v-if="groupSubjects.list.length" :class="openActived(true) == 'subjects' ? 'active':''" class="nav-link" data-toggle="tab">Disciplinas <span class="badge badge-primary" :class="{'badge-success': groupSubjects.viewPoints == 'strong', 'badge-danger': groupSubjects.viewPoints == 'improve'}">#{groupSubjects.viewPoints ? groupSubjects.list.filter(topic => groupSubjects.viewPoints == 'strong' ? topic.performance.toFixed(0) >= 50:topic.performance.toFixed(0) < 50).length : groupSubjects.list.length}</span></a>
+                            <a href="#group-topics" @click="getPerformanceGroup('topics')" v-if="topics.length" :class="openActived(true) == 'topics' ? 'active':''" class="nav-link" data-toggle="tab">Assuntos Abordados <span class="badge badge-primary" :class="{'badge-success': groupBNCC.viewPoints == 'strong', 'badge-danger': groupBNCC.viewPoints == 'improve'}">#{!loads.groupPerformanceTopics ? groupBNCC.viewPoints ? groupBNCC.topics.filter(topic => groupBNCC.viewPoints == 'strong' ? topic.performance.toFixed(0) >= 50:topic.performance.toFixed(0) < 50).length : groupBNCC.topics.length : topics.length}</span></a>
+                            <a href="#group-abilities" @click="getPerformanceGroup('abilities')" v-if="abilities.length" :class="openActived(true) == 'abilities' ? 'active':''" class="nav-link" data-toggle="tab">Habilidades <span class="badge badge-primary" :class="{'badge-success': groupBNCC.viewPoints == 'strong', 'badge-danger': groupBNCC.viewPoints == 'improve'}">#{!loads.groupPerformanceAbilities ? groupBNCC.viewPoints ? groupBNCC.abilities.filter(ability => groupBNCC.viewPoints == 'strong' ? ability.performance.toFixed(0) >= 50:ability.performance.toFixed(0) < 50).length : groupBNCC.abilities.length : abilities.length}</span></a>
+                            <a href="#group-competences" @click="getPerformanceGroup('competences')" v-if="competences.length" :class="openActived(true) == 'competences' ? 'active':''" class="nav-link" data-toggle="tab">Competências <span class="badge badge-primary" :class="{'badge-success': groupBNCC.viewPoints == 'strong', 'badge-danger': groupBNCC.viewPoints == 'improve'}">#{!loads.groupPerformanceCompetences ? groupBNCC.viewPoints ? groupBNCC.competences.filter(competence => groupBNCC.viewPoints == 'strong' ? competence.performance.toFixed(0) >= 50:competence.performance.toFixed(0) < 50).length : groupBNCC.competences.length : competences.length}</span></a>
+                          </nav>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-12 d-flex justify-content-end">
+                      <nav aria-label="breadcrumb" style="position: absolute; top: -40px; cursor: pointer;">
+                        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                          <li class="breadcrumb-item" :class="{'active': groupBNCC.viewPoints == '' || groupSubjects.viewPoints == '' }" @click="groupBNCC.viewPoints = '', groupSubjects.viewPoints = ''">Geral</li>
+                          <li class="breadcrumb-item" :class="{'active': groupBNCC.viewPoints == 'strong' || groupSubjects.viewPoints == 'strong' }" @click="groupBNCC.viewPoints = 'strong', groupSubjects.viewPoints = 'strong'">Pontos Fortes</li>
+                          <li class="breadcrumb-item" :class="{'active text-danger': groupBNCC.viewPoints == 'improve' || groupSubjects.viewPoints == 'improve' }" @click="groupBNCC.viewPoints = 'improve', groupSubjects.viewPoints = 'improve'">À Melhorar</li>
+                        </ol>
+                      </nav>
+                    </div>
+                    <div class="col-12 tab-content">
+                      <div id="group-subjects" class="tab-pane fade" :class="openActived(true) == 'subjects' ? 'active show':''">
+                        <div class="row m-0" v-show="!loads.groupSubjectPerformance">
+                          <div class="col-12 p-0">
+                            <div class="table-responsive">
+                              <table class="table table-sm tx-nowrap mg-b-0">
+                                <thead>
+                                  <tr class="tx-color-03 tx-uppercase">
+                                    <th></th>
+                                    <th>Texto</th>
+                                    <th>Desempenho</th>
+                                    <th>Histograma</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="subject in groupSubjects.viewPoints ? groupSubjects.list.filter(subject => groupSubjects.viewPoints == 'strong' ? subject.performance.toFixed(0) >= 50:subject.performance.toFixed(0) < 50):groupSubjects.list">
+                                    <td class="pb-0 align-middle text-truncate" style="max-width: 3rem;"><a href="javascript:void(0)" @click="selectBNCCOrSubjectInGroup('subjects', subject)" class="text-primary" :class="{'text-success': groupSubjects.viewPoints == 'strong', 'text-danger': groupSubjects.viewPoints == 'improve'}">Detalhes <i class="fas fa-link"></i></a></td>
+                                    <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{subject.name}</td>
+                                    <td class="pb-0 align-middle">
+                                      <div class="wd-150 d-inline-block">
+                                        <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                          <div class="progress-bar" :class="{'bg-pink': subject.performance.toFixed(0) < 50, 'bg-success': subject.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + subject.performance.toFixed(0) + '%;'" :aria-valuenow="subject.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100"><span class="tx-14">#{subject.performance.toFixed(0)} %</span></div>
+                                          <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -subject.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - subject.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td class="align-middle text-center" style="cursor: pointer;" @click="showAlertWithHistogramChart(subject.histogram)">
+                                      <span class="bar-colours">#{subject.histogram && subject.histogram.data.length ? subject.histogram.data.join(','):''}</span>
+                                    </td>
+                                  </tr>
+                                  <tr v-if="!subjects.length">
+                                    <td colspan="3">Não há disciplinas</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row m-0" v-if="loads.groupSubjectPerformance">
+                          <div class="col-12 text-center">
+                            <div class="spinner-grow text-info mx-3" role="status">
+                              <span class="sr-only"></span>
+                            </div>
+                            <p class="text-center">Aguarde enquanto carregamos os dados das disciplinas</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div id="group-topics" class="tab-pane fade" :class="openActived(true) == 'topics' ? 'active show':''">
+                        <div class="row m-0">
+                          <div class="col-12 p-0">
+                            <div class="table-responsive">
+                              <table class="table table-sm tx-nowrap mg-b-0">
+                                <thead>
+                                  <tr class="tx-color-03 tx-uppercase">
+                                    <th></th>
+                                    <th>Texto</th>
+                                    <th>Desempenho</th>
+                                    <th>Histograma</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="topic in groupBNCC.viewPoints ? groupBNCC.topics.filter(topic => groupBNCC.viewPoints == 'strong' ? topic.performance.toFixed(0) >= 50:topic.performance.toFixed(0) < 50):groupBNCC.topics">
+                                    <td class="pb-0 align-middle text-truncate" style="max-width: 3rem;"><a href="javascript:void(0)" @click="selectBNCCOrSubjectInGroup('topics', topic)" class="text-primary" :class="{'text-success': groupBNCC.viewPoints == 'strong', 'text-danger': groupBNCC.viewPoints == 'improve'}">Detalhes <i class="fas fa-link"></i></a></td>
+                                    <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{topic.name}</td>
+                                    <td class="pb-0 align-middle">
+                                      <div class="wd-150 d-inline-block">
+                                        <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                          <div class="progress-bar" :class="{'bg-pink': topic.performance.toFixed(0) < 50, 'bg-success': topic.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + topic.performance.toFixed(0) + '%;'" :aria-valuenow="topic.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100"><span class="tx-14">#{topic.performance.toFixed(0)} %</span></div>
+                                          <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -topic.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - topic.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td class="align-middle text-center" style="cursor: pointer;" @click="showAlertWithHistogramChart(topic.histogram)">
+                                      <span class="bar-colours">#{topic.histogram && topic.histogram.data.length ? topic.histogram.data.join(','):''}</span>
+                                    </td>
+                                  </tr>
+                                  <tr v-if="!topics.length">
+                                    <td colspan="3">Não há assuntos abordados</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row m-0" v-if="loads.groupPerformanceTopics">
+                          <div class="col-12 text-center">
+                            <div class="spinner-grow text-info mx-3" role="status">
+                              <span class="sr-only"></span>
+                            </div>
+                            <p class="text-center">Aguarde enquanto carregamos os dados dos assuntos</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div id="group-abilities" class="tab-pane fade" :class="openActived(true) == 'abilities' ? 'active show':''">
+                        <div class="row m-0">
+                          <div class="col-12 p-0">
+                            <div class="table-responsive">
+                              <table class="table table-sm tx-nowrap mg-b-0">
+                                <thead>
+                                  <tr class="tx-color-03 tx-uppercase">
+                                    <th>Código</th>
+                                    <th>Texto</th>
+                                    <th>Desempenho</th>
+                                    <th>Histograma</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="ability in groupBNCC.viewPoints ? groupBNCC.abilities.filter(ability => groupBNCC.viewPoints == 'strong' ? ability.performance.toFixed(0) >= 50:ability.performance.toFixed(0) < 50):groupBNCC.abilities">
+                                    <td class="pb-0 align-middle text-truncate" style="max-width: 3rem;"><a href="javascript:void(0)" @click="selectBNCCOrSubjectInGroup('abilities', ability)" class="text-primary" :class="{'text-success': groupBNCC.viewPoints == 'strong', 'text-danger': groupBNCC.viewPoints == 'improve'}">#{ability.code ? ability.code : 'S/Código'} <i class="fas fa-link"></i></a></td>
+                                    <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{ability.text}</td>
+                                    <td class="pb-0 align-middle">
+                                      <div class="wd-150 d-inline-block">
+                                        <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                          <div class="progress-bar" :class="{'bg-pink': ability.performance.toFixed(0) < 50, 'bg-success': ability.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + ability.performance.toFixed(0) + '%;'" :aria-valuenow="ability.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100"><span class="tx-14">#{ability.performance.toFixed(0)} %</span></div>
+                                          <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -ability.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - ability.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td class="align-middle text-center" style="cursor: pointer;" @click="showAlertWithHistogramChart(ability.histogram)">
+                                      <span class="bar-colours">#{ability.histogram && ability.histogram.data.length ? ability.histogram.data.join(','):''}</span>
+                                    </td>
+                                  </tr>
+                                  <tr v-if="!abilities.length">
+                                    <td colspan="3">Não há habilidades</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row m-0" v-if="loads.groupPerformanceAbilities">
+                          <div class="col-12 text-center">
+                            <div class="spinner-grow text-info mx-3" role="status">
+                              <span class="sr-only"></span>
+                            </div>
+                            <p class="text-center">Aguarde enquanto carregamos os dados das habilidades</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div id="group-competences" class="tab-pane fade" :class="openActived(true) == 'competences' ? 'active show':''">
+                        <div class="row m-0">
+                          <div class="col-12 p-0">
+                            <table class="table table-sm tx-nowrap mg-b-0">
+                              <thead>
+                                <tr class="tx-color-03 tx-uppercase">
+                                  <th>Código</th>
+                                  <th>Texto</th>
+                                  <th>Desempenho</th>
+                                  <th>Histograma</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="competence in groupBNCC.viewPoints ? groupBNCC.competences.filter(competence => groupBNCC.viewPoints == 'strong' ? competence.performance.toFixed(0) >= 50:competence.performance.toFixed(0) < 50):groupBNCC.competences">
+                                  <td class="pb-0 align-middle text-truncate" style="max-width: 2rem;"><a href="javascript:void(0)" @click="selectBNCCOrSubjectInGroup('competences', competence)" class="text-primary" :class="{'text-success': groupBNCC.viewPoints == 'strong', 'text-danger': groupBNCC.viewPoints == 'improve'}">#{competence.code ? competence.code : 'S/Código'} <i class="fas fa-link"></i></a></td>
+                                  <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{competence.text}</td>
+                                  <td class="pb-0 align-middle">
+                                    <div class="wd-150 d-inline-block">
+                                      <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                        <div class="progress-bar" :class="{'bg-pink': competence.performance.toFixed(0) < 50, 'bg-success': competence.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + competence.performance.toFixed(0) + '%;'" :aria-valuenow="competence.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100"><span class="tx-14">#{competence.performance.toFixed(0)} %</span></div>
+                                        <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -competence.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - competence.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td class="align-middle text-center" style="cursor: pointer;" @click="showAlertWithHistogramChart(competence.histogram)">
+                                    <span class="bar-colours">#{competence.histogram && competence.histogram.data.length ? competence.histogram.data.join(','):''}</span>
+                                  </td>
+                                </tr>
+                                <tr v-if="!competences.length">
+                                  <td colspan="3">Não há competências</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                        <div class="row m-0" v-if="loads.groupPerformanceCompetences">
+                          <div class="col-12 text-center">
+                            <div class="spinner-grow text-info mx-3" role="status">
+                              <span class="sr-only"></span>
+                            </div>
+                            <p class="text-center">Aguarde enquanto carregamos os dados das competências</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div v-show="list_type == 'histogram'">
+                  <div class="row">
+                    <div class="col-12">
+                      Histograma
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+      <div v-if="widgets.loads.optionAnswers && widgets.loads.discursiveAnswers">
+        <div class="row">
+          <div class="col-12 text-center p-5">
+            <img style="max-height: 350px;" src="{% static 'administration/assets/img/img15.svg' %}" alt="">
+          </div>
+          <div class="col-12 text-center">
+            <h5 class="text-dark p-4">
+              <strong>Aguarde enquanto buscamos os dados do caderno...</strong>
+            </h5>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div class="row">
+        <div class="col-12 text-center p-5 d-flex align-items-center justify-content-center">
+          <img style="max-height: 350px;" src="{% static 'administration/assets/img/img15.svg' %}" alt="">
+        </div>
+        <div class="col-12 text-center">
+          <h5 class="text-dark p-4">
+            {% comment %} 
+            Aguarde enquanto processamos os dados desse caderno,<br/>
+            esse processo pode demorar um pouco, mas não se preocupe<br/>
+            iremos te avisar quando estiver pronto. <br/>
+            <strong>Você pode nevegar por outras páginas enquanto espera.</strong> 
+            {% endcomment %}
+            <strong>Este caderno ainda não foi processado pelo nosso sistema, o resultado estará disponível em breve.</strong>
+          </h5>
+        </div>
+      </div>
+    {% endif %}
+      
+  </div>
+</main>
+{% endblock content %}
+
+{% block extra-modal %}
+  <div class="modal fade effect-sign" id="modalBNCCDetail" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-body pd-x-30 pd-sm-x-30" v-if="selectedBNCC.id">
+          <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </a>
+          <h4>{{object.name}}</h4>
+          <div class="d-flex align-items-center justify-content-between tx-rubik mb-3">
+            <div>
+              <h4>#{ selectedBNCC.code ? '('+selectedBNCC.code+') ' : '' } #{selectedBNCC.knowledge_object}</h4>
+              <div class="tx-14 tx-md-16 tx-color-02 clean-v-html" v-html="selectedBNCC.text"></div>
+            </div>
+            <div class="d-flex align-items-end">
+              <h1 class="tx-40 lh-1 tx-normal tx-spacing--2 mb-0 mg-r-5 text-nowrap">#{selectedBNCC.performance.toFixed(2)} %</h1>
+            </div>
+          </div>
+          {% if applied_filters %}
+            <div class="col-12 p-0">
+              <span class="d-block tx-10 tx-rubik">{{count_filters}} filtro(s) aplicado(s):</span>
+              {% for applied_filter in applied_filters %}
+                <span class="badge badge-primary">{{applied_filter}}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+          <div class="nav-wrapper mg-b-20">
+            <div>
+              <nav class="nav nav-line tx-medium">
+                <a href="#bncc-classes" class="nav-link active" data-toggle="tab">Turmas</a>
+                <a href="#bncc-unities" @click="getUnitiesPerformances('', selectedBNCC.id)" class="nav-link" data-toggle="tab">Unidades</a>
+                <a href="#bncc-students" @click="getStudentsPerformances('', selectedBNCC.id)" class="nav-link" data-toggle="tab">Alunos</a>
+                <a href="#bncc-histogram" class="nav-link" data-toggle="tab">Histograma</a>
+              </nav>
+            </div>
+          </div>
+          <div class="tab-content">
+            <div id="bncc-classes" class="tab-pane fade active show">
+              <div class="row m-0">
+                <div class="col-12 d-flex justify-content-end">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                      <li class="breadcrumb-item cp" :class="{'active': groupBNCC.studentsViewPoints == ''}" @click="groupBNCC.studentsViewPoints = ''">Geral <span class="badge badge-primary">#{selectedSubject.classes_performances ? selectedSubject.classes_performances.length : 0}</span></li>
+                      <li class="breadcrumb-item cp" :class="{'active': groupBNCC.studentsViewPoints == 'strong'}" @click="groupBNCC.studentsViewPoints = 'strong'">Pontos Fortes <span class="badge badge-success">#{selectedSubject.classes_performances ? selectedSubject.classes_performances.filter(student => student.performance >= 50).length : 0}</span></li>
+                      <li class="breadcrumb-item cp" :class="{'active text-danger': groupBNCC.studentsViewPoints == 'improve'}" @click="groupBNCC.studentsViewPoints = 'improve'">À Melhorar <span class="badge badge-danger">#{selectedSubject.classes_performances ? selectedSubject.classes_performances.filter(student => student.performance < 50).length : 0}</span></li>
+                    </ol>
+                  </nav>
+                </div>
+                <div class="col-12">
+                  <div class="table-responsive">
+                    <div v-show="groupBNCC.studentsViewPoints == ''">
+                      <table class="table table-sm tx-nowrap mg-b-0 table-striped">
+                        <thead>
+                          <tr class="tx-color-03 tx-uppercase">
+                            <th>Turma</th>
+                            <th>Desempenho</th>
+                            <th>Histograma</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="classe in selectedBNCC.classes_performances">
+                            <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{classe.name.toUpperCase()} <br /> #{classe.count} Aluno(s)</td>
+                            <td class="pb-0 align-middle">
+                              <div class="wd-150 d-inline-block">
+                                <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                  <div class="progress-bar" :class="{'bg-pink': classe.performance.toFixed(0) < 50, 'bg-success': classe.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + classe.performance.toFixed(0) + '%;'" :aria-valuenow="classe.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100">
+                                    <span class="tx-14">#{classe.performance.toFixed(0)} %</span>
+                                  </div>
+                                  <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -classe.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - classe.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="align-middle text-center" style="cursor: pointer;" @click="showAlertWithHistogramChart(classe.histogram)">
+                              <span class="bar-colours">#{classe.histogram && classe.histogram.data.length ? classe.histogram.data.join(','):''}</span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div v-show="groupBNCC.studentsViewPoints == 'strong'">
+                      <table class="table table-sm tx-nowrap mg-b-0 table-striped">
+                        <thead>
+                          <tr class="tx-color-03 tx-uppercase">
+                            <th>Turma</th>
+                            <th>Desempenho</th>
+                            <th>Histograma</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="classe in selectedBNCC.classes_performances.filter(classe => classe.performance >= 50)">
+                            <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{classe.name.toUpperCase()} <br /> #{classe.count} Aluno(s)</td>
+                            <td class="pb-0 align-middle">
+                              <div class="wd-150 d-inline-block">
+                                <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                  <div class="progress-bar" :class="{'bg-pink': classe.performance.toFixed(0) < 50, 'bg-success': classe.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + classe.performance.toFixed(0) + '%;'" :aria-valuenow="classe.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100"><span class="tx-14">#{classe.performance.toFixed(0)} %</span></div>
+                                  <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -classe.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - classe.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="align-middle text-center" style="cursor: pointer;" @click="showAlertWithHistogramChart(classe.histogram)">
+                              <span class="bar-colours">#{classe.histogram && classe.histogram.data.length ? classe.histogram.data.join(','):''}</span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div v-show="groupBNCC.studentsViewPoints == 'improve'">
+                      <table class="table table-sm tx-nowrap mg-b-0 table-striped">
+                        <thead>
+                          <tr class="tx-color-03 tx-uppercase">
+                            <th>Turma</th>
+                            <th>Desempenho</th>
+                            <th>Histograma</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="classe in selectedBNCC.classes_performances.filter(classe => classe.performance < 50)">
+                            <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{classe.name.toUpperCase()} <br /> #{classe.count} Aluno(s)</td>
+                            <td class="pb-0 align-middle">
+                              <div class="wd-150 d-inline-block">
+                                <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                  <div class="progress-bar" :class="{'bg-pink': classe.performance.toFixed(0) < 50, 'bg-success': classe.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + classe.performance.toFixed(0) + '%;'" :aria-valuenow="classe.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100"><span class="tx-14">#{classe.performance.toFixed(0)} %</span></div>
+                                  <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -classe.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - classe.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="align-middle text-center" style="cursor: pointer;" @click="showAlertWithHistogramChart(classe.histogram)">
+                              <span class="bar-colours">#{classe.histogram && classe.histogram.data.length ? classe.histogram.data.join(','):''}</span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row" v-if="!selectedBNCC.loads.classes_performances_loaded">
+                <div class="col-12 text-center">
+                  <div class="spinner-grow text-info mx-3" role="status">
+                    <span class="sr-only"></span>
+                  </div>
+                  <p class="text-center">Aguarde enquanto carregamos os dados das turmas</p>
+                </div>
+              </div>
+            </div>
+            <div id="bncc-unities" class="tab-pane fade">
+              <div class="row m-0" v-if="selectedBNCC.loads.unities_performances_loaded && selectedBNCC.unities_performances">
+                <div class="col-12 d-flex justify-content-end">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                      <li class="breadcrumb-item cp" :class="{'active': groupSubjects.studentsViewPoints == ''}" @click="groupSubjects.studentsViewPoints = ''">Geral <span class="badge badge-primary">#{selectedBNCC.unities_performances ? selectedBNCC.unities_performances.length : 0}</span></li>
+                      <li class="breadcrumb-item cp" :class="{'active': groupSubjects.studentsViewPoints == 'strong'}" @click="groupSubjects.studentsViewPoints = 'strong'">Pontos Fortes <span class="badge badge-success">#{selectedBNCC.unities_performances ? selectedBNCC.unities_performances.filter(student => student.performance >= 50).length : 0}</span></li>
+                      <li class="breadcrumb-item cp" :class="{'active text-danger': groupSubjects.studentsViewPoints == 'improve'}" @click="groupSubjects.studentsViewPoints = 'improve'">À Melhorar <span class="badge badge-danger">#{selectedBNCC.unities_performances ? selectedBNCC.unities_performances.filter(student => student.performance < 50).length : 0}</span></li>
+                    </ol>
+                  </nav>
+                </div>
+                <div class="col-12">
+                  <div class="table-responsive">
+                    <div v-show="groupSubjects.studentsViewPoints == ''">
+                      <table class="table table-sm tx-nowrap mg-b-0 table-striped" id="table-students-general-unities">
+                        <thead>
+                          <tr class="tx-color-03 tx-uppercase">
+                            <th>Turma</th>
+                            <th>Desempenho</th>
+                            <th>Histograma</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="classe in selectedBNCC.unities_performances">
+                            <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{classe.name.toUpperCase()} <br /> #{classe.count} Aluno(s)</td>
+                            <td class="pb-0 align-middle">
+                              <div class="wd-150 d-inline-block">
+                                <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                  <div class="progress-bar" :class="{'bg-pink': classe.performance.toFixed(0) < 50, 'bg-success': classe.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + classe.performance.toFixed(0) + '%;'" :aria-valuenow="classe.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100">
+                                    <span class="tx-14">#{classe.performance.toFixed(0)} %</span>
+                                  </div>
+                                  <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -classe.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - classe.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="align-middle text-center" style="cursor: pointer;" @click="showAlertWithHistogramChart(classe.histogram)">
+                              <span class="bar-colours">#{classe.histogram && classe.histogram.data.length ? classe.histogram.data.join(','):''}</span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div v-show="groupSubjects.studentsViewPoints == 'strong'">
+                      <table class="table table-sm tx-nowrap mg-b-0 table-striped" id="table-students-strongs-unities">
+                        <thead>
+                          <tr class="tx-color-03 tx-uppercase">
+                            <th>Turma</th>
+                            <th>Desempenho 2</th>
+                            <th>Histograma</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="classe in selectedBNCC.unities_performances.filter(classe => classe.performance >= 50)">
+                            <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{classe.name.toUpperCase()} <br /> #{classe.count} Aluno(s)</td>
+                            <td class="pb-0 align-middle">
+                              <div class="wd-150 d-inline-block">
+                                <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                  <div class="progress-bar" :class="{'bg-pink': classe.performance.toFixed(0) < 50, 'bg-success': classe.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + classe.performance.toFixed(0) + '%;'" :aria-valuenow="classe.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100"><span class="tx-14">#{classe.performance.toFixed(0)} %</span></div>
+                                  <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -classe.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - classe.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="align-middle text-center" style="cursor: pointer;" @click="showAlertWithHistogramChart(classe.histogram)">
+                              <span class="bar-colours">#{classe.histogram && classe.histogram.data.length ? classe.histogram.data.join(','):''}</span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div v-show="groupSubjects.studentsViewPoints == 'improve'">
+                      <table class="table table-sm tx-nowrap mg-b-0 table-striped" id="table-students-improves-unities">
+                        <thead>
+                          <tr class="tx-color-03 tx-uppercase">
+                            <th>Turma</th>
+                            <th>Desempenho</th>
+                            <th>Histograma</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="classe in selectedBNCC.unities_performances.filter(classe => classe.performance < 50)">
+                            <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{classe.name.toUpperCase()} <br /> #{classe.count} Aluno(s)</td>
+                            <td class="pb-0 align-middle">
+                              <div class="wd-150 d-inline-block">
+                                <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                  <div class="progress-bar" :class="{'bg-pink': classe.performance.toFixed(0) < 50, 'bg-success': classe.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + classe.performance.toFixed(0) + '%;'" :aria-valuenow="classe.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100"><span class="tx-14">#{classe.performance.toFixed(0)} %</span></div>
+                                  <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -classe.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - classe.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="align-middle text-center" style="cursor: pointer;" @click="showAlertWithHistogramChart(classe.histogram)">
+                              <span class="bar-colours">#{classe.histogram && classe.histogram.data.length ? classe.histogram.data.join(','):''}</span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row" v-if="!selectedBNCC.loads.unities_performances_loaded">
+                <div class="col-12 text-center">
+                  <div class="spinner-grow text-info mx-3" role="status">
+                    <span class="sr-only"></span>
+                  </div>
+                  <p class="text-center">Aguarde enquanto carregamos os dados das unidades</p>
+                </div>
+              </div>
+            </div>
+            <div id="bncc-students" class="tab-pane fade">
+              <div class="row m-0" v-if="selectedBNCC.loads.students_performances_loaded && selectedBNCC.students_performances">
+                <div class="col-12 d-flex justify-content-end">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                      <li class="breadcrumb-item cp" :class="{'active': groupBNCC.studentsViewPoints == ''}" @click="groupBNCC.studentsViewPoints = ''">Geral <span class="badge badge-primary">#{selectedBNCC.students_performances.results.length}</span></li>
+                      <li class="breadcrumb-item cp" :class="{'active': groupBNCC.studentsViewPoints == 'strong'}" @click="groupBNCC.studentsViewPoints = 'strong'">Pontos Fortes <span class="badge badge-success">#{selectedBNCC.students_performances.results.filter(student => student.performance >= 50).length}</span></li>
+                      <li class="breadcrumb-item cp" :class="{'active text-danger': groupBNCC.studentsViewPoints == 'improve'}" @click="groupBNCC.studentsViewPoints = 'improve'">À Melhorar <span class="badge badge-danger">#{selectedBNCC.students_performances.results.filter(student => student.performance < 50).length}</span></li>
+                    </ol>
+                  </nav>
+                </div>
+                <div class="col-12">
+                  <div class="table-responsive">
+                    <div v-show="groupBNCC.studentsViewPoints == ''">
+                      <table class="table table-sm tx-nowrap mg-b-0" id="table-students-general-subjects">
+                        <thead>
+                          <tr class="tx-color-03 tx-uppercase">
+                            <th>Aluno</th>
+                            <th>Desempenho</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="student in selectedBNCC.students_performances.results">
+                            <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{student.name.toUpperCase()}</td>
+                            <td class="pb-0 align-middle">
+                              <div class="wd-150 d-inline-block">
+                                <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                  <div class="progress-bar" :class="{'bg-pink': student.performance.toFixed(0) < 50, 'bg-success': student.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + student.performance.toFixed(0) + '%;'" :aria-valuenow="student.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100"><span class="tx-14">#{student.performance.toFixed(0)} %</span></div>
+                                  <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -student.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - student.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div v-show="groupBNCC.studentsViewPoints == 'strong'">
+                      <table class="table table-sm tx-nowrap mg-b-0" id="table-students-strongs-subjects">
+                        <thead>
+                          <tr class="tx-color-03 tx-uppercase">
+                            <th>Aluno</th>
+                            <th>Desempenho</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="student in selectedBNCC.students_performances.results.filter(student => student.performance >= 50)">
+                            <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{student.name.toUpperCase()}</td>
+                            <td class="pb-0 align-middle">
+                              <div class="wd-150 d-inline-block">
+                                <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                  <div class="progress-bar" :class="{'bg-pink': student.performance.toFixed(0) < 50, 'bg-success': student.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + student.performance.toFixed(0) + '%;'" :aria-valuenow="student.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100"><span class="tx-14">#{student.performance.toFixed(0)} %</span></div>
+                                  <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -student.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - student.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div v-show="groupBNCC.studentsViewPoints == 'improve'">
+                      <table class="table table-sm tx-nowrap mg-b-0" id="table-students-improves-subjects">
+                        <thead>
+                          <tr class="tx-color-03 tx-uppercase">
+                            <th>Aluno</th>
+                            <th>Desempenho</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="student in selectedBNCC.students_performances.results.filter(student => student.performance < 50)">
+                            <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{student.name.toUpperCase()}</td>
+                            <td class="pb-0 align-middle">
+                              <div class="wd-150 d-inline-block">
+                                <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                  <div class="progress-bar" :class="{'bg-pink': student.performance.toFixed(0) < 50, 'bg-success': student.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + student.performance.toFixed(0) + '%;'" :aria-valuenow="student.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100"><span class="tx-14">#{student.performance.toFixed(0)} %</span></div>
+                                  <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -student.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - student.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <pagination-component :data="selectedBNCC.students_performances"></pagination-component>
+                </div>
+              </div>
+              <div class="row" v-if="!selectedBNCC.loads.students_performances_loaded">
+                <div class="col-12 text-center">
+                  <div class="spinner-grow text-info mx-3" role="status">
+                    <span class="sr-only"></span>
+                  </div>
+                  <p class="text-center">Aguarde enquanto carregamos os dados dos alunos</p>
+                </div>
+              </div>
+            </div>
+            <div id="bncc-histogram" class="tab-pane fade">
+              <div class="row m-0" v-show="selectedBNCC.loads.histogram_loaded">
+                <div class="col-12 p-0">
+                  <div id="bnccHistogramChart"></div>
+                </div>
+              </div>
+              <div class="row" v-if="!selectedBNCC.loads.histogram_loaded">
+                <div class="col-12 text-center">
+                  <div class="spinner-grow text-info mx-3" role="status">
+                    <span class="sr-only"></span>
+                  </div>
+                  <p class="text-center">Aguarde enquanto carregamos os dados do histograma</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-block btn-primary mb-2" data-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade effect-sign" id="modalSubjectDetail" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-body pd-x-30 pd-sm-x-30" v-if="selectedSubject.id">
+          <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </a>
+          <h4>{{object.name}}</h4>
+          <div class="d-flex align-items-center justify-content-between tx-rubik mb-0">
+            <div>
+              <h4>Disciplina: #{ selectedSubject.name }</h4>
+            </div>
+            <div class="d-flex align-items-end">
+              <h1 class="tx-40 lh-1 tx-normal tx-spacing--2 mb-0 mg-r-5 text-nowrap">#{selectedSubject.performance.toFixed(2)} %</h1>
+            </div>
+          </div>
+          {% if applied_filters %}
+            <div class="col-12 p-0">
+              <span class="d-block tx-10 tx-rubik">{{count_filters}} filtro(s) aplicado(s):</span>
+              {% for applied_filter in applied_filters %}
+                <span class="badge badge-primary">{{applied_filter}}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+          <div class="nav-wrapper mg-b-20">
+            <div>
+              <nav class="nav nav-line tx-medium">
+                <a href="#subject-classes" class="nav-link active" data-toggle="tab">Turmas</a>
+                <a href="#subject-unities" @click="getUnitiesPerformances(selectedSubject.id, '')" class="nav-link" data-toggle="tab">Unidades</a>
+                <a href="#subject-students" @click="getStudentsPerformances(selectedSubject.id, '')" class="nav-link" data-toggle="tab">Alunos</a>
+                <a href="#subject-histogram" class="nav-link" data-toggle="tab">Histograma</a>
+              </nav>
+            </div>
+          </div>
+          <div class="tab-content">
+            <div id="subject-classes" class="tab-pane fade active show">
+              <div class="row m-0">
+                <div class="col-12 d-flex justify-content-end">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                      <li class="breadcrumb-item cp" :class="{'active': groupSubjects.studentsViewPoints == ''}" @click="groupSubjects.studentsViewPoints = ''">Geral <span class="badge badge-primary">#{selectedSubject.classes_performances ? selectedSubject.classes_performances.length : 0}</span></li>
+                      <li class="breadcrumb-item cp" :class="{'active': groupSubjects.studentsViewPoints == 'strong'}" @click="groupSubjects.studentsViewPoints = 'strong'">Pontos Fortes <span class="badge badge-success">#{selectedSubject.classes_performances ? selectedSubject.classes_performances.filter(student => student.performance >= 50).length : 0}</span></li>
+                      <li class="breadcrumb-item cp" :class="{'active text-danger': groupSubjects.studentsViewPoints == 'improve'}" @click="groupSubjects.studentsViewPoints = 'improve'">À Melhorar <span class="badge badge-danger">#{selectedSubject.classes_performances ? selectedSubject.classes_performances.filter(student => student.performance < 50).length : 0}</span></li>
+                    </ol>
+                  </nav>
+                </div>
+                <div class="col-12">
+                  <div class="table-responsive">
+                    <div v-show="groupSubjects.studentsViewPoints == ''">
+                      <table class="table table-sm tx-nowrap mg-b-0 table-striped" id="table-students-general-classes">
+                        <thead>
+                          <tr class="tx-color-03 tx-uppercase">
+                            <th>Turma</th>
+                            <th>Desempenho</th>
+                            <th>Histograma</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="classe in selectedSubject.classes_performances">
+                            <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{classe.name.toUpperCase()} <br /> #{classe.count} Aluno(s)</td>
+                            <td class="pb-0 align-middle">
+                              <div class="wd-150 d-inline-block">
+                                <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                  <div class="progress-bar" :class="{'bg-pink': classe.performance.toFixed(0) < 50, 'bg-success': classe.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + classe.performance.toFixed(0) + '%;'" :aria-valuenow="classe.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100">
+                                    <span class="tx-14">#{classe.performance.toFixed(0)} %</span>
+                                  </div>
+                                  <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -classe.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - classe.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="align-middle text-center" style="cursor: pointer;" @click="showAlertWithHistogramChart(classe.histogram)">
+                              <span class="bar-colours">#{classe.histogram && classe.histogram.data.length ? classe.histogram.data.join(','):''}</span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div v-show="groupSubjects.studentsViewPoints == 'strong'">
+                      <table class="table table-sm tx-nowrap mg-b-0 table-striped" id="table-students-strongs-classes">
+                        <thead>
+                          <tr class="tx-color-03 tx-uppercase">
+                            <th>Turma</th>
+                            <th>Desempenho</th>
+                            <th>Histograma</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="classe in selectedSubject.classes_performances.filter(classe => classe.performance >= 50)">
+                            <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{classe.name.toUpperCase()} <br /> #{classe.count} Aluno(s)</td>
+                            <td class="pb-0 align-middle">
+                              <div class="wd-150 d-inline-block">
+                                <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                  <div class="progress-bar" :class="{'bg-pink': classe.performance.toFixed(0) < 50, 'bg-success': classe.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + classe.performance.toFixed(0) + '%;'" :aria-valuenow="classe.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100"><span class="tx-14">#{classe.performance.toFixed(0)} %</span></div>
+                                  <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -classe.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - classe.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="align-middle text-center" style="cursor: pointer;" @click="showAlertWithHistogramChart(classe.histogram)">
+                              <span class="bar-colours">#{classe.histogram && classe.histogram.data.length ? classe.histogram.data.join(','):''}</span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div v-show="groupSubjects.studentsViewPoints == 'improve'">
+                      <table class="table table-sm tx-nowrap mg-b-0 table-striped" id="table-students-improves-classes">
+                        <thead>
+                          <tr class="tx-color-03 tx-uppercase">
+                            <th>Turma</th>
+                            <th>Desempenho</th>
+                            <th>Histograma</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="classe in selectedSubject.classes_performances.filter(classe => classe.performance < 50)">
+                            <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{classe.name.toUpperCase()} <br /> #{classe.count} Aluno(s)</td>
+                            <td class="pb-0 align-middle">
+                              <div class="wd-150 d-inline-block">
+                                <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                  <div class="progress-bar" :class="{'bg-pink': classe.performance.toFixed(0) < 50, 'bg-success': classe.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + classe.performance.toFixed(0) + '%;'" :aria-valuenow="classe.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100"><span class="tx-14">#{classe.performance.toFixed(0)} %</span></div>
+                                  <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -classe.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - classe.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="align-middle text-center" style="cursor: pointer;" @click="showAlertWithHistogramChart(classe.histogram)">
+                              <span class="bar-colours">#{classe.histogram && classe.histogram.data.length ? classe.histogram.data.join(','):''}</span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row" v-if="!selectedSubject.loads.classes_performances_loaded">
+                <div class="col-12 text-center">
+                  <div class="spinner-grow text-info mx-3" role="status">
+                    <span class="sr-only"></span>
+                  </div>
+                  <p class="text-center">Aguarde enquanto carregamos os dados das turmas</p>
+                </div>
+              </div>
+            </div>
+            <div id="subject-unities" class="tab-pane fade">
+              <div class="row m-0" v-if="selectedSubject.loads.unities_performances_loaded && selectedSubject.unities_performances">
+                <div class="col-12 d-flex justify-content-end">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                      <li class="breadcrumb-item cp" :class="{'active': groupSubjects.studentsViewPoints == ''}" @click="groupSubjects.studentsViewPoints = ''">Geral <span class="badge badge-primary">#{selectedSubject.unities_performances ? selectedSubject.unities_performances.length : 0}</span></li>
+                      <li class="breadcrumb-item cp" :class="{'active': groupSubjects.studentsViewPoints == 'strong'}" @click="groupSubjects.studentsViewPoints = 'strong'">Pontos Fortes <span class="badge badge-success">#{selectedSubject.unities_performances ? selectedSubject.unities_performances.filter(student => student.performance >= 50).length : 0}</span></li>
+                      <li class="breadcrumb-item cp" :class="{'active text-danger': groupSubjects.studentsViewPoints == 'improve'}" @click="groupSubjects.studentsViewPoints = 'improve'">À Melhorar <span class="badge badge-danger">#{selectedSubject.unities_performances ? selectedSubject.unities_performances.filter(student => student.performance < 50).length : 0}</span></li>
+                    </ol>
+                  </nav>
+                </div>
+                <div class="col-12">
+                  <div class="table-responsive">
+                    <div v-show="groupSubjects.studentsViewPoints == ''">
+                      <table class="table table-sm tx-nowrap mg-b-0 table-striped" id="table-students-general-unities">
+                        <thead>
+                          <tr class="tx-color-03 tx-uppercase">
+                            <th>Turma</th>
+                            <th>Desempenho</th>
+                            <th>Histograma</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="classe in selectedSubject.unities_performances">
+                            <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{classe.name.toUpperCase()} <br /> #{classe.count} Aluno(s)</td>
+                            <td class="pb-0 align-middle">
+                              <div class="wd-150 d-inline-block">
+                                <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                  <div class="progress-bar" :class="{'bg-pink': classe.performance.toFixed(0) < 50, 'bg-success': classe.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + classe.performance.toFixed(0) + '%;'" :aria-valuenow="classe.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100">
+                                    <span class="tx-14">#{classe.performance.toFixed(0)} %</span>
+                                  </div>
+                                  <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -classe.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - classe.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="align-middle text-center" style="cursor: pointer;" @click="showAlertWithHistogramChart(classe.histogram)">
+                              <span class="bar-colours">#{classe.histogram && classe.histogram.data.length ? classe.histogram.data.join(','):''}</span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div v-show="groupSubjects.studentsViewPoints == 'strong'">
+                      <table class="table table-sm tx-nowrap mg-b-0 table-striped" id="table-students-strongs-unities">
+                        <thead>
+                          <tr class="tx-color-03 tx-uppercase">
+                            <th>Turma</th>
+                            <th>Desempenho</th>
+                            <th>Histograma</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="classe in selectedSubject.unities_performances.filter(classe => classe.performance >= 50)">
+                            <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{classe.name.toUpperCase()} <br /> #{classe.count} Aluno(s)</td>
+                            <td class="pb-0 align-middle">
+                              <div class="wd-150 d-inline-block">
+                                <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                  <div class="progress-bar" :class="{'bg-pink': classe.performance.toFixed(0) < 50, 'bg-success': classe.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + classe.performance.toFixed(0) + '%;'" :aria-valuenow="classe.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100"><span class="tx-14">#{classe.performance.toFixed(0)} %</span></div>
+                                  <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -classe.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - classe.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="align-middle text-center" style="cursor: pointer;" @click="showAlertWithHistogramChart(classe.histogram)">
+                              <span class="bar-colours">#{classe.histogram && classe.histogram.data.length ? classe.histogram.data.join(','):''}</span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div v-show="groupSubjects.studentsViewPoints == 'improve'">
+                      <table class="table table-sm tx-nowrap mg-b-0 table-striped" id="table-students-improves-unities">
+                        <thead>
+                          <tr class="tx-color-03 tx-uppercase">
+                            <th>Turma</th>
+                            <th>Desempenho</th>
+                            <th>Histograma</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="classe in selectedSubject.unities_performances.filter(classe => classe.performance < 50)">
+                            <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{classe.name.toUpperCase()} <br /> #{classe.count} Aluno(s)</td>
+                            <td class="pb-0 align-middle">
+                              <div class="wd-150 d-inline-block">
+                                <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                  <div class="progress-bar" :class="{'bg-pink': classe.performance.toFixed(0) < 50, 'bg-success': classe.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + classe.performance.toFixed(0) + '%;'" :aria-valuenow="classe.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100"><span class="tx-14">#{classe.performance.toFixed(0)} %</span></div>
+                                  <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -classe.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - classe.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="align-middle text-center" style="cursor: pointer;" @click="showAlertWithHistogramChart(classe.histogram)">
+                              <span class="bar-colours">#{classe.histogram && classe.histogram.data.length ? classe.histogram.data.join(','):''}</span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row" v-if="!selectedSubject.loads.unities_performances_loaded">
+                <div class="col-12 text-center">
+                  <div class="spinner-grow text-info mx-3" role="status">
+                    <span class="sr-only"></span>
+                  </div>
+                  <p class="text-center">Aguarde enquanto carregamos os dados das unidades</p>
+                </div>
+              </div>
+            </div>
+            <div id="subject-students" class="tab-pane fade">
+              <div class="row m-0" v-if="selectedSubject.loads.students_performances_loaded && selectedSubject.students_performances">
+                <div class="col-12 d-flex justify-content-end">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                      <li class="breadcrumb-item cp" :class="{'active': groupSubjects.studentsViewPoints == ''}" @click="groupSubjects.studentsViewPoints = ''">Geral <span class="badge badge-primary">#{selectedSubject.students_performances.results.length}</span></li>
+                      <li class="breadcrumb-item cp" :class="{'active': groupSubjects.studentsViewPoints == 'strong'}" @click="groupSubjects.studentsViewPoints = 'strong'">Pontos Fortes <span class="badge badge-success">#{selectedSubject.students_performances.results.filter(student => student.performance >= 50).length}</span></li>
+                      <li class="breadcrumb-item cp" :class="{'active text-danger': groupSubjects.studentsViewPoints == 'improve'}" @click="groupSubjects.studentsViewPoints = 'improve'">À Melhorar <span class="badge badge-danger">#{selectedSubject.students_performances.results.filter(student => student.performance < 50).length}</span></li>
+                    </ol>
+                  </nav>
+                </div>
+                <div class="col-12">
+                  <div class="table-responsive">
+                    <div v-show="groupSubjects.studentsViewPoints == ''">
+                      <table class="table table-sm tx-nowrap mg-b-0" id="table-students-general-subjects">
+                        <thead>
+                          <tr class="tx-color-03 tx-uppercase">
+                            <th>Aluno</th>
+                            <th>Desempenho</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="student in selectedSubject.students_performances.results">
+                            <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{student.name.toUpperCase()}</td>
+                            <td class="pb-0 align-middle">
+                              <div class="wd-150 d-inline-block">
+                                <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                  <div class="progress-bar" :class="{'bg-pink': student.performance.toFixed(0) < 50, 'bg-success': student.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + student.performance.toFixed(0) + '%;'" :aria-valuenow="student.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100"><span class="tx-14">#{student.performance.toFixed(0)} %</span></div>
+                                  <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -student.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - student.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div v-show="groupSubjects.studentsViewPoints == 'strong'">
+                      <table class="table table-sm tx-nowrap mg-b-0" id="table-students-strongs-subjects">
+                        <thead>
+                          <tr class="tx-color-03 tx-uppercase">
+                            <th>Aluno</th>
+                            <th>Desempenho</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="student in selectedSubject.students_performances.results.filter(student => student.performance >= 50)">
+                            <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{student.name.toUpperCase()}</td>
+                            <td class="pb-0 align-middle">
+                              <div class="wd-150 d-inline-block">
+                                <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                  <div class="progress-bar" :class="{'bg-pink': student.performance.toFixed(0) < 50, 'bg-success': student.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + student.performance.toFixed(0) + '%;'" :aria-valuenow="student.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100"><span class="tx-14">#{student.performance.toFixed(0)} %</span></div>
+                                  <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -student.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - student.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div v-show="groupSubjects.studentsViewPoints == 'improve'">
+                      <table class="table table-sm tx-nowrap mg-b-0" id="table-students-improves-subjects">
+                        <thead>
+                          <tr class="tx-color-03 tx-uppercase">
+                            <th>Aluno</th>
+                            <th>Desempenho</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="student in selectedSubject.students_performances.results.filter(student => student.performance < 50)">
+                            <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{student.name.toUpperCase()}</td>
+                            <td class="pb-0 align-middle">
+                              <div class="wd-150 d-inline-block">
+                                <div class="progress ht-4 mg-b-0" style="height: 20px;">
+                                  <div class="progress-bar" :class="{'bg-pink': student.performance.toFixed(0) < 50, 'bg-success': student.performance.toFixed(0) >= 50 }" role="progressbar"  :style="'width: ' + student.performance.toFixed(0) + '%;'" :aria-valuenow="student.performance.toFixed(0)" aria-valuemin="0" aria-valuemax="100"><span class="tx-14">#{student.performance.toFixed(0)} %</span></div>
+                                  <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -student.performance.toFixed(0)) + '%;'" :aria-valuenow="(100 - student.performance.toFixed(0))" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <pagination-component :data="selectedSubject.students_performances"></pagination-component>
+                </div>
+              </div>
+              <div class="row" v-if="!selectedSubject.loads.students_performances_loaded">
+                <div class="col-12 text-center">
+                  <div class="spinner-grow text-info mx-3" role="status">
+                    <span class="sr-only"></span>
+                  </div>
+                  <p class="text-center">Aguarde enquanto carregamos os dados dos alunos</p>
+                </div>
+              </div>
+            </div>
+            <div id="subject-histogram" class="tab-pane fade">
+              <div class="row m-0" v-show="selectedSubject.loads.histogram_loaded">
+                <div class="col-12 p-0">
+                  <div id="histogramChart"></div>
+                </div>
+              </div>
+              <div class="row" v-if="!selectedSubject.loads.histogram_loaded">
+                <div class="col-12 text-center">
+                  <div class="spinner-grow text-info mx-3" role="status">
+                    <span class="sr-only"></span>
+                  </div>
+                  <p class="text-center">Aguarde enquanto carregamos os dados dos alunos</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-block btn-primary mb-2" data-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% comment %} 
+  <div class="modal fade effect-sign" id="modalRecalculateConfirm" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-body pd-x-30 pd-sm-x-30">
+          <a href="" role="button" class="close pos-absolute r-15" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </a>
+          <div class="row">
+            <div class="col-12">
+              <div class="pd-y-20">
+                <label class="tx-uppercase tx-sans tx-16 tx-medium tx-spacing-1 tx-color-03 pd-l-10 mg-b-10">Quais os desempenhos você deseja recalcular?</label>
+                <ul class="list-group list-group-flush tx-13">
+                  <li class="list-group-item d-flex align-items-center pd-sm-x-20 cp" @click="recalculate.calculate('all')">
+                    <div class="avatar d-none d-sm-block"><span class="avatar-initial rounded-circle bg-gray-400" :class="{ 'bg-teal': recalculate.all }"><i class="icon ion-md-checkmark"></i></span></div>
+                    <div class="pd-sm-l-10">
+                      <p class="tx-medium mg-b-0">Todos</p>
+                    </div>
+                  </li>
+                  <li class="list-group-item d-flex align-items-center pd-sm-x-20 cp" @click="recalculate.calculate('only_students')">
+                    <div class="avatar d-none d-sm-block"><span class="avatar-initial rounded-circle bg-gray-400" :class="{ 'bg-teal': recalculate.only_students }"><i class="icon ion-md-checkmark"></i></span></div>
+                    <div class="pd-sm-l-10">
+                      <p class="tx-medium mg-b-0">Dos alunos</p>
+                    </div>
+                  </li>
+                  <li class="list-group-item d-flex align-items-center pd-sm-x-20 cp" @click="recalculate.calculate('only_classes')">
+                    <div class="avatar d-none d-sm-block"><span class="avatar-initial rounded-circle bg-gray-400" :class="{ 'bg-teal': recalculate.only_classes }"><i class="icon ion-md-checkmark"></i></span></div>
+                    <div class="pd-sm-l-10">
+                      <p class="tx-medium mg-b-0">Das turmas</p>
+                    </div>
+                  </li>
+                  <li class="list-group-item d-flex align-items-center pd-sm-x-20 cp" @click="recalculate.calculate('only_subjects')">
+                    <div class="avatar d-none d-sm-block"><span class="avatar-initial rounded-circle bg-gray-400" :class="{ 'bg-teal': recalculate.only_subjects }"><i class="icon ion-md-checkmark"></i></span></div>
+                    <div class="pd-sm-l-10">
+                      <p class="tx-medium mg-b-0">Das disciplinas</p>
+                    </div>
+                  </li>
+                  <li class="list-group-item d-flex align-items-center pd-sm-x-20 cp" @click="recalculate.calculate('only_bnccs')">
+                    <div class="avatar d-none d-sm-block"><span class="avatar-initial rounded-circle bg-gray-400" :class="{ 'bg-teal': recalculate.only_bnccs }"><i class="icon ion-md-checkmark"></i></span></div>
+                    <div class="pd-sm-l-10">
+                      <p class="tx-medium mg-b-0">Objetos do conhecimento e bnccs</p>
+                    </div>
+                  </li>
+                  <li class="list-group-item d-flex align-items-center pd-sm-x-20 cp" @click="recalculate.calculate('only_unities')">
+                    <div class="avatar d-none d-sm-block"><span class="avatar-initial rounded-circle bg-gray-400" :class="{ 'bg-teal': recalculate.only_unities }"><i class="icon ion-md-checkmark"></i></span></div>
+                    <div class="pd-sm-l-10">
+                      <p class="tx-medium mg-b-0">Das unidades</p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="col-12">
+              <p class="text-muted">
+                O processo pode demorar um pouco, você será informado quando o processo terminar.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer d-flex align-items-center">
+          <button class="btn btn-block btn-success mt-0" @click="recalculateExam(true)" :disabled="!recalculate.haveSomethingToCalculate() || recalculate.load">Confirmar</button>
+          <button class="btn btn-block btn-secondary mt-0" data-dismiss="modal">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div> 
+  {% endcomment %}
+{% endblock extra-modal %}
+
+{% block off-canvas %}
+  <div id="right-off-canvas" class="off-canvas off-canvas-right wd-400 bg-white"
+    style="overflow-y: auto; overflow-x: hidden;">
+    <form method="GET">
+      <div class="row p-3">
+        <div class="col-12">
+          <h5>Filtrar resultados</h5>
+          <p>Adiciona abaixo os filtros que você deseja aplicar na listagem abaixo</p>
+          <hr/>
+        </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="id_q_school_classes" class="mb-1">Turmas</label>
+            <select name="q_school_classes" id="id_q_school_classes" class="form-control" multiple="multiple">
+              {% for classe in classes %}
+                <option value="{{classe.id}}" {% if classe.id|stringformat:'s' in q_school_classes %} selected="selected" {% endif %}>
+                  {{classe}} com {{classe.students.count}} alunos
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="id_q_subjects" class="mb-1">Disciplinas</label>
+            <select name="q_subjects" id="id_q_subjects" class="form-control" multiple="multiple">
+              {% for subject in subjects %}
+                <option value="{{subject.id}}" {% if subject.id|stringformat:'s' in q_subjects %} selected="selected" {% endif %}>
+                  {{subject}}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="id_q_unities" class="mb-1">Unidades</label>
+            <select name="q_unities" id="id_q_unities" class="form-control" multiple="multiple">
+              {% for unity in unities %}
+                <option value="{{unity.id}}" {% if unity.id|stringformat:'s' in q_unities %} selected="selected" {% endif %}>
+                  {{unity.name}}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="custom-control custom-switch ">
+            <input {% if q_all_students %} checked="checked" {% endif %} type="checkbox" id="id_q_all_students" name="q_all_students" class="custom-control-input">
+            <label class="custom-control-label" for="id_q_all_students">Mostrar todos os alunos</label>
+            <small class="form-text text-muted mt-0">Selecine caso queira mostrar todos os alunos, independende de ter iniciado a prova ou não.</small>
+          </div>
+        </div>
+        
+        <div class="col-12 mt-5">
+          <button type="submit" class="btn btn-primary btn-block">
+            <i class="fas fa-search"></i>
+            Aplicar filtro
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+{% endblock %}
+
+{% block js-additional %}
+
+<script src="{% static 'administration/lib/datatables.net-responsive-dt/js/responsive.dataTables.min.js' %}"></script>
+<script src="{% static 'administration/lib/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"></script>
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'dashboard/lib/apexcharts/apexcharts.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="{% static 'new/administration/lib/peity/jquery.peity.min.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+
+
+<script>
+  var app = new Vue({
+    delimiters: ["#{", "}"],
+    components: {
+      {% include 'includes/components/pagination.html' %}
+    el: "#app",
+    data: {
+      list_type: 'grouped',
+      exam: {
+        exists_performances: {{object.last_performance.exists|lower}}
+      },
+      subjects: [
+        {% for subject in subjects %}
+          {
+            id: '{{subject.id}}',
+            name: '{{subject}}',
+          },
+        {% endfor %}
+      ],
+      abilities: [
+        {% for ability in abilities.all %}
+          {
+            id: '{{ability.id}}',
+            code: '{{ability.code|default:""}}',
+            text: '{{ability.text|remove_line_break|safe}}',
+            knowledge_object: '{{ability.knowledge_object.text|default:""|remove_line_break|safe}}',
+            questions: {{ability|get_questions:object|safe}},
+            performance: 0,
+          },
+        {% endfor %}
+      ],
+      competences: [
+        {% for competence in competences.all %}
+          {
+            id: '{{competence.id}}',
+            code: '{{competence.code|default:""}}',
+            text: '{{competence.text|remove_line_break|safe}}',
+            questions: {{competence|get_questions:object|safe}},
+            performance: 0,
+          },
+        {% endfor %}
+      ],
+      topics: [
+        {% for topic in topics.all %}
+          {
+            id: '{{topic.id}}',
+            text: '{{topic.name|remove_line_break|safe}}',
+            questions: {{topic|get_questions:object|safe}},
+            performance: 0,
+          },
+        {% endfor %}
+      ],
+      classes: [
+        {% for classe in classes %}
+          {
+            id: '{{classe.id}}',
+            name: '{{classe}}',
+          },
+        {% endfor %}
+      ],
+      unities: [
+        {% for unity in unities %}
+          {
+            id: '{{unity.id}}',
+            name: '{{unity.name}}',
+          },
+        {% endfor %}
+      ],
+      groupBNCC: {
+        topics: [],
+        abilities: [],
+        competences: [],
+        viewPoints: '',
+        studentsViewPoints: ''
+      },
+      groupSubjects: {
+        list: [],
+        studentsViewPoints: '',
+        viewPoints: '',
+      },
+      selectedSubject: {
+        id: '',
+        name: '',
+        exams_performance: [],
+        students_performances: null,
+        classes_performances: [],
+        unities_performances: [],
+        table_subject_performances: [],
+        histogram: null,
+        loads: {
+          performances_loaded: false,
+          students_performances_loaded: false,
+          classes_performances_loaded: false,
+          unities_performances_loaded: false,
+          histogram_loaded: false,
+        },
+        averageExams() {
+          return this.exams_performance.reduce((total = 0, exam) => total += exam.performance, 0) / this.exams_performance.filter(exam => exam.id).length
+        }
+      },
+      selectedBNCC: {
+        id: '',
+        code: '',
+        type: '',
+        text: '',
+        performance: 0,
+        questions: [],
+        knowledge_object: '',
+        students_performances: [],
+        exams_performance: [],
+        classes_performances: [],
+        unities_performances: [],
+        table_bncc_performances: [],
+        histogram: null,
+        loads: {
+          performances_loaded: false,
+          students_performances_loaded: false,
+          classes_performances_loaded: false,
+          unities_performances_loaded: false,
+          histogram_loaded: false,
+        },
+        bncc: {
+          topic: [],
+          ability: [],
+          competence: [],
+        },
+        averageExams() {
+          return this.exams_performance.reduce((total = 0, exam) => total += exam.performance, 0) / this.exams_performance.filter(exam => exam.id).length
+        }
+      },
+      //Charts
+      histogramChart: '',
+      bnccHistogramChart: '',
+      loads: {
+        groupPerformance: true,
+        groupPerformanceTopics: true,
+        groupPerformanceAbilities: true,
+        groupPerformanceCompetences: true,
+        groupSubjectPerformance: true,
+      },
+      widgets: {
+        optionAnswers: '',
+        discursiveAnswers: '',
+        loads: {
+          optionAnswers: true,
+          discursiveAnswers: true,
+        }
+      },
+      studentsDataTable: {
+        generalSubjects: '',
+        strongsSubjects: '',
+        improvesSubjects: '',
+        generalClasses: '',
+        strongsClasses: '',
+        improvesClasses: '',
+        generalUnities: '',
+        strongsUnities: '',
+        improvesUnities: '',
+      },
+      recalculate: {
+        yesno: {{recalculate|default:False|lower}},
+        all: false,
+        only_students: false,
+        only_classes: false,
+        only_bnccs: false,
+        only_unities: false,
+        only_subjects: false,
+        hasProcessTime: false,
+        processFinished: false,
+        processTime: '',
+        load: false,
+        calculate(param) {
+          if(param == 'all') {
+            this.only_students = true
+            this.only_classes = true
+            this.only_bnccs = true
+            this.only_unities = true
+            this.only_subjects = true
+          } else {
+            this[param] = !this[param]
+          }
+          if(!this.only_students || !this.only_classes || !this.only_bnccs || !this.only_unities || !this.only_subjects)
+            return this.all = false
+          this.all = true
+        },
+        getParams() {
+          let params = ''
+          if(this.only_students) 
+            params += '&only_students=true'
+          if(this.only_classes) 
+            params += '&only_classes=true'
+          if(this.only_bnccs) 
+            params += '&only_bnccs=true'
+          if(this.only_subjects) 
+            params += '&only_subjects=true'
+          if(this.only_unities) 
+            params += '&only_unities=true'
+
+          return params
+        },
+        haveSomethingToCalculate() {
+          return this.all || this.only_students || this.only_classes || this.only_bnccs || this.only_unities || this.only_subjects ? true:false
+        },
+        clear() {
+          this.processFinished = true
+          this.hasProcessTime = false,
+          localStorage.removeItem("RECALCULATE_EXAM_{{object.id}}")
+        }
+      },
+    },
+    watch: {
+      list_type: function(val) {
+        setTimeout(() => {
+          $('[data-toggle="tooltip"]').tooltip()
+          $('[data-toggle="popover"]').popover({ trigger: "hover" })
+        }, 500)
+      },
+    },
+    updated() {
+      $(".bar-colours").peity("bar", {
+        max: 100,
+        min: 0,
+        padding: 0.025,
+        height: 50,
+        width: 170,
+        delimiter: ",",
+        fill: ['#FF0000', '#FF0000', '#008000', '#008000', '#008000'],
+      })
+    },
+    methods: {
+      moment(args) {
+        return moment(args)
+      },
+      initialize() {
+        axios.get("{% url 'api:exams:optionanswers_widget' %}?{{request.GET.urlencode|safe}}&exam_pk={{object.pk}}").then((response) => {
+          this.widgets.optionAnswers = response.data
+        }).finally(() => {
+          this.widgets.loads.optionAnswers = false
+        })
+        axios.get("{% url 'api:exams:discursiveanswers_widget' %}?{{request.GET.urlencode|safe}}&exam_pk={{object.pk}}").then((response) => {
+          this.widgets.discursiveAnswers = response.data
+        }).finally(() => {
+          this.widgets.loads.discursiveAnswers = false
+        })
+        axios.get("{% url 'api:exams:exam_subjects_performance' object.pk %}?{{request.GET.urlencode|safe}}").then((response) => {
+          this.groupSubjects.list = response.data
+        }).finally(() => {
+          this.loads.groupSubjectPerformance = false
+        })
+        this.recalculateExam()
+      },
+      selectExam(exam) {
+        Swal.fire({
+          title: exam.name,
+          width: '80%',
+        })
+      },
+      getPerformanceGroup(only) {
+        let url = "{% url 'api:exams:exam_bncc_performance' object.pk %}?{{request.GET.urlencode|safe}}"
+        if(only == 'topics' && this.loads.groupPerformanceTopics) {
+          axios.get(url + '&only=topics').then((response) => {
+            this.groupBNCC.topics = response.data.topics
+            this.loads.groupPerformanceTopics = false
+          })
+        } else if(only == 'abilities' && this.loads.groupPerformanceAbilities) {
+          axios.get(url + '&only=abilities').then((response) => {
+            this.groupBNCC.abilities = response.data.abilities
+            this.loads.groupPerformanceAbilities = false
+          })
+        } else if(only == 'competences' && this.loads.groupPerformanceCompetences) {
+          axios.get(url + '&only=competences').then((response) => {
+            this.groupBNCC.competences = response.data.competences
+            this.loads.groupPerformanceCompetences = false
+          })
+        }
+      },
+      getSubject(id) {
+        return this.groupSubjects.list.find((subject) => subject.id == id)
+      },
+      selectBNCCOrSubjectInGroup(type, object) {
+        if(type == 'subjects') {
+          this.selectedSubject.id = object.id
+          this.selectedSubject.name = object.name
+          this.selectedSubject.performance = object.performance
+          this.selectedSubject.histogram = object.histogram
+          this.selectedSubject.classes_performances = object.classes_performances          
+          this.selectedSubject.students_performances = object.students_performances
+          this.selectedSubject.unities_performances = object.unities_performances
+          this.selectedSubject.loads.histogram_loaded = object.loads.histogram_loaded
+          this.selectedSubject.loads.classes_performances_loaded = object.loads.classes_performances_loaded
+          this.selectedSubject.loads.students_performances_loaded = object.loads.students_performances_loaded
+          this.selectedSubject.loads.unities_performances_loaded = object.loads.unities_performances_loaded
+
+          $("#modalSubjectDetail").modal()
+          
+          if(!object.loads.classes_performances_loaded) {
+            let url = `{% url 'api:exams:exam_classes_performance' object.pk %}?{{request.GET.urlencode|safe}}&subject_pk=${object.id}`
+            axios.get(url).then((response) => {
+              object.classes_performances = response.data
+              object.loads.classes_performances_loaded = true
+              this.selectedSubject.classes_performances = object.classes_performances
+              this.selectedSubject.loads.classes_performances_loaded = object.loads.classes_performances_loaded
+            }).finally(() => {
+              this.startDataTable()
+            })
+          }
+
+          if(object.histogram) {
+            object.loads.histogram_loaded = true
+            this.selectedSubject.loads.histogram_loaded = object.loads.histogram_loaded
+            setTimeout(() => {
+              this.createHistogramChart('subjects', object.histogram)
+            }, 800) 
+
+          } else {
+
+            let url = `{% url 'api:exams:exam_histograms_performance' object.pk %}?{{request.GET.urlencode|safe}}&subject_pk=${object.id}`
+            axios.get(url).then((response) => {
+              object.histogram = response.data
+              object.loads.histogram_loaded = true
+              this.selectedSubject.histogram = object.histogram
+              this.selectedSubject.loads.histogram_loaded = object.loads.histogram_loaded
+            }).finally(() => {
+              this.createHistogramChart('subjects', this.selectedSubject.histogram)
+            })
+          }
+          
+          return
+
+        } else {
+          
+          this.selectedBNCC.id = object.id
+          this.selectedBNCC.code = object.code
+          this.selectedBNCC.type = type
+          this.selectedBNCC.text = object.text ? object.text : object.name
+          this.selectedBNCC.knowledge_object = object.knowledge_object
+          this.selectedBNCC.histogram = object.histogram
+          this.selectedBNCC.performance = object.performance
+          this.selectedBNCC.students_performances = object.students_performances
+          this.selectedBNCC.loads.classes_performances_loaded = object.loads.classes_performances_loaded
+          this.selectedBNCC.classes_performances = object.classes_performances        
+          this.selectedBNCC.unities_performances = object.unities_performances  
+          this.selectedBNCC.loads.performances_loaded = object.loads.performances_loaded
+          this.selectedBNCC.loads.students_performances_loaded = object.loads.students_performances_loaded
+          this.selectedBNCC.loads.unities_performances_loaded = object.loads.unities_performances_loaded
+          this.selectedBNCC.loads.histogram_loaded = object.loads.histogram_loaded
+          
+          if(!object.loads.classes_performances_loaded) {
+            let url = `{% url 'api:exams:exam_classes_performance' object.pk %}?{{request.GET.urlencode|safe}}&bncc_pk=${object.id}`
+            axios.get(url).then((response) => {
+              object.classes_performances = response.data
+              object.loads.classes_performances_loaded = true
+              this.selectedBNCC.classes_performances = object.classes_performances
+              this.selectedBNCC.loads.classes_performances_loaded = object.loads.classes_performances_loaded
+            })
+          }
+          if(object.histogram) {
+            object.loads.histogram_loaded = true
+            this.selectedBNCC.loads.histogram_loaded = object.loads.histogram_loaded
+            setTimeout(() => {
+              this.createHistogramChart('bnccs', object.histogram)
+            }, 800)
+          } else {
+            let url = `{% url 'api:exams:exam_histograms_performance' object.pk %}?{{request.GET.urlencode|safe}}&bncc_pk=${object.id}`
+            axios.get(url).then((response) => {
+              object.histogram = response.data
+              object.loads.histogram_loaded = true
+              this.selectedBNCC.histogram = object.histogram
+              this.selectedBNCC.loads.histogram_loaded = object.loads.histogram_loaded
+            })
+          }
+          new Promise((resolve, reject) => {
+            $("#modalBNCCDetail").modal()
+            resolve()
+          }).then(() => {
+            this.startDataTable()
+          })
+        }
+      },
+      getStudentsPerformances(subject_pk, bncc_pk, page) {
+        axios.get(page ? page : `{% url 'api:exams:exam_students_performance' %}?{{request.GET.urlencode|safe}}&exam_pk={{object.id}}&subject_pk=${subject_pk}&bncc_pk=${bncc_pk}`).then((response) => {
+          if(subject_pk) {
+            this.selectedSubject.loads.students_performances_loaded = true
+            this.selectedSubject.students_performances = response.data
+          } else if(bncc_pk) {
+            this.selectedBNCC.loads.students_performances_loaded = true
+            this.selectedBNCC.students_performances = response.data
+          } else {
+            this.selectedSubject.students_performances = response.data
+            this.selectedBNCC.students_performances = response.data
+          }
+        })
+      },
+      getUnitiesPerformances(subject_pk, bncc_pk) {
+        if(subject_pk && !this.selectedSubject.loads.unities_performances_loaded) {
+          axios.get(`{% url 'api:exams:exam_unities_performance' object.id %}?{{request.GET.urlencode|safe}}&subject_pk=${subject_pk}`).then((response) => {
+            this.selectedSubject.loads.unities_performances_loaded = true
+            this.selectedSubject.unities_performances = response.data
+          }).finally(() => {
+            this.startDataTable()
+          })
+        } if(bncc_pk && !this.selectedBNCC.loads.unities_performances_loaded) {
+          axios.get(`{% url 'api:exams:exam_unities_performance' object.id %}?{{request.GET.urlencode|safe}}&bncc_pk=${bncc_pk}`).then((response) => {
+            this.selectedBNCC.loads.unities_performances_loaded = true
+            this.selectedBNCC.unities_performances = response.data
+          }).finally(() => {
+            this.startDataTable()
+          })
+        }
+      },
+      selectTab(tab) {
+        $(`[href="#${tab}`).click()
+      },
+      createHistogramChart(type, object) {
+        let options = {
+          series: [
+            {
+              name: 'Alunos',
+              data: object.data,
+            }
+          ],
+            chart: {
+            type: 'histogram',
+            height: 350
+          },
+          plotOptions: {
+            bar: {
+              horizontal: false,
+              endingShape: 'rounded'
+            },
+          },
+          dataLabels: {
+            enabled: false
+          },
+          stroke: {
+            show: true,
+            width: 2,
+            colors: ['transparent']
+          },
+          xaxis: {
+            categories: object.categories,
+          },
+          yaxis: {
+            title: {
+              text: 'Desempenho Geral'
+            },
+            labels: {
+              formatter: function (val) {
+                return val.toFixed(2) + " %";
+              },
+            },
+            min: 0,
+            max: 100,
+          },
+          fill: {
+            opacity: 1
+          },
+          tooltip: {
+            y: {
+              formatter: function (val) {
+                return val.toFixed(2) + " %";
+              }
+            }
+          }
+        };
+        if(type == 'subjects') {
+          if(this.histogramChart) {
+            this.histogramChart.destroy();
+          }
+          this.histogramChart = new ApexCharts(document.querySelector('#histogramChart'), options);
+          this.histogramChart.render()
+        } else {
+          if(this.bnccHistogramChart) {
+            this.bnccHistogramChart.destroy();
+          }
+          this.bnccHistogramChart = new ApexCharts(document.querySelector('#bnccHistogramChart'), options);
+          this.bnccHistogramChart.render()
+        }
+      },
+      hasPoints(type, student) {
+        if(
+          student.bncc.topics.some(topic => type == 'strong' && topic.performance.toFixed(0) >= 50 || type == 'improve' && topic.performance.toFixed(0) < 50) ||
+          student.bncc.abilities.some(ability => type == 'strong' && ability.performance.toFixed(0) >= 50 || type == 'improve' && ability.performance.toFixed(0) < 50) ||
+          student.bncc.competences.some(competence => type == 'strong' && competence.toFixed(0) >= 50 || type == 'improve' && competence.toFixed(0) < 50)
+        ) {
+          return true
+        }
+        return false
+      },
+      openActived(withoutSubject) {
+        if(!withoutSubject) {
+          if(this.subjects.length) {
+            return 'subjects'
+          }
+        } else {
+          if(this.subjects.length) {
+            return 'subjects'
+          }
+        }
+        if(this.topics.length) {
+          return 'topics'
+        }
+        else if(this.abilities.length) {
+          return 'abilities'
+        }
+        else if(this.competences.length) {
+          return 'competences'
+        }
+      },
+      getUrl(url, id, params = false) {
+        if (params) {
+          url += params;
+        }
+        return url.replace('00000000-0000-0000-0000-000000000000', id);
+      },
+      startDataTable() {
+        data = {
+          destroy: true,
+          responsive: true,
+          pageLength: 25,
+          language: {
+            url: "//cdn.datatables.net/plug-ins/1.10.22/i18n/Portuguese-Brasil.json"
+          },
+        }
+
+        this.studentsDataTable.generalSubjects = $('#table-students-general-subjects').DataTable(data)
+        this.studentsDataTable.strongsSubjects = $('#table-students-strongs-subjects').DataTable(data)
+        this.studentsDataTable.improvesSubjects = $('#table-students-improves-subjects').DataTable(data)
+        
+        this.studentsDataTable.generalClasses = $('#table-students-general-classes').DataTable(data)
+        this.studentsDataTable.strongsClasses = $('#table-students-strongs-classes').DataTable(data)
+        this.studentsDataTable.improvesClasses = $('#table-students-improves-classes').DataTable(data)
+        
+        this.studentsDataTable.generalUnities = $('#table-students-general-unities').DataTable(data)
+        this.studentsDataTable.strongsUnities = $('#table-students-strongs-unities').DataTable(data)
+        this.studentsDataTable.improvesUnities = $('#table-students-improves-unities').DataTable(data)
+
+        this.$forceUpdate()
+
+      },
+      recalculateExam(confirmation) {
+        if(confirmation) {
+          this.recalculate.load = true
+          window.location.href = `?recalculate=true${this.recalculate.getParams()}`
+        } else {
+          if(this.recalculate.yesno) {
+            window.history.pushState('', document.title, '?')
+            let exam_storage = {
+              {% if process_time %}
+                process_time: "{{process_time|safe}}"
+              {% else %}
+                process_time: null
+              {% endif %}                                               
+            }
+            localStorage.setItem("RECALCULATE_EXAM_{{object.id}}", JSON.stringify(exam_storage))
+          }
+
+          let exam = JSON.parse(localStorage.getItem("RECALCULATE_EXAM_{{object.id}}"))                                           
+          if(exam) {
+            if(exam.process_time) {
+              if(moment().diff(moment(exam.process_time), 'hours') >= 12) {
+                this.recalculate.clear()
+              }
+              this.recalculate.hasProcessTime = true
+            }
+            this.recalculate.processTime = exam.process_time
+            
+            let get_task_status = setInterval(() => { 
+              axios.get("{% url 'core:get_generic_task_status' %}?task_id=RECALCULATE_EXAM_{{object.id}}").then((response) => {
+                if(response.data.status == 'SUCCESS') {
+                  this.recalculate.clear()
+                  clearInterval(get_task_status)
+                  Swal.fire({
+                    title: 'Processo concluído',
+                    icon: 'info',
+                    text: 'O recalculo de desempenho foi concluído, vamos atualizar sua página para que você possa ver o resultado.'
+                  }).then((result) => {
+                    window.location.reload()
+                  })
+                } else if(response.data.status == 'FAILURE') {
+                  this.recalculate.clear()
+                  Swal.fire({
+                    title: 'Ocorreu um erro',
+                    icon: 'warning',
+                    text: 'O recalculo de desempenho não foi concluído, vamos atualizar a página para que você possa tentar novamente.'
+                  })
+                  setTimeout(() => {
+                    window.location.reload()
+                  }, 2000)
+                }
+              })
+            }, 10000)
+          } else {
+            this.recalculate.clear()
+            {% comment %} 
+              if(!this.exam.exists_performances) {
+                window.location.href = `?recalculate=true`
+              } 
+            {% endcomment %}
+          }
+        }
+      },
+      showAlertWithHistogramChart(serie) {
+        Swal.fire({
+          html: `<div id="histogram_alert"></div>`,
+          confirmButtonText: 'Fechar',
+          width: '60%',
+          showClass: {
+            popup: '',
+          }
+        })
+        let options = {
+          series: [
+            {
+              name: 'Alunos',
+              data: serie.data,
+            }
+          ],
+            chart: {
+            type: 'histogram',
+            height: 350
+          },
+          plotOptions: {
+            bar: {
+              horizontal: false,
+              endingShape: 'rounded'
+            },
+          },
+          dataLabels: {
+            enabled: false
+          },
+          stroke: {
+            show: true,
+            width: 2,
+            colors: ['transparent']
+          },
+          xaxis: {
+            categories: serie.categories,
+          },
+          yaxis: {
+            title: {
+              text: 'Desempenho Geral'
+            },
+            labels: {
+              formatter: function (val) {
+                return val.toFixed(2) + " %";
+              },
+            },
+            min: 0,
+            max: 100,
+          },
+          fill: {
+            opacity: 1,
+          },
+          tooltip: {
+            y: {
+              formatter: function (val) {
+                return val.toFixed(2) + " %";
+              }
+            }
+          },
+        };
+        let histogram = new ApexCharts(document.querySelector('#histogram_alert'), options);
+        histogram.render()
+      },
+    },
+    mounted() {
+      this.initialize()
+      moment.locale('pt-br');
+      this.selectedClasses = this.classes.slice(0, 2)
+      this.selectedUnities = this.unities.slice(0, 2)
+
+      setTimeout(() => {
+        $('[data-toggle="tooltip"]').tooltip()
+        $('[data-toggle="popover"]').popover({ trigger: "hover" })
+      }, 2000)
+      $('#id_q_school_classes').select2({
+        placeholder: "Selecione uma turma",
+        width: '100%',
+        closeOnSelect: false
+      })
+      $('#id_q_subjects').select2({
+        placeholder: "Selecione uma disciplina",
+        width: '100%',
+        closeOnSelect: false
+      })
+      $('#id_q_unities').select2({
+        placeholder: "Selecione uma unidade",
+        width: '100%',
+        closeOnSelect: false
+      })
+
+      $('.off-canvas-menu').on('click', function (e) {
+        e.preventDefault();
+        var target = $(this).attr('data-toggle-off-canvas');
+        $(target).addClass('show');
+      });
+  
+      $('.off-canvas .close').on('click', function (e) {
+        e.preventDefault();
+        $(this).closest('.off-canvas').removeClass('show');
+      })
+  
+      $(document).on('click touchstart', function (e) {
+        if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+          return
+        }
+        e.stopPropagation();
+  
+        if (!$(e.target).closest('.off-canvas-menu').length) {
+          var offCanvas = $(e.target).closest('.off-canvas').length;
+          if (!offCanvas) {
+            $('.off-canvas.show').removeClass('show');
+          }
+        }
+      })
+      $(document).on('show.bs.modal', '.modal', function (event) {
+          var zIndex = 1040 + (10 * $('.modal:visible').length);
+          $(this).css('z-index', zIndex);
+          setTimeout(function() {
+              $('.modal-backdrop').not('.modal-stack').css('z-index', zIndex - 1).addClass('modal-stack');
+          }, 0);
+      });
+      $(document).on("hidden.bs.modal", function () {
+        $('#modalBNCCDetail [data-toggle="tab"]:first').tab('show');
+        $('#modalSubjectDetail [data-toggle="tab"]:first').tab('show');
+      });
+
+      setTimeout(() => {
+        axios.post("{% url 'notifications:api-especial-notification' %}", { where: "after_view_exam_results" }) 
+      }, 8000)
+      
+    }
+  });
+</script>
+{% endblock js-additional %}
+

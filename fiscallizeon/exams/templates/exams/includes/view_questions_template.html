@@ -1,0 +1,102 @@
+<div class="d-sm-flex align-items-end justify-content-between mg-b-15 mg-lg-b-25">
+    <div>
+    <p class="mg-b-0 tx-color-03">Visualizar</p>
+    <h4 class="mg-b-5">Lista de questões selecionadas</h4>
+    <p class="mg-b-0 tx-color-03">Aqui você confere sua lista de questões selecionadas.</p>
+    </div>
+    <div>
+    <nav class="nav nav-with-icon" v-if="examTeacherSubject">
+        <p class="tx-color-03 tx-medium">#{examTeacherSubject.questions.length} questão(ões) selecionada(s)</p>
+    </nav>
+    </div>
+</div>
+<div class="row mg-b-15 mg-lg-b-25">
+    <div class="col-12 my-2" v-for="(examQuestion, index) in examTeacherSubject.questions">
+    <div class="card rounded-0" style="border-width: 3px;">
+        <div class="card-header d-flex justify-content-between py-3">
+            <span class="tx-color-03 tx-bold tx-15">Questão #{index + 1}</span>
+            <template v-if="examQuestion.can_be_remove">
+                <a href="javascript:;" class="tx-color-03" @click="removeExamQuestion(examQuestion)">
+                    <i class="fe fe-trash-2 tx-20"></i>
+                </a>
+            </template>
+            <template v-else>
+                <span class="tx-color-03 op-5">
+                    <i class="fe fe-trash-2 tx-20"></i>
+                </span>
+            </template>
+        </div>
+        <div class="card-body">
+        <div>
+            <ul class="nav nav-line" id="myTab5" role="tablist" style="border-bottom: unset;">
+            <li class="nav-item">
+                <a class="nav-link active" data-toggle="tab" :href="'#questionEnunciation-'+index" role="tab" aria-controls="home" aria-selected="true">Enunciado</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" :href="'#questionData-'+index" role="tab" aria-controls="profile" aria-selected="false">Dados pedagógicos</a>
+            </li>
+            </ul>
+            <div class="tab-content mg-t-20" id="myTabContent5">
+            <div class="tab-pane fade show active" :id="'questionEnunciation-'+index" role="tabpanel">
+                <p class="mg-b-0" v-html="examQuestion.question.enunciation"></p>
+                <hr>
+                <div class="custom-control custom-radio" v-for="alternative in examQuestion.question.alternatives">
+                    <input type="radio" onclick="return false" :checked="alternative.is_correct" class="custom-control-input" :id="alternative.id">
+                    <label class="custom-control-label tx-medium tx-color-03 alternatives" :for="alternative.id" v-html="alternative.text"></label>
+                </div>
+            </div>
+            <div class="tab-pane fade" :id="'questionData-'+index" role="tabpanel">
+                <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                    <div class="card-header p-2 font-weight-bold">
+                        Assuntos Abordados
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <template v-if="examQuestion.question.topics">
+                        <li v-if="!examQuestion.question.topics.length" class="list-group-item  p-1">Não há assuntos
+                            cadastrados nessa questão</li>
+                        <li v-else v-for="topic in examQuestion.question.topics" class="list-group-item  p-2">
+                            #{topic.name}</li>
+                        </template>
+                    </ul>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="card mt-2">
+                    <div class="card-header p-2 font-weight-bold">
+                        Habilidades
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <template v-if="examQuestion.question.abilities">
+                        <li v-if="!examQuestion.question.abilities.length" class="list-group-item  p-1">Não há habilidades
+                            cadastradas nessa questão</li>
+                        <li v-else v-for="abilitie in examQuestion.question.abilities" class="list-group-item  p-2">
+                            #{abilitie.text}</li>
+                        </template>
+                    </ul>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="card mt-2">
+                    <div class="card-header p-2 font-weight-bold">
+                        Competências
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <template v-if="examQuestion.question.competences">
+                        <li v-if="!examQuestion.question.competences.length" class="list-group-item  p-1">Não há competências
+                            cadastradas nessa questão</li>
+                        <li v-else v-for="competence in examQuestion.question.competences" class="list-group-item  p-2">
+                            #{competence.text}</li>
+                        </template>
+                    </ul>
+                    </div>
+                </div>
+                </div>
+            </div>
+            </div>
+        </div>
+        </div>
+    </div>
+    </div>
+</div>

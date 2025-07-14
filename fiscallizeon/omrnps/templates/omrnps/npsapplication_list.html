@@ -1,0 +1,786 @@
+{% extends 'redesign/base.html' %}
+{% load static %}
+{% load permissions %}
+{% load cdn_url %}
+
+{% block css-additional %}
+
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+
+<link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+
+<style>
+  .select2-selection__choice__remove{
+    display: none !important;
+  }
+</style>
+{% endblock %}
+
+{% block title %} Listagem de NPS - Lize {% endblock title %}
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+        <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1rem; justify-content: space-between;">
+          <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-6 sm:tw-flex-nowrap tw-w-full">
+            <h1 class="tw-text-xl tw-font-semibold tw-leading-7 tw-text-[#374151] sm:tw-truncate sm:tw-text-2xl sm:tw-tracking-tight tw-mb-0">
+              Aplicações
+            </h1>
+            <div class="tw-order-last tw-flex tw-w-full tw-gap-x-8 tw-text-sm tw-font-semibold tw-leading-6 sm:tw-order-none sm:tw-w-auto sm:tw-border-l sm:tw-border-gray-200 sm:tw-pl-6 sm:tw-leading-7">
+              <button data-tg-title="Filtros detalhados" data-tg-order="3" data-tg-tour="Agora você pode acessar a janela de filtros detalhados clicando aqui." data-tg-group="default-application-list" type="button" class="tw-flex tw-items-center tw-text-[#667085] tw-off-canvas-menu" id="headlessui-slider-over-button-1" data-toggle-off-canvas="#right-off-canvas" @click="filters.createNewFilter = false">
+                <span>Filtrar</span>
+                <span class="ml-2">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M5 10H15M2.5 5H17.5M7.5 15H12.5" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </button>
+            </div>          
+            <div class="tw-ml-auto tw-flex tw-gap-3">
+              {% include "redesign/includes/breadcrumb-year.html" with year=year|force_escape %}
+              <a href="{% url 'exports:nps_applications_export' %}?{{request.GET.urlencode}}" data-tg-title="Exportação CSV ou XLS" data-tg-order="2" data-tg-tour='Baixe os resultados das aplicações já aplicados utilizando esse botão.' data-tg-group="default-template-list" class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold hover:tw-text-white tw-shadow-sm hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600">
+                Exportar resultados
+              </a>
+              {% if user.is_superuser %}
+                <a class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600 hover:tw-text-white" href="{% url 'admin:omrnps_npsapplication_add' %}">Cadastrar aplicação</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div data-tg-title="Filtros aplicados" data-tg-order="4" data-tg-tour='Visualize os filtros já aplicados nesta listagem, remova-os individualmente clicando no "x" ou todos de uma vez clicando em "Limpar filtro".' data-tg-group="default-application-list" v-if="filters.selected || {{ count_filters|default:0|safe }}" class="tw-bg-white sm:tw-rounded-lg tw-py-5 tw-border tw-border-[#E5E7EA] tw-mb-4">
+          <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8" >
+            <div class="tw-flex tw-justify-between">
+              <div class="tw-flex tw-items-center">
+                <p class="tw-mb-0 tw-pl-4 tw-pr-3 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900 sm:tw-pl-0">
+                  Filtrando por
+                </p>
+                <div class="tw-space-x-2">
+                  <span class="filter-elements tw-inline-flex tw-items-center tw-gap-x-0.5 tw-rounded tw-bg-[#F9FAFA] tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-text-[#384250]" v-for="filter in filters.labels()">
+                    <button @click="removeFilter(filter)" type="button" class="tw-group tw-relative tw--ml-1 tw-h-3.5 tw-w-3.5 tw-rounded-sm hover:tw-bg-gray-500/20">
+                      <span class="tw-sr-only">Remove</span>
+                      <svg viewBox="0 0 14 14" class="tw-h-3.5 tw-w-3.5 tw-stroke-gray-700/50 group-hover:tw-stroke-gray-700/75">
+                        <path d="M4 4l6 6m0-6l-6 6" />
+                      </svg>
+                      <span class="tw-absolute tw--inset-1"></span>
+                    </button>
+                    ${ filter.label }<template v-if="filter.showValues">:<span v-if="!filter.showCount">${ filter.values.join(', ') }</span><span v-else>${ filter.values.length }</span></template>
+                  </span>
+                </div>
+              </div>
+              <div class="tw-flex tw-items-center">
+                <button type="button" class="tw-text-left tw-text-sm tw-font-semibold tw-text-[#667085] tw-flex tw-items-center" @click="cleanFilter({{ year|force_escape }})">
+                  Limpar filtro
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="tw-ml-2">
+                    <path d="M15 5L5 15M5 5L15 15" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tw-bg-white sm:tw-rounded-lg tw-pt-5 tw-border tw-border-[#E5E7EA]">
+          <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8">
+            <div class="tw-flow-root">
+              <div class="tw--mx-4 tw--my-2 tw-overflow-x-auto sm:tw--mx-6 lg:tw--mx-8" id="mousable">
+                <div class="tw-inline-block tw-min-w-full tw-py-2 tw-align-middle sm:tw-px-6 lg:tw-px-8">
+                  <div class="tw-relative">
+                    <div v-if="selectionList.length > 0" class="tw-absolute tw-top-0 tw-left-14 tw-flex tw-h-12 tw-items-center tw-space-x-3 tw-bg-white sm:tw-left-12">
+                        <button type="button"
+                          @click="exportApplicationResults(application=null, inBulk=true)" 
+                          class="tw-inline-flex tw-items-center tw-rounded tw-bg-white tw-px-2 tw-py-1 tw-text-sm tw-font-semibold tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 disabled:tw-cursor-not-allowed disabled:tw-opacity-30 disabled:hover:tw-bg-white">
+                          Exportar resultados dos selecionados
+                        </button> 
+                    </div>
+                    <div class="table-responsive">
+                      <table class="tw-min-w-full tw-table-fixed tw-divide-y tw-divide-gray-300" style="min-height: 350px;">
+                        <thead>
+                            <th data-tg-title="Selecione vários" data-tg-order="2" data-tg-tour="Selecione várias applicações ao mesmo tempo e aplique ações em massa." data-tg-group="default-application-list" scope="col" 
+                                class="tw-relative tw-px-7 sm:tw-w-12 sm:tw-px-6">
+                                <input type="checkbox" 
+                                  class="tw-absolute tw-left-4 tw-top-1/2 tw--mt-2 tw-h-4 tw-w-4 tw-rounded tw-border-gray-300 tw-text-primary-600 focus:tw-ring-primary-600" 
+                                  :checked="isIndeterminate || selectionList.length === applications.length" 
+                                  :indeterminate.prop="isIndeterminate"
+                                  @change="selectionList = $event.target.checked ? applications.map((e) => e.id) : []" />
+                            </th>
+                            <th scope="col" class="tw-py-3.5 tw-pr-3 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900">Aplicações</th>
+                            <th scope="col" v-if="selectionList.length <= 0" class="tw-px-3 tw-py-3.5 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900">Turmas</th>
+                            <th scope="col" v-if="selectionList.length <= 0" style="max-width: 5rem;" class="tw-px-3 tw-py-3.5 tx-center tw-text-sm tw-font-semibold tw-text-gray-900"></th>
+                            <th scope="col" v-if="selectionList.length <= 0" colspan="2" class="tw-px-3 tw-py-3.5 tw-pl-3 tw-pr-4 sm:tw-pr-3 text-right">Ações</th>
+                        </thead>
+                        <tbody class="tw-divide-y tw-divide-gray-200 tw-bg-white">
+                          <template>
+                            <tr :id="'tr-'+application.id" :class="[selectionList.includes('application.id') && 'bg-gray-50']" v-for="(application, index) in applications"  :key="application.id">
+                              <td class="tw-relative tw-px-7 sm:tw-w-12 sm:tw-px-6">
+                                <div v-if="selectionList.includes(application.id)" class="tw-absolute tw-inset-y-0 tw-left-0 tw-w-0.5 tw-bg-primary-600"></div>
+                                <input type="checkbox" class="tw-absolute tw-left-4 tw-top-1/2 tw--mt-2 tw-h-4 tw-w-4 tw-rounded tw-border-gray-300 tw-text-primary-600 focus:tw-ring-primary-600"  :value="application.id" v-model="selectionList"/>
+                              </td>                              
+                              <td class="tw-py-4 tw-pr-3 tw-text-sm tw-font-medium tw-text-gray-900">
+                                  <div class="">
+                                    ${application.name}
+                                    <br>
+                                    <span class="text-muted">${application.date}</span>
+                                  </div>
+                              </td>
+                              <td class="tw-whitespace-nowrap tw-px-3 tw-py-4 tw-font-medium tw-text-gray-900">
+                                <div class="tw-flex tw-mt-1 align-items-center">
+                                  <span class="badge badge-secondary mr-1" v-for="school_class in application.school_classes">${school_class}</span>
+                                </div>
+                              </td>
+                              <!-- Malote -->
+                              <td class="tw-whitespace-nowrap tw-px-3 tw-py-4 tw-font-medium tw-text-gray-900">
+                                <template v-if="application.category == 3">
+                                  <template v-if="application.sheetsExportingStatus === 1">
+                                    <span class=" tw-text-primary-600">
+                                      Gerando cartões... 
+                                      <i class="fas fa-spinner fa-spin"></i>
+                                    </span>
+                                    <div class="progress mt-2" style="height: 8px;">
+                                      <div
+                                          class="progress-bar progress-bar-striped progress-bar-animated" 
+                                          role="progressbar"
+                                          :style="{ width: application.sheetsExportingProgress + '%' }">
+                                      </div>
+                                    </div>
+                                  </template>
+                                  <div v-else-if="application.sheetsExportingStatus == 2 && application.answerSheetUrl" class="text-center">
+                                    <a :href="application.answerSheetUrl" target="_blank">
+                                      <div class="d-flex justify-content-center tw-flex-wrap tw-gap-1">
+                                        <span class="tw-inline-flex tw-items-center tw-rounded-full tw-px-3 tw-py-1 tw-text-xs tw-font-medium tw-text-primary-600 hover:tw-bg-[#fff4ec] tw-ring-1 tw-ring-inset tw-ring-[#E5E7EA] tooltips" data-tippy-content="Baixar folha de respostas">
+                                          <svg width="18" height="18" class="mx-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M13 7L11.8845 4.76892C11.5634 4.1268 11.4029 3.80573 11.1634 3.57116C10.9516 3.36373 10.6963 3.20597 10.4161 3.10931C10.0992 3 9.74021 3 9.02229 3H5.2C4.0799 3 3.51984 3 3.09202 3.21799C2.71569 3.40973 2.40973 3.71569 2.21799 4.09202C2 4.51984 2 5.0799 2 6.2V7M2 7H17.2C18.8802 7 19.7202 7 20.362 7.32698C20.9265 7.6146 21.3854 8.07354 21.673 8.63803C22 9.27976 22 10.1198 22 11.8V16.2C22 17.8802 22 18.7202 21.673 19.362C21.3854 19.9265 20.9265 20.3854 20.362 20.673C19.7202 21 18.8802 21 17.2 21H6.8C5.11984 21 4.27976 21 3.63803 20.673C3.07354 20.3854 2.6146 19.9265 2.32698 19.362C2 18.7202 2 17.8802 2 16.2V7ZM9 14L12 17M12 17L15 14M12 17V11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                          </svg>
+                                          Baixar folha de respostas
+                                        </span>
+                                      </div>
+                                    </a>
+                                    <span class="text-muted">Gerado ${ application.lastAnswerSheetGeneration }</span>
+                                  </div>
+                                  <div v-else-if="application.sheetsExportingStatus == 3" class="tw-flex tw-items-center tw-flex-wrap tw-gap-1">
+                                    <span class="tw-inline-flex tw-items-center tw-rounded-full tw-bg-white tw-px-3 tw-py-1 tw-text-xs tw-font-medium tw-text-red-600 tw-ring-1 tw-ring-inset tw-ring-[#E5E7EA] tooltips" data-tippy-content="Ocorreu um erro ao tentar gerar o malote">
+                                      <svg width="18" height="18" class="mx-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                      </svg>
+                                      Erro na exportação
+                                    </span>
+                                  </div>
+                                </template>
+                                <p v-if="application.print_ready" class="tw-mt-1 tw-font-medium tw-text-gray-900 text-success tx-bold text-center">
+                                  <span class="d-flex justify-content-center">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    Pronto para impressão</p>
+                                  </span>
+                              </td>
+                              <!-- Atalhos -->
+                              <td class="tw-whitespace-nowrap tw-py-4 tw-pl-3 tw-pr-4 tw-text-sm tw-font-medium sm:tw-pr-3">
+                                <div class="tw-flex tw-items-center tw-justify-end tw-space-x-4">
+                                  <template v-if="application.sheet_exporting_status === 1">
+                                    Gerando malote... 
+                                    <i class="fas fa-spinner fa-spin text-primary"></i>
+                                    <div class="progress">
+                                      <div
+                                          class="progress-bar bg-primary progress-bar-striped progress-bar-animated" 
+                                          role="progressbar"
+                                          :style="{ width: application.exporting_progress + '%' }">
+                                      </div>
+                                    </div>
+                                  </template>
+                                  <span 
+                                    v-else-if="application.sheet_exporting_status == 2 && application.answer_sheets"
+                                  >
+                                    <a :href="application.answer_sheets" target="_blank">
+                                      <i class="fas fa-file-download"></i> Baixar folha de respostas
+                                    </a><br>
+                                    <span class="text-muted">Gerado ${ application.last_answer_sheet_generation }</span>
+                                  </span>
+                                  <span class="text-danger" v-else-if="application.sheet_exporting_status == 3">
+                                    Erro na exportação
+                                  </span>
+                                </div>
+                              </td>
+                              <!-- Opções -->
+                              <td style="max-width: 6rem;" class="tw-whitespace-nowrap tw-py-4 tw-pl-3 tw-pr-4 tw-text-sm tw-font-medium sm:tw-pr-3">                                
+                                <div v-bind="index === 0 ? {
+                                  'data-tg-title': 'Mais opções agrupadas',
+                                  'data-tg-order': '8',
+                                  'data-tg-tour': 'Acesse outros recursos como edição, relatórios e impressão do instrumento avaliativo.',
+                                  'data-tg-group': 'default-application-list'
+                                  } : {}" 
+                                  class="dropdown" 
+                                >
+                                  <button class="tw-inline-flex tw-w-full tw-justify-center tw-gap-x-1.5 tw-rounded-md tw-bg-white tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-[#667085] tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50" type="button" :id="'dropdownMenuButton-' + application.id" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Opções
+                                    <svg class="tw--mr-1 tw-h-5 tw-w-5 tw-text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                      <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                                    </svg>
+                                  </button>
+                                  <div class="dropdown-menu dropdown-menu-right tw-absolute tw-right-0 tw-z-10 tw-mt-2 tw-origin-top-right tw-divide-y tw-divide-gray-100 tw-rounded-md tw-bg-white tw-shadow-lg tw-ring-1 tw-ring-black tw-ring-opacity-5 focus:tw-outline-none tw-text-inherit tw-m-0 tw-p-0 tw-border-0" :aria-labelledby="'dropdownMenuButton-' + application.id" style="font-size: inherit;">
+                                    <div class="tw-flex tw-gap-1">
+                                      <div class="tw-py-1" role="none">
+                                        <p class="tw-px-4 tw-py-1" style="font-size: 10px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Inter UI', Roboto, sans-serif; letter-spacing: .7px; color: #8392a5; text-transform: uppercase;">
+                                          Geral
+                                        </p>
+                                        {% if user|has_perm:'omrnps.export_answer_sheet' %}
+                                            <a href="#"  class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" data-toggle="tooltip" data-placement="top" title="Gerar malote" @click.prevent.default="exportApplicationBag(application)">
+                                              <svg width="18" height="18" class="mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M20 13V17.8C20 18.9201 20 19.4802 19.782 19.908C19.5903 20.2843 19.2843 20.5903 18.908 20.782C18.4802 21 17.9201 21 16.8 21H7.2C6.0799 21 5.51984 21 5.09202 20.782C4.71569 20.5903 4.40973 20.2843 4.21799 19.908C4 19.4802 4 18.9201 4 17.8V13M9 10H15M9.28571 14H14.7143C16.8467 14 17.913 14 18.7355 13.6039C19.552 13.2107 20.2107 12.552 20.6039 11.7355C21 10.913 21 9.84674 21 7.71429C21 6.11494 21 5.31527 20.7029 4.69835C20.408 4.08603 19.914 3.59197 19.3017 3.29709C18.6847 3 17.8851 3 16.2857 3H7.71429C6.11494 3 5.31527 3 4.69835 3.29709C4.08603 3.59197 3.59197 4.08603 3.29709 4.69835C3 5.31527 3 6.11494 3 7.71429C3 9.84674 3 10.913 3.39612 11.7355C3.7893 12.552 4.44803 13.2107 5.26447 13.6039C6.08703 14 7.15326 14 9.28571 14Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                              </svg> Gerar malote
+                                            </a>
+                                        {% endif %}
+                                        <a href="javascript:;"  class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" data-toggle="tooltip" data-placement="top" title="Exportar resultados" @click.prevent.default="exportApplicationResults(application)">
+                                          <svg width="18" height="18" class="mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M20 12.5V6.8C20 5.11984 20 4.27976 19.673 3.63803C19.3854 3.07354 18.9265 2.6146 18.362 2.32698C17.7202 2 16.8802 2 15.2 2H8.8C7.11984 2 6.27976 2 5.63803 2.32698C5.07354 2.6146 4.6146 3.07354 4.32698 3.63803C4 4.27976 4 5.11984 4 6.8V17.2C4 18.8802 4 19.7202 4.32698 20.362C4.6146 20.9265 5.07354 21.3854 5.63803 21.673C6.27976 22 7.1198 22 8.79986 22H12.5M14 11H8M10 15H8M16 7H8M15 19L18 22M18 22L21 19M18 22V16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                          </svg> Exportar resultados
+                                        </a>
+                                      </div>
+                                    </div>
+                                  </div>                                       
+                                </div>                                       
+                              </td>
+                            </tr>
+                            <tr v-if="!applications.length">
+                              <td colspan="5"><p class="tw-py-3 mb-0">Não há aplicações cadastradas</p></td>
+                            </tr>
+                          </template>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% include 'redesign/includes/pagination.html' %}
+          </div>
+        </div>
+
+    </div>
+{% endblock content-fixed %}
+
+{% block slide-over %}
+  <div class="tw-relative tw-z-[1000] tw-off-canvas tw-off-canvas-right tw-invisible" aria-labelledby="slide-over-title" role="dialog" aria-modal="true" id="right-off-canvas">
+    <div class="tw-fixed tw-inset-0 tw-bg-[#9BA3AF] tw-bg-opacity-60 tw-transition-opacity"></div>
+    <div class="tw-fixed tw-inset-0 tw-overflow-hidden">
+      <div class="tw-absolute tw-inset-0 tw-overflow-hidden">
+        <div class="tw-pointer-events-none tw-fixed tw-inset-y-0 tw-right-0 tw-flex tw-max-w-full tw-pl-10" v-click-outside="onClickOutsideFilters">
+          <div class="tw-pointer-events-auto tw-w-screen tw-max-w-md">
+            <div class="tw-flex tw-h-full tw-flex-col tw-divide-y tw-divide-gray-200 tw-bg-white tw-border-l">
+              <div class="tw-h-0 tw-flex-1 tw-overflow-y-auto">
+                <div class="tw-px-4 tw-pt-6 sm:tw-px-6">
+                  <div class="tw-flex tw-items-center tw-justify-between">
+                    <h2 class="tw-text-base tw-font-semibold tw-leading-6 tw-text-gray-900" id="slide-over-title">
+                      Filtrar aplicações
+                    </h2>
+                    <div class="tw-ml-3 tw-flex tw-h-7 tw-items-center">
+                      <button type="button" class="tw-relative tw-rounded-md tw-bg-white tw-text-gray-400 hover:tw-text-gray-500 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-primary-500 focus:tw-ring-offset-2 tw-off-canvas-close" id="headlessui-slider-over-close-button-1">
+                        <span class="tw-absolute tw--inset-2.5"></span>
+                        <span class="tw-sr-only">Close panel</span>
+                        <svg class="tw-h-6 tw-w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="tw-mt-1">
+                    <p class="tw-text-sm tw-text-gray-500">
+                      Adiciona abaixo os filtros que você deseja aplicar na listagem abaixo.
+                    </p>
+                  </div>
+                </div>
+                <form id="filterForm" method="GET" class="tw-flex tw-flex-1 tw-flex-col tw-justify-between">
+                  <input type="hidden" value="{{ year|force_escape }}" name="year" />
+                  <div class="tw-divide-y tw-divide-gray-200 tw-px-4 sm:tw-px-6">
+                    <div class="tw-space-y-6 tw-pb-5 tw-pt-6">
+                      <div>
+                        <label for="application_name_id" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Nome da aplicação</label>
+                        <div class="tw-mt-2">
+                          <input type="text" id="application_name_id" name="q_name" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" value="{{ q_name }}" placeholder="Digite o nome do caderno aqui" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label for="school_class_id" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Turmas</label>
+                        <div class="tw-mt-2">
+                          <select id="school_class_id" name="q_school_class" class="tw-mt-2 tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pl-3 tw-pr-10 tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" multiple="multiple">
+                            {% for school_class in school_classes %}
+                              <option value="{{school_class.pk}}" {% if school_class.pk|stringformat:'s' in q_school_class %}selected="selected" {% endif %}>
+                                {{school_class.name}} - {{ school_class.coordination__unity__name }} - {{ school_class.school_year|force_escape }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label for="grade_id" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Séries</label>
+                        <div class="tw-mt-2">
+                          <select id="grade_id" name="q_grade" class="tw-mt-2 tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pl-3 tw-pr-10 tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" multiple="multiple">
+                            {% for grade in grades %}
+                              <option value="{{ grade.pk }}" {% if grade.pk|stringformat:'s' in q_grade %}selected="selected"{% endif %}>
+                                {{ grade }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label for="unity_id" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Unidades</label>
+                        <div class="tw-mt-2">
+                          <select id="unity_id" name="q_unity" class="tw-mt-2 tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pl-3 tw-pr-10 tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" multiple="multiple">
+                            {% for unity in unities %}
+                              <option value="{{ unity.pk }}" {% if unity.pk|stringformat:'s' in q_unity %}selected="selected"{% endif %}>
+                                {{ unity }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                </form>
+              </div>
+              <div class="tw-flex tw-flex-wrap tw-space-y-3 sm:tw-space-x-3 sm:tw-space-y-0 tw-px-4 tw-py-4">
+                <button type="submit" class="tw-inline-flex tw-w-full tw-flex-shrink-0 tw-items-center tw-justify-center tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600 sm:tw-flex-1" v-if="!filters.createNewFilter" form="filterForm">
+                  Aplicar filtro
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock slide-over %}
+
+{% block extra-modal %}
+  <div id="export-results-modal" class="modal" tabindex="-1">
+    <div class="modal-dialog" data-backdrop="static" data-keyboard="false">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Exportando resultados</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" style="max-height: 150px;">
+          <template>
+            <p v-if="exportResultsStatus == 'exporting'"><i class="fas fa-spinner fa-spin"></i> Aguarde enquanto o arquivo é gerado. Deixe esta janela aberta durante o processo.</p>
+            <p v-else-if="exportResultsStatus == 'error'" class="text-danger">Ocorreu um erro na exportação. Atualize a página e tente novamente.</p>
+            <p v-else-if="exportResultsStatus == 'exported'">
+              <a class="btn btn-info" :href="exportResultsFileUrl">Baixar resultados da aplicação</a>
+            </p>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% include 'includes/confirm_modal.html' %}
+{% endblock extra-modal %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+
+<script>
+  var app = new Vue({
+      delimiters: ['${', '}'],
+      el: '#app',
+      data: {
+        selectedApplication: null,
+        applications: [
+          {% for application in object_list %}
+            {
+              "id": "{{application.id}}",
+              "name": "{{application.name}}",
+              "date": "{{application.date}}",
+              "sheet_exporting_status": {{application.sheet_exporting_status}},
+              "export_count": {{application.export_count}},
+              "has_answers": {{application.has_answers|yesno:"true,false"}},
+              "answer_sheets": {% if application.answer_sheet %}"{{application.answer_sheet.url|cdn_url|safe}}"{% else %}''{% endif %},
+              "last_answer_sheet_generation": moment("{{ application.last_answer_sheet_generation|safe }}").locale('pt-br').fromNow(),
+              "exporting_progress": 0,
+              "school_classes": [
+                {% for school_classe in application.school_classes.all %}
+                  "{{school_classe.name}}",
+                {% endfor %}
+              ],
+              "edit_url": "{% url 'admin:omrnps_npsapplication_change' application.pk %}",
+              "delete_url": "{% url 'admin:omrnps_npsapplication_delete' application.pk %}",
+              "exportResultsStatus": null,
+              "exportResultsVersion": null,
+              "exportResultsFileUrl": null,
+            },
+          {% endfor %}
+        ],
+        selectedApplications: [],
+        selectionList: [],
+        exportResultsStatus: null,
+        exportResultsVersion: null,
+        exportResultsFileUrl: null,
+        filters: {
+          selected: false,
+          list: [],
+          createNewFilter: false,
+          selectedParams: '',
+          parseParamsInLabels(params) {
+            let query = {}, labels = [];
+            let pairs = (params[0] === '?' ? params.substr(1) : params).split('&');
+            for (var i = 0; i < pairs.length; i++) {
+              var pair = pairs[i].split('=');
+              query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+            }
+            for(key in query) {
+              if(query[key]) {
+                const count = params.match(new RegExp(`\\b(${key})\\b`, 'g')).length;
+                let input = $(`[name="${key}"]`), inputId = input.attr('id'), label = `${$(`[for="${inputId}"]`).text()}`
+                if(input.prop('type') == 'select-multiple') {
+                  label += `: <span class="badge badge-dark rounded-circle">${count}</span>`
+                } else {
+                  if(input.prop('type') == 'select-one') {
+                    label += `: ${input.find(`option[value=${query[key]}]`).text()}`
+                  }
+                  if(input.prop('type') == 'text') {
+                    label += `: ${query[key]}`
+                  }
+                }
+                labels.push(label)
+              }
+            }
+            return labels
+          },
+          labels() {
+            let labels = []
+            
+            $('#filterForm').find('select, input').each((index, input) => {
+              let values = [], showValues = true, showCount = false
+              if(input.id) {
+                if(input.type.includes('select')  ) {
+                  if(input.type == 'select-multiple') {
+                    showCount = true
+                  }
+                  values = $(`#${input.id} option:selected`).toArray().map(item => item.text)
+                }
+                else if(input.type == 'checkbox' || input.type == 'radio') {
+                  value = $(`#${input.id}:checked`).val()
+                  if(value == 'on' || value === true) {
+                    showValues = false
+                    values.push(true)
+                  }
+                } else {
+                  values.push($(`#${input.id}`).val())
+                }
+                if(values.filter(value => value).length) {
+                  labels.push({
+                    name: $(`#${input.id}`).attr('name'),
+                    label: $(`[for=${input.id}]`).text(),
+                    showValues: showValues,
+                    showCount: showCount,
+                    values: values,
+                  })
+                }
+              }
+            })
+            return labels
+          },
+        },
+      },
+      computed: {
+        isIndeterminate() {
+          return this.selectionList.length > 0 && this.selectionList.length < this.applications.length
+        },
+      },
+      watch: {
+      },
+      methods: {
+        exportApplicationBag(application) {
+          application.sheet_exporting_status = 1
+          application.export_count += 1
+          const url = "{% url 'omrnps:export_application_bag' %}"
+
+          fetch(url, {
+            method: 'POST',
+            headers: {"Content-type": "application/json"},
+            body: JSON.stringify({'nps_application_id': application.id}),
+          })
+          .then(response => response.json())
+          .then(data => {
+            this.fetchStatus(application)
+          })
+          .catch(error => {
+            console.log(error)
+          });
+        },
+        exportApplicationResults(application, inBulk=false) {
+          const url = "{% url 'omrnps:export_results' %}"
+          let selectedApplications = []
+          this.exportResultsVersion = Date.now()
+
+          if(inBulk) {
+            selectedApplications = this.applications.filter(a => this.selectionList.includes(a.id))
+            selectedApplications.forEach((a) => {
+              if (!a.has_answers) {
+                Swal.fire({
+                    position: 'top-end',
+                    icon: 'error',
+                    text: `Não é possível exportar resultados, a aplicação ${a.name} não tem respostas cadastradas!`,
+                    showConfirmButton: false,
+                    timer: 5000,
+                    backdrop: false,
+                    allowOutsideClick: false,
+                    timerProgressBar: true,
+                })
+                return
+              }
+            })
+          } else {
+            if (!application.has_answers) {
+              Swal.fire({
+                  position: 'top-end',
+                  icon: 'error',
+                  text: "Não é possível exportar resultados de uma aplicação sem respostas cadastradas!",
+                  showConfirmButton: false,
+                  timer: 5000,
+                  backdrop: false,
+                  allowOutsideClick: false,
+                  timerProgressBar: true,
+              })
+              return
+            }
+            selectedApplications.push({
+              id: application.id,
+              export_version: this.exportResultsVersion
+            })
+          }
+
+          this.exportResultsStatus = 'exporting'
+
+
+          fetch(url, {
+            method: 'POST',
+            headers: {"Content-type": "application/json"},
+            body: JSON.stringify({
+              'nps_applications': selectedApplications.map((a) => ({ id: a.id, export_version: this.exportResultsVersion })),
+            }),
+          })
+          .then(response => response.json())
+          .then(data => {
+            $('#export-results-modal').modal('show')
+            this.fetchExportResultStatus(selectedApplications)
+          })
+          .catch(error => {
+            console.log(error)
+          });
+        },
+        fetchStatus(application) {
+          const self = this
+          let url = `{% url 'omrnps:export_application_bag_status' %}?id=${application.id}&version=${application.export_count}`
+          fetch(url)
+          .then(response => response.json())
+          .then(data => {
+            switch (data.status) {
+              case 'PENDING':
+                setTimeout(() => self.fetchStatus(application), {% if DEBUG %}1000{% else %}10000{% endif %})
+                break
+              case 'STARTED':
+                application.exporting_progress = Math.round(data.percent * 100)
+                setTimeout(() => self.fetchStatus(application), {% if DEBUG %}1000{% else %}10000{% endif %})
+                break
+              case 'SUCCESS':
+                application.sheet_exporting_status = 2
+                application.answer_sheets = data.application.answer_sheet
+                application.last_answer_sheet_generation = moment().fromNow()
+                break
+              case 'FAILURE':
+                application.sheet_exporting_status = 3
+                break;
+            }
+          })
+        },
+        fetchExportResultStatus(applications) {
+          let url = `{% url 'omrnps:export_results_status' %}`
+          fetch(url, {
+            method: 'POST',
+            headers: {"Content-type": "application/json"},
+            body: JSON.stringify({
+              'nps_applications': applications.map((a) => ({ id: a.id, export_version: this.exportResultsVersion })),
+            }),
+          })
+          .then(response => response.json())
+          .then(data => {
+            switch (data.status) {
+              case 'STARTED':
+              case 'PENDING':
+                setTimeout(() => this.fetchExportResultStatus(applications), {% if DEBUG %}1000{% else %}10000{% endif %})
+                break
+              case 'SUCCESS':
+                this.exportResultsFileUrl = data.result_file_url
+                this.exportResultsStatus = 'exported'
+                break
+              case 'FAILURE':
+                this.exportResultsStatus = 'error'
+                break;
+            }
+          })
+        },
+        removeFilter(filter) {
+          const url = new URL(window.location.href);
+          const urlParams = url.searchParams;
+          urlParams.delete(filter.name);
+          url.search = urlParams.toString();
+          window.location.href = url.href;
+        },
+        cleanFilter(year) {
+          window.location.href = "{% url 'omrnps:list' %}?year=" + year;
+        },
+        onClickOutsideFilters(event) {
+          const target = event.target
+          const button = document.getElementById('headlessui-slider-over-button-1')
+
+          const select2DropdownAbove = document.getElementsByClassName('select2-dropdown--above')[0]
+          const select2DropdownBelow = document.getElementsByClassName('select2-dropdown--below')[0]
+          if (select2DropdownAbove || select2DropdownBelow) {
+            return
+          }
+
+          if (!(target === button || button.contains(target))) {
+            const rightOffCanvasContent = document.getElementById('right-off-canvas')
+            if (rightOffCanvasContent.classList.contains('tw-show')) {
+              rightOffCanvasContent.classList.remove('tw-show')
+            }
+          }
+        },
+        filterFormChanged() {
+          let params = ''
+          $('#filterForm').find('select, input').each((index, input) => {
+            if(input.id) {
+              if(input.type.includes('select')  ) {
+                let name = $(`#${input.id}`).attr('name')
+                let values = $(`#${input.id} option:selected`).toArray().map(item => item.value)
+                if(values.length){
+                  values.forEach((value, index) => {
+                    params += `${name}=${value}&`
+                  })
+                }
+              }else if(input.type == 'checkbox' || input.type == 'radio') {
+                name = $(`#${input.id}`).attr('name')
+                value = $(`#${input.id}:checked`).val()
+                if(value == 'on' || value === true) {
+                  params += `${name}=true&`
+                }
+              } else {
+                name = $(`#${input.id}`).attr('name')
+                value = $(`#${input.id}`).val()
+                if(value) {
+                  params += `${name}=${value}&`
+                }
+              }
+              
+            }
+          })
+          this.filters.selectedParams = params
+        },
+      },
+      directives: {
+        'click-outside': {
+          bind: function(el, binding, vNode) {
+            // Provided expression must evaluate to a function.
+            if (typeof binding.value !== 'function') {
+              const compName = vNode.context.name
+              let warn = `[Vue-click-outside:] provided expression '${binding.expression}' is not a function, but has to be`
+              if (compName) { warn += `Found in component '${compName}'` }
+
+              console.warn(warn)
+            }
+            // Define Handler and cache it on the element
+            const bubble = binding.modifiers.bubble
+            const handler = (e) => {
+              if (bubble || (!el.contains(e.target) && el !== e.target)) {
+                binding.value(e)
+              }
+            }
+            el.__vueClickOutside__ = handler
+
+            // add Event Listeners
+            document.addEventListener('click', handler)
+          },
+
+          unbind: function(el, binding) {
+            // Remove Event Listeners
+            document.removeEventListener('click', el.__vueClickOutside__)
+            el.__vueClickOutside__ = null
+          }
+        },
+      },
+      mounted() {
+        $('#filterForm').find('input,select').change(this.filterFormChanged)
+        $('.tw-off-canvas-menu').on('click', function (e) {
+          e.preventDefault();
+          var target = $(this).attr('data-toggle-off-canvas');
+          $(target).addClass('tw-show');
+        });
+    
+        $('.tw-off-canvas .tw-off-canvas-close').on('click', function (e) {
+          e.preventDefault();
+          $(this).closest('.tw-off-canvas').removeClass('tw-show');
+        })
+
+        $('#unity_id').select2({
+          placeholder: "Selecione uma opção",
+          closeOnSelect: false,
+        }).on('select2:selecting', function(e) {
+          let cur = e.params.args.data.id;
+          let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+          $(e.target).val(old).trigger('change');
+          $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+          return false;
+        });
+
+        $('#grade_id').select2({
+          placeholder: "Selecione uma opção",
+          closeOnSelect: false,
+        }).on('select2:selecting', function(e) {
+          let cur = e.params.args.data.id;
+          let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+          $(e.target).val(old).trigger('change');
+          $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+          return false;
+        });
+
+        $('#school_class_id').select2({
+          placeholder: "Selecione uma opção",
+          closeOnSelect: false,
+        }).on('select2:selecting', function(e) {
+          let cur = e.params.args.data.id;
+          let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+          $(e.target).val(old).trigger('change');
+          $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+          return false;
+        });
+      
+        $(document).on('click touchstart', function (e) {
+          if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+            return
+          }
+          e.stopPropagation();
+          if (!$(e.target).closest('.tw-off-canvas-menu').length) {
+            var offCanvas = $(e.target).closest('.tw-off-canvas').length;
+            if (!offCanvas) {
+              $('.tw-off-canvas.tw-show').removeClass('tw-show');
+            }
+          }
+        });
+        const pendingExports = this.applications.filter(
+          application => application.sheet_exporting_status == 1
+        )
+
+        if(pendingExports) {
+          pendingExports.map((application) => {
+            this.fetchStatus(application)
+          })
+        }
+      },
+  })
+</script>
+{% endblock js-additional %}

@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block css-additional %}
+
+<style>
+  form i#togglePassword {
+    cursor: pointer;
+    top: -27px;
+    float: right;
+    margin-right: 17px;
+    font-size: 16px;
+    margin-bottom: p;
+    position: relative;
+  }
+</style>
+{% endblock css-additional %}
+
+{% block content %}
+<div class="content content-auth">
+  <div class="container">
+    <div class="row">
+      <div class="col-12 text-center">
+          <img style="width: 300px;" src="{% static 'fiscallize-remote-logo-black.png' %}" class="img-fluid mb-5" alt="">
+            {% include 'includes/messages.html' with messages=messages only %}
+      </div>
+    </div>
+    <div class="media align-items-stretch justify-content-center ht-100p pos-relative">
+      <div class="media-body align-items-center d-none d-lg-flex">
+        <div class="mx-wd-600">
+          <img src="{% static 'login_b.png' %}" class="img-fluid" alt="">
+        </div>
+      </div>
+      
+      <form method="POST" action=".">
+        {% csrf_token %}
+        <div class="sign-wrapper mg-lg-l-50 mg-xl-l-60">
+          <div class="wd-100p">
+            <h3 class="tx-color-01 mg-b-5">Bem vindo de volta</h3>
+           
+            <p class="tx-color-03 tx-16">Insira seus dados abaixo ou entre com a conta do google para ter acesso ao seu dashboard.</p>
+            {% if form.non_field_errors %}
+              <p class="text-danger">
+                <em>Seu <strong>usuário</strong> e 
+                  <strong>senha</strong> não correspondem. Por favor, tente novamente.
+                </em>
+              </p>
+            {% endif %}
+            <div class="form-group">
+              <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+              <input class="form-control {% if form.username.errors %}is-invalid{% endif %}" placeholder="Digite seu usuário" type="text" id="{{ form.username.auto_id }}" {% if email %}value="{{email}}"{% endif %} name="{{ form.username.name }}" oninput="this.value=this.value.toLowerCase()" />
+              {% if form.username.errors %}
+                {% for error in form.username.errors %}
+                  <div class="invalid-feedback">
+                    {{ error|escape }}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <div class="d-flex justify-content-between mg-b-5">
+                  <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+              </div>
+              <input class="form-control {% if form.password.errors %}is-invalid{% endif %}" placeholder="Digite sua senha" type="password" id="{{ form.password.auto_id }}" name="{{ form.password.name }}"/>
+              <i class="far fa-eye-slash" id="togglePassword"></i>
+              {% if form.password.errors %}
+                {% for error in form.password.errors %}
+                  <div class="invalid-feedback">
+                    {{ error|escape }}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            </div>
+            <div class="row">
+              <div class="col-12">
+                Ao utilizar essa plataforma estou ciente e de acordo com o <a href="{% url 'terms' slug='aviso-privacidade' %}"
+                  target="_blank"> Aviso de Privacidade
+                </a> e
+
+                <a href="{% url 'terms' slug='condicoes-uso' %}" target="_blank"> Condições de Uso
+                </a> da Fiscallize Remote.
+              </div>
+            </div>
+            <button type="submit" class="btn btn-brand-02 btn-block bg-primary">Entrar na plataforma</button>
+            <hr/>
+              <a class="white btn btn-outline-primary btn-block font-weight-bold" href="{% url 'social:begin' 'google-oauth2' %}">
+                  <img src="https://img.icons8.com/color/16/000000/google-logo.png">
+                  Entrar com o Google
+              </a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+  const togglePassword = document.querySelector("#togglePassword");
+  const password = document.querySelector("#id_password");
+
+  togglePassword.addEventListener("click", function () {
+      // toggle the type attribute
+      const type = password.getAttribute("type") === "password" ? "text" : "password";
+      password.setAttribute("type", type);
+      
+      // toggle the icon
+      this.classList.toggle("fa-eye-slash");
+      this.classList.toggle("fa-eye");
+  });
+
+
+  // delete cookies if key start with "_sleek_"
+  function delete_cookie(key) {
+    document.cookie = key + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+  }
+  function delete_all_cookies() {
+    var cookies = document.cookie.split(";");
+    for (var i = 0; i < cookies.length; i++) {
+      var cookie = cookies[i];
+      var eqPos = cookie.indexOf("=");
+      var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+      if (name.indexOf("_sleek_") == 0) {
+        delete_cookie(name);
+      }
+    }
+  }
+
+  delete_all_cookies()
+
+  // delete local storage if key start with "_sleek_"
+  function delete_local_storage(key) {
+    localStorage.removeItem(key);
+  }
+
+  function delete_all_local_storage() {
+    console.log(key)
+    var keys = Object.keys(localStorage);
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      if (key.indexOf("_sleek_") == 0) {
+        delete_local_storage(key);
+      }
+    }
+  }
+
+  delete_all_local_storage()
+
+  
+</script>
+{% endblock %}

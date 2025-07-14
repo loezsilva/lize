@@ -1,0 +1,7 @@
+{% if messages %}
+  <div class="content pb-0">
+    <div class="container pd-x-0 pd-lg-x-10 pd-xl-x-0 mb-n3">
+      {% include 'includes/messages.html' with messages=messages only %}
+    </div>
+  </div>
+{% endif %}

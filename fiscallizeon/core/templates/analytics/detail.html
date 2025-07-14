@@ -1,0 +1,842 @@
+{% extends 'redesign/base.html' %}
+
+{% load split %}
+
+{% block title %}Desempenho dos alunos - Lize{% endblock title %}
+
+{% block css-additional %}
+<!-- <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" /> -->
+<link href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" rel="stylesheet" />
+<style>
+  /*///////////////////////////////////////////////////////////////////////////*/
+  /* SELECT2 */
+  /*///////////////////////////////////////////////////////////////////////////*/
+  span#id-students-select2.select2-container .select2-selection--single, span#id-students-select2.select2-container--default .select2-selection--single .select2-selection__rendered {
+    height: 72px;
+  }
+
+  span#id-students-select2.select2-container--default.select2-container--open.select2-container--below .select2-selection--single, span#id-students-select2.select2-container--default.select2-container--open.select2-container--below .select2-selection--multiple {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  span#id-students-select2.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 100%;
+  }
+
+  span#id-students-select2.select2-container .select2-selection--single .select2-selection__rendered {
+    padding: 0;
+  }
+
+  span#id-students-select2.select2-container--default .select2-selection--single {
+    border: 1px solid #E5E7EA;
+    border-radius: 8px;
+    box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+  }
+
+  span#id-students-select2 .select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: #D0D5DD transparent transparent transparent;
+  }
+
+  span#id-students-select2 .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+    border-color: transparent transparent #D0D5DD transparent;
+  }
+
+  span#id-students-select2-dropdown .select2-dropdown {
+    border: 1px solid #E5E7EA;
+    box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+    border-bottom-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+  }
+
+  span#id-students-select2-dropdown .select2-search__field {
+    border: unset;
+  }
+
+  /*///////////////////////////////////////////////////////////////////////////*/
+  /* DATERANGEPICKER */
+  /*///////////////////////////////////////////////////////////////////////////*/
+
+  .daterangepicker .ranges li.active {
+    background-color: #FF8F3E;
+  }
+
+  .daterangepicker td.in-range {
+    background-color: #FFF6EB;
+  }
+
+  .daterangepicker td.active, .daterangepicker td.active:hover {
+    background-color: #F47605;
+  }
+
+  /*///////////////////////////////////////////////////////////////////////////*/
+  /* RESET ECHARTS TOOLTIP */
+  /*///////////////////////////////////////////////////////////////////////////*/
+
+  .reset-echarts-tooltip {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    background-color: unset !important;
+  }
+</style>
+{% endblock %}
+
+{% block content-body %}<div id="app" class="content-body p-0" style="height: 100%;">{% endblock content-body %}
+
+{% block content-fixed %}
+<div class="tw-flex tw-justify-center tw-bg-white">
+  <div class="tw-max-w-[100rem] tw-flex-1">
+    <div class="tw-bg-[#F9FAFB] tw-pb-6 tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]">
+      <div style="padding-top: 24px;">
+        <a href="#" onclick="history.back()" class="tw-inline-flex tw-items-center tw-gap-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600" style="font-family: 'Inter'; font-size: 14px; line-height: 24px; font-weight: 400; color: #374151;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Voltar
+        </a>
+      </div>
+      <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-6 sm:tw-flex-nowrap tw-w-full" style="padding-top: 24px;">
+        <div class="tw-flex tw-items-center tw-gap-5">
+          <div
+            style="width: 60px; height: 60px; background-color: #FFFFFF; border: 1px solid #E5E7EA; border-radius: 12px; display: flex; align-items: center; justify-content: center;"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M21 21H4.6C4.03995 21 3.75992 21 3.54601 20.891C3.35785 20.7951 3.20487 20.6422 3.10899 20.454C3 20.2401 3 19.9601 3 19.4V3M21 7L15.5657 12.4343C15.3677 12.6323 15.2687 12.7313 15.1545 12.7684C15.0541 12.8011 14.9459 12.8011 14.8455 12.7684C14.7313 12.7313 14.6323 12.6323 14.4343 12.4343L12.5657 10.5657C12.3677 10.3677 12.2687 10.2687 12.1545 10.2316C12.0541 10.1989 11.9459 10.1989 11.8455 10.2316C11.7313 10.2687 11.6323 10.3677 11.4343 10.5657L7 15M21 7H17M21 7V11" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <h1 class="tw-text-xl tw-font-semibold tw-leading-7 tw-text-[#374151] sm:tw-truncate sm:tw-text-2xl sm:tw-tracking-tight tw-mb-0" style="font-weight: 600; font-size: 24px; line-height: 32px; font-family: 'Inter'; margin-bottom: 0px;">
+            Desempenho dos alunos
+          </h1>
+        </div>
+        <div class="tw-ml-auto tw-flex tw-items-center tw-gap-3">
+          <button type="button" class="tw-flex tw-gap-2 tw-rounded-md tw-px-4 tw-py-2.5 tw-text-sm tw-font-semibold tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-100">
+            Baixar
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M17.5 12.5V13.5C17.5 14.9001 17.5 15.6002 17.2275 16.135C16.9878 16.6054 16.6054 16.9878 16.135 17.2275C15.6002 17.5 14.9001 17.5 13.5 17.5H6.5C5.09987 17.5 4.3998 17.5 3.86502 17.2275C3.39462 16.9878 3.01217 16.6054 2.77248 16.135C2.5 15.6002 2.5 14.9001 2.5 13.5V12.5M14.1667 8.33333L10 12.5M10 12.5L5.83333 8.33333M10 12.5V2.5" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <button type="button" class="tw-flex tw-gap-2 tw-rounded-md tw-px-4 tw-py-2.5 tw-text-sm tw-font-semibold tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-100">
+            Compartilhar
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M17.5 7.50001L17.5 2.50001M17.5 2.50001H12.5M17.5 2.50001L10 10M8.33333 2.5H6.5C5.09987 2.5 4.3998 2.5 3.86502 2.77248C3.39462 3.01217 3.01217 3.39462 2.77248 3.86502C2.5 4.3998 2.5 5.09987 2.5 6.5V13.5C2.5 14.9001 2.5 15.6002 2.77248 16.135C3.01217 16.6054 3.39462 16.9878 3.86502 17.2275C4.3998 17.5 5.09987 17.5 6.5 17.5H13.5C14.9001 17.5 15.6002 17.5 16.135 17.2275C16.6054 16.9878 16.9878 16.6054 17.2275 16.135C17.5 15.6002 17.5 14.9001 17.5 13.5V11.6667" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="tw-pb-8 tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" style="padding-bottom: 40px;">
+      <div class="tw-pt-8">
+        <h3 style="font-size: 16px; line-height: 24px; font-weight: 500; color: #101828; margin-bottom: 16px;">
+          Encontramos para você
+        </h3>
+        <div class="tw-grid tw-grid-cols-1 tw-gap-x-4 tw-gap-y-8 sm:tw-grid-cols-8">
+          <div class="sm:tw-col-span-4 sm:tw-col-start-1">
+            <select id="id-students" name="students" style="width: 100%;"></select>
+          </div>
+          <div class="sm:tw-col-span-2">
+            <select class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-p-6 tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" style="font-size: 16px; font-weight: 500; line-height: 24px;">
+              <option>Português</option>
+              <option selected>Ciências</option>
+              <option>Matemática</option>
+            </select>
+          </div>
+          <div class="sm:tw-col-span-2">
+            <div id="id-date" class="tw-flex tw-justify-between tw-w-full tw-rounded-md tw-border-0 tw-p-6 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" style="font-size: 16px; font-weight: 500; line-height: 24px;">
+              <span class="tw-truncate"></span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M21 10H3M16 2V6M8 2V6M7.8 22H16.2C17.8802 22 18.7202 22 19.362 21.673C19.9265 21.3854 20.3854 20.9265 20.673 20.362C21 19.7202 21 18.8802 21 17.2V8.8C21 7.11984 21 6.27976 20.673 5.63803C20.3854 5.07354 19.9265 4.6146 19.362 4.32698C18.7202 4 17.8802 4 16.2 4H7.8C6.11984 4 5.27976 4 4.63803 4.32698C4.07354 4.6146 3.6146 5.07354 3.32698 5.63803C3 6.27976 3 7.11984 3 8.8V17.2C3 18.8802 3 19.7202 3.32698 20.362C3.6146 20.9265 4.07354 21.3854 4.63803 21.673C5.27976 22 6.11984 22 7.8 22Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- <div class="tw-grid tw-grid-cols-1 tw-gap-x-4 tw-gap-y-8 sm:tw-grid-cols-8">
+          <div class="sm:tw-col-span-4 sm:tw-col-start-1">
+            <select class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pl-3 tw-pr-10 tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" style="padding: 24px;">
+              <option>Alexandre Carlos Dantas</option>
+              <option>Alexandra Barros da Silva</option>
+              <option selected>Alex Oliveira</option>
+            </select>
+          </div>
+          <div class="sm:tw-col-span-2">
+            <select class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pl-3 tw-pr-10 tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" style="font-size: 16px; font-family: 'Inter'; font-weight: 500; line-height: 24px; padding: 24px;">
+              <option>Português</option>
+              <option selected>Ciências</option>
+              <option>Matemática</option>
+            </select>
+          </div>
+          <div class="sm:tw-col-span-2">
+            <input type="date" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" style="font-size: 16px; font-family: 'Inter'; font-weight: 500; line-height: 24px; padding: 24px;" />
+          </div>
+        </div> -->
+      </div>
+    </div>
+    <hr style="margin: 0; border-color: #E5E7EA;" />
+    <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" style="padding-top: 40px;">
+      <h3 style="font-family: 'Inter'; font-size: 30px; line-height: 34px; font-weight: 500; color: #282F3E; letter-spacing: -0.01em; margin-bottom: 0;">
+        Desempenho Geral
+      </h3>
+    </div>
+    <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" style="padding-top: 24px;">
+      <div class="tw-grid tw-grid-cols-1 tw-gap-x-8 tw-gap-y-16 sm:tw-grid-cols-3">
+        <div style="display: flex; flex-direction: column; border: 1px solid #E5E7EA; height: 320px; border-radius: 12px; padding: 24px;">
+          <div class="tw-flex tw-justify-between tw-items-center tw-pb-2">
+            <h3 style="font-size: 16px; line-height: 24px; font-weight: 500; color: #101828; margin-bottom: 0;">
+              Média geral
+            </h3>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-left: 8px;">
+              <g clip-path="url(#clip0_2002_1216)">
+                <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </g>
+              <defs>
+                <clipPath id="clip0_2002_1216">
+                  <rect width="16" height="16" fill="white"/>
+                </clipPath>
+              </defs>
+            </svg>
+          </div>
+          <div>
+            <span class="tw-flex tw-items-center">
+              <span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M4.66602 11.3333L11.3327 4.66666M11.3327 4.66666V11.3333M11.3327 4.66666H4.66602" stroke="#41C588" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span style="font-size: 14px; font-family: 'Inter'; font-weight: 600; line-height: 20px; color: #41C588; margin-left: 4px;">8%</span>
+              <span style="font-size: 12px; font-family: 'Roboto'; font-weight: 400; line-height: 16px; color: #667085; margin-left: 8px;">melhor que a média da escola</span>
+            </span>
+          </div>
+          <div style="flex: 1;">
+            <div id="my-chart-1" style="height: 100%;"></div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; border: 1px solid #E5E7EA; height: 320px; border-radius: 12px; padding: 24px 0;">
+          <div class="tw-flex tw-justify-between tw-items-center tw-pb-2" style="padding: 0 24px;">
+            <h3 style="font-size: 16px; line-height: 24px; font-weight: 500; color: #101828; margin-bottom: 0;">
+              Progresso
+            </h3>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-left: 8px;">
+              <g clip-path="url(#clip0_2002_1216)">
+                <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </g>
+              <defs>
+                <clipPath id="clip0_2002_1216">
+                  <rect width="16" height="16" fill="white"/>
+                </clipPath>
+              </defs>
+            </svg>
+          </div>
+          <div style="padding: 0 24px;">
+            <span class="tw-flex tw-items-center">
+              <span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M4.66699 11.3333L11.3337 4.66665M11.3337 4.66665V11.3333M11.3337 4.66665H4.66699" stroke="#41C588" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span style="font-size: 14px; font-family: 'Inter'; font-weight: 600; line-height: 20px; color: #41C588; margin-left: 4px;">3%</span>
+              <span style="font-size: 12px; font-family: 'Roboto'; font-weight: 400; line-height: 16px; color: #667085; margin-left: 8px;">comparado mês anterior</span>
+            </span>
+          </div>
+          <div style="flex: 1;">
+            <div id="my-chart-2" style="height: 100%;"></div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; border: 1px solid #E5E7EA; height: 320px; border-radius: 12px; padding: 24px;">
+          <div class="tw-flex tw-justify-between tw-items-center tw-pb-4">
+            <h3 style="font-size: 16px; line-height: 24px; font-weight: 500; color: #101828; margin-bottom: 0;">
+              A melhorar
+            </h3>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-left: 8px;">
+              <g clip-path="url(#clip0_2002_1216)">
+                <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </g>
+              <defs>
+                <clipPath id="clip0_2002_1216">
+                  <rect width="16" height="16" fill="white"/>
+                </clipPath>
+              </defs>
+            </svg>
+          </div>
+          <div style="flex: 1;">
+            <div id="my-chart-3" style="height: 100%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" style="padding-top: 32px;">
+      <span class="tw-flex tw-items-center tw-justify-between tw-pb-6">
+        <div class="tw-flex tw-items-center">
+          <h3 class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">
+            Histórico de desafios
+          </h3>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="tw-ml-2">
+            <g clip-path="url(#clip0_2002_1216)">
+              <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </g>
+            <defs>
+              <clipPath id="clip0_2002_1216">
+                <rect width="16" height="16" fill="white" />
+              </clipPath>
+            </defs>
+          </svg>
+        </div>
+        <div>
+          <div class="tw-flex tw-space-x-2" role="tablist" aria-orientation="horizontal">
+            <button class="tw-flex tw-items-center tw-rounded-3xl tw-bg-[#F9FAFB] tw-text-sm tw-font-normal tw-px-4 tw-py-[0.438rem]" id="headlessui-tabs-tab-:rr:" role="tab" type="button" aria-selected="false" tabindex="-1" data-headlessui-state="" aria-controls="headlessui-tabs-panel-:rv:">
+              <span class="tw-text-[#667085]">Ano</span>
+            </button>
+            <button class="tw-flex tw-items-center tw-rounded-3xl tw-bg-[#F9FAFB] tw-text-sm tw-font-normal tw-px-4 tw-py-[0.438rem]" id="headlessui-tabs-tab-:rs:" role="tab" type="button" aria-selected="false" tabindex="-1" data-headlessui-state="" aria-controls="headlessui-tabs-panel-:ru:">
+              <span class="tw-text-[#667085]">Semestre</span>
+            </button>
+            <button class="tw-flex tw-items-center tw-rounded-3xl tw-bg-white tw-text-sm tw-font-medium tw-border tw-border-[#E5E7EA] tw-px-4 tw-py-[0.438rem]" id="headlessui-tabs-tab-:rt:" role="tab" type="button" aria-selected="true" tabindex="0" data-headlessui-state="selected" aria-controls="headlessui-tabs-panel-:r1h:" data-selected="">
+              <span class="tw-text-[#101828]">Mês</span>
+            </button>
+          </div>
+        </div>
+      </span>
+      <div>
+        <div id="my-chart-4" style="height: 100px; width: 100%;"></div>
+      </div>
+      <div class="tw-flex tw-justify-center tw-pt-2">
+        <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">Abril 2024</p>
+      </div>
+    </div>
+    <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" style="padding-top: 32px; padding-bottom: 32px;">
+      <hr class="tw-m-0" style="border-color: #E5E7EA;" />
+    </div>
+    <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" style="padding-bottom: 60px;">
+      <span class="tw-flex tw-items-center tw-pb-6">
+        <h3 class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">
+          Grau de domínio
+        </h3>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="tw-ml-2">
+          <g clip-path="url(#clip0_2002_1216)">
+            <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </g>
+          <defs>
+            <clipPath id="clip0_2002_1216">
+              <rect width="16" height="16" fill="white" />
+            </clipPath>
+          </defs>
+        </svg>
+      </span>
+      <div>
+        <ul role="list" class="tw-grid tw-grid-cols-1 tw-gap-6 sm:tw-grid-cols-2 md:tw-grid-cols-3 lg:tw-grid-cols-4">
+          <li class="tw-list-none tw-flex tw-flex-col tw-gap-6 tw-col-span-1 tw-rounded-xl tw-bg-white tw-border tw-border-[#E5E7EA] tw-p-6">
+            <h3 class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-gray-900">Zoologia - Ciência da Natureza e suas tecnologias</h3>
+            <div class="tw-flex tw-flex-col tw-gap-2">
+              <div class="tw-flex tw-justify-between">
+                <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">Grau de domínio</p>
+                <p class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-[#001737] tw-mb-0">25%</p>
+              </div>
+              <div class="tw-overflow-hidden tw-rounded-[0.25rem] tw-bg-[#FFF4EC]">
+                <div class="tw-h-2 tw-rounded-sm tw-bg-primary-600" style="width: 69.04%"></div>
+              </div>
+            </div>
+          </li>
+          <li class="tw-list-none tw-flex tw-flex-col tw-gap-6 tw-col-span-1 tw-rounded-xl tw-bg-white tw-border tw-border-[#E5E7EA] tw-p-6">
+            <h3 class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-gray-900">Zoologia - Ciência da Natureza e suas tecnologias</h3>
+            <div class="tw-flex tw-flex-col tw-gap-2">
+              <div class="tw-flex tw-justify-between">
+                <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">Grau de domínio</p>
+                <p class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-[#001737] tw-mb-0">25%</p>
+              </div>
+              <div class="tw-overflow-hidden tw-rounded-[0.25rem] tw-bg-[#FFF4EC]">
+                <div class="tw-h-2 tw-rounded-sm tw-bg-primary-600" style="width: 69.04%"></div>
+              </div>
+            </div>
+          </li>
+          <li class="tw-list-none tw-flex tw-flex-col tw-gap-6 tw-col-span-1 tw-rounded-xl tw-bg-white tw-border tw-border-[#E5E7EA] tw-p-6">
+            <h3 class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-gray-900">Zoologia - Ciência da Natureza e suas tecnologias</h3>
+            <div class="tw-flex tw-flex-col tw-gap-2">
+              <div class="tw-flex tw-justify-between">
+                <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">Grau de domínio</p>
+                <p class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-[#001737] tw-mb-0">25%</p>
+              </div>
+              <div class="tw-overflow-hidden tw-rounded-[0.25rem] tw-bg-[#FFF4EC]">
+                <div class="tw-h-2 tw-rounded-sm tw-bg-primary-600" style="width: 69.04%"></div>
+              </div>
+            </div>
+          </li>
+          <li class="tw-list-none tw-flex tw-flex-col tw-gap-6 tw-col-span-1 tw-rounded-xl tw-bg-white tw-border tw-border-[#E5E7EA] tw-p-6">
+            <h3 class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-gray-900">Zoologia - Ciência da Natureza e suas tecnologias</h3>
+            <div class="tw-flex tw-flex-col tw-gap-2">
+              <div class="tw-flex tw-justify-between">
+                <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">Grau de domínio</p>
+                <p class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-[#001737] tw-mb-0">25%</p>
+              </div>
+              <div class="tw-overflow-hidden tw-rounded-[0.25rem] tw-bg-[#FFF4EC]">
+                <div class="tw-h-2 tw-rounded-sm tw-bg-primary-600" style="width: 69.04%"></div>
+              </div>
+            </div>
+          </li>
+          <li class="tw-list-none tw-flex tw-flex-col tw-gap-6 tw-col-span-1 tw-rounded-xl tw-bg-white tw-border tw-border-[#E5E7EA] tw-p-6">
+            <h3 class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-gray-900">Zoologia - Ciência da Natureza e suas tecnologias</h3>
+            <div class="tw-flex tw-flex-col tw-gap-2">
+              <div class="tw-flex tw-justify-between">
+                <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">Grau de domínio</p>
+                <p class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-[#001737] tw-mb-0">25%</p>
+              </div>
+              <div class="tw-overflow-hidden tw-rounded-[0.25rem] tw-bg-[#FFF4EC]">
+                <div class="tw-h-2 tw-rounded-sm tw-bg-primary-600" style="width: 69.04%"></div>
+              </div>
+            </div>
+          </li>
+          <li class="tw-list-none tw-flex tw-flex-col tw-gap-6 tw-col-span-1 tw-rounded-xl tw-bg-white tw-border tw-border-[#E5E7EA] tw-p-6">
+            <h3 class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-gray-900">Zoologia - Ciência da Natureza e suas tecnologias</h3>
+            <div class="tw-flex tw-flex-col tw-gap-2">
+              <div class="tw-flex tw-justify-between">
+                <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">Grau de domínio</p>
+                <p class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-[#001737] tw-mb-0">25%</p>
+              </div>
+              <div class="tw-overflow-hidden tw-rounded-[0.25rem] tw-bg-[#FFF4EC]">
+                <div class="tw-h-2 tw-rounded-sm tw-bg-primary-600" style="width: 69.04%"></div>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<!-- <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script> -->
+<script src="https://cdn.jsdelivr.net/momentjs/latest/moment-with-locales.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script>
+  $(document).ready(function () {
+    ///////////////////////////////////////////////////////////////////////////////
+    // SELECT2
+    ///////////////////////////////////////////////////////////////////////////////
+
+    let studentsSelect2Object = $('#id-students').select2({
+      ajax: {
+        url: 'https://api.github.com/search/repositories',
+        dataType: 'json',
+        delay: 250,
+        data: function (params) {
+          return {
+            q: params.term,
+            page: params.page
+          };
+        },
+        processResults: function (data, params) {
+          params.page = params.page || 1;
+
+          return {
+            results: data.items,
+            pagination: {
+              more: (params.page * 30) < data.total_count
+            }
+          };
+        },
+        cache: true
+      },
+      placeholder: 'Search...',
+      minimumInputLength: 1,
+      templateResult: formatRepo,
+      templateSelection: formatRepoSelection
+    });
+    studentsSelect2Object.data('select2').$container.attr('id', 'id-students-select2');
+    studentsSelect2Object.data('select2').$dropdown.attr('id', 'id-students-select2-dropdown');
+
+    $('#id-students').on('select2:open', function () {
+      $('.select2-search--dropdown .select2-search__field').attr('placeholder', 'Pesquisar aluno');
+    });
+
+    $('#id-students').on('select2:close', function () {
+      $('.select2-search--dropdown .select2-search__field').attr('placeholder', null);
+    });
+
+    function formatRepo(repo) {
+      if (repo.loading) return repo.text;
+
+      let $container = $(
+        "<div class='select2-result-content clearfix' style='display: flex; gap: 0.5rem;'>" +
+          "<div class='select2-result-content__avatar'><img src='" + repo.owner.avatar_url + "' style='max-width: 50px; height: 50px;' /></div>" +
+          "<div class='select2-result-content__meta'>" +
+            "<div class='select2-result-content__title' style='font-size: 0.875rem; line-height: 1.25rem;'></div>" +
+            "<div class='select2-result-content__description' style='font-size: 0.75rem; line-height: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;'></div>" +
+          "</div>" +
+        "</div>"
+      );
+
+      $container.find(".select2-result-content__title").text(repo.full_name);
+      $container.find(".select2-result-content__description").text(repo.description);
+
+      return $container;
+    }
+
+    function formatRepoSelection(repo) {
+      // console.log(repo)
+
+      if (!repo.id) return ''
+
+      let $state = $(`
+        <div>
+          <div class="tw-flex tw-items-center tw-gap-3 tw-p-3">
+            <img src="${repo.owner.avatar_url}" style="width: 48px; height: 48px; border-radius: 9999px;" />
+            <div class="tw-flex tw-flex-col">
+              <span class="tw-text-base tw-font-medium tw-text-[#101828]">${repo.full_name || repo.text}</span>
+              <span class="tw-text-sm tw-font-normal tw-text-[#667085]">Ensino Fundamental - Nível 2</span>
+            </div>
+          </div>
+        </div>
+      `);
+
+      return $state;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // DATERANGEPICKER
+    ///////////////////////////////////////////////////////////////////////////////
+
+    moment.locale('pt-br');
+    let start = moment().subtract(29, 'days');
+    let end = moment();
+
+    function callbackDateRangePicker(start, end) {
+      let text = start.format('D [de] MMMM YYYY') + ' - ' + end.format('D [de] MMMM YYYY');
+
+      let ranges = $('#id-date').data('daterangepicker').ranges;
+      for (let key in ranges) {
+        if (key === 'Customizado') continue;
+        if (ranges[key][0].isSame(start) && ranges[key][1].isSame(end)) {
+          text = key;
+          break;
+        }
+      }
+
+      $('#id-date span').html(`${text}`);
+    }
+
+    $('#id-date').daterangepicker({
+      'locale': {
+        "format": "DD/MM/YYYY",
+        "separator": " - ",
+        "applyLabel": "Aplicar",
+        "cancelLabel": "Cancelar",
+        "fromLabel": "De",
+        "toLabel": "Para",
+        "customRangeLabel": "Customizado",
+        "weekLabel": "W",
+        "daysOfWeek": ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"],
+        "monthNames": ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"],
+        "firstDay": 1
+      },
+      startDate: start,
+      endDate: end,
+      ranges: {
+        'Hoje': [moment(), moment()],
+        'Ontem': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+        'Últimos 7 dias': [moment().subtract(6, 'days'), moment()],
+        'Últimos 30 dias': [moment().subtract(29, 'days'), moment()],
+        'Este mês': [moment().startOf('month'), moment().endOf('month')],
+        'Último mês': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+      }
+    }, callbackDateRangePicker);
+
+    callbackDateRangePicker(start, end);
+  });
+</script>
+<script>
+  let myChart = echarts.init(document.getElementById('my-chart-1'))
+  myChart.setOption({
+    grid: {
+      top: '15%',
+      right: 0,
+      bottom: '10%',
+      left: 0,
+    },
+    xAxis: {
+      type: 'category',
+      data: [
+        {
+          value: 'Alex',
+          textStyle: {
+            color: '#001737',
+            fontWeight: 500
+          }
+        },
+        {
+          value: 'Turma',
+          textStyle: {
+            color: '#667085'
+          }
+        }
+      ],
+      axisLine: {
+        lineStyle: {
+          color: '#E5E7EA'
+        }
+      },
+      axisTick: {
+        show: false
+      },
+      axisLabel: {
+        fontFamily: 'Inter',
+        margin: 8,
+        fontSize: 14,
+      }
+    },
+    yAxis: {
+      max: 'dataMax',
+      show: false,
+    },
+    series: [
+      {
+        type: 'bar',
+        barCategoryGap: 32,
+        label: {
+          show: true,
+          formatter: '{@score}%',
+          position: 'insideTop',
+          padding: [24, 0, 0, 0],
+          fontFamily: 'Roboto',
+          fontSize: 30,
+          fontWeight: 500,
+        },
+        itemStyle: {
+          barBorderRadius: [8, 8, 0, 0]
+        },
+        data: [
+          {
+            value: 84,
+            label: {
+              color: '#FFFFFF',
+            },
+            itemStyle: {
+              color: '#FF8F3D'
+            }
+          },
+          {
+            value: 76,
+            label: {
+              color: '#282F3E',
+            },
+            itemStyle: {
+              color: '#FFF4EC'
+            }
+          }
+        ]
+      }
+    ]
+  })
+
+  let myChart2 = echarts.init(document.getElementById('my-chart-2'))
+  myChart2.setOption({
+    grid: {
+      top: '30%',
+      right: 0,
+      bottom: '10%',
+      left: 0,
+      backgroundColor: new echarts.graphic.LinearGradient(0, 1, 0, 0, [
+        {
+          offset: 0,
+          color: 'rgba(255,244,236,1)'
+        },
+        {
+          offset: 1,
+          color: 'rgba(255,244,236,0)'
+        }
+      ]),
+      borderWidth: 0,
+      show: true,
+    },
+    tooltip: {
+      trigger: 'item',
+      formatter: '{c0}%',
+      backgroundColor: '#FF8F3D',
+      textStyle: {
+        fontFamily: 'Roboto',
+        fontSize: 16,
+        lineHeight: 20,
+        fontWeight: 500,
+        color: '#FFFFFF',
+      },
+    },
+    xAxis: {
+      type: 'category',
+      data: [
+        'Fev',
+        'Mar',
+        {
+          value: 'Abr',
+          textStyle: {
+            color: '#001737',
+            fontWeight: 500,
+            fontFamily: 'Roboto',
+            fontSize: 14,
+            lineHeight: 20,
+          },
+        },
+      ],
+      axisTick: {
+        show: false,
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#E5E7EA'
+        }
+      },
+      axisLabel: {
+        margin: 8,
+        color: '#667085',
+        fontWeight: 400,
+        fontFamily: 'Inter',
+        fontSize: 14,
+        lineHeight: 20,
+      },
+    },
+    yAxis: {
+      show: false,
+      min: 40,
+    },
+    series: [
+      {
+        type: 'line',
+        // areaStyle: {
+        //   color: new echarts.graphic.LinearGradient(0, 1, 0, 0, [
+        //     {
+        //       offset: 0,
+        //       color: 'rgba(255,244,236,1)'
+        //     },
+        //     {
+        //       offset: 1,
+        //       color: 'rgba(255,244,236,0)'
+        //     }
+        //   ])
+        // },
+        lineStyle: {
+          color: '#FF8F3D',
+          width: 2,
+        },
+        itemStyle: {
+          color: '#FF8F3D',
+        },
+        symbolSize: 12,
+        data: [
+          60,
+          72,
+          75
+        ],
+      }
+    ]
+  })
+
+  let myChart3 = echarts.init(document.getElementById('my-chart-3'))
+  myChart3.setOption({
+    series: [
+      {
+        name: 'My Chart',
+        type: 'pie',
+        radius: ['40%', '70%'],
+        label: {
+          show: false,
+        },
+        // emphasis: {
+        //   disabled: true,
+        // },
+        data: [
+          {
+            name: 'A',
+            value: 68,
+            itemStyle: { color: '#FF8F3D' },
+            emphasis: { itemStyle: { color: '#FF8024' } }
+          },
+          {
+            name: 'B',
+            value: 32,
+            itemStyle: { color: '#FFF4EC' },
+            emphasis: { itemStyle: { color: '#FFE5D3' } }
+          }
+        ]
+      }
+    ],
+  })
+
+  let myChart4 = echarts.init(document.getElementById('my-chart-4'))
+  myChart4.setOption({
+    grid: {
+      // show: true,
+      // backgroundColor: 'rgb(255, 0, 0)',
+      top: 0,
+      right: -4,
+      bottom: 0,
+      left: -4,
+    },
+    xAxis: {
+      show: false,
+      type: 'category',
+      data: ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8'],
+      axisTick: {
+        show: false
+      },
+    },
+    yAxis: {
+      show: false,
+    },
+    tooltip: {
+      className: 'reset-echarts-tooltip',
+      formatter: `
+        <div class="tw-w-fit tw-flex tw-flex-col tw-bg-white tw-border tw-border-[#E6E8EC] tw-rounded-lg">
+          <div class="tw-border-b tw-border-[#F3F3F3]">
+            <div class="tw-flex tw-items-center tw-justify-between tw-px-4 tw-pt-2 tw-pb-[0.563rem]">
+              <div>
+                <p class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">{b0}</p>
+              </div>
+              <div>
+                <p class="tw-text-xs tw-font-medium tw-text-[#667085] tw-mb-0">8 Ago</p>
+              </div>
+            </div>
+          </div>
+          <div class="tw-flex tw-gap-8 tw-p-4">
+            <div>
+              <div class="tw-flex tw-items-center tw-gap-1">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M6 12L10 8L6 4" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">473 questões</p>
+              </div>
+              <div class="tw-flex tw-items-center tw-gap-1">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M6 12L10 8L6 4" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">411 acertos</p>
+              </div>
+              <div class="tw-flex tw-items-center tw-gap-1">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M6 12L10 8L6 4" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">62 erros</p>
+              </div>
+            </div>
+            <div class="tw-flex tw-items-center tw-justify-center">
+              <p class="tw-text-3xl tw-leading-[2.125rem] tw-font-medium tw-text-[#FF8F3D] tw-tracking-[0.01em] tw-mb-0">{c0}%</p>
+            </div>
+          </div>
+          <div class="tw-px-4 tw-pb-4">
+            <button type="button" class="tw-w-full tw-rounded-lg tw-bg-primary-600 tw-px-3 tw-py-3 tw-text-sm tw-font-semibold tw-text-white hover:tw-bg-primary-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600">Visualizar</button>
+          </div>
+        </div>
+      `,
+    },
+    series: [
+      {
+        itemStyle: {
+          barBorderRadius: 2,
+          color: '#FFF8F2',
+        },
+        data: [80, 100, 93, 72, { value: 80, itemStyle: { color: '#FF8F3D' } }, 100, 82, 82],
+        barCategoryGap: 8,
+        type: 'bar'
+      }
+    ]
+  })
+</script>
+{% endblock js-additional %}

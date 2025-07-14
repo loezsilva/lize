@@ -1,0 +1,582 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load format_duration %}
+
+{% block title %}Adicionar ou remover alunos de uma aplicação - Lize{% endblock title %}
+
+
+{% block css-additional %}
+
+
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+
+<style>
+
+    .disabled-input {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
+    }    
+    .btn-secondary:hover { /* round facebook icon*/
+        background: #009ede;
+        border: 1px solid #009ede;
+    }
+    
+    .select2 {
+        width: 100% !important;
+    }
+</style>
+{% endblock %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">APLICAÇÕES</a></li>
+          <li class="breadcrumb-item active" aria-current="page">GERENCIAR ALUNOS</li>
+        </ol>
+      </nav>
+      <h4>Aplicação do dia {{object.date}} às {{object.start}}</h4>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+        <nav class="ls" aria-label="Breadcrumb">
+          <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+            <li>
+              <div>
+                <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                    <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+                </a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="{% url 'applications:applications_list' %}?category=online" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Aplicações</a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Gerenciar alunos</a>
+              </div>
+            </li>
+          </ol>
+        </nav>
+        <div class="d-none d-md-block">
+          <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+          </a>
+        </div>
+      </div>
+
+      <!-- <div class="preload" v-if="load">
+    <div class="row py-5">
+        <div class="py-5 col-12 d-flex flex-column justify-content-center align-items-center">
+            <h4>Aguarde...</h4>
+            <img src="{% static 'preload.gif' %}" width="100" height="100" alt="">
+        </div>
+    </div>
+</div> -->
+
+    <div class="row">
+        {% include 'includes/messages.html' %}
+        <div class="col-12 mb-3">
+            <h4>Aplicação do dia {{object.date}} às {{object.start}}</h4>
+        </div>
+        <div class="col-sm-4 col-lg-2">
+            <div class="card card-body">
+                <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8 text-truncate">Alunos registrados</h6>
+                <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                    <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">${selectedStudentsCount}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4 col-lg-2">
+            <div class="card card-body">
+                <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8 text-truncate">Turmas Selecionadas</h6>
+                <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                    <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1 text-truncate">
+                        ${selectedClassesCount}
+                    </h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4 col-lg-2">
+            <div class="card card-body">
+                <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8 text-truncate">Duração da prova</h6>
+                <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                    <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1 text-truncate">
+                        {{object.duration}}
+                    </h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="{{ form.students.id_for_label }}">Digite o nome do aluno que deseja adicionar a esta aplicação</label>
+                            <div class="d-flex align-items-center">
+                                <select   
+                                    name="{{ form.students.html_name }}"
+                                    id="{{ form.students.id_for_label }}"
+                                    class="form-control"
+                                    multiple="multiple"
+                                >
+                                </select>
+                                <div class="w-50 custom-file ml-1">
+                                    <label for="file-input" class="custom-file-label" data-browse="escolher">Importar alunos via planilha</label>
+                                    <input @change="handleFileInput($event)" id="file-input" type="file" class="custom-file-input"/>
+                                    <a href="{% static 'modelo_importacao_alunos_matricula.csv' %}">Baixar planilha modelo</a>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted">
+                                {{ form.students.help_text }}
+                            </small>
+                            {% if form.students.errors %}
+                                <label class="text-danger">
+                                {{ form.students.errors.0 }}</label>
+                            {% endif %}
+                        </div>
+    
+                        <div class="form-group">
+                            <label for="{{ form.school_classes.id_for_label }}">Seleciona a turma que você deseja adicionar</label>
+                            <select 
+                                name="{{ form.school_classes.html_name }}"
+                                id="{{ form.school_classes.id_for_label }}"
+                                class="form-control"
+                                multiple="multiple"
+                            >       
+                            </select>
+                            <small class="form-text text-muted">
+                                {{ form.school_classes.help_text }}
+                            </small>
+                            {% if form.school_classes.errors %}
+                            <label class="text-danger">
+                                {{ form.school_classes.errors.0 }}
+                            </label>
+                            {% endif %}
+                        </div>
+
+                        <div class="row pt-3">
+                            <div class="col-xl-8 border-right">
+                                <h5>Turmas</h5>
+                                
+                                <div v-if="duplicateApplication" class="form-group">
+                                    <span class="badge badge-primary m-1" style="cursor: pointer;" @click="selectRemoveAllClasses(true)">Selecionar Todos</span>
+                                    <span class="badge badge-primary m-1" style="cursor: pointer;" @click="selectRemoveAllClasses(false)">Desselecionar Todos</span>
+                                    <span v-if="duplicateApplication" class="badge badge-primary m-1" style="cursor: pointer;" @click="removeClassesAll(classes)">Remover Turmas</span>
+                                </div>
+                                <div class="form-group">
+                                    <div v-if="classes.length > 0" v-for="(classe, index) in classes">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <span class="tx-bold">
+                                                ${classe.name} 
+                                                <span class="text-muted font-weight-bold">
+                                                    ${classe.unity_name}
+                                                </span>
+                                                <span class="badge badge-primary m-1" style="cursor: pointer;">${classe.students_count} Alunos</span>
+                                            </span>
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge badge-primary m-1" style="cursor: pointer;" @click="selectStudents('selectAll', index)">Selecionar Todos</span>
+                                                <span class="badge badge-primary m-1" style="cursor: pointer;" @click="selectStudents('unselectAll', index)">Desmarcar Todos</span>
+                                                <span v-if="duplicateApplication" class="badge badge-primary m-1" style="cursor: pointer;" @click="removeClasses(classe, index)">Remover Turma</span>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-6 col-xl-4" v-for="student in classe.students">
+                                                <div class="form-check" id="checks_students">
+                                                    <input data-class="classeCheck" class="form-check-input" data-type="student"
+                                                        :data-classe="'check'+index" name="students"
+                                                        @click="studentsCount()" type="checkbox" :id="student.id+index"
+                                                        :value="student.id">
+                                                    <label class="form-check-label" :for="student.id+index"
+                                                        style="width:100%;">
+                                                        <p class="m-0 p-0 text-truncate">
+                                                            ${student.name}
+                                                        </p>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                    </div>
+                                    <div v-else>
+                                        <p>Não há turmas selecionadas</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-xl-4">
+                                <h5>Alunos sem turma</h5>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-12" v-for="(student, index) in studentNotInClasse">
+                                            <div class="form-check" id="checks_students">
+                                                <input class="form-check-input" data-type="student"
+                                                    :data-classe="'check'+index" name="students"
+                                                    @click="studentsCount()" type="checkbox" :id="student.id+index"
+                                                    checked :value="student.id">
+                                                <label class="form-check-label" :for="student.id+index"
+                                                    style="width:100%;">
+                                                    <p class="m-0 p-0 text-truncate">
+                                                        ${student.name}
+                                                    </p>
+                                                </label>
+                                            </div>
+
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% comment %}
+                        <!-- ISSO AQUI POSSUI ALGUMA FUNÇÃO? -->
+                        <select v-if="!duplicateApplication" name="students" multiple class="d-none" style="display: none;" v-show="false == true">
+                            <option v-for="student in students" :value="student.id" selected></option>
+                        </select>
+                        {% endcomment %}
+                        <select name="school_classes" multiple class="d-none" style="display: none;" v-show="false == true">
+                            <option v-for="classe in classes" :value="classe.id" selected></option>
+                        </select>
+                        <button class="btn btn-primary btn-sm" type="submit">Alterar Aplicação</button>
+                    </form>
+                </div>    
+            </div>
+        </div>
+    </div>
+    </div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+<script>
+
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+            duplicateApplication: '{{object.duplicate_application|default:''}}',
+            classes: [
+                {% for classe in object.school_classes.all %}
+                    {
+                        id: '{{classe.id}}',
+                        name: '{{classe.name}}',
+                        unity_name: '{{classe.coordination.unity.name}}',
+                        students_count: '{{classe.count_students}}',
+                        students: [
+                            {% for student in classe.students.all %}
+                                {
+                                    id: '{{student.pk}}',
+                                    name: '{{student}}',
+                                    enrollment_number: '{{student.enrollment_number}}',
+                                },
+                            {% endfor %}
+                        ],
+                    },
+                {% endfor %}
+            ],
+            students: [
+                {% for student in object.students.all %}
+                    {
+                        id: '{{student.pk}}',
+                        name: '{{student}}',
+                        enrollment_number: '{{student.enrollment_number}}',
+                    },
+                {% endfor %}
+            ],
+            selectedStudents: '',
+            selectedStudentsCount: {{object.students.all.count|safe}},
+            selectedClassesCount: {{object.school_classes.all.count|safe}},
+            studentNotInClasse: [],
+            load: true,
+            inputStudents: undefined,
+        },
+        methods: {
+            handleFileInput(e){
+                let file = e.target.files[0]
+            
+                formData = new FormData()
+                formData.append('file', file)
+            
+                axios.post('{% url "applications:application_student_upload" %}', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }).then((res) => {
+                    res.data.forEach((student) => {
+                    let studentClasses = student.classes.map((item) => ({name: item}))
+                    let newOption = $(new Option(student.name, student.pk, true, true));
+                    newOption.data('data', { id: student.pk, text: student.name, classes: studentClasses, selected: true});
+                    if(!this.inputStudents.find("option[value='" + student.pk + "']").length && !this.studentNotInClasse.find(({ id }) => student.pk == id)){
+                        this.inputStudents.append(newOption).trigger('change');
+                    }
+                    })
+                })
+            },
+            selectRemoveAllClasses(select) {
+                $('input[type="checkbox"]').prop('checked', select ? true:false)
+                this.selectStudents()  
+            },
+            removeClasses(classe, index) {
+                $(`#{{form.school_classes.id_for_label}} option[value=${classe.id}]`).remove()
+                $('#{{form.school_classes.id_for_label}}').trigger('change.select2')
+                this.classes.splice(index, 1)
+                this.selectedClassesCount -= 1
+                setTimeout(() => {
+                    this.studentsCount()
+                }, 100)
+              },
+            removeClassesAll(classes) {
+                $('[data-class="classeCheck"]').prop('checked', false)
+                $('#{{form.school_classes.id_for_label}}').val(null).trigger('change')
+                this.selectedClassesCount = 0
+                this.classes.splice(classes)
+                setTimeout(() => {
+                    this.studentsCount()
+                }, 100)  
+              },
+            confirmRemoveClass(classe, index) {
+                Swal.fire({
+                    title: 'Você tem certeza que deseja remover essa turma da aplicação?',
+                    showCancelButton: true,
+                    reverseButtons: true,
+                    confirmButtonText: 'Sim',
+                    cancelButtonText: "Cancelar",
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // this.selectStudents('unselectAll', index)
+                        this.removeClasses(classe, index)
+                    }
+                })
+            },
+            selectStudents(option, index) {
+                if(option == 'selectAll') {
+                    $(`input:checkbox[data-classe=check${index}]`).prop('checked', true)
+                }
+                if(option == 'unselectAll') {
+                    $(`input:checkbox[data-classe=check${index}]`).prop('checked', false)
+                }
+
+                this.studentsCount()
+            },
+            studentsCount() {
+                this.selectedStudentsCount = $(':checkbox[data-type=student]:checked').length + $('#id_students option:selected').length;
+            },
+            getClasse(classe) {
+                axios.get(`{% url "students:students_list_api" %}?classe=${classe.id}`).then((response) =>
+                {
+                    if(response.data.length > 0) {
+                        this.classes.push({id: classe.id, name: classe.name, students: response.data, unity_name: classe.unity_name})
+                    }
+                }).finally(() => {
+                    this.studentsCount()
+                })
+            },
+            fetchStudentsNotInClasse: async function() {
+                let studentsClasses = []
+                this.classes.forEach(classe => classe.students.forEach(classeStudent => studentsClasses.push(classeStudent)))
+                this.students.forEach(student => {
+                    if(!studentsClasses.find(e => e.id == student.id)){
+                        this.studentNotInClasse.push(student)
+                    }
+                })
+                await this.studentNotInClasse
+            },
+        },
+        mounted: function() {
+          
+            var self = this
+
+            var inputStudents = $('#{{form.students.id_for_label}}').select2({closeOnSelect: false})
+            self.inputStudents = inputStudents
+
+            this.fetchStudentsNotInClasse().then((e) => {
+                this.students.forEach(student => $(`:checkbox[value=${student.id}]`).prop('checked', true))
+                this.load = false
+            })
+            
+            $('#{{form.school_classes.id_for_label}}').on('select2:unselect', (e) => {
+                this.selectedClassesCount -= 1 
+            })
+
+            $('#id_school_classes').on('select2:select', (e) => {
+                self.getClasse(e.params.data)
+                this.selectedClassesCount += 1 
+            })
+
+            $('#id_school_classes').on('select2:unselect', (e) => {
+            
+                self.classes.splice(self.classes.indexOf(self.classes.find(classe => classe.id == e.params.data.id)), 1)
+                setTimeout(() => {
+                    self.studentsCount()
+                }, 1000)
+                
+            })
+
+            $('#id_school_classes').on('select2:clear', (e) => {
+            
+                self.classes = [], self.selectedStudentsCount = 0
+            
+            })
+
+            $('#id_students').on('select2:select select2:unselect select2:clear', (e) => { self.studentsCount() })
+               
+            $('#id_students').select2({
+                placeholder: 'Buscar pelo nome do aluno...',
+                minimumInputLength: 3,
+                closeOnSelect: false,
+                allowClear: false,
+                escapeMarkup: function (text) {
+                    return text;
+                },
+                ajax: {
+                    url: '{% url "students:students_list_api" %}',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            search: params.term
+                        }
+                    },
+                    processResults: function(results) {
+                        let new_results = $.map(results, function(element) {
+                            if(!self.students.find((student) => student.id == element.id)){
+                                element.text = element.name
+                                return element
+                            }
+                        })
+                        
+                        return {
+                            results: new_results,
+                        }
+                }
+                },templateSelection: (data) => {
+                    if(data.text) {
+                    result = `<span class="font-weight-bold ">
+                        <span>${data.text}</span>`
+                
+                    if (data.classes){
+                        result += "<p class='m-0'>"
+                        data.classes.forEach(element => {
+                        result += `<span class="badge badge-primary font-weight-bold mr-1">${element.name}</span>`
+                        });
+                        result += "</p>"
+                    }
+                    result += "</span>"
+                        return result
+                    } else {
+                        return "Buscar pelo nome do aluno..."
+                    }
+                },
+                templateResult: (data) => {
+                    if(data.text){
+                        result = `
+                            <span class="font-weight-bold">
+                            <span class="mr-1">${data.text}</span>
+                        `
+                
+                    if (data.classes){
+                        result += "<p class='m-0'>"
+                        data.classes.forEach(element => {
+                            result += `<span class="badge mr-1 badge-primary font-weight-bold">${element.name}</span>`
+                        });
+                        result += "</p>"
+                    }
+                    result += "</span>"
+                    return result
+                    } else {
+                        return "Buscar pelo nome do aluno..."
+                    }
+                }
+            })
+            
+            $('#id_school_classes').select2({
+                placeholder: 'Buscar pelo nome da turma...',
+                minimumInputLength: 1,
+                closeOnSelect: false,
+                allowClear: false,
+                escapeMarkup: function (text) {
+                    return text;
+                },
+                ajax: {
+                    url: `{% url "classes:classes_list_api" %}?year=${new Date().getFullYear()}`,
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            search: params.term
+                        }
+                    },
+                    processResults: function(results) {
+                        let new_results = $.map(results, function(element) {
+                            if(!self.classes.find((classe) => classe.id == element.id)) {
+                                element.text = element.name + " - " + element.unity_name
+                                return element 
+                            }
+                        })
+                        return {
+                            results: new_results,
+                        }
+                    }
+                },
+                templateSelection: (data) => {
+                    if(data.text){
+                        return `
+                            <span class="font-weight-bold">
+                            <span class="mr-1">${data.text}</span>
+                            <span class="badge badge-primary font-weight-bold">${data.students_count} Alunos</span>
+                            </span>
+                        `
+                    } else {
+                        return "Buscar pelo nome da turma..."
+                    }
+                },
+                templateResult: (data) => {
+                    if (data.name){
+                    return `
+                        <div class="row mb-0">
+                        <div class="col-12 mb-0">
+                            <div class="font-weight-bold">
+                            ${data.name}
+                            <span class="badge badge-primary font-weight-bold">${data.students_count} Alunos</span>
+                            <p class="text-muted mb-0">${data.unity_name}</p>
+                            </div>
+                        </div>
+                    `
+                    } else{
+                        return "Buscando..."
+                    }
+                }
+            })
+
+        }
+    })
+
+</script>
+
+{% endblock js-additional %}
+    

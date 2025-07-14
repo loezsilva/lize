@@ -1,0 +1,235 @@
+{% extends 'redesign/base.html' %}
+{% load static %}
+{% load exams_tags %}
+{% load increment %}
+
+{% block title %}
+    Lize - Gabarito Prévio
+{% endblock title %}
+
+{% block css-additional %}
+<style>
+    .questions-container {
+        display: flex;
+        flex-direction: row;
+        flex-flow: row wrap;
+        justify-content: left;
+    }
+
+    .question {
+        display: flex;
+        border-radius: 5px;
+        width: 80px;
+        height: 30px;
+        padding: 5px;
+        margin: 10px;
+        justify-content: space-around;
+        align-items: center;
+        font-weight: bold;
+        cursor: pointer;
+    }   
+
+    .question-blank {
+        background-color: #00000021;
+        color: rgb(70, 70, 70);
+    }
+
+    .question-correct {
+        background-color: #00ff555d;
+        color: rgb(0, 65, 0);
+    }
+
+    @media print
+    {    
+        * {
+            overflow: hidden !important;
+        }
+        .no-print, .no-print *
+        {
+            display: none !important;
+        }
+
+        .print {
+            display:block !important;
+            -webkit-print-color-adjust: exact;            
+        }
+        
+    }   
+
+</style>
+
+{% endblock css-additional %}
+
+
+{% block content-fixed %}
+<div class="ard cer dcv tw-mb-16 mt-4">
+
+    <div class="row no-print">
+        <div class="d-flex justify-content-between ml-4 mr-4">
+            <h4>{{ object.application.exam }}</h4>
+            <div class="d-flex align-items-start justify-content-start mt-4">
+                <button class="btn btn-primary" type="button" onclick="window.print()">Imprimir Gabarito</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row d-none print">
+        <div class="col">
+            <h3>{{ object.application.exam }}</h3>   
+            <p>Data da Aplicação: {{object.application.date|date:'d/m/Y'}}</p>
+        </div>
+    </div>
+
+    <div class="row no-print">
+        <div class="col-sm-6 col-lg-3 print">
+            <div class="card card-body">
+                <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">data da aplicação</h6>
+                <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                    <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">{{object.application.date|date:'d/m/Y'}}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-2">
+            <div class="card card-body">
+                <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Objetivas</h6>
+                <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                    <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">{{questions_counts.choice}}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-2">
+            <div class="card card-body">
+                <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Discursivas</h6>
+                <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                    <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">{{questions_counts.textual}}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-2">
+            <div class="card card-body">
+                <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Anexo</h6>
+                <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                    <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">{{questions_counts.file}}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-2">
+            <div class="card card-body">
+                <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Somatório</h6>
+                <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                    <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">{{questions_counts.sum_question}}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row print">
+        <div class="col-12">
+            <h5 class="mt-1">Resultado Parcial</h5>
+            <div class="card card-body questions-container">
+                {% for question in questions %}
+                    <div class="question question-blank" {% if question.get_category_display in 'Objetiva,Somatório' %}
+                    @click="openQuestionModal({ pk: '{{question.pk}}'})" {% endif %}>
+                        <span>{{question|number_print_question:object.application.exam }}</span>
+                        <span>
+                            {{question|get_correct_option_answer|upper}}
+                        </span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra-modal %}
+<div class="modal pr-0" tabindex="-1" role="dialog" id="questionModal">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-white">
+                <h5 class="modal-title">
+                <i class="fas fa-user mr-2"></i>
+                    Detalhes da questão
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div 
+                    id="question-details"
+                    class="mb-3 p-2"
+                    v-show="selectedQuestion.enunciation"
+                >
+                    <div v-html="selectedQuestion.enunciation" class="mb-2"></div>    
+                    
+                    <div class="alert alert-warning" v-if="checkAlternatives(selectedQuestion.alternatives)">
+                        O professor ainda não cadastrou gabarito para esta questão.
+                    </div>
+
+                    <table class="w-100">
+                        <tr v-for="alternative in selectedQuestion.alternatives" :class="alternative.is_correct ? 'question-correct': ''" >
+                            <td class="form-check" v-if="alternative" :class="getOptionClass(alternative, selectedQuestion.answer)">
+                                <input class="form-check-input" type="radio" disabled="disabled" :checked="alternative.is_correct">
+                                <label v-html="alternative.text"></label>
+                            </td>
+                        </tr>
+                    </table>
+                    
+                </div>
+
+                <template v-if="selectedQuestion.category == 'Arquivo anexado'">
+                    <a type="button" class="btn btn-primary btn-sm" v-if="selectedQuestion.file_answer" :href="selectedQuestion.file_answer" target="_blank">Ver arquivo enviado</a>
+                    <span class="text-danger" v-else target="_blank">Sem arquivo anexado</span>
+                </template>
+
+                <template v-if="selectedQuestion.category == 'Discursiva'">
+                    <hr>
+                    <span class="font-weight-bold">Sua resposta:</span>
+                    <p v-if="selectedQuestion.textual_answer">${selectedQuestion.textual_answer}</p>
+                    <span class="text-danger" v-else>Sem resposta</span>
+                </template>
+
+                <div v-if="selectedQuestion.commented_awnser">
+                    <hr>
+                    <h6>Resposta comentada</h6>
+                    <div v-html="selectedQuestion.commented_awnser"></div>
+                </div>   
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock extra-modal %}
+
+
+{% block js-additional %}
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<script>
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+            selectedQuestion: ''
+        },
+        methods: {
+            {% include 'dashboard/applications/includes/application-exam-detail-functions.js' %}
+            checkAlternatives(alternatives){
+                if(alternatives)
+                    return !alternatives.find(alternative => alternative.is_correct)
+
+                return false
+            }
+        },
+        mounted: function() {
+            $('[data-toggle="tooltip"]').tooltip()
+            $('[data-toggle="popover"]').popover({ trigger: "hover" })
+        },
+        updated: function() {
+            MathJax.typeset();
+        },
+    })
+</script>
+{% endblock js-additional %}
+

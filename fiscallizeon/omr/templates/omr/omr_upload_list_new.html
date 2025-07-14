@@ -1,0 +1,982 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+{% load remove_line_break %}
+
+
+{% block css-additional %}
+  <link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/@sjmc11/tourguidejs/dist/css/tour.min.css">
+  <style>
+    .tg-backdrop{
+      z-index: 9999 !important;
+    }
+    .errors span {
+      cursor: pointer;
+    }
+  </style>
+{% endblock css-additional %}
+
+{% block title %}Enviar respostas - Lize{% endblock title %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="{% url 'omr:omr_upload_list' %}">GABARITOS</a></li>
+          <li class="breadcrumb-item active" aria-current="page">ENVIAR</li>
+        </ol>
+      </nav> 
+      <h4>Gabaritos</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <a href="#" onclick="history.back(); return false;" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+
+{% block content-fixed %}
+<div class="tw-flex tw-justify-center">
+  <div class="ard cer dcv tw-pb-8 tw-max-w-[100rem] tw-flex-1">
+    <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1.5rem; justify-content: space-between;">
+      <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-6 sm:tw-flex-nowrap tw-w-full">
+        <h1 class="tw-text-xl tw-font-semibold tw-leading-7 tw-text-[#374151] sm:tw-truncate sm:tw-text-2xl sm:tw-tracking-tight tw-mb-0">
+          Enviar respostas
+        </h1>
+        <div data-tg-title="Filtros detalhados" data-tg-order="2" data-tg-tour="Agora você pode acessar a janela de filtros detalhados clicando aqui." data-tg-group="default-omr-upload-list" class="tw-order-last tw-flex tw-w-full tw-gap-x-8 tw-text-sm tw-font-semibold tw-leading-6 sm:tw-order-none sm:tw-w-auto sm:tw-border-l sm:tw-border-gray-200 sm:tw-pl-6 sm:tw-leading-7">
+          <button type="button" class="tw-flex tw-items-center tw-text-[#667085] off-canvas-menu" id="headlessui-slider-over-button-1" data-toggle-off-canvas="#right-off-canvas">
+            <span>Filtrar</span>
+            <span class="ml-2">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M5 10H15M2.5 5H17.5M7.5 15H12.5" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </button>
+        </div>
+        <div class="tw-ml-auto tw-flex tw-gap-3">
+          {% include "redesign/includes/breadcrumb-year.html" with year=year|force_escape %}
+        </div>
+      </div>
+    </div>
+    {% if count_filters > 0 %}
+      <div class="tw-bg-white sm:tw-rounded-lg tw-py-5 tw-border tw-border-[#E5E7EA] tw-mb-4">
+        <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8" >
+          <div class="tw-flex tw-justify-between">
+            <div class="tw-flex tw-items-center">
+              <p class="tw-pl-4 tw-pr-3 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900 sm:tw-pl-0">
+                Filtrando por
+              </p>
+              <div class="tw-space-x-2">
+                {% if q_name %}
+                  <span class="tw-inline-flex tw-items-center tw-gap-x-0.5 tw-rounded tw-bg-[#F9FAFA] tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-text-[#384250]">
+                    <button type="button" class="tw-group tw-relative tw--ml-1 tw-h-3.5 tw-w-3.5 tw-rounded-sm hover:tw-bg-gray-500/20">
+                      <span class="tw-sr-only">Remove</span>
+                      <svg viewBox="0 0 14 14" class="tw-h-3.5 tw-w-3.5 tw-stroke-gray-700/50 group-hover:tw-stroke-gray-700/75">
+                        <path d="M4 4l6 6m0-6l-6 6" />
+                      </svg>
+                      <span class="tw-absolute tw--inset-1"></span>
+                    </button>
+                    Nome da prova: {{ q_name }}
+                    <!-- &{ filter.label }<template v-if="filter.showValues">:<span v-if="!filter.showCount">${ filter.values.join(', ') }</span><span v-else>${ filter.values.length }</span></template> -->
+                  </span>
+                {% endif %}
+                {% if q_subjects %}
+                  <span class="tw-inline-flex tw-items-center tw-gap-x-0.5 tw-rounded tw-bg-[#F9FAFA] tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-text-[#384250]">
+                    <button type="button" class="tw-group tw-relative tw--ml-1 tw-h-3.5 tw-w-3.5 tw-rounded-sm hover:tw-bg-gray-500/20">
+                      <span class="tw-sr-only">Remove</span>
+                      <svg viewBox="0 0 14 14" class="tw-h-3.5 tw-w-3.5 tw-stroke-gray-700/50 group-hover:tw-stroke-gray-700/75">
+                        <path d="M4 4l6 6m0-6l-6 6" />
+                      </svg>
+                      <span class="tw-absolute tw--inset-1"></span>
+                    </button>
+                    Disciplinas na prova:
+                    {% for subject in subjects %}
+                      {% if subject.pk|stringformat:'s' in q_subjects %}
+                        {{ subject.name }} > {{ subject.knowledge_area.name }}
+                      {% endif %}
+                    {% endfor %}
+                  </span>
+                {% endif %}
+                {% if q_grades %}
+                  <span class="tw-inline-flex tw-items-center tw-gap-x-0.5 tw-rounded tw-bg-[#F9FAFA] tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-text-[#384250]">
+                    <button type="button" class="tw-group tw-relative tw--ml-1 tw-h-3.5 tw-w-3.5 tw-rounded-sm hover:tw-bg-gray-500/20">
+                      <span class="tw-sr-only">Remove</span>
+                      <svg viewBox="0 0 14 14" class="tw-h-3.5 tw-w-3.5 tw-stroke-gray-700/50 group-hover:tw-stroke-gray-700/75">
+                        <path d="M4 4l6 6m0-6l-6 6" />
+                      </svg>
+                      <span class="tw-absolute tw--inset-1"></span>
+                    </button>
+                    Séries:
+                    {% for grade in grades %}
+                      {% if grade.pk|stringformat:'s' in q_grades %}
+                        {{ grade }}
+                      {% endif %}
+                    {% endfor %}
+                  </span>
+                {% endif %}
+                {% if q_is_unprecedented %}
+                  <span class="tw-inline-flex tw-items-center tw-gap-x-0.5 tw-rounded tw-bg-[#F9FAFA] tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-text-[#384250]">
+                    <button type="button" class="tw-group tw-relative tw--ml-1 tw-h-3.5 tw-w-3.5 tw-rounded-sm hover:tw-bg-gray-500/20">
+                      <span class="tw-sr-only">Remove</span>
+                      <svg viewBox="0 0 14 14" class="tw-h-3.5 tw-w-3.5 tw-stroke-gray-700/50 group-hover:tw-stroke-gray-700/75">
+                        <path d="M4 4l6 6m0-6l-6 6" />
+                      </svg>
+                      <span class="tw-absolute tw--inset-1"></span>
+                    </button>
+                    Gabaritos inéditos: sim
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="tw-flex tw-items-center">
+              <a href="{% url 'omr:template_list' %}" class="tw-text-left tw-text-sm tw-font-semibold tw-text-[#667085] tw-flex tw-items-center hover:tw-text-[#667085]">
+                Limpar filtro
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="tw-ml-2">
+                  <path d="M15 5L5 15M5 5L15 15" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <div data-tg-title="Enviar múltiplos arquivos" data-tg-order="3" data-tg-tour="Agora você pode enviar vários arquivos de uma única vez." data-tg-group="default-omr-upload-list" class="tw-bg-white sm:tw-rounded-lg tw-py-8 tw-border tw-border-[#E5E7EA] tw-mb-8">
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8" >
+        <div class="tw-flex tw-justify-between">
+          <div class="tw-flex tw-flex-col tw-w-full tw-gap-4">
+            <p class="tw-pl-4 tw-pr-3 tw-text-left tw-text-lg tw-font-semibold tw-text-[#374151] sm:tw-pl-0">
+              Gabaritos para correção automática
+            </p>
+            <div class="tw-space-x-2">
+              <form>
+                {% csrf_token %}
+
+                {% if form.omr_category.field.queryset %}
+                  <div class="sm:tw-col-span-2 sm:tw-col-start-1 tw-pb-5">
+                    <label for="{{ form.omr_category.id_for_label }}" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                      {{ form.omr_category.label }}
+                    </label>
+                    <div class="tw-mt-2">
+                      {% render_field form.omr_category class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" v-model="selectedOmrCategory" @change="saveOmrChoice()" %}
+                    </div>
+                  </div>
+                {% endif %}
+
+                <label for="id_pdf_scan" class="tw-relative tw-cursor-pointer tw-w-full tw-flex tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-shadow-sm hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600">
+                  Adicionar arquivos para correção
+                  <svg width="25" height="24" viewBox="0 0 25 24" fill="none" class="ml-2">
+                    <path d="M12.5 5V19M5.5 12H19.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <input
+                    id="id_pdf_scan"
+                    name="pdf_scan"
+                    type="file"
+                    class="sr-only"
+                    accept="application/pdf"
+                    multiple
+                    required
+                    @change="uploadFiles"
+                  />
+                </label>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tw-flex tw-flex-col tw-gap-6">
+      <div class="tw-flex tw-items-center tw-justify-between">
+        <h2 class="tw-pl-4 tw-pr-3 tw-text-left tw-text-lg tw-font-semibold tw-text-[#374151] sm:tw-pl-0">
+          Histórico de uploads
+        </h2>
+        <p
+          class="tw-flex tw-text-sm tw-font-semibold tw-text-[#374151]"
+          v-if="totalFilesProcessing > 0 && totalFilesBeingSentNow > 0"
+        >
+          <span class="tw-mr-3">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <path d="M11 1.9375C12.1901 1.9375 13.3686 2.17191 14.4681 2.62734C15.5676 3.08278 16.5666 3.75031 17.4082 4.59185C18.2497 5.43338 18.9172 6.43242 19.3727 7.53193C19.8281 8.63145 20.0625 9.8099 20.0625 11C20.0625 12.1901 19.8281 13.3686 19.3727 14.4681C18.9172 15.5676 18.2497 16.5666 17.4082 17.4082C16.5666 18.2497 15.5676 18.9172 14.4681 19.3727C13.3686 19.8281 12.1901 20.0625 11 20.0625C9.80989 20.0625 8.63144 19.8281 7.53193 19.3727C6.43242 18.9172 5.43337 18.2497 4.59184 17.4082C3.75031 16.5666 3.08277 15.5676 2.62734 14.4681C2.17191 13.3686 1.9375 12.1901 1.9375 11C1.9375 9.80989 2.17191 8.63144 2.62734 7.53193C3.08278 6.43241 3.75032 5.43337 4.59185 4.59184C5.43338 3.75031 6.43242 3.08277 7.53194 2.62734C8.63145 2.17191 9.8099 1.9375 11 1.9375L11 1.9375Z" stroke="#DFE5EA" stroke-width="3.75" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M11 1.9375C12.9138 1.9375 14.7785 2.54337 16.3268 3.66828C17.8751 4.79319 19.0275 6.37939 19.6189 8.19953C20.2104 10.0197 20.2104 11.9803 19.6189 13.8005C19.0275 15.6206 17.8751 17.2068 16.3268 18.3317" stroke="#0C7BDB" stroke-width="3.75" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          Processando arquivos&nbsp;&nbsp;<span class="tw-font-medium tw-text-[#667085]">${totalFilesProcessing}/${totalFilesBeingSentNow}</span>
+        </p>
+      </div>
+      <div class="tw-bg-white sm:tw-rounded-lg tw-pt-6 tw-pb-8 tw-px-8 tw-border tw-border-[#E5E7EA]">
+        <div class="tw-grid tw-grid-cols-12 tw-mb-4">
+          <p class="tw-col-span-2 tw-text-sm tw-font-semibold tw-text-[#374151]" data-tg-title="Situação do envio de cartões" data-tg-order="4" data-tg-tour="Acompanhe a situação dos cartões: Enviando, Processando, Revisão pendente e Sucesso." data-tg-group="default-omr-upload-list">Leitura</p>
+          <p class="tw-col-span-3 tw-text-sm tw-font-semibold tw-text-[#374151] tw-ml-3">Arquivo</p>
+          <p class="tw-col-span-2 tw-text-sm tw-text-center tw-font-semibold tw-text-[#374151]">N&#xB0; de pendências</p>
+          <p class="tw-col-span-3 tw-text-sm tw-font-semibold tw-text-[#374151]">Turmas</p>
+          <p class="tw-col-span-2 tw-text-sm tw-font-semibold tw-text-[#374151] tw-text-center">Ações</p>
+        </div>
+        <div class="tw-flex tw-flex-col tw-gap-2">
+
+          <div
+            v-for="upload in uploads" :key="upload.id"
+            class="tw-grid tw-grid-cols-12 tw-rounded-2xl tw-px-6 tw-py-5"
+            :class="[upload.sendStatus === 'uploading' || upload.sendStatus === 'processing' ? 'tw-bg-white tw-border tw-border-[#E5E7EA] tw-opacity-40' : 'tw-bg-[#F9FAFA]']"
+            :data-tg-title="firstUploadError?.id === upload.id ? 'Revisão pendente' : ''" :data-tg-order="firstUploadError?.id === upload.id ? 5 : -1" :data-tg-tour="firstUploadError?.id === upload.id ? 'Utilize o botão revisar para corrigir todas as pendências que existem no arquivo enviado.' : ''" :data-tg-group="firstUploadError?.id === upload.id ? 'default-omr-upload-list' : ''"
+          >
+            <template v-if="upload.sendStatus === 'uploading' || upload.sendStatus === 'processing'">
+              <div class="tw-col-span-2 tw-flex tw-items-center tw-gap-2">
+                <span>
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <g clip-path="url(#clip0_383_1934)">
+                      <path d="M10.0001 1.66669V5.00002M10.0001 15V18.3334M5.00008 10H1.66675M18.3334 10H15.0001M15.8988 15.8987L13.5417 13.5417M15.8988 4.16664L13.5417 6.52366M4.10139 15.8987L6.45841 13.5417M4.10139 4.16664L6.45841 6.52366" stroke="#0C7BDB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </g>
+                    <defs>
+                      <clipPath id="clip0_383_1934">
+                        <rect width="20" height="20" fill="white"/>
+                      </clipPath>
+                    </defs>
+                  </svg>
+                </span>
+                <span class="tw-font-normal tw-text-sm tw-text-[#9BA3AF]">
+                  <template v-if="upload.sendStatus === 'uploading'">
+                    Enviando
+                  </template>
+                  <template v-else>
+                    Processando
+                  </template>
+                </span>
+              </div>
+              <div class="tw-col-span-3 tw-flex tw-justify-center tw-flex-col tw-gap-1">
+                <p class="tw-font-medium tw-text-sm tw-text-[#101928]">${upload.createdDate}</p>
+                <p class="tw-font-normal tw-text-sm tw-text-[#667085]">${upload.user}</p>
+              </div>
+              <div class="tw-col-span-2 tw-flex tw-justify-center tw-flex-col tw-gap-1">
+              </div>
+              <div class="tw-col-span-3 tw-flex tw-items-center tw-flex-wrap tw-gap-1 tw-max-w-[280px]">
+              </div>
+              <div class="tw-col-span-2 tw-flex tw-items-center tw-justify-end tw-gap-1">
+                <button type="button" class="tw-w-10 tw-h-10 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-pointer-events-none">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 10V4.5C6 3.67157 6.67157 3 7.5 3C8.32843 3 9 3.67157 9 4.5V10C9 11.6569 7.65685 13 6 13C4.34315 13 3 11.6569 3 10V6M12.5 2H15.2C16.8802 2 17.7202 2 18.362 2.32698C18.9265 2.6146 19.3854 3.07354 19.673 3.63803C20 4.27976 20 5.11984 20 6.8V17.2C20 18.8802 20 19.7202 19.673 20.362C19.3854 20.9265 18.9265 21.3854 18.362 21.673C17.7202 22 16.8802 22 15.2 22H8.8C7.11984 22 6.27976 22 5.63803 21.673C5.07354 21.3854 4.6146 20.9265 4.32698 20.362C4 19.7202 4 18.8802 4 17.2V16.5" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <button type="button" class="tw-w-10 tw-h-10 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-pointer-events-none">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M2.42012 12.7132C2.28394 12.4975 2.21584 12.3897 2.17772 12.2234C2.14909 12.0985 2.14909 11.9015 2.17772 11.7766C2.21584 11.6103 2.28394 11.5025 2.42012 11.2868C3.54553 9.50484 6.8954 5 12.0004 5C17.1054 5 20.4553 9.50484 21.5807 11.2868C21.7169 11.5025 21.785 11.6103 21.8231 11.7766C21.8517 11.9015 21.8517 12.0985 21.8231 12.2234C21.785 12.3897 21.7169 12.4975 21.5807 12.7132C20.4553 14.4952 17.1054 19 12.0004 19C6.8954 19 3.54553 14.4952 2.42012 12.7132Z" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12.0004 15C13.6573 15 15.0004 13.6569 15.0004 12C15.0004 10.3431 13.6573 9 12.0004 9C10.3435 9 9.0004 10.3431 9.0004 12C9.0004 13.6569 10.3435 15 12.0004 15Z" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </template>
+            <template v-else>
+              <div class="tw-col-span-2 tw-flex tw-justify-center tw-flex-col tw-gap-1">
+                <div class="tw-flex tw-items-center tw-gap-2">
+                  <template v-if="upload.status === 5">
+                    <span>
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <g clip-path="url(#clip0_383_1934)">
+                          <path d="M10.0001 1.66669V5.00002M10.0001 15V18.3334M5.00008 10H1.66675M18.3334 10H15.0001M15.8988 15.8987L13.5417 13.5417M15.8988 4.16664L13.5417 6.52366M4.10139 15.8987L6.45841 13.5417M4.10139 4.16664L6.45841 6.52366" stroke="#0C7BDB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </g>
+                        <defs>
+                          <clipPath id="clip0_383_1934">
+                            <rect width="20" height="20" fill="white"/>
+                          </clipPath>
+                        </defs>
+                      </svg>
+                    </span>
+                    <span class="tw-font-normal tw-text-sm tw-text-[#9BA3AF]">Reprocessando</span>
+                  </template>
+                  <template v-else-if="upload.studentPageErrorCount || (upload.totalPages - upload.errorsCounter) !== upload.totalPages">
+                    <span>
+                      <!-- <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M15 9L9 15M9 9L15 15M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#D92D20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg> -->
+
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 8V12M12 16H12.01M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#D92D20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </span>
+                    <span class="tw-font-normal tw-text-sm tw-text-[#D92D20]">Revisão pendente</span>
+                  </template>
+                  <template v-else-if="upload.sendStatus === 'success' || upload.status === 2">
+                    <span>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#41C588" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </span>
+                    <span class="tw-font-normal tw-text-sm tw-text-[#9BA3AF]">Sucesso</span>
+                  </template>
+                  <template v-else>
+                    <span>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M15 9L9 15M9 9L15 15M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#D92D20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </span>
+                    <span class="tw-font-normal tw-text-sm tw-text-[#D92D20]">Erro</span>
+                  </template>
+                </div>
+                <div>
+                  <span class="tw-font-medium tw-text-xs tw-text-[#101928]" @click="navigator.clipboard.writeText(upload.id)">
+                    ${upload.createdDate}
+                  </span>
+                </div>
+              </div>
+              <div class="tw-col-span-3 tw-flex tw-justify-center tw-flex-col tw-gap-1">
+                <p
+                  class="tw-font-medium tw-text-sm tw-text-[#101928] tw-truncate"
+                  :title="upload.filename"
+                >
+                  ${upload.filename}
+                </p>
+                <p class="tw-font-normal tw-text-sm tw-text-[#667085]">${upload.user}</p>
+              </div>
+              <div class="tw-col-span-2 tw-flex tw-items-center tw-justify-center tw-px-2">
+                <template v-if="(upload.totalPages - upload.errorsCounter) !== upload.totalPages">
+                  <span class="tw-flex tw-items-center tw-justify-center tw-gap-1 tw-text-red-700">
+                    <span>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tw-w-4 tw-h-4">
+                        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/>
+                        <path d="M14 2v4a2 2 0 0 0 2 2h4"/>
+                        <path d="M8 13h2"/>
+                        <path d="M14 13h2"/>
+                        <path d="M8 17h2"/>
+                        <path d="M14 17h2"/>
+                      </svg>
+                    </span>
+                    <span>
+                      <span data-tippy-content="Occorreu um erro na leitura de pelo menos uma página" class="tw-text-xs tw-font-medium tooltips">
+                        ${upload.errorsCounter}
+                      </span>
+                    </span>
+                  </span>
+                </template>
+                <template v-if="(upload.totalPages - upload.errorsCounter) !== upload.totalPages && upload.studentPageErrorCount">
+                  <span class="tw-text-gray-300 tw-px-3">|</span>
+                </template>
+                <template v-if="upload.studentPageErrorCount">
+                  <span class="tw-flex tw-items-center tw-justify-center tw-gap-1">
+                    <span class="tw-text-red-700">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tw-w-4 tw-h-4">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                      </svg>
+                    </span>
+                    <span>
+                      <span
+                        :data-tippy-content="'Encontramos um erro(s) de leitura em '+ upload.studentPageErrorCount + ' cartão(ões) de resposta'"
+                        class="tw-text-xs tw-font-medium tooltips"
+                      >
+                        <a class="tw-text-red-700" :href="getUrl(omrUploadDetailUrl, upload.id)">
+                          ${upload.studentPageErrorCount}
+                        </a>
+                      </span>
+                    </span>
+                  </span>
+                </template>
+                <template v-if="upload.studentPageErrorCountLoading">
+                  <div class="tw-inline-flex tw-items-center">
+                    <svg class="tw-animate-spin tw--ml-1 tw-mr-3 tw-h-5 tw-w-5" fill="none" viewBox="0 0 24 24">
+                      <circle class="tw-opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="tw-opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="tw-sr-only">Carregando...</span>
+                  </div>
+                </template>
+              </div>
+              <tooltip :configs="{'objects': upload.classes, showNumber: 2, 'attribute': 'name'}"></tooltip>
+              <div class="tw-col-span-2 tw-flex tw-items-center tw-justify-end tw-gap-1">
+                <template v-if="upload.studentPageErrorCount || (upload.totalPages - upload.errorsCounter) !== upload.totalPages">
+                  <a
+                    :href="getUrl(omrUploadDetailUrl, upload.id) + '?v=2'"
+                    v-if="upload.status > 0"
+                    class="tw-rounded-md tw-bg-red-600 tw-px-8 tw-py-1.5 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
+                  >
+                    Revisar
+                  </a>
+                </template>
+                <template v-else>
+                  <a
+                    :href="upload.fullUrl"
+                    class="tw-w-10 tw-h-10 hover:tw-bg-[#F2F2F2] tw-rounded-full tw-flex tw-items-center tw-justify-center"
+                    download
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M6 10V4.5C6 3.67157 6.67157 3 7.5 3C8.32843 3 9 3.67157 9 4.5V10C9 11.6569 7.65685 13 6 13C4.34315 13 3 11.6569 3 10V6M12.5 2H15.2C16.8802 2 17.7202 2 18.362 2.32698C18.9265 2.6146 19.3854 3.07354 19.673 3.63803C20 4.27976 20 5.11984 20 6.8V17.2C20 18.8802 20 19.7202 19.673 20.362C19.3854 20.9265 18.9265 21.3854 18.362 21.673C17.7202 22 16.8802 22 15.2 22H8.8C7.11984 22 6.27976 22 5.63803 21.673C5.07354 21.3854 4.6146 20.9265 4.32698 20.362C4 19.7202 4 18.8802 4 17.2V16.5" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </a>
+                  <a
+                    :href="getUrl(omrUploadDetailUrl, upload.id) + '?v=2'"
+                    v-if="upload.status > 0"
+                    class="tw-w-10 tw-h-10 hover:tw-bg-[#F2F2F2] tw-rounded-full tw-flex tw-items-center tw-justify-center"
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M2.42012 12.7132C2.28394 12.4975 2.21584 12.3897 2.17772 12.2234C2.14909 12.0985 2.14909 11.9015 2.17772 11.7766C2.21584 11.6103 2.28394 11.5025 2.42012 11.2868C3.54553 9.50484 6.8954 5 12.0004 5C17.1054 5 20.4553 9.50484 21.5807 11.2868C21.7169 11.5025 21.785 11.6103 21.8231 11.7766C21.8517 11.9015 21.8517 12.0985 21.8231 12.2234C21.785 12.3897 21.7169 12.4975 21.5807 12.7132C20.4553 14.4952 17.1054 19 12.0004 19C6.8954 19 3.54553 14.4952 2.42012 12.7132Z" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M12.0004 15C13.6573 15 15.0004 13.6569 15.0004 12C15.0004 10.3431 13.6573 9 12.0004 9C10.3435 9 9.0004 10.3431 9.0004 12C9.0004 13.6569 10.3435 15 12.0004 15Z" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </a>
+                </template>
+                <button
+                  type="button"
+                  class="tw-w-10 tw-h-10 hover:tw-bg-[#F2F2F2] tw-rounded-full tw-flex tw-items-center tw-justify-center"
+                  @click="selectedUploadId = upload.id" 
+                  data-toggle="modal" data-target="#confirmCancelModal"
+                >
+                  <svg class="tw-h-5 tw-w-5" viewBox="0 0 57 65" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g clip-path="url(#clip0_3_2)">
+                      <path
+                        d="M34.0982 52.8125H37.1518C37.5567 52.8125 37.9451 52.652 38.2314 52.3663C38.5177 52.0806 38.6786 51.6931 38.6786 51.2891V23.8672C38.6786 23.4631 38.5177 23.0757 38.2314 22.79C37.9451 22.5043 37.5567 22.3438 37.1518 22.3438H34.0982C33.6933 22.3438 33.3049 22.5043 33.0186 22.79C32.7323 23.0757 32.5714 23.4631 32.5714 23.8672V51.2891C32.5714 51.6931 32.7323 52.0806 33.0186 52.3663C33.3049 52.652 33.6933 52.8125 34.0982 52.8125ZM54.9643 10.1563H44.4804L40.1545 2.95801C39.6114 2.05502 38.843 1.30789 37.9243 0.789477C37.0056 0.271063 35.9679 -0.000937712 34.9125 2.42887e-06H22.0875C21.0321 -0.000937712 19.9944 0.271063 19.0757 0.789477C18.157 1.30789 17.3886 2.05502 16.8455 2.95801L12.5196 10.1563H2.03571C1.49581 10.1563 0.978017 10.3703 0.596247 10.7512C0.214476 11.1321 0 11.6488 0 12.1875L0 14.2188C0 14.7575 0.214476 15.2741 0.596247 15.6551C0.978017 16.036 1.49581 16.25 2.03571 16.25H4.07143V58.9063C4.07143 60.5224 4.71486 62.0724 5.86017 63.2152C7.00548 64.358 8.55886 65 10.1786 65H46.8214C48.4411 65 49.9945 64.358 51.1398 63.2152C52.2851 62.0724 52.9286 60.5224 52.9286 58.9063V16.25H54.9643C55.5042 16.25 56.022 16.036 56.4038 15.6551C56.7855 15.2741 57 14.7575 57 14.2188V12.1875C57 11.6488 56.7855 11.1321 56.4038 10.7512C56.022 10.3703 55.5042 10.1563 54.9643 10.1563ZM21.8585 6.46192C21.9271 6.34841 22.0243 6.25474 22.1403 6.19017C22.2563 6.1256 22.3872 6.09237 22.5201 6.09375H34.4799C34.6128 6.09237 34.7437 6.1256 34.8597 6.19017C34.9757 6.25474 35.0729 6.34841 35.1415 6.46192L37.3554 10.1563H19.6446L21.8585 6.46192ZM46.8214 58.9063H10.1786V16.25H46.8214V58.9063ZM19.8482 52.8125H22.9018C23.3067 52.8125 23.6951 52.652 23.9814 52.3663C24.2677 52.0806 24.4286 51.6931 24.4286 51.2891V23.8672C24.4286 23.4631 24.2677 23.0757 23.9814 22.79C23.6951 22.5043 23.3067 22.3438 22.9018 22.3438H19.8482C19.4433 22.3438 19.0549 22.5043 18.7686 22.79C18.4823 23.0757 18.3214 23.4631 18.3214 23.8672V51.2891C18.3214 51.6931 18.4823 52.0806 18.7686 52.3663C19.0549 52.652 19.4433 52.8125 19.8482 52.8125Z"
+                        fill="#FF8F3D" />
+                    </g>
+                    <defs>
+                      <clipPath id="clip0_3_2">
+                        <rect width="57" height="65" fill="white" />
+                      </clipPath>
+                    </defs>
+                  </svg>
+                </button>
+              </div>
+            </template>
+          </div>
+
+        </div>
+      </div>
+
+      {% include 'redesign/includes/pagination.html' with objects=object_list transparent=True border=False %}
+      <div aria-hidden="true" class="modal  fade" id="confirmCancelModal" role="dialog" tabindex="-1">
+        <div class="modal-dialog modal-sm" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Confirme sua ação</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body" style="max-height: fit-content; height: fit-content;">
+              <h6>Você tem certeza que deseja realizar esta operação?
+                <span class="text-muted">
+                  As respostas enviadas nesse upload não serão excluídas.
+                </span>
+              </h6>
+            </div>
+            <div class="modal-footer">
+              <div class="form-buttons-w text-right">
+                  <button class="btn btn-danger" type="submit" @click="softDeleteOmrUpload(selectedUploadId)">
+                      <i class="os-icon os-icon-check"></i>
+                      <span>Sim, confirmar</span>
+                  </button>
+                  <button class="btn btn-secondary" data-dismiss="modal" type="button">
+                      <i class="os-icon os-icon-cancel-circle"></i>
+                      <span>Não</span>
+                  </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+{% endblock content-fixed %}
+
+{% block off-canvas %}
+<div id="right-off-canvas" class="off-canvas off-canvas-right wd-400 bg-white"
+  style="overflow-y: auto; overflow-x: hidden;">
+  <form action="" method="GET">
+  <div class="row p-3">
+      <div class="col-12">
+        <h5>Filtrar gabaritos</h5>
+        <p>Adiciona abaixo os filtros que você deseja aplicar na listagem abaixo</p>
+        <hr/>
+      </div>
+
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="exam_id" class="mb-1">Nome da prova</label>
+          <input type="text" value="{{q_exam}}" id="exam_id" name="q_exam" class="form-control" placeholder="Digite o nome da prova">
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="filename" class="mb-1">Nome do arquivo enviado</label>
+          <input type="text" value="{{q_filename}}" id="filename" name="q_filename" class="form-control" placeholder="Digite o nome do arquivo">
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="exam_id" class="mb-1">Status do Upload</label>
+          <select class="form-control" name="q_status" id="omr_status_id">
+            <option value="all" {% if q_status == "all" %}selected{%endif%}>Todos os status</option>
+            <option value="0" {% if q_status == "0" %}selected{%endif%}>Em fila</option>
+            <option value="1" {% if q_status == "1" %}selected{%endif%}>Processando</option>
+            <option value="2" {% if q_status == "2" %}selected{%endif%}>Finalizado</option>
+            <option value="3" {% if q_status == "3" %}selected{%endif%}>Erro</option>
+            <option value="4" {% if q_status == "4" %}selected{%endif%}>Desconhecido</option>
+            <option value="5" {% if q_status == "5" %}selected{%endif%}>Reprocessando</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="col-6">
+        <div class="form-group mb-3">
+          <label for="initial_date" class="mb-1">Data Inicial</label>
+          <input type="date" value="{{q_initial_date}}" id="initial_date" name="q_initial_date" class="form-control">
+        </div>
+      </div>
+
+      <div class="col-6">
+        <div class="form-group mb-3">
+          <label for="final_date" class="mb-1">Data Final</label>
+          <input type="date" value="{{q_final_date}}" id="final_date" name="q_final_date" class="form-control">
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="classe_id" class="mb-1">Turmas</label>
+          <select name="q_classes" id="classe_id" class="form-control" multiple="multiple">
+            {% for classe in classes %}
+            <option value="{{classe.pk}}" {% if classe.pk|stringformat:'s' in q_classes %}selected="selected" {% endif %}>
+              {{classe.full_name}}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="grade_id" class="mb-1">Séries</label>
+          <select name="q_grades" id="grade_id" class="form-control" multiple="multiple">
+            {% for grade in grades %}
+              <option value="{{grade.pk}}" {% if grade.pk|stringformat:'s' in q_grades %} selected="selected" {% endif %}>
+                {{grade}}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="unity_id" class="mb-1">Unidade</label>
+          <select name="q_unitys" id="unity_id" class="form-control" multiple="multiple">
+            {% for unity in unitys %}
+              <option value="{{unity.pk}}" {% if unity.pk|stringformat:'s' in q_unitys %} selected="selected" {% endif %}>
+                {{unity}}
+              </option>
+            {% endfor %}
+          </select>
+          <p class="text-muted">De acordo com as unidades do usuário que enviou o arquivo.</p>
+        </div>
+      </div>
+
+
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="category_id" class="mb-1">Categoria do erro</label>
+          <select name="q_categorys" id="category_id" class="form-control" multiple="multiple">
+            <option value="2" {% if "2" in q_categorys %} selected="selected" {% endif %}> Marcações não identificadas </option>
+            <option value="3" {% if "3" in q_categorys %} selected="selected" {% endif %}> Aluno não encontrado </option>
+            <option value="1" {% if "1" in q_categorys %} selected="selected" {% endif %}> QRCode não identificado </option>
+            <option value="0" {% if "0" in q_categorys %} selected="selected" {% endif %}> Outro </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="custom-control custom-switch">
+          <input {% if q_errors  %} checked="checked" {% endif %} type="checkbox" id="id_q_errors" name="q_errors" class="custom-control-input">
+          <label class="custom-control-label" for="id_q_errors">Provas com erro</label>
+          <small class="form-text text-muted mt-0">Exibe apenas provas com erros de correção.</small>
+        </div>
+      </div>
+
+      <div class="col-12 mt-5">
+        <button type="submit" class="btn btn-primary btn-block">
+          <i class="fas fa-search"></i>
+          Aplicar filtro
+        </button>
+      </div>
+    </div>
+    <input type="hidden" name="year" value="{{year}}">
+    </form>
+</div>
+{% endblock %}
+
+{% block js-additional %}
+  <script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+  <script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+  <script src="{% static 'js/tippy/popper.min.js' %}"></script>
+  <script src="{% static 'js/tippy/tippy.min.js' %}"></script>
+  <script src="https://unpkg.com/@sjmc11/tourguidejs/dist/tour.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <script>
+    const datetimeformatter = new Intl.DateTimeFormat('pt-BR', {
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false,
+      timeZone: 'America/Fortaleza',
+    })
+
+      var tooltip = Vue.component('tooltip', {
+        delimiters: ['#{', '}'],
+        props: ['configs'],
+        // Parametros para o configs
+        // classes > Classes personalizadas
+        // objects > Array contendo os objetos
+        // attribute > Nome do atributo que será mostrado dentro do span
+        // showNumber > Número da quantidade de objetos que serão mostrados
+        template: `
+          <div class="tw-col-span-3 tw-flex tw-items-center tw-flex-wrap tw-gap-1 tw-max-w-[280px]">
+            <span
+              v-for="(object, index) in configs.objects.slice(0, configs.showNumber)"
+              class="tw-inline-flex tw-items-center tw-rounded-full tw-bg-white tw-px-3 tw-py-1 tw-text-xs tw-font-medium tw-text-gray-600 tw-ring-1 tw-ring-inset tw-ring-[#E5E7EA] tooltips"
+              :data-tippy-content="configs.attribute ? object[configs.attribute] : object"
+            >
+              <template v-if="configs.attribute">#{object[configs.attribute]}</template>
+              <template v-else>#{object}</template>
+            </span>
+            <span
+              v-if="configs.objects.length > configs.showNumber && configs.objects.slice(configs.showNumber, configs.objects.length - 1).length"
+              class="tw-inline-flex tw-items-center tw-rounded-full tw-bg-white tw-px-3 tw-py-1 tw-text-xs tw-font-medium tw-text-gray-600 tw-ring-1 tw-ring-inset tw-ring-[#E5E7EA] tooltips"
+              :data-tippy-content="configs.objects.slice(configs.showNumber, configs.objects.length - 1).map(object => object[configs.attribute]).join(', ')"
+            >
+              + #{configs.objects.slice(configs.showNumber, configs.objects.length - 1).length}
+            </span>
+          </div>
+        `,
+      })
+      var app = new Vue({
+        delimiters: ['${', '}'],
+        components: { 'tooltip': tooltip },
+        el: '#app',
+        data: {
+          selectedOmrCategory: '',
+          omrUploadDetailUrl: "{% url 'omr:omr_upload_detail' '00000000-0000-0000-0000-000000000000' %}",
+          omrUploadStudentErrorsCount: "{% url 'omr:omr_upload_student_page_error_count' '00000000-0000-0000-0000-000000000000' %}",
+          uploads: [
+            {% for upload in object_list %}
+              {
+                'id': "{{ upload.pk }}",
+                'createdDate': "{{ upload.created_at|date:'d/m/Y \à\s G:i' }}",
+                'user': "{{ upload.user }}",
+                'filename': "{{ upload.filename|default_if_none:'' }}",
+                'status': {{ upload.status }},
+                'statusDescription': "{{ upload.get_status_display }}",
+                'errorsCounter': {{ upload.total_errors_count }},
+                'totalPages': {{ upload.total_pages }},
+                'classes': [
+                  {% for class in upload.get_classes %}
+                    {'name': '{{class}}'},
+                  {% endfor %}
+                ],
+                'studentPageErrorCountLoading': false,
+                'studentPageErrorCount': {{ upload.student_page_error_count }},
+                'fullUrl': '{{ upload.get_full_url }}',
+              },
+            {% endfor %}
+          ],
+          filesBeingSentNow: [],
+          totalFilesBeingSentNow: 0,
+          selectedUploadId: null,
+        },
+        watch: {
+          totalFilesProcessing(newTotal, oldTotal) {
+            if (newTotal === 0) {
+              this.filesBeingSentNow = []
+              this.totalFilesBeingSentNow = 0
+            }
+          },
+          allFilesFinished(newTotal, oldTotal) {
+            if (newTotal) {
+              this.removeEventListenerBeforeUnload()
+              this.filesBeingSentNow.forEach(file => {
+                file.alreadyCounted = true
+              })
+            }
+          },
+        },
+        computed: {
+          allFilesFinished() {
+            return this.filesBeingSentNow.every(file => file.sendStatus === 'success' || file.sendStatus === 'error')
+          },
+          totalFilesProcessing() {
+            return this.filesBeingSentNow.filter(file => !file.alreadyCounted && (file.sendStatus === 'processing' || file.sendStatus === 'success' || file.sendStatus === 'error')).length
+          },
+          firstUploadError() {
+            return this.uploads.find(upload => upload.status !== 5 && (upload.studentPageErrorCount || (upload.totalPages - upload.errorsCounter) !== upload.totalPages))
+          },
+        },
+        methods: {
+          alertTop(text, icon = 'success') {
+            Swal.fire({
+              position: 'top-end',
+              text: text,
+              icon: icon,
+              showConfirmButton: false,
+              timer: 1500,
+              toast: true,
+              timerProgressBar: true,
+            })
+          },
+          softDeleteOmrUpload(uploadId) {
+            // Faz a request para dar o soft delete no omr
+            axios.delete("{% url 'omr:omr_soft_delete' '00000000-0000-0000-0000-000000000000' %}".replace('00000000-0000-0000-0000-000000000000', uploadId)).then((response) => {
+              if (response.status == 204) {
+                this.alertTop('Gabarito removido com sucesso', 'success')
+                window.location.reload();
+              }
+              else {
+                this.alertTop('Ocorreu um erro ao remover o gabarito', 'error')
+              }
+            }).catch((error) => {
+              if(error.response.status == 404) {
+                this.alertTop('Upload não encontrado', 'error')
+              }
+            })
+          },
+          formatDate(date) {
+            return datetimeformatter.format(date).replace(',', ' às')
+          },
+          handleBeforeUnload(event) {
+            const confirmationMessage = 'Are you sure you want to leave?';
+            event.returnValue = confirmationMessage; // For Chrome
+            return confirmationMessage; // For other browsers
+          },
+          addEventListenerBeforeUnload() {
+            window.addEventListener('beforeunload', this.handleBeforeUnload)
+          },
+          removeEventListenerBeforeUnload() {
+            window.removeEventListener('beforeunload', this.handleBeforeUnload)
+          },
+          async uploadFiles(event) {
+            this.addEventListenerBeforeUnload()
+
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value
+            this.totalFilesBeingSentNow = event.target.files.length
+            const files = event.target.files
+
+            const filesToSend = []
+            for (const file of files) {
+              const formData = new FormData()
+              formData.append('pdf_scan', file)
+              formData.append('omr_category', this.selectedOmrCategory)
+
+              let sendFile = {
+                id: crypto.randomUUID(),
+                name: file.name,
+                sendStatus: 'uploading',
+                createdDate: this.formatDate(new Date()),
+                user: '{{ user }}',
+                classes: [],
+                intervalId: null,
+                alreadyCounted: false,
+              }
+
+              this.uploads.unshift(sendFile)
+              this.filesBeingSentNow.push(sendFile)
+
+              filesToSend.push({ formData, sendFile })
+            }
+
+            for (const fileToSend of filesToSend) {
+              try {
+                const response = await fetch('{% url "omr:api_import_answer_sheets" %}', {
+                  method: 'POST',
+                  body: fileToSend.formData,
+                  headers: {'X-CSRFToken': csrftoken},
+                })
+                const data = await response.json()
+                if (response.ok) {
+                  fileToSend.sendFile.id = data.id
+                  fileToSend.sendFile.createdDate = data.createdDate
+                  fileToSend.sendFile.user = data.user
+                  fileToSend.sendFile.filename = data.filename
+                  fileToSend.sendFile.status = data.status
+                  fileToSend.sendFile.statusDescription = data.statusDescription
+                  fileToSend.sendFile.errorsCounter = data.errorsCounter
+                  fileToSend.sendFile.totalPages = data.totalPages
+                  fileToSend.sendFile.classes = data.classes
+                  fileToSend.sendFile.studentPageErrorCountLoading = false // data.studentPageErrorCountLoading
+                  fileToSend.sendFile.studentPageErrorCount = data.studentPageErrorCount
+                  fileToSend.sendFile.fullUrl = data.fullUrl
+                  fileToSend.sendFile.sendStatus = 'processing'
+                  this.fetchStatus(fileToSend.sendFile)
+                } else {
+                  throw new Error('Error')
+                }
+              } catch (error) {
+                console.error('Error:', error)
+                fileToSend.sendFile.sendStatus = 'error'
+              }
+            }
+          },
+          fetchStatus(upload) {
+            let url = "{% url 'omr:omr_upload_task_status' pk='00000000-0000-0000-0000-000000000000' %}"
+            upload.intervalId = setInterval(() => {
+              fetch(url.replace('00000000-0000-0000-0000-000000000000', upload.id))
+                .then(response => {
+                  if (response.ok) {
+                    return response.json()
+                  } else {
+                    throw new Error('Error')
+                  }
+                })
+                .then(data => {
+                  if (data.status === 'PENDING') {
+                    upload.sendStatus = 'processing'
+                  } else if (data.status === 'SUCCESS') {
+                    upload.sendStatus = 'success'
+                    upload.status = 2
+                    upload.statusDescription = 'Finalizado'
+                    upload.totalPages = data.total_pages
+                    upload.errorsCounter = data.error_pages
+                  } else if (data.status === 'ERROR' || data.status === 'FAILURE') {
+                    upload.sendStatus = 'error'
+                  }
+
+                  if (data.status === 'SUCCESS' || data.status === 'ERROR' || data.status === 'FAILURE') {
+                    clearInterval(upload.intervalId)
+                  }
+                })
+                .catch(error => {
+                  console.error('Failed to fetch task status', error)
+                  clearInterval(upload.intervalId)
+                })
+            }, 1000)
+          },
+          getUrl(url, uploadID) {
+            return url.replace('00000000-0000-0000-0000-000000000000', uploadID)
+          },
+          fetchUploadStatus(pendingUploads) {
+            const self = this
+            pendingUploads.map(function(upload) {
+              let url = "{% url 'omr:omr_upload_task_status' pk='00000000-0000-0000-0000-000000000000' %}"
+              fetch(url.replace('00000000-0000-0000-0000-000000000000', upload.id))
+              .then(response => response.json())
+              .then(data => {
+                switch (data.status) {
+                  case 'STARTED':
+                    upload.status = 1
+                    upload.statusDescription = 'Processando'
+                    const {done, total} = data.details
+                    upload.progress = Math.round(done / total * 100)
+                    console.log(done, total)
+                    self.$forceUpdate()
+                    break
+                  case 'SUCCESS':
+                    upload.status = 2
+                    upload.statusDescription = 'Finalizado'
+                    upload.totalPages = data.total_pages
+                    upload.errorsCounter = data.error_pages
+                    break
+                  case 'ERROR':
+                    upload.status = 3
+                    upload.statusDescription = 'Erro'
+                    break;
+                  case 'FAILURE':
+                    upload.status = 3
+                    upload.statusDescription = 'Erro'
+                    break;
+                }
+              })
+            })
+          },
+          async getData() {
+            for (let upload of this.uploads) {
+              await axios(this.getUrl(this.omrUploadStudentErrorsCount, upload.id)).then((response) => {
+                up = this.uploads.find((omrUpload) => omrUpload.id == response.data.id)
+                up.studentPageErrorCountLoading = false
+                up.studentPageErrorCount = response.data.count
+              })
+            }
+          },
+          saveOmrChoice() {
+            sessionStorage.setItem("selectedOmrCategory", this.selectedOmrCategory)
+          }
+        },
+        mounted() {
+          {% include 'help/includes/tour_guide.js' with group_guide_name='default-omr-upload-list' %}
+
+          const sessionStorageSelectedOmrCategory = sessionStorage.getItem("selectedOmrCategory")
+          if (sessionStorageSelectedOmrCategory) {
+            this.selectedOmrCategory = sessionStorageSelectedOmrCategory
+          }
+          // this.getData()
+
+
+
+          // setInterval(() => {
+          //     const pendingUploads = this.uploads.filter(upload => upload.status < 2)
+          //     if(pendingUploads) {
+          //         this.fetchUploadStatus(pendingUploads)
+          //     }
+          // }, 30000)
+          tippy('.tooltips', {
+            placement: 'bottom',
+            followCursor: true,
+            followCursor: 'horizontal',
+            allowHTML: true,
+            theme: 'custom',
+          })
+          
+          $('.off-canvas-menu').on('click', function (e) {
+            e.preventDefault();
+            var target = $(this).attr('data-toggle-off-canvas');
+            $(target).addClass('show');
+          });
+
+          $('.off-canvas .close').on('click', function (e) {
+            e.preventDefault();
+            $(this).closest('.off-canvas').removeClass('show');
+          })
+
+          $(document).on('click touchstart', function (e) {
+            if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+              return
+            }
+          e.stopPropagation();
+
+          if (!$(e.target).closest('.off-canvas-menu').length) {
+            var offCanvas = $(e.target).closest('.off-canvas').length;
+            if (!offCanvas) {
+              $('.off-canvas.show').removeClass('show');
+            }
+          }
+          });
+
+          $('#classe_id').select2({
+            placeholder: "Selecione uma opção",
+            closeOnSelect: false
+            });
+    
+            $('#grade_id').select2({
+            placeholder: "Selecione uma opção",
+            closeOnSelect: false
+          });
+            
+          $('#unity_id').select2({
+                placeholder: "Selecione uma opção",
+                closeOnSelect: false
+            });
+
+          $('#category_id').select2({
+                placeholder: "Selecione uma opção",
+                closeOnSelect: false
+          });
+          },
+        }) 
+  </script>
+{% endblock %}

@@ -1,0 +1,535 @@
+{% extends 'dashboard/base_fixed.html' %}
+{% load static %}
+{% load proportion %}
+{% load round_to %}
+
+{% block title %}
+    Lize - Detalhes da prova do aluno
+{% endblock title %}
+
+{% block css-additional %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@recogito/annotorious-openseadragon@2.6.0/dist/annotorious.min.css">
+
+<style>
+    .questions-container {
+        display: flex;
+        flex-direction: row;
+        flex-flow: row wrap;
+        justify-content: left;
+    }
+
+    .question {
+        display: flex;
+        border-radius: 5px;
+        width: 80px;
+        height: 30px;
+        padding: 5px;
+        margin: 10px;
+        justify-content: space-around;
+        align-items: center;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .question-correct {
+        background-color: #00ff555d;
+        color: rgb(0, 65, 0);
+    }
+    
+    .question-wrong {
+        background-color: #ff000044;
+        color: rgb(119, 0, 0);
+    }
+
+    .question-partial {
+        background-color: #ffc10782;
+        color: #6b5000;
+    }
+
+    .question-blank {
+        background-color: #00000021;
+        color: rgb(70, 70, 70);
+    }
+
+    #question-details img {
+        min-width: 300px;
+    }
+
+    td.alternative-correct {
+        background-color: #10b75990 !important;
+    }
+
+    td.alternative-incorrect {
+        background-color: #dc354590 !important;
+    }
+    .overlay {
+        overflow: hidden;
+        z-index: 20;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        transition: .5s ease;
+        background: rgba(0, 0, 0, 0.8);
+    }
+    .overlay i {
+        cursor: pointer;
+    }
+    .overlay i:hover {
+        color: coral !important;
+    }
+</style>
+
+{% endblock css-additional %}
+
+{% block js-header-additional %}
+    <script src="{% static 'js/annotorious/openseadragon.min.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@recogito/annotorious@2.6.0/dist/annotorious.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@recogito/annotorious-openseadragon@2.6.0/dist/openseadragon-annotorious.min.js"></script>
+{% endblock js-header-additional %}
+
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">PROVAS</a></li>
+          <li class="breadcrumb-item active" aria-current="page">DETALHES</li>
+        </ol>
+      </nav> 
+      <h4>{{ object.application.exam }}</h4>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+
+
+{% block content-fixed %}
+
+<h5 class="mt-3">Desempenho geral</h5>
+<div class="row">
+    <div class="col-sm-6 col-lg-2">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Questões</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">{{ answers_count }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-2">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Acertos</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <h3 class="tx-success tx-rubik mg-b-0 mg-r-5 lh-1">{{ correct_answers_count }}</h3>
+            </div>        
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-2">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Acertos parciais</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <h3 class="tx-warning tx-rubik mg-b-0 mg-r-5 lh-1">{{ partial_answers_count }}</h3>
+            </div>        
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-2">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Erros</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <h3 class="tx-danger tx-rubik mg-b-0 mg-r-5 lh-1">{{ incorrect_answers_count }}</h3>
+            </div>        
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-2">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Acertos (%)</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">{{ correct_answers_count|proportion:answers_count|floatformat:2 }} %</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-2">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Nota</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <h3 class="tx-rubik mg-b-0 mg-r-5 lh-1">{{ total_grade|floatformat:2 }}</h3>
+            </div>        
+        </div>
+    </div>
+</div>
+
+<h5 class="mt-1">Desempenho por disciplina</h5>
+<div class="row">
+    <div class="col-12">
+        
+        <div class="card mg-b-10">
+            <div class="table-responsive">
+                <table class="table table-dashboard mg-b-0">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th class="text-right">Total de Questões</th>
+                            <th class="text-right">Respostas</th>
+                            <th class="text-right">Nota</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subject in subjects %}
+                        <tr>
+                            <td class="tx-normal">{{subject.name}}</td>
+                            <td class="tx-normal text-right">
+                                {{subject.total_questions}}
+                            </td>
+                            <td class="tx-normal text-right">
+                                <span class="text-success h5">{{subject.data.total_correct_answers}}</span>
+                                /
+                                <span class="text-warning h5">{{subject.data.total_partial_answers}}</span>
+                                /
+                                <span class="text-danger h6">{{subject.data.total_incorrect_answers}}</span>
+                            
+                            </td>
+                            <td class="tx-medium text-right h6">
+                                {{subject.data.total_grade|stringformat:'.2f'}}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="text-right">
+            <span>
+                <i class="fas fa-circle text-success"></i> Acertos
+                <i class="fas fa-circle text-warning"></i> Parciais
+                <i class="fas fa-circle text-danger"></i> Erros
+
+            </span>
+
+        </div>
+    </div>
+</div>
+
+<h5 class="mt-1">Questões da prova</h5>
+<div class="row">
+    <div class="col-12">
+        <div class="card card-body questions-container">
+            <div v-for="(question, index) in questions" class="question" :class="getAnswerClass(question)" @click="openQuestionModal(question), getQuestionWrong(question)">
+                <span>${index + 1}</span>
+                <i v-if="question.is_correct === true && question.answer" class="fas fa-check"></i>
+                <i v-if="question.is_correct === false && question.answer" class="fas fa-times"></i>
+                <i v-if="question.category === 'Discursiva'" class="fas fa-pen-nib"></i>
+                <i v-if="question.category === 'Arquivo anexado'" class="fa fa-paperclip"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content-fixed %}
+
+
+{% block extra-modal %}
+    <div class="overlay text-center d-none">
+        <div class="row m-0 shadow bg-secondary fixed-top">
+            <div class="col">
+                <h4 class="text-white pt-3 m-0 pb-1"> <i class="fas fa-times text-white fa-2x float-right" @click="showAnnotorious(true, true, selectedQuestion.file_answer, 'questionModal')"></i></h4>
+            </div>
+            <div class="col-12 pb-2">
+                <div id="toolbarDiv">
+                    <div class="row m-0 d-flex justify-content-center">
+                        <i class="fas fa-home m-2 text-white" style="font-size: 1.1rem;" id="home"></i>
+                        <i class="fas fa-search-plus m-2 text-white" style="font-size: 1.1rem;" id="zoom-in"></i>
+                        <i class="fas fa-search-minus m-2 text-white" style="font-size: 1.1rem;" id="zoom-out"></i>
+                        <i class="fas fa-undo m-2 text-white" style="font-size: 1.1rem;" id="rotate-left"></i>
+                        <i class="fas fa-undo m-2 text-white" style="transform: rotate(-90deg); transform: scaleX(-1); font-size: 1.1rem;" id="rotate-right"></i>
+                        <i class="fas fa-expand-arrows-alt m-2 text-white" style="font-size: 1.1rem;" id="full-page"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row m-0" style="padding-top: 100px;">
+            <div class="container p-0">
+                <div class="row d-flex justify-content-center">
+                    <div class="col">
+                        <div class="overlay-content" id="img-content" style="height: 720px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>  
+
+<div class="modal pr-0" tabindex="-1" role="dialog" id="questionModal">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-body pd-x-25 pd-sm-x-30 pd-t-40 pd-sm-t-20 pd-b-15 pd-sm-b-20">
+                <a href="#" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </a>
+                <div class="nav-wrapper mg-b-20 tx-13">
+                    <div>
+                        <nav class="nav nav-line tx-medium">
+                            <a href="#questionDetails" class="nav-link active" data-toggle="tab">Detalhes da questão</a>
+                            
+                            {% if user.client_has_wrongs and object.application.deadline_to_request_review %}
+                                <template v-if="moment('{{object.application.deadline_to_request_review|safe}}') > moment()">
+                                    <a href="#wrongs" class="nav-link" data-toggle="tab">Solicitar Correção 
+                                        <template v-if="selectedQuestion.wrong">
+                                            <span 
+                                            class="badge badge-pill badge-primary" 
+                                            >${selectedQuestion.wrong.status_name}</span>
+                                        </template>
+                                    </a>
+                                </template>
+                            {% endif %}
+                        </nav>
+                    </div>
+                </div>
+
+                <div class="tab-content">
+                    <div id="questionDetails" class="tab-pane fade active show">
+                        <!-- <h6 class="tx-uppercase tx-spacing-1 tx-semibold tx-10 tx-color-02 mg-b-15">Detalhes da questão</h6> -->
+                        <div 
+                            id="question-details"
+                            class="mb-3 p-2"
+                            v-show="selectedQuestion.enunciation"
+                        >
+                            <div v-html="selectedQuestion.enunciation" class="mb-2"></div>   
+                            
+                            <table class="w-100">
+                                <tr v-for="alternative in selectedQuestion.alternatives">
+                                    <td class="form-check" v-if="alternative" :class="getOptionClass(alternative, selectedQuestion.answer)">
+                                        <input class="form-check-input" type="radio" disabled="disabled" :checked="alternative.id == selectedQuestion.answer">
+                                        <label v-html="alternative.text"></label>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <template v-if="!selectedQuestion.enunciation">
+                            <h5>Esta questão não possui enunciado</h5>
+                        </template>
+
+                        <template v-if="selectedQuestion.category == 'Arquivo anexado'">
+                            <template v-if="selectedQuestion.file_answer && checkAnswerType(selectedQuestion.file_answer)">
+                                <a href="javascript:void(0)" class="btn btn-primary btn-sm" data-animation="effect-scale" @click="showAnnotorious(false, true, selectedQuestion.file_answer, 'questionModal')">
+                                    <i class="fas fa-image"></i>
+                                    Ver arquivo enviadoxx
+                                </a>
+                            </template>
+                            <template v-else>
+                                <a type="button" class="btn btn-primary btn-sm" v-if="selectedQuestion.file_answer" :href="selectedQuestion.file_answer" target="_blank">Ver arquivo enviado</a>
+                            </template>
+                            <span class="text-danger" v-else target="_blank">Sem arquivo anexado</span>
+                        </template>
+
+                        <template v-if="selectedQuestion.category == 'Discursiva'">
+                            <hr>
+                            <span class="font-weight-bold">Sua resposta:</span>
+                            <p v-if="selectedQuestion.textual_answer">${selectedQuestion.textual_answer}</p>
+                            <span class="text-danger" v-else>Sem resposta</span>
+                        </template>
+
+                        <div v-if="selectedQuestion.commented_awnser">
+                            <hr>
+                            <h6>Resposta comentada</h6>
+                            <div v-html="selectedQuestion.commented_awnser"></div>
+                        </div>
+
+                        <div v-if="selectedQuestion.feedback">
+                            <hr>
+                            <h6>Feedback do professor</h6>
+                            <div v-html="selectedQuestion.feedback"></div>
+                        </div>
+
+                        <div>
+                            <hr>
+                            <template v-if="selectedQuestion.category !== 'Objetiva'">
+                                <h6>Correção do professor</h6>
+                                <p>${selectedQuestion.teacher_feedback}</p>
+                            </template>
+                            <p>
+                                <span class="font-weight-bold">Sua nota na questão:</span> 
+                                <span class="badge badge-info">${selectedQuestion.teacher_grade || 'Não corrigida'}</span>
+                            </p>
+                            <p>
+                                <span class="font-weight-bold">Valor da questão:</span> 
+                                <span class="badge badge-info">${selectedQuestion.question_weight}</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div id="wrongs" class="tab-pane fade">
+                        <template v-if="selectedQuestion.wrong">
+                            <ul class="activity tx-13 mg-b-10">
+                                <li class="activity-item">
+                                    <div class="activity-icon bg-success-light tx-success">
+                                        <i class="fas fa-paperclip" style="font-size: 1.3rem;"></i>    
+                                    </div>
+                                    <div class="activity-body">
+                                        <p class="mg-b-2"><strong>Sua solicitação: </strong> ${selectedQuestion.wrong.student_description}</p>
+                                        <small class="tx-color-03">${moment(selectedQuestion.wrong.created_at).fromNow()}</small>
+                                    </div>
+                                </li>
+                                <li class="activity-item">
+                                    <div class="activity-icon bg-primary-light tx-primary">
+                                        <i class="far fa-clock " style="font-size: 1.3rem;"></i>    
+                                    </div>
+                                    <div class="activity-body">
+                                        <p class="mb-0 align-self-center"><strong>Aguardando revisão</strong></p>
+                                        <small class="tx-color-03">
+                                            <template v-if="moment(selectedQuestion.wrong.updated_at) > moment(selectedQuestion.wrong.created_at)">
+                                                ${moment(selectedQuestion.wrong.updated_at).format('DD/MM/YYYY')}
+                                            </template>
+                                            <template v-else>
+                                                ${moment(selectedQuestion.wrong.created_at).format('DD/MM/YYYY')}
+                                            </template>
+                                        </small>
+                                    </div>
+                                </li>
+
+                                <li class="activity-item" v-if="selectedQuestion.wrong.status == 1">
+                                    <div class="activity-icon bg-success-light tx-success">
+                                        <i class="fas fa-check" style="font-size: 1.3rem;"></i>
+                                    </div>
+                                    <div class="activity-body">
+                                        <p class="mg-b-2"><strong>Aceita</strong> sua solicitação foi aceita, sua nota é <strong>${selectedQuestion.teacher_grade}</strong></p>
+                                        <small class="tx-color-03">${moment(selectedQuestion.wrong.response_date).fromNow()}</small>
+                                    </div>
+                                </li>
+
+
+                                <li class="activity-item" v-if="selectedQuestion.wrong.status == 2">
+                                    <div class="activity-icon bg-pink-light tx-pink">
+                                        <i class="fas fa-times" style="font-size: 1.3rem;"></i>    
+                                    </div>
+                                    <div class="activity-body">
+                                        <p class="mg-b-2"><strong>Recusada</strong> sua solicitação foi recusada, você poderá entender o motivo lendo o comentário do professor logo abaixo.</p>
+                                        <small class="tx-color-03">${moment(selectedQuestion.wrong.response_date).fromNow()}</small>
+                                    </div>
+                                </li>
+
+                                <li class="activity-item" v-if="selectedQuestion.wrong.status == 3">
+                                    <div class="activity-icon bg-warning-light tx-orange">
+                                        <i class="far fa-edit" style="font-size: 1.1rem;"></i> 
+                                    </div>
+                                    <div class="activity-body">
+                                        <p class="mg-b-2 flex-wrap"><strong>Reaberta</strong> sua solicitação foi reaberta, o professor precisa de mais informações a respeito de sua solicitação <strong>use o campo de texto para aprimorar sua solicitação</strong></p>
+                                        <small class="tx-color-03">${moment(selectedQuestion.wrong.created_at).format('DD/MM/YYYY')}</small>
+                                    </div>
+                                </li>
+                                
+                            </ul>
+                            <template v-if="selectedQuestion.wrong.status == 0">
+                                <h6 class="mt-5 tx-uppercase tx-spacing-1 tx-semibold tx-10 tx-color-02 mg-b-15">Já recebemos sua solicitação, em breve você receberá uma resposta</h6>
+                            </template>
+                            <template v-if="selectedQuestion.wrong.response && selectedQuestion.wrong.status == 1 || selectedQuestion.wrong.status == 2">
+                                <h6 class="mt-5 tx-uppercase tx-spacing-1 tx-semibold tx-10 tx-color-02 mg-b-15">Resposta do professor</h6>
+                                <p class="">
+                                    ${selectedQuestion.wrong.response}
+                                </p>
+                                <small v-if="selectedQuestion.wrong.user">Respondida por: ${selectedQuestion.wrong.teacher_name}</small>
+                            </template>
+                            <template v-if="selectedQuestion.wrong.status == 3">
+                                <h6 class="tx-uppercase tx-spacing-1 tx-semibold tx-10 tx-color-02 mg-b-15 mg-t-30">Você deve aprimorar a resposta enviada anteriormente</h6>
+                                <form>
+                                    <div class="form-group">
+                                        <label for="wrong">Digite o motivo para a revisão da sua resposta</label>
+                                        <textarea class="form-control" v-model="selectedQuestion.wrong.student_description" rows="5" id="wrong" placeholder="Nos explique o motivo pelo qual você não concorda com nota recebida nesta questão" required></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <button class="btn btn-success" @click="resendWrong()" :disabled="selectedQuestion.wrong.student_description.length == 0">Reenviar resposta</button>
+                                    </div>
+                                </form>
+                            </template>
+                        </template>
+                        <template v-else>
+                            <h6 class="tx-uppercase tx-spacing-1 tx-semibold tx-10 tx-color-02 mg-b-15">Digite um texto abaixo com o motivo da solicitação</h6>
+                            <form>
+                                <div class="form-group">
+                                    <label for="wrong">Digite o motivo para a revisão da sua resposta</label>
+                                    <textarea class="form-control" v-model="wrong.student_description" rows="5" id="wrong" placeholder="Nos explique o motivo pelo qual você não concorda com nota recebida nesta questão" required></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <button class="btn btn-primary" type="button" @click="createWrong()" :disabled="wrong.student_description.length == 0">Enviar solicitação</button>
+                                </div>
+                            </form>
+                        </template>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock extra-modal %}
+
+{% block js-additional %}
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<script>
+    moment.locale('pt-br');
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+            anno: '',
+            annotationsList: [],
+            wrong: {
+                application_student: '{{object.id}}',
+                question: '',
+                student_description: '',
+            },
+            urls: {
+                wrongCreate: "{% url 'exams:student_correccion_contestation_create' %}",
+                studentResendWrong: "{% url 'exams:student_correccion_contestation_resend_update' pk='00000000-0000-0000-0000-000000000000' %}",
+            },
+            viewer: '',
+            {% include 'dashboard/applications/includes/application-exam-detail-data.js' %}
+        },
+        methods: {
+            checkAnswerType(fileanswer) {
+                const types = ['.jpeg', '.jpg', '.jpe', '.jfif', '.png', '.bmp', '.gif', '.tif', '.psd', '.tiff', '.exif', '.raw', '.crw', '.cr2', '.nef', '.nrw', '.eps', '.svg', '.webp']
+                if(types.find(type => fileanswer.toLowerCase().includes(type)))
+                    return true
+                return false
+            },
+            getUrl(url, id) {
+                return url.replace('00000000-0000-0000-0000-000000000000', id)
+            },
+            getQuestionWrong(question) {
+                return axios.get(`{% url 'exams:student_correccion_contestation_list' %}?application_student={{object.id}}&question=${question.id || question.pk}`)
+            },
+            createWrong() {
+                this.wrong.question = this.selectedQuestion.id
+                axios.post(this.urls.wrongCreate, this.wrong)
+                .then(response => {
+                    this.selectedQuestion['wrong'] = response.data
+                    this.selectedQuestion['wrong']['status_name'] = "Aguardando revisão"
+                    this.wrong.student_description = ''
+                    this.$forceUpdate()
+                })
+                .catch(error => {
+                    console.log(error)
+                })
+            },
+            resendWrong() {
+                axios.put(this.getUrl(this.urls.studentResendWrong, this.selectedQuestion.wrong.id), this.selectedQuestion.wrong).then((response) => {
+                    this.selectedQuestion.wrong.status = response.data.status
+                    this.selectedQuestion.wrong.status_name = "Aguardando revisão"
+                    this.$forceUpdate()
+                })
+            },
+            {% include 'dashboard/applications/includes/application-exam-detail-functions.js' %}
+            {% include 'dashboard/exams/includes/exam-annotations-methods.js' %},
+        },
+        mounted: function() {
+            $('[data-toggle="tooltip"]').tooltip()
+            $('[data-toggle="popover"]').popover({ trigger: "hover" })
+        },
+        updated: function() {
+            MathJax.typeset();
+        },
+    })
+</script>
+{% endblock js-additional %}

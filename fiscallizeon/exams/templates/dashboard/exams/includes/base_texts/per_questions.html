@@ -1,0 +1,16 @@
+{% load i18n %}
+
+<template v-for="(baseText, index) in question.base_texts" v-if="question.number == getTheLowestNumber(questions, baseText)">
+    <div class="row break-inside-auto" :id="'baseText_'+baseText.id">
+        <div class="col-12 mb-3">
+            <h6 class="text-uppercase font-weight-bold mb-0" :data-baseText="'baseText_'+baseText.id">${baseText.title}</h6>
+            <span class="text-muted">{% translate "Texto base" %} <span data-baseNumber></span></span> - 
+            <template v-if="question.base_texts.length">
+                <a @click="scroll(0, $('#question-'+_question.id).offset().top - 90)" href="javascript:void(0)" class="tx-1 mr-1" v-for="(_question, i) in getQuestionsWithTheseBaseTexts(question.base_texts)">
+                    <span class="pb-2">{% translate "Questão" %} ${_question.number_print}<span v-if="getQuestionsWithTheseBaseTexts(question.base_texts).length > 1 && i != getQuestionsWithTheseBaseTexts(question.base_texts).length - 1">,</span></span>
+                </a>
+            </template>
+            <div class="break-inside-auto" v-html="baseText.text"></div>
+        </div>
+    </div>
+</template>

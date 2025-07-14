@@ -1,0 +1,69 @@
+{% load static %}
+<aside class="aside aside-fixed">
+    <div class="aside-header">
+      <a href="#" class="aside-logo">
+        <img src="{% static 'mentorizze/logo-fundo-roxo.png' %}" style="max-width: 90%;" alt="">
+      </a>
+      <a href="" class="aside-menu-link">
+        <i data-feather="menu"></i>
+        <i data-feather="x"></i>
+      </a>
+    </div>
+    <div class="aside-body">
+      <div class="aside-loggedin">
+        <div class="d-flex align-items-center justify-content-start">
+          <div class="aside-alert-link">
+            {% comment %} <a href="" class="new" data-toggle="tooltip" title="You have 2 unread messages"><i data-feather="message-square"></i></a>
+            <a href="" class="new" data-toggle="tooltip" title="You have 4 new notifications"><i data-feather="bell"></i></a> {% endcomment %}
+            <a href="{% url 'accounts:logout' %}" data-toggle="tooltip" title="Sair"><i data-feather="log-out"></i></a>
+          </div>
+        </div>
+        <div class="aside-loggedin-user">
+          <a href="#loggedinMenu" class="d-flex align-items-center justify-content-between mg-b-2" data-toggle="collapse">
+            <h6 class="tx-semibold mg-b-0">{{user.get_user_first_name}}</h6>
+            <i data-feather="chevron-down"></i>
+          </a>
+          <p class="text-white tx-12 mg-b-0 text-truncate">{{user.email}}</p>
+        </div>
+        <div id="loggedinMenu">
+          <ul class="nav nav-aside mg-b-0">
+            {% comment %} 
+              <li class="nav-item"><a href="" class="nav-link">
+                <i data-feather="edit"></i> 
+                <span>Editar Perfil</span>
+              </a> 
+            {% endcomment %}
+            </li>
+            <li class="nav-item"><a href="{% url 'accounts:logout' %}" class="nav-link">
+              <i data-feather="log-out"></i>
+                <span>Sair</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div><!-- aside-loggedin -->
+      <ul class="nav nav-aside">
+        <li class="nav-label">ACESSOS</li>
+        <li class="nav-item">
+          <a href="{% url 'core:dashboard_student_mentorize' %}" class="nav-link">
+            <i data-feather="home"></i> 
+            <span>DASHBOARD</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'applications:mentorize_application_student_list' %}?category=homework" class="nav-link">
+            <i data-feather="file-text"></i> 
+            <span>MINHAS LISTAS</span>
+          </a>
+        </li>
+        {% comment %} <li class="nav-item">
+          <a href="dashboard-one.html" class="nav-link">
+            <i data-feather="book-open"></i> 
+            <span>MATERIAIS DE ESTUDO</span>
+          </a>
+        </li> {% endcomment %}
+        
+
+      </ul>
+    </div>
+</aside>

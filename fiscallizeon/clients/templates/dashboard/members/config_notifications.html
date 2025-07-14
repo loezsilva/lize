@@ -1,0 +1,314 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    Lize - Configurações de notificação
+{% endblock title %}
+
+{% block css-additional %}
+
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+    <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                    <li class="breadcrumb-item"><a href="#">CONFIGURAÇÕES</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        {% if object %}
+                            ATUALIZAR
+                        {% else %}
+                            CADASTRAR
+                        {% endif %}
+                        
+                    </li>
+                </ol>
+            </nav>
+            <h4>
+                Gerenciar notificações
+            </h4>
+        </div>
+        <div class="d-none d-md-block">
+            <button class="btn btn-sm pd-x-15 btn-white btn-uppercase" onclick="history.back();">
+                <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+            </button>
+        </div>
+    </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block top-menu %}
+{% include "includes/configurations_header.html" %}
+{% endblock top-menu %}
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+      <div class="ls" style="margin-top: 0.5rem; margin-bottom: 1rem; justify-content: space-between;">
+        <!-- Empty -->
+      </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card mg-b-10">
+                <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+                    <div>
+                        <h6 class="mg-b-5">
+                            Configurações
+                        </h6>
+                        <p class="tx-13 tx-color-03 mg-b-5">Gerencie as configurações abaixo</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch">
+                                    {% render_field form.send_notification v-model="notifications_teachers" class="custom-control-input cp" %}
+                                    <label class="custom-control-label cp" for="{{form.send_notification.auto_id}}">
+                                        {{form.send_notification.label}}
+                                    </label>
+                                    {% for error in form.first_notification.errors %}
+                                        <small class="text-danger">{{error}}</small>
+                                    {% endfor %}
+                                    <p class="m-0 text-muted">
+                                        {{form.send_notification.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-show="notifications_teachers">
+                            <div class="form-row">
+                                <div class="col-12">
+                                    <h5 class="mt-3">Notificar professores</h5>
+                                </div>
+                                <div class="col-md-4 mt-1 mb-2">
+                                    <label for="{{form.first_notification.auto_id}}">
+                                        {{form.first_notification.label}}
+                                    </label>
+                                    {% render_field form.first_notification v-model="first_notification_date" class="form-control" %}
+                                    {% for error in form.first_notification.errors %}
+                                        <small class="text-danger">{{error}}</small>
+                                    {% endfor %}
+                                    <p class="m-0 text-muted">
+                                        {{form.first_notification.help_text}}
+                                    </p>
+                                </div>
+                                <div class="col-md-4 mt-1 mb-2">
+                                    <label for="{{form.second_notification.auto_id}}">
+                                        {{form.second_notification.label}}
+                                    </label>
+                                    {% render_field form.second_notification v-model="second_notification_date" class="form-control" %}
+                                    {% for error in form.second_notification.errors %}
+                                        <small class="text-danger">{{error}}</small>
+                                    {% endfor %}
+                                    <p class="m-0 text-muted">
+                                        {{form.second_notification.help_text}}
+                                    </p>
+                                    <p class="text-danger" v-if="hasDateError()">
+                                        A segunda notificação deve vir depois da primeira
+                                    </p>
+                                </div>
+                                <div class="col-md-4 mt-1 mb-2">
+                                    <label for="{{form.after_expiration.auto_id}}">
+                                        {{form.after_expiration.label}}
+                                    </label>
+                                    {% render_field form.after_expiration v-model="after_expiration_date" class="form-control" %}
+                                    {% for error in form.after_expiration.errors %}
+                                        <small class="text-danger">{{error}}</small>
+                                    {% endfor %}
+                                    <p class="m-0 text-muted">
+                                        {{form.after_expiration.help_text}}
+                                    </p>
+                                    <p class="text-danger" v-if="hasDateError()">
+                                        A segunda notificação deve vir depois da primeira
+                                    </p>
+                                </div>
+                            </div>
+                            <hr>
+                        </div>
+                        {% if user.client.has_dashboards %}
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch">
+                                    {% render_field form.response_correction_notification v-model="response_correction_notification" class="custom-control-input cp" %}
+                                    <label class="custom-control-label cp" for="{{form.response_correction_notification.auto_id}}">
+                                        {{form.response_correction_notification.label}}
+                                    </label>
+                                    {% for error in form.response_correction_notification.errors %}
+                                        <small class="text-danger">{{error}}</small>
+                                    {% endfor %}
+                                    <p class="m-0 text-muted">
+                                        {{form.response_correction_notification.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-show="response_correction_notification">
+                            <div class="form-row">
+                                <div class="col-12">
+                                    <h5 class="mt-3">Notificar correção de respostas</h5>
+                                </div>
+                                <div class="col-md-4 mt-1 mb-2">
+                                    <label for="{{form.cadence_send_email.auto_id}}">
+                                        {{form.cadence_send_email.label}}
+                                    </label>
+                                    {% render_field form.cadence_send_email v-model="cadence_send_email" class="form-control" %}
+                                    {% for error in form.cadence_send_email.errors %}
+                                    <small class="text-danger">{{error}}</small>
+                                    {% endfor %}
+                                    <p class="m-0 text-muted">
+                                        {{form.cadence_send_email.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                            <hr>
+                        </div>
+                        {% endif %}
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch">
+                                    {% render_field form.coordination_send_notification v-model="notifications_coordination" class="custom-control-input cp" %}
+                                    <label class="custom-control-label cp" for="{{form.coordination_send_notification.auto_id}}">
+                                        {{form.coordination_send_notification.label}}
+                                    </label>
+                                    {% for error in form.first_notification.errors %}
+                                        <small class="text-danger">{{error}}</small>
+                                    {% endfor %}
+                                    <p class="m-0 text-muted">
+                                        {{form.coordination_send_notification.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-show="notifications_coordination">
+                            <div class="form-row">
+                                <div class="col-12">
+                                    <h5 class="mt-3">Notificar coordenadores</h5>
+                                </div>
+                                <div class="col-md-4 mt-1 mb-2">
+                                    <label for="{{form.coordination_first_notification.auto_id}}">
+                                        {{form.coordination_first_notification.label}}
+                                    </label>
+                                    {% render_field form.coordination_first_notification v-model="coordination_first_notification_date" class="form-control" %}
+                                    {% for error in form.coordination_first_notification.errors %}
+                                        <small class="text-danger">{{error}}</small>
+                                    {% endfor %}
+                                    <p class="m-0 text-muted">
+                                        {{form.coordination_first_notification.help_text}}
+                                    </p>
+                                </div>
+                                <div class="col-md-4 mt-1 mb-2">
+                                    <label for="{{form.coordination_second_notification.auto_id}}">
+                                        {{form.coordination_second_notification.label}}
+                                    </label>
+                                    {% render_field form.coordination_second_notification v-model="coordination_second_notification_date" class="form-control" %}
+                                    {% for error in form.coordination_second_notification.errors %}
+                                        <small class="text-danger">{{error}}</small>
+                                    {% endfor %}
+                                    <p class="m-0 text-muted">
+                                        {{form.coordination_second_notification.help_text}}
+                                    </p>
+                                    <p class="text-danger" v-if="hasDateError()">
+                                        A segunda notificação deve vir depois da primeira
+                                    </p>
+                                </div>
+                                <div class="col-md-4 mt-1 mb-2">
+                                    <label for="{{form.coordination_after_expiration.auto_id}}">
+                                        {{form.coordination_after_expiration.label}}
+                                    </label>
+                                    {% render_field form.coordination_after_expiration v-model="coordination_after_expiration_date" class="form-control" %}
+                                    {% for error in form.coordination_after_expiration.errors %}
+                                        <small class="text-danger">{{error}}</small>
+                                    {% endfor %}
+                                    <p class="m-0 text-muted">
+                                        {{form.coordination_after_expiration.help_text}}
+                                    </p>
+                                    <p class="text-danger" v-if="hasDateError()">
+                                        A segunda notificação deve vir depois da primeira
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch">
+                                    {% render_field form.send_email_to_student_after_create class="custom-control-input cp" %}
+                                    <label class="custom-control-label cp" for="{{form.send_email_to_student_after_create.auto_id}}">
+                                        {{ form.send_email_to_student_after_create.label }}
+                                    </label>
+                                    {% for error in form.send_email_to_student_after_create.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                    <p class="m-0 text-muted">
+                                        {{ form.send_email_to_student_after_create.help_text }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <button :disabled="hasDateError()" class="btn btn-warning">Salvar configurações</button>
+                            </div>
+                        </div>
+                        <input type="hidden" name="client" value="{{user.get_clients_cache.0}}">
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+
+{% endblock extra-modal %}
+
+{% block js-additional %}
+
+<script type="text/javascript" src="{% static 'tinymce/tinymce.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.20/lodash.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    var app = new Vue({
+        el: '#app',
+        delimiters: ['${', '}'],
+        data: {
+            notifications_teachers: {{object.send_notification|default:False|lower}},
+            first_notification_date: "{{object.first_notification|default:3}}",
+            second_notification_date: "{{object.second_notification|default_if_none:''}}",
+            after_expiration_date: "{{object.after_expiration|default:0}}",
+
+            response_correction_notification: {{object.response_correction_notification|default:False|lower}},
+            cadence_send_email: "{{object.cadence_send_email|default:0}}",
+
+            notifications_coordination: {{object.coordination_send_notification|default:False|lower}},
+            coordination_first_notification_date: "{{object.coordination_first_notification|default:3}}",
+            coordination_second_notification_date: "{{object.coordination_second_notification|default_if_none:''}}",
+            coordination_after_expiration_date: "{{object.coordination_after_expiration|default:0}}",
+            coodination_after_expiration_date: "{{object.coodination_after_expiration|default:0}}",
+        },
+        watch:{
+            notifications_teachers(newValue){
+                this.notifications_teachers = newValue
+            },
+            notifications_coordination(newValue){
+                this.notifications_coordination = newValue
+            },
+        },
+        methods: {
+            hasDateError(){
+                if(this.second_notification_date) return (this.second_notification_date >= this.first_notification_date)
+                
+            }
+        },
+        mounted() {
+        
+        }
+    });
+</script>
+{% endblock js-additional %}

@@ -1,0 +1,14 @@
+
+{% if tutorial.get_emmbbeded_video %}
+    <div class="row text-center">
+        <div class="col-12">
+            {{tutorial.get_emmbbeded_video_modal|safe}}
+        </div>
+    </div>
+{% endif %}
+
+<div class="row mb-0 mt-3">
+    <div class="col-12">
+        {{ tutorial.content|safe }}
+    </div>
+</div>

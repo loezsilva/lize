@@ -1,0 +1,16 @@
+{% load i18n %}
+
+<template v-for="(baseText, baseTextIndex) in baseTexts">
+    <div class="row break-inside-auto" :id="'baseText_'+baseText.id" v-if="baseText.subject == subject.id">
+        <div class="col-12 mb-3">
+            <span class="text-muted">{% translate "Texto base" %} ${baseTextIndex + 1}</span>
+            <h6 class="text-uppercase font-weight-bold mb-0" :data-baseText="'baseText_'+baseText.id">${baseText.title}</h6>
+            <template v-if="filtredBaseTexts(baseText.questions).length">
+                <a @click="scroll(0, $('#question-'+_question.id).offset().top - 90)" href="javascript:void(0)" class="tx-11 mr-1" v-for="(_question, i) in filtredBaseTexts(baseText.questions)">
+                    <span class="pb-2">{% translate "Questão" %} ${checkExists(_question).number_print}<span v-if="i != filtredBaseTexts(baseText.questions).length - 1">, </span></span>
+                </a>
+            </template>
+            <div class="break-inside-auto" v-html="baseText.text"></div>
+        </div>
+    </div>
+</template>

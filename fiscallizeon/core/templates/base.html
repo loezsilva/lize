@@ -1,0 +1,573 @@
+{% load static %}
+{% load compress %}
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+
+    {% if not DEBUG %}
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWRQHDS');</script>
+    <!-- End Google Tag Manager -->
+    {% endif %}
+
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="referrer" content="no-referrer-when-downgrade">
+
+    {% block meta-seo %}
+    <!-- Twitter -->
+    <meta name="twitter:site" content="https://app.lizeedu.com.br">
+    <meta name="twitter:creator" content="Lize Edu">
+    <meta name="twitter:card" content="Sua escola referência de ensino e aprendizagem">
+    <meta name="twitter:title" content="Lize Edu">
+    <meta name="twitter:description" content="Sua escola referência de ensino e aprendizagem">
+    <!-- <meta name="twitter:image" content="#"> -->
+
+    <!-- Facebook -->
+    <meta property="og:url" content="https://app.lizeedu.com.br">
+    <meta property="og:title" content="Lize Edu">
+    <meta property="og:description" content="Sua escola referência de ensino e aprendizagem">
+    {% endblock %}
+
+    <!-- <meta property="og:image" content="#">
+    <meta property="og:image:secure_url" content="#">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="600"> -->
+
+    <!-- Meta -->
+    <meta name="description" content="Monitoramento e aplicações de provas online">
+    <meta name="author" content="Fiscallize Remote">
+    
+    <!-- Meta -->
+    {% comment %}
+      {% progressive_web_app_meta %}
+    {% endcomment %}
+
+    <!-- Favicon -->
+    <link href="{% static 'favicon/favicon.ico' %}" rel="shortcut icon" />
+    <title>{% block title %}LizeEdu - Sua escola referência de ensino e aprendizagem{% endblock title %}</title>
+    <!-- vendor css -->
+    <link href="{% static 'administration/lib/@fortawesome/fontawesome-free/css/all.min.css' %}" rel="stylesheet">
+    <link href="{% static 'administration/lib/ionicons/css/ionicons.min.css' %}" rel="stylesheet">
+    <!-- Main CSS -->
+
+    {% if IS_MENTORIZZE %}
+      <link rel="stylesheet" href="{% static 'administration/assets/css/app_mentorizze.css' %}">
+    {% else %}
+      <link rel="stylesheet" href="{% static 'administration/assets/css/app.css' %}">
+    {% endif %}
+
+    <link rel="stylesheet" href="{% static 'administration/assets/css/app-extra.css' %}">
+
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.3.2/build/styles/default.min.css">
+    
+    {% block css-additional %}{% endblock css-additional %}
+
+    {% compress css %}
+    <link rel="stylesheet" href="{% static 'administration/assets/css/skin.light.css' %}">
+    <link rel="stylesheet" href="{% static 'administration/assets/css/skin.gradient1.css' %}">
+    <link rel="stylesheet" href="{% static 'administration/assets/css/app.fix.css' %}">
+    {% endcompress %}
+
+    {% if not DEBUG %}
+      <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "cl4r2phsyu");
+      </script>
+    {% endif %}
+
+    {% block js-header-additional %}{% endblock js-header-additional %}
+    
+    <script src="{% static 'js/vue.min.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/6.4.0/adapter.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+    
+    {% compress js %}
+    <script src="{% static 'administration/lib/feather-icons/feather.min.js' %}"></script>
+    <script src="{% static 'administration/assets/js/janus/janus.js' %}"></script>
+    <script src="{% static 'administration/lib/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'js/jquery.start-ratings.js' %}"></script>
+    {% endcompress %}
+
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.3.2/build/highlight.min.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.8.4/Sortable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Vue.Draggable/2.20.0/vuedraggable.umd.min.js"></script>
+
+    {% if not disable_sleek and not DEBUG %}
+     {% if not debug and user and user_type == "teacher" or user_type == "coordination" and user.get_clients %}
+     <script type="text/javascript">
+       window.SLEEK_USER = {
+         token: '{{user.generate_sleekplan_token}}',
+       }
+     </script>
+
+     <script type="text/javascript">
+       window.$sleek = [];
+       window.SLEEK_PRODUCT_ID = 890227471;
+       (function () {
+         d = document;
+         s = d.createElement("script");
+         s.src = "https://client.sleekplan.com/sdk/e.js";
+         s.async = 1;
+         d.getElementsByTagName("head")[0].appendChild(s);
+       })();
+     </script>
+
+     {% endif  %}
+    {% endif %}
+      
+    <style>
+      .modal-body{
+        max-height: 80vh;
+        height: 80vh;
+        overflow: auto;
+      }
+      .select2-results__option:before {
+        content: "";
+        display: inline-block;
+        position: relative;
+        height: 20px;
+        width: 20px;
+        border: 2px solid #C1C1C1;
+        border-radius: 4px;
+        background-color: rgb(255, 255, 255);
+        margin-right: 5px;
+        vertical-align: middle;
+      }
+      .select2-results__option[aria-selected=true]:before {
+        content: "✔️";
+        color: rgb(0, 0, 0);
+        border: 2px solid #fffefe;
+        border: 0;
+        display: inline-block;
+        padding-left: 3px;
+      }
+    </style>
+    
+  </head>
+  <body class="df-roboto">    
+    {% if not DEBUG %}
+    <!-- Google Tag Manager (noscript) -->
+      <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWRQHDS"
+      height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+      <!-- End Google Tag Manager (noscript) -->
+      {% endif %}
+      
+       <div id="myNav" class="overlay" style="display:none;">
+
+         <div class="overlay-content">
+           <img src="{% static 'arrow.png' %}" alt="">
+           <h3 class="text-white" style="margin-top: -100px">
+            <span class="font-weight-light"> Aperte na opção</span>
+            <span class="font-weight-bold">Permitir</span>
+          </h3>
+         </div>
+
+       </div>
+
+      <div id="app-header">
+        {% block header %}{% endblock header %}
+      </div>
+  
+      <div id="app" style="min-height:100%;">
+
+        {% block off-canvas %}{% endblock off-canvas %}
+        {% block content %}{% endblock content %}
+        
+        {% for tutorial in tutoriais %}
+          <div class="modal pr-0" tabindex="-1" role="dialog" data-notification id="modal-tutorial-{{ tutorial.id }}">
+            <div class="modal-dialog modal-lg" role="document">
+              <div class="modal-content">
+                  <div class="modal-header bg-white">
+                    <h5 class="modal-title">
+                      {{ tutorial.title }}
+                    </h5>
+                    <span class="badge badge-success text-white ml-2 mt-1">Ajuda</span>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <i class="fas fa-times-circle"></i>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                    {% include 'includes/modal_tutorial_content.html' %}
+                  </div>
+                  <div class="modal-footer bg-white">
+                    <button class="btn btn-primary" data-dismiss="modal">Fechar</button>
+                  </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+
+        {% block extra-modal %}{% endblock extra-modal %}
+
+      </div>
+
+      {% compress js %}
+      <script src="{% static 'administration/lib/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+      <script src="{% static 'administration/lib/perfect-scrollbar/perfect-scrollbar.min.js' %}"></script>
+      <script src="{% static 'administration/assets/js/app.js' %}"></script>
+      <script src="{% static 'administration/assets/js/app.settings.js' %}"></script>
+      {% endcompress %}
+      
+      {% comment %}
+      <script>
+        with ((console && console._commandLineAPI) || {}) {
+          console.log("%cCuidado!", "font: 2.8em sans-serif; color: red; font-weight: bold;");
+          console.log("%cEste é um recurso voltado para desenvolvedores! Tentar manipular este sistema por aqui pode ocasionar problemas em sua experiência. Uma notificação foi enviada ao nosso suporte", "font: 2em sans-serif; color: gray;");
+        }
+      </script>
+     
+      {% if user_type == 'coordination' %}
+        <script>
+          moment.locale('pt-br');
+
+          Array.prototype.sum = function (prop) {
+            var total = 0
+            for ( var i = 0, _len = this.length; i < _len; i++ ) {
+                total += this[i][prop]
+            }
+            return total
+          }
+
+
+        var vue_chat = new Vue({
+            delimiters: ['${', '}'],
+            el: '#app-header',
+            data: {
+              firstName: "{{user.get_user_first_name}}",
+              functionUser: "{{user.get_user_function}}",
+              notificationSound: new Audio("{% static 'administration/assets/sound/not_sound.mp3' %}"),
+              sendingMessage: false,
+              transactions: {},
+              textMessage:"",
+              selectedApplication: {},
+              applications:[
+                {% for application in applications_actived %}
+                {
+                    id: "{{application.pk}}",
+                    opaqueId: "textroom-"+Janus.randomString(12),
+                    myid: "",
+                    participants: {},
+                    janus: null,
+                    server: "{{application.prefix}}.rtc.fiscallize.com.br",
+                    textRoomId: {{ application.text_room_id }},
+                    textRoomPin: "{{ application.text_room_pin }}",
+                    chatNotificationCount: 0,
+                    {% if application.subject %}
+                      subject: "{{application.subject|capfirst}}",
+                    {% else %}
+                      subject: "",
+                    {% endif %}
+                    registred:false,
+                    messages: [
+                      {% for message in application.messages.all %}
+                        {
+                          sender: "{{message.sender.get_user_first_name}} ({{message.sender.get_user_function}})",
+                          content: "{{message.content}}",
+                          created_at: "Hoje às {{message.created_at|date:'H:i'}}",
+                        },
+                      {% endfor %}
+                    ],
+                    pluginHandle: null,
+                    start: "{{application.start}}",
+                    end: "{{application.end}}",
+                    classes: [
+                      {% for school_class in application.school_classes.all %}
+                        {
+                          name: "{{school_class.name}}"
+                        },
+                      {% endfor %}
+                    ]
+                  }, 
+                {% endfor %}
+              ]
+            },
+            computed: {
+              countNotifications: function(){
+                return this.applications.sum("chatNotificationCount")
+              }
+            },
+            methods: {
+              downScroll(){
+                $("#chat-body").animate({ scrollTop: 99999999999 }, 300);
+              },
+              sendMessageChat(){
+                self = this
+                self.sendingMessage = true
+                self.textMessage = self.textMessage.replace("\n", "").trim()
+
+                if (self.textMessage == ""){
+                  self.sendingMessage = false
+                  return
+                }
+
+                var message = {
+                  textroom: "message",
+                  transaction: Janus.randomString(12),
+                  room: self.selectedApplication.textRoomId,
+                  text: self.textMessage,
+                };
+
+                self.selectedApplication.pluginHandle.data({
+                  text: JSON.stringify(message),
+                  error: function(reason) { alert("error"); },
+                  success: function() { 
+
+                    var newMessage = {
+                      "application": self.selectedApplication.id,
+                      "content": self.textMessage
+                    }
+
+                    axios.post("{% url 'events:aplication_message_create'  %}", newMessage).then(function(response){
+                      vue_chat.downScroll()
+
+                      self.textMessage = ""
+                      self.sendingMessage = false
+                    })
+                  }
+                });
+              },
+              registerUsernameChat(application){
+                self = this 
+                application.myid = Janus.randomString(12);
+                var username = `${self.firstName} (${self.functionUser})`
+                var transaction = Janus.randomString(12);
+                var register = {
+                  textroom: "join",
+                  transaction: transaction,
+                  room: application.textRoomId,
+                  username: application.myid,
+                  display: username,
+                  pin: application.textRoomPin
+                };
+                myusername = username;
+                self.transactions[transaction] = function(response) {
+                  if(response["textroom"] === "error") {
+                    
+                    if(response["error_code"] === 7) {
+                      alert("Criação de ambiente sendo executada.");
+                    } else {
+                      alert(response["error"]);
+                    }
+                    return;
+                  }
+                  
+                  if(response.participants && response.participants.length > 0) {
+                    for(var i in response.participants) {
+                      var p = response.participants[i];
+                      application.participants[p.username] = p.display ? p.display : p.username;
+                      if(p.username !== application.myid && $('#rp' + p.username).length === 0) {
+                        // Add to the application.participants list frontend
+                      }
+                    }
+                  }
+                };
+
+                application.pluginHandle.data({
+                  text: JSON.stringify(register),
+                  error: function(reason) {
+                    alert(reason);
+                  }
+                });
+              },
+              createNewSessionChat(){
+                self = this
+                self.applications.forEach(function(application){
+                application.janus = new Janus({
+                  server: `wss://${application.server}/ws`,
+                  iceServers :[
+                    {
+                      url: 'turn:'+application.server,
+                      username: 'gA42zcNAp8',
+                      credential: 'uzQNsqqF8c',
+                    },
+                    {
+                      url: 'stun:stun.fiscallize.com.br'
+                    },
+                    ],
+                  success: function() {            
+                    application.janus.attach(
+                      {
+                        plugin: "janus.plugin.textroom",
+                        opaqueId: application.opaqueId,
+                        success: function(pluginHandle) {
+                          application.pluginHandle = pluginHandle;
+                          
+                          Janus.log("Plugin attached! (" + application.pluginHandle.getPlugin() + ", id=" + application.pluginHandle.getId() + ")");
+                          // Setup the DataChannel
+                          var body = { request: "setup" };
+                          Janus.debug("Sending message:", body);
+                          application.pluginHandle.send({ message: body });
+                    
+                        },
+                        error: function(error) {
+                          console.error("  -- Error attaching plugin...", error);
+                        },
+                        iceState: function(state) {
+                          Janus.log("ICE state changed to " + state);
+                        },
+                        mediaState: function(medium, on) {
+                          Janus.log("Janus " + (on ? "started" : "stopped") + " receiving our " + medium);
+                        },
+                        webrtcState: function(on) {
+                          Janus.log("Janus says our WebRTC PeerConnection is " + (on ? "up" : "down") + " now");
+                        },
+                        onmessage: function(msg, jsep) {
+                          Janus.debug(" ::: Got a message :::", msg);
+                          if(msg["error"]) {
+                            alert(msg["error"]);
+                          }
+                          if(jsep) {
+                            // Answer
+                            application.pluginHandle.createAnswer(
+                              {
+                                jsep: jsep,
+                                media: { audio: false, video: false, data: true },
+                                success: function(jsep) {
+                                  Janus.debug("Got SDP!", jsep);
+                                  var body = { request: "ack" };
+                                  application.pluginHandle.send({ message: body, jsep: jsep });
+                                },
+                                error: function(error) {
+                                  Janus.error("WebRTC error:", error);
+                                  alert("WebRTC error... " + error.message);
+                                }
+                              });
+                          }
+                        },
+                        ondataopen: function(data) {
+                          vue_chat.registerUsernameChat(application)
+                        },
+                        ondata: function(data) {
+                          Janus.debug("We got data from the DataChannel!", data);
+                          //~ $('#datarecv').val(data);
+                          var json = JSON.parse(data);
+                          var transaction = json["transaction"];
+                          if(self.transactions[transaction]) {
+                            // Someone was waiting for this
+                            self.transactions[transaction](json);
+                            delete self.transactions[transaction];
+                            return;
+                          }
+                          
+                          var what = json["textroom"];
+                          
+                          if(what === "message") {
+                            // Incoming message: public or private?
+                            var msg = json["text"];
+                            msg = msg.replace(new RegExp('<', 'g'), '&lt');
+                            msg = msg.replace(new RegExp('>', 'g'), '&gt');
+                            var from = json["from"];
+                            
+                            application.messages.push({
+                              "sender": application.participants[from],
+                              "content": msg,
+                              "created_at": moment().calendar()
+                            });
+                            if(application.participants[from] !== `${self.firstName} (${self.functionUser})`){
+                              application.chatNotificationCount++;
+                            }
+
+                            vue_chat.downScroll()
+
+                          }  else if(what === "join") {
+                            var username = json["username"];
+                            var display = json["display"];
+                            application.participants[username] = display ? display : username;
+
+                            // Somebody joined
+                            // if(username !== application.myid && $('#rp' + username).length === 0) {
+                            // 	// Add to the application.participants list
+                            // }
+                            
+                          } else if(what === "leave") {
+                            // var username = json["username"];
+                            // var when = new Date();
+                            
+                            delete application.participants[username];
+                            
+                          } else if(what === "destroyed") {
+                            if(json["room"] !== application.textRoomId)
+                              return;
+                            // Room was destroyed, goodbye!
+                            alert("A sala foi removida")
+                          }
+                        },
+                        oncleanup: function() {
+                          Janus.log(" ::: Got a cleanup notification :::");
+                        }
+                      });
+                    },
+                    error: function(error) {
+                      alert(error)
+                    },
+                    destroyed: function() {
+                      alert("Servidor foi removido!")
+                    }
+                  });
+                });
+              },
+            },
+            mounted: function() {
+              self = this;
+              Janus.init({debug: "false", callback: function() {
+                if(!Janus.isWebrtcSupported()) {
+                  alert("No WebRTC support... ");
+                  return;
+                }
+                self.createNewSessionChat()
+              }})
+            }
+        })
+        </script>
+      {% endif %}
+      {% endcomment %}
+      
+      {% block js-additional %}{% endblock js-additional %}
+
+      <script>
+        $("form").not('.not-disable').submit(function (e) {
+          $(this).find(":submit").not(".not-disable").prop("disabled", true);
+        });
+      </script>
+
+      {% if not disable_support_chat %}
+        {% include 'includes/chatwoot.html' with user_type="anonimo" %}
+      {% endif %}
+
+      <script>
+        document.addEventListener("wheel", function(event){
+            if(document.activeElement.type === "number" &&
+              document.activeElement.classList.contains("noscroll"))
+            {
+                document.activeElement.blur();
+            }
+        });
+      </script>
+      {% comment %} NÃO REMOVA ESSA INSTÂNCIA DO VUE, ELA É RESPONSÁVEL PELAS NOTIFICAÇÕES DOS USUÁRIOS {% endcomment %}
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+      <script>
+        var app_notifications = new Vue({
+          components: {
+            {% include 'includes/components/vue-notifications.html' %}
+          },
+          el: '#vueNotifications',
+        })
+      </script>
+  </body>
+</html>

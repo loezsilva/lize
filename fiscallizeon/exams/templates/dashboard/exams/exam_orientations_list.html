@@ -1,0 +1,88 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+
+{% block title %}Listagem de Orientações - Lize{% endblock title %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">ORIENTAÇÕES</a></li>
+          <li class="breadcrumb-item active" aria-current="page">LISTAGEM</li>
+        </ol>
+      </nav> 
+      <h4>Suas Orientações</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <a href="{% url 'exams:exam_orientation_create' %}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+            <i data-feather="plus" class="wd-10 mg-r-5"></i> Cadastrar Orientações
+        </a >
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1rem; justify-content: space-between;">
+      <div style="flex: 1;">
+        <!-- Empty -->
+      </div>
+      <div>
+        <a href="{% url 'exams:exam_orientation_create' %}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+          <i data-feather="plus" class="wd-10 mg-r-5"></i> Cadastrar orientações
+        </a>
+      </div>
+    </div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+              <div>
+                <h6 class="mg-b-5">Orientações</h6>
+                <p class="tx-13 tx-color-03 mg-b-5">Gerencie todas as suas orientações listadas abaixo</p>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-dashboard mg-b-1">
+                <thead>
+                  <tr>
+                    <th>Nº</th>
+                    <th>Título</th>
+                    <th>Criado por</th>
+                    <th class="text-wrap text-right"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for orientation in object_list %}
+                  <tr>
+                    <td class="tx-medium">{{forloop.counter}}</td>
+                    <td>{{orientation.title}}</td>
+                    <td>{{orientation.user.get_full_name}}</td>
+                    <td>
+                      <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'exams:exam_orientation_update' orientation.pk %}" class="nav-link p-2"><i class="fas fa-edit"></i></a>
+                        <a href="javascript:void(0)" class="nav-link p-2" onClick="confirmCancel('{% url "exams:exam_orientation_delete" orientation.pk %}')" data-toggle="tooltip" data-placement="top" title="Remover">
+                          <i class="fas fa-trash"></i>
+                        </a>  
+                      </div>
+                      
+                    </td>
+                </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+        </div>
+          {% include 'includes/pagination.html' with objects=object_list %}
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+  {% include 'includes/confirm_modal.html' %}
+{% endblock extra-modal %}

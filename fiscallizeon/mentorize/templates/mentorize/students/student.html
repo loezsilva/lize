@@ -1,0 +1,691 @@
+
+{% extends 'mentorize/base.html' %}
+{% load proportion %}
+{% load static %}
+{% load applications_student %}
+
+{% block content %}
+
+<div class="container px-0">
+    <div class="row">
+        <div class="col-12">
+            <h4 class="mb-4">Olá {{user.get_user_first_name}}, seja bem vindo</h4>
+        </div>
+        <div class="col-12" v-if="recalculate">
+            <div class="alert alert-warning">
+                <p>Estamos calculando o seu desempenho, o processo pode demorar um pouco, mas não se preocupe, você será avisado assim que concluir.</p>
+            </div>
+        </div>
+        <div class="col-lg-3 bd-r-0 bd-sm-r">
+            <div class="card-events">
+                {% if False %}
+                    <p class="event-panel-label mb-2">Teste de Nivelamento</p>
+                    <div class="media-body event-panel-primary event-panel-border bg-white rounded ml-0 mb-2">
+                        <span class="event-time">
+                            Você pode acessar a qualquer momento.
+                        </span>
+                        <span class="badge-custom badge-custom-blue">Prova de Nivelamento</span>
+                        <h6 class="event-title">Nivelamento de Exatas</h6>
+                        <div class="card-todo">
+                            <div class="card-progress pt-2 pb-0">
+                                <label class="content-label mg-b-0">Progresso</label>
+                                <div class="progress">
+                                <div class="progress-bar bg-r-blue" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width: 50%;"></div>
+                                </div>
+                                <label class="content-label mg-b-0">50,00%</label>
+                            </div>
+                            <div class="card-footer card-footer-blue bg-transparent bd-t-0 pt-2 px-0 pb-0">
+                                <a href="#" class="btn btn-block">&plus; Continuar</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="media-body event-panel-primary event-panel-border bg-white rounded ml-0 mb-2">
+                        <span class="event-time">
+                            Você pode acessar a qualquer momento.
+                        </span>
+                        <span class="badge-custom badge-custom-blue">Prova de Nivelamento</span>
+                        <h6 class="event-title">Nivelamento de Humanas</h6>
+                        <div class="card-todo">
+                            <div class="card-progress pt-2 pb-0">
+                                <label class="content-label mg-b-0">Progresso</label>
+                                <div class="progress">
+                                <div class="progress-bar bg-r-blue" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%;"></div>
+                                </div>
+                                <label class="content-label mg-b-0">0,00%</label>
+                            </div>
+                            <div class="card-footer card-footer-blue bg-transparent bd-t-0 pt-2 px-0 pb-0">
+                                <a href="#" class="btn btn-block">&plus; Começar prova</a>
+                            </div>
+                        </div>
+                    </div>
+                    <hr />
+                {% endif %}
+
+                <p class="event-panel-label mb-2">Sugeridas para você</p>
+                {% for application_student in applications_today %}
+                    {% include 'includes/mentorize/card-application-student.html' with application_student=application_student %}
+                {% empty %}
+                    <div class="media-body event-panel-gray event-panel-border bg-white rounded ml-0 mb-2">
+                    <h6 class="event-title">Não há provas disponíveis para você hoje.</h6>
+                    </div>
+                {% endfor %}
+                <hr class="d-block d-sm-none" />
+            </div>
+        </div>
+        <div class="col-lg-9">
+            {% if user.student.finish_applications_count > 0 %}
+                {% if applications_student_launch_score %}
+                    <div class="card mg-b-10">
+                        <div class="card-header d-flex justify-content-between">
+                            <h6 class="lh-5 mg-b-0">Resultados liberados recentemente</h6>
+                            <a href="{% url 'applications:mentorize_application_student_list' %}" class="tx-12 link-03">
+                            Ver todas as listas <i data-feather="arrow-right" class="wd-15 ht-15"></i>
+                            </a>
+                        </div>
+                        <div class="card-body pd-0">
+                            <ul class="list-unstyled mg-b-0">
+                            {% regroup applications_student_launch_score by application.student_stats_permission_date|date:"D, d \d\e F" as applications_student_launch_score_dates %}
+
+                            {% for applications_student_launch_score_date in applications_student_launch_score_dates %}
+                            <li class="list-label bg-light p-2">{{ applications_student_launch_score_date.grouper }}</li>
+                                {% for application_student in applications_student_launch_score_date.list %}
+                                <li class="list-item p-2">
+                                <a href="{% url 'applications:application_exam_student_detail_v2' application_student.pk %}" class="d-flex align-items-center justify-content-between w-100" style="color: inherit;">
+                                    <div class="media align-items-center">
+                                    <div class="wd-35 ht-35 bd bd-2 bd-primary tx-primary rounded-circle align-items-center justify-content-center op-6 d-none d-sm-flex">
+                                        <i data-feather="book" class="wd-20 ht-20"></i>
+                                    </div>
+                                    <div class="media-body mg-sm-l-15">
+                                        <p class="tx-medium mg-b-0">{{ application_student.application.exam.name }}</p>
+                                        <span class="badge-custom-r badge-custom-green">{{ application_student.application.get_category_display }}</span>
+                                    </div>
+                                    </div>
+                                    <div class="text-right tx-rubik">
+                                    <p class="mg-b-0 tx-primary">
+                                        {{ application_student|get_performance_recalculate|floatformat:2 }}%
+                                    </p>
+                                    <p class="tx-12 tx-nowrap mg-b-0">{{ application_student.get_score|floatformat:2 }} <small class="tx-11 tx-color-03 tx-medium">/ {{ application_student.get_total_weight|floatformat:2 }}</small></p>
+                                    </div>
+                                </a>
+                                </li>
+                                {% endfor %}
+                            {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                {% endif %}
+                <div class="card mg-b-10">
+                    <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+                        <div>
+                        <h6 class="mg-b-5 text-uppercase">Seu desempenho geral</h6>
+                        <p class="tx-13 tx-color-03 mg-b-0">Resumo do seu desempenho geral em todas as provas e atividades</p>
+                        </div>
+                    </div>
+                    <div class="card-body pd-y-10">
+                        <div class="row">
+                            <div class="col-6 col-sm-3 media mg-t-5">
+                                <div class="wd-40 wd-md-50 ht-40 ht-md-50 bg-teal tx-white mg-r-10 mg-md-r-10 d-flex align-items-center justify-content-center rounded op-6">
+                                    <i data-feather="bar-chart-2"></i>
+                                </div>
+                                <div class="media-body">
+                                    <h6 class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold mg-b-5 mg-md-b-8 text-truncate">Provas realizadas</h6>
+                                    <h4 class="tx-20 tx-sm-18 tx-md-24 tx-normal tx-rubik mg-b-0">
+                                        {{ student.get_finished_exams_current_year.count|default:0 }}
+                                    </h4>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-3 media mg-t-5">
+                                <div class="wd-40 wd-md-50 ht-40 ht-md-50 bg-pink tx-white mg-r-10 mg-md-r-10 d-flex align-items-center justify-content-center rounded op-5">
+                                    <i data-feather="bar-chart-2"></i>
+                                </div>
+                                <div class="media-body">
+                                    <h6 class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold mg-b-5 mg-md-b-8 text-truncate">Questões</h6>
+                                    <h4 class="tx-20 tx-sm-18 tx-md-24 tx-normal tx-rubik mg-b-0">
+                                        {{ student.get_total_answerds.sum_total_answers|default:0 }}
+                                    </h4>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-3 media mg-t-5">
+                                <div class="wd-40 wd-md-50 ht-40 ht-md-50 bg-orange tx-white mg-r-10 mg-md-r-10 d-flex align-items-center justify-content-center rounded op-5">
+                                    <i data-feather="bar-chart-2"></i>
+                                </div>
+                                <div class="media-body">
+                                    <h6 class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold mg-b-5 mg-md-b-8 text-truncate">Acertos</h6>
+                                    <h4 class="tx-20 tx-sm-18 tx-md-24 tx-normal tx-rubik mg-b-0">
+                                        {{ student.get_total_answerds.sum_total_correct_answers|default:0 }}
+                                    </h4>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-3 media mg-t-5">
+                                <div class="wd-40 wd-md-50 ht-40 ht-md-50 bg-primary tx-white mg-r-10 mg-md-r-10 d-flex align-items-center justify-content-center rounded op-4">
+                                    <i data-feather="bar-chart-2"></i>
+                                </div>
+                                <div class="media-body">
+                                    <h6 class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold mg-b-5 mg-md-b-8 text-truncate">Aproveitamento</h6>
+                                    <h4 class="tx-20 tx-sm-18 tx-md-24 tx-normal tx-rubik mg-b-0">
+                                        {{ student.get_total_answerds.sum_total_correct_answers|default:0|proportion:user.student.get_total_answerds.sum_total_answers|default:0|floatformat:2 }}%
+                                    </h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card mg-b-10">
+                    <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pb-0">
+                        <div>
+                            <h6 class="mg-b-5">DESEMPENHO DETALHADO</h6>
+                            <p class="tx-13 tx-color-03 mg-b-0">Assuntos e disciplinas que você mandou bem ou que precisa melhorar</p>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="contact-content">
+                            <div class="contact-content-header">
+                                <nav class="nav">
+                                    <a href="#subjectsFails" @click="subjectView = 'fails'" style="color:#dc3545;" class="nav-link active pr-0 text-danger d-flex align-items-center" data-toggle="tab">
+                                        <span class="text-truncate d-block d-lg-none d-xl-none" style="max-width: 6rem;">À MELHORAR</span> 
+                                        <span class="text-truncate d-none d-lg-block d-xl-block d-xl-none">PONTOS A MELHORAR</span> 
+                                        <span class="badge badge-danger mx-1">${subjects.filter(subject => subject.performance <= 50).length}</span> <i class="fas fa-angle-double-down mx-1"></i>
+                                    </a>
+                                    <a href="#subjectsNormals" @click="subjectView = 'normals'" class="nav-link d-flex align-items-center px-1" data-toggle="tab">
+                                        <span class="text-truncate d-block d-lg-none d-xl-none" style="max-width: 6rem;">MEDIANOS</span> 
+                                        <span class="text-truncate d-none d-lg-block d-xl-block d-xl-none">PONTOS MEDIANOS </span> 
+                                        <span class="badge badge-primary mx-1">${subjects.filter(subject => subject.performance > 50 && subject.performance <= 75).length}</span> <i class="fas fa-minus mx-1"></i></a>
+                                    <a href="#subjectsStrongs" @click="subjectView = 'strongs'" class="nav-link text-success d-flex align-items-center pl-0" data-toggle="tab">
+                                        <span class="text-truncate d-block d-lg-none d-xl-none" style="max-width: 6rem;">FORTES</span> 
+                                        <span class="text-truncate d-none d-lg-block d-xl-block d-xl-none">PONTOS FORTES</span> 
+                                        <span class="badge badge-success mx-1">${subjects.filter(subject => subject.performance > 75).length}</span> <i class="fas fa-angle-double-up mx-1"></i></a>
+                                </nav>
+                            </div>
+                            <div class="contact-content-body">
+                                <div class="tab-content">
+                                    <div id="subjectsFails" class="tab-pane show active">
+                                        <div class="accordion" id="accordionExample">
+                                            <ul class="list-unstyled">
+                                                <template v-for="(subject, index) in shownSubjects()">
+                                                    <li style="cursor:pointer;" class="list-item" @click="getBNNCPerformances(subject)" data-toggle="collapse" :data-target="'#collapse_subject' + index">
+                                                        <div class="media align-items-center">
+                                                            <div class="wd-35 ht-35 bd bd-2 bd-primary tx-primary rounded-circle align-items-center justify-content-center op-6 d-none d-sm-flex">
+                                                                <i class="fa fa-calculator"></i>
+                                                            </div>
+                                                            <div class="media-body mg-sm-l-15">
+                                                                <p class="tx-medium mg-b-0 text-truncate d-none d-lg-block d-xl-block d-xl-none" style="width: 20rem;">${subject.name}</p>
+                                                                <p class="tx-medium mg-b-0 text-truncate d-block d-lg-none d-xl-none" style="width: 10rem;">${subject.name}</p>
+                                                                <p class="tx-12 mg-b-0 tx-color-03">Desempenho a baixo da média</p>
+                                                            </div>
+                                                        </div>
+                                                        <div class="tx-rubik w-25">
+                                                            <div class="d-flex w-100">
+                                                                <div class="progress w-75 ht-20" style="min-width: 4rem;">
+                                                                    <div class="progress-bar bg-danger op-7" :style="{'width': subject.performance+'%'}" role="progressbar" :aria-valuenow="subject.performance" aria-valuemin="0" aria-valuemax="100"></div>
+                                                                </div>
+                                                                <div class="ml-2 text-nowrap">
+                                                                    ${subject.performance.toFixed(2)} %
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="text-right tx-rubik">
+                                                            <i class="fas fa-chevron-right"></i>
+                                                        </div>
+                                                    </li>
+                                                    <div :id="'collapse_subject' + index" class="collapse" data-parent="#accordionExample">
+                                                        <li class="list-label">Assuntos Abordados <span class="badge badge-secondary">${subject.topics.length}</span></li>
+                                                        <li class="list-item" v-for="topic in subject.topics" v-if="subject.topics.length">
+                                                            <div class="media align-items-center">
+                                                                <div class="media-body mg-sm-l-15">
+                                                                    <p class="tx-medium mg-b-0">${topic.name}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="text-right tx-rubik">
+                                                                <p class="mg-b-0">${topic.performance.toFixed(2)} %</p>
+                                                            </div>
+                                                        </li>
+                                                        <li class="list-item" v-if="!subject.topics.length">
+                                                            <div class="media align-items-center">
+                                                                <div class="media-body mg-sm-l-15">
+                                                                    <div class="d-flex" v-if="subject.loads.topics == 'false'">
+                                                                        <p class="tx-12 mg-b-0 tx-color-03">
+                                                                            Aguarde enquanto carregamos os dados... 
+                                                                        </p>
+                                                                        <div class="spinner-border mx-2 text-info" style="width: 20px; height: 20px;" role="status">
+                                                                            <span class="sr-only">Loading...</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <p class="tx-12 mg-b-0 tx-color-03" v-else>Nenhum assunto abordado encontrada</p>
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                        <li class="list-label">Habilidades <span class="badge badge-secondary">${subject.abilities.length}</span></li>
+                                                        <li class="list-item" v-for="ability in subject.abilities" v-if="subject.abilities.length">
+                                                            <div class="media align-items-center">
+                                                                <div class="media-body mg-sm-l-15">
+                                                                    <p class="tx-medium mg-b-0">${ability.text}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="text-right tx-rubik">
+                                                                <p class="mg-b-0">${ability.performance.toFixed(2)} %</p>
+                                                            </div>
+                                                        </li>
+                                                        <li class="list-item" v-if="!subject.abilities.length">
+                                                            <div class="media align-items-center">
+                                                                <div class="media-body mg-sm-l-15">
+                                                                    <div class="d-flex" v-if="subject.loads.abilities == 'false'">
+                                                                        <p class="tx-12 mg-b-0 tx-color-03">
+                                                                            Aguarde enquanto carregamos os dados... 
+                                                                        </p>
+                                                                        <div class="spinner-border mx-2 text-info" style="width: 20px; height: 20px;" role="status">
+                                                                            <span class="sr-only">Loading...</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <p class="tx-12 mg-b-0 tx-color-03" v-else>Nenhuma habilidade encontrada</p>
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                        <li class="list-label">Competências <span class="badge badge-secondary">${subject.competences.length}</span></li>
+                                                        <li class="list-item" v-for="competence in subject.competences" v-if="subject.competences.length">
+                                                            <div class="media align-items-center">
+                                                                <div class="media-body mg-sm-l-15">
+                                                                    <p class="tx-medium mg-b-0">${competence.text}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="text-right tx-rubik">
+                                                                <p class="mg-b-0">${competence.performance.toFixed(2)} %</p>
+                                                            </div>
+                                                        </li>
+                                                        <li class="list-item" v-if="!subject.competences.length">
+                                                            <div class="media align-items-center">
+                                                                <div class="media-body mg-sm-l-15">
+                                                                    <div class="d-flex" v-if="subject.loads.competences == 'false'">
+                                                                        <p class="tx-12 mg-b-0 tx-color-03">
+                                                                            Aguarde enquanto carregamos os dados... 
+                                                                        </p>
+                                                                        <div class="spinner-border mx-2 text-info" style="width: 20px; height: 20px;" role="status">
+                                                                            <span class="sr-only">Loading...</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <p class="tx-12 mg-b-0 tx-color-03" v-else>Nenhuma competência encontrada</p>
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                    </div>
+                                                </template>
+                                                <template v-if="!shownSubjects().length">
+                                                    <li style="cursor:pointer;" class="list-item" data-toggle="collapse" data-target="#collapseThree" aria-controls="collapseThree">
+                                                        <div class="media align-items-center">
+                                                            <div class="wd-35 ht-35 bd bd-2 bd-primary tx-primary rounded-circle align-items-center justify-content-center op-6 d-none d-sm-flex">
+                                                                <i class="fas fa-times"></i>
+                                                            </div>
+                                                            <div class="media-body mg-sm-l-15">
+                                                            <p class="tx-medium mg-b-0">Nenhuma disciplina encontrada nessa categoria</p>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                                </template>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div id="subjectsNormals" class="tab-pane">
+                                        <div class="accordion" id="accordionSubjectsNormals">
+                                            <ul class="list-unstyled">
+                                                <template v-for="(subject, index) in shownSubjects()">
+                                                    <li style="cursor:pointer;" class="list-item" @click="getBNNCPerformances(subject)" data-toggle="collapse" :data-target="'#collapse_subject' + index">
+                                                        <div class="media align-items-center">
+                                                            <div class="wd-35 ht-35 bd bd-2 bd-primary tx-primary rounded-circle align-items-center justify-content-center op-6 d-none d-sm-flex">
+                                                                <i class="fas fa-vials"></i>
+                                                            </div>
+                                                            <div class="media-body mg-sm-l-15">
+                                                            <p class="tx-medium mg-b-0 text-truncate d-none d-lg-block d-xl-block d-xl-none" style="width: 20rem;">${subject.name}</p>
+                                                            <p class="tx-medium mg-b-0 text-truncate d-block d-lg-none d-xl-none" style="width: 10rem;">${subject.name}</p>
+                                                            <p class="tx-12 mg-b-0 tx-color-03">Desempenho na média</p>
+                                                            </div>
+                                                        </div>
+                                                        <div class="tx-rubik w-25">
+                                                            <div class="d-flex w-100">
+                                                                <div class="progress w-75 ht-20" style="min-width: 4rem;">
+                                                                    <div class="progress-bar bg-primary op-7" :style="{'width': subject.performance+'%'}" role="progressbar" :aria-valuenow="subject.performance" aria-valuemin="0" aria-valuemax="100"></div>
+                                                                </div>
+                                                                <div class="ml-2 text-nowrap">
+                                                                    ${subject.performance.toFixed(2)} %
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="text-right tx-rubik">
+                                                            <i class="fas fa-chevron-right"></i>
+                                                        </div>
+                                                    </li>
+                                                    <div :id="'collapse_subject' + index" class="collapse" data-parent="#accordionSubjectsNormals">
+                                                        <li class="list-label">Assuntos Abordados <span class="badge badge-secondary">${subject.topics.length}</span></li>
+                                                        <li class="list-item" v-for="topic in subject.topics" v-if="subject.topics.length">
+                                                            <div class="media align-items-center">
+                                                                <div class="media-body mg-sm-l-15">
+                                                                    <p class="tx-medium mg-b-0">${topic.name}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="text-right tx-rubik">
+                                                                <p class="mg-b-0">${topic.performance.toFixed(2)} %</p>
+                                                            </div>
+                                                        </li>
+                                                        <li class="list-item" v-if="!subject.topics.length">
+                                                            <div class="media align-items-center">
+                                                                <div class="media-body mg-sm-l-15">
+                                                                    <div class="d-flex" v-if="subject.loads.topics == 'false'">
+                                                                        <p class="tx-12 mg-b-0 tx-color-03">
+                                                                            Aguarde enquanto carregamos os dados... 
+                                                                        </p>
+                                                                        <div class="spinner-border mx-2 text-info" style="width: 20px; height: 20px;" role="status">
+                                                                            <span class="sr-only">Loading...</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <p class="tx-12 mg-b-0 tx-color-03" v-else>Nenhum assunto abordado encontrada</p>
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                        <li class="list-label">Habilidades <span class="badge badge-secondary">${subject.abilities.length}</span></li>
+                                                        <li class="list-item" v-for="ability in subject.abilities" v-if="subject.abilities.length">
+                                                            <div class="media align-items-center">
+                                                                <div class="media-body mg-sm-l-15">
+                                                                    <p class="tx-medium mg-b-0">${ability.text}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="text-right tx-rubik">
+                                                                <p class="mg-b-0">${ability.performance.toFixed(2)} %</p>
+                                                            </div>
+                                                        </li>
+                                                        <li class="list-item" v-if="!subject.abilities.length">
+                                                            <div class="media align-items-center">
+                                                                <div class="media-body mg-sm-l-15">
+                                                                    <div class="d-flex" v-if="subject.loads.abilities == 'false'">
+                                                                        <p class="tx-12 mg-b-0 tx-color-03">
+                                                                            Aguarde enquanto carregamos os dados... 
+                                                                        </p>
+                                                                        <div class="spinner-border mx-2 text-info" style="width: 20px; height: 20px;" role="status">
+                                                                            <span class="sr-only">Loading...</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <p class="tx-12 mg-b-0 tx-color-03" v-else>Nenhuma habilidade encontrada</p>
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                        <li class="list-label">Competências <span class="badge badge-secondary">${subject.competences.length}</span></li>
+                                                        <li class="list-item" v-for="competence in subject.competences" v-if="subject.competences.length">
+                                                            <div class="media align-items-center">
+                                                                <div class="media-body mg-sm-l-15">
+                                                                    <p class="tx-medium mg-b-0">${competence.text}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="text-right tx-rubik">
+                                                                <p class="mg-b-0">${competence.performance.toFixed(2)} %</p>
+                                                            </div>
+                                                        </li>
+                                                        <li class="list-item" v-if="!subject.competences.length">
+                                                            <div class="media align-items-center">
+                                                                <div class="media-body mg-sm-l-15">
+                                                                    <div class="d-flex" v-if="subject.loads.competences == 'false'">
+                                                                        <p class="tx-12 mg-b-0 tx-color-03">
+                                                                            Aguarde enquanto carregamos os dados... 
+                                                                        </p>
+                                                                        <div class="spinner-border mx-2 text-info" style="width: 20px; height: 20px;" role="status">
+                                                                            <span class="sr-only">Loading...</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <p class="tx-12 mg-b-0 tx-color-03" v-else>Nenhuma competência encontrada</p>
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                    </div>
+                                                </template>
+                                                <template v-if="!shownSubjects().length">
+                                                    <li style="cursor:pointer;" class="list-item" data-toggle="collapse" data-target="#collapseThree" aria-controls="collapseThree">
+                                                        <div class="media align-items-center">
+                                                            <div class="wd-35 ht-35 bd bd-2 bd-primary tx-primary rounded-circle align-items-center justify-content-center op-6 d-none d-sm-flex">
+                                                                <i class="fas fa-times"></i>
+                                                            </div>
+                                                            <div class="media-body mg-sm-l-15">
+                                                            <p class="tx-medium mg-b-0">Nenhuma disciplina encontrada nessa categoria</p>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                                </template>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div id="subjectsStrongs" class="tab-pane">
+                                        <div class="accordion" id="accordionSubjectsStrongs">
+                                            <ul class="list-unstyled">
+                                                <template v-for="(subject, index) in shownSubjects()">
+                                                    <li style="cursor:pointer;" class="list-item" @click="getBNNCPerformances(subject)" data-toggle="collapse" :data-target="'#collapse_subject' + index">
+                                                        <div class="media align-items-center">
+                                                            <div class="wd-35 ht-35 bd bd-2 bd-primary tx-primary rounded-circle align-items-center justify-content-center op-6 d-none d-sm-flex">
+                                                                <i class="fa fa-calculator"></i>
+                                                            </div>
+                                                            <div class="media-body mg-sm-l-15">
+                                                                <p class="tx-medium mg-b-0 text-truncate d-none d-lg-block d-xl-block d-xl-none" style="width: 20rem;">${subject.name}</p>
+                                                                <p class="tx-medium mg-b-0 text-truncate d-block d-lg-none d-xl-none" style="width: 10rem;">${subject.name}</p>
+                                                                <p class="tx-12 mg-b-0 tx-color-03">Desempenho acima da média</p>
+                                                            </div>
+                                                        </div>
+                                                        <div class="tx-rubik w-25">
+                                                            <div class="d-flex w-100">
+                                                                <div class="progress w-75 ht-20" style="min-width: 4rem;">
+                                                                    <div class="progress-bar bg-success op-7" :style="{'width': subject.performance+'%'}" role="progressbar" :aria-valuenow="subject.performance" aria-valuemin="0" aria-valuemax="100"></div>
+                                                                </div>
+                                                                <div class="ml-2 text-nowrap">
+                                                                    ${subject.performance.toFixed(2)} %
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="text-right tx-rubik">
+                                                            <i class="fas fa-chevron-right"></i>
+                                                        </div>
+                                                    </li>
+                                                    <div :id="'collapse_subject' + index" class="collapse" data-parent="#accordionSubjectsStrongs">
+                                                        <li class="list-label">Assuntos Abordados <span class="badge badge-secondary">${subject.topics.length}</span></li>
+                                                        <li class="list-item" v-for="topic in subject.topics" v-if="subject.topics.length">
+                                                            <div class="media align-items-center">
+                                                                <div class="media-body mg-sm-l-15">
+                                                                    <p class="tx-medium mg-b-0">${topic.name}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="text-right tx-rubik">
+                                                                <p class="mg-b-0">${topic.performance.toFixed(2)} %</p>
+                                                            </div>
+                                                        </li>
+                                                        <li class="list-item" v-if="!subject.topics.length">
+                                                            <div class="media align-items-center">
+                                                                <div class="media-body mg-sm-l-15">
+                                                                    <div class="d-flex" v-if="subject.loads.topics == 'false'">
+                                                                        <p class="tx-12 mg-b-0 tx-color-03">
+                                                                            Aguarde enquanto carregamos os dados... 
+                                                                        </p>
+                                                                        <div class="spinner-border mx-2 text-info" style="width: 20px; height: 20px;" role="status">
+                                                                            <span class="sr-only">Loading...</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <p class="tx-12 mg-b-0 tx-color-03" v-else>Nenhum assunto abordado encontrada</p>
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                        <li class="list-label">Habilidades <span class="badge badge-secondary">${subject.abilities.length}</span></li>
+                                                        <li class="list-item" v-for="ability in subject.abilities" v-if="subject.abilities.length">
+                                                            <div class="media align-items-center">
+                                                                <div class="media-body mg-sm-l-15">
+                                                                    <p class="tx-medium mg-b-0">${ability.text}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="text-right tx-rubik">
+                                                                <p class="mg-b-0">${ability.performance.toFixed(2)} %</p>
+                                                            </div>
+                                                        </li>
+                                                        <li class="list-item" v-if="!subject.abilities.length">
+                                                            <div class="media align-items-center">
+                                                                <div class="media-body mg-sm-l-15">
+                                                                    <div class="d-flex" v-if="subject.loads.abilities == 'false'">
+                                                                        <p class="tx-12 mg-b-0 tx-color-03">
+                                                                            Aguarde enquanto carregamos os dados... 
+                                                                        </p>
+                                                                        <div class="spinner-border mx-2 text-info" style="width: 20px; height: 20px;" role="status">
+                                                                            <span class="sr-only">Loading...</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <p class="tx-12 mg-b-0 tx-color-03" v-else>Nenhuma habilidade encontrada</p>
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                        <li class="list-label">Competências <span class="badge badge-secondary">${subject.competences.length}</span></li>
+                                                        <li class="list-item" v-for="competence in subject.competences" v-if="subject.competences.length">
+                                                            <div class="media align-items-center">
+                                                                <div class="media-body mg-sm-l-15">
+                                                                    <p class="tx-medium mg-b-0">${competence.text}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="text-right tx-rubik">
+                                                                <p class="mg-b-0">${competence.performance.toFixed(2)} %</p>
+                                                            </div>
+                                                        </li>
+                                                        <li class="list-item" v-if="!subject.competences.length">
+                                                            <div class="media align-items-center">
+                                                                <div class="media-body mg-sm-l-15">
+                                                                    <div class="d-flex" v-if="subject.loads.competences == 'false'">
+                                                                        <p class="tx-12 mg-b-0 tx-color-03">
+                                                                            Aguarde enquanto carregamos os dados... 
+                                                                        </p>
+                                                                        <div class="spinner-border mx-2 text-info" style="width: 20px; height: 20px;" role="status">
+                                                                            <span class="sr-only">Loading...</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <p class="tx-12 mg-b-0 tx-color-03" v-else>Nenhuma competência encontrada</p>
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                    </div>
+                                                </template>
+                                                <template v-if="!shownSubjects().length">
+                                                    <li style="cursor:pointer;" class="list-item" data-toggle="collapse" data-target="#collapseThree" aria-controls="collapseThree">
+                                                        <div class="media align-items-center">
+                                                            <div class="wd-35 ht-35 bd bd-2 bd-primary tx-primary rounded-circle align-items-center justify-content-center op-6 d-none d-sm-flex">
+                                                                <i class="fas fa-times"></i>
+                                                            </div>
+                                                            <div class="media-body mg-sm-l-15">
+                                                            <p class="tx-medium mg-b-0">Nenhuma disciplina encontrada nessa categoria</p>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                                </template>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center">
+                    <h3>
+                        Inicie suas listas de nivelamento ao lado para <br/>
+                        receber insights e novas listas com recomendações.
+                    </h3>
+                    <h6 class="text-muted mb-5">
+                        Ao concluir as duas listas de nivelamento novas listas 
+                        <br/>serão sugeridas de acordo com sua necessidade.
+                    </h6>
+                    <img class="mt-5" style="max-width: 60%;" src="{% static 'mentorizze/check_boxes.svg' %}" alt="">
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block bundle %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+<script>
+
+
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+            subjectView: 'fails', 
+            subjects: {{subjects|safe}},
+            recalculate: false,
+        },
+        watch:{
+
+        },
+        methods: {
+            shownSubjects() {
+                if(this.subjectView == 'fails') {
+                    return this.subjects.filter(subject => subject.performance <= 50).sort((a, b) => a.performance - b.performance)
+                } else if(this.subjectView == 'normals') {
+                    return this.subjects.filter(subject => subject.performance > 50 && subject.performance < 75).sort((a, b) => a.performance - b.performance)
+                } else if(this.subjectView == 'strongs') {
+                    return this.subjects.filter(subject => subject.performance > 75).sort((a, b) => a.performance - b.performance)
+                }
+            },
+            getBNNCPerformances(subject) {
+                if(subject['loads']['topics'] == 'false') {
+                    axios.get(`{% url 'api:bncc:topics-list' %}?get_performance=true&subject=${subject.id}`).then((response) => {
+                        subject['topics'] = response.data.sort((a, b) => b.performance - a.performance)
+                        subject['loads']['topics'] = true
+                    })
+                }
+                if(subject['loads']['abilities'] == 'false') {
+                    axios.get(`{% url 'api:bncc:abilities-list' %}?get_performance=true&subject=${subject.id}`).then((response) => {
+                        subject['abilities'] = response.data.sort((a, b) => b.performance - a.performance)
+                        subject['loads']['abilities'] = true
+                    })
+                }
+                if(subject['loads']['competences'] == 'false') {
+                    axios.get(`{% url 'api:bncc:competences-list' %}?get_performance=true&subject=${subject.id}`).then((response) => {
+                        subject['competences'] = response.data.sort((a, b) => b.performance - a.performance)
+                        subject['loads']['competences'] = true
+                    })
+                }
+            },
+            getParamFromStorage(param) {
+                var values = [],
+                keys = Object.keys(localStorage),
+                i = keys.length;
+                while ( i-- ) {
+                    if(keys[i].includes(param)) {
+                        values.push(keys[i])
+                    }
+                }
+                return values;
+            }
+        },
+        mounted() {
+
+            let tasks_ids = this.getParamFromStorage('RECALCULATE_STUDENT_PERFORMANCE_')
+            
+            if(tasks_ids.length) {
+                this.recalculate = true
+                let get_task_status = setInterval(() => { 
+                    let url = `{% url 'core:get_generic_task_status' %}?`
+
+                    url += `&task_id=${tasks_ids[0]}`
+
+                    axios.get(url).then((response) => {
+                        if(response.data.status == 'SUCCESS') {
+                            Swal.fire({
+                                title: 'Processo concluído',
+                                icon: 'info',
+                                text: 'O recalculo de desempenho foi concluído, vamos atualizar sua página para que você possa ver o resultado.'
+                            }).then((result) => {
+                                window.location.reload()
+                            })
+                            localStorage.clear();
+                            clearInterval(get_task_status)
+                        }
+                    })
+                }, 10000)
+            }
+
+        }
+    })
+</script>
+
+{% endblock bundle %}

@@ -1,0 +1,14 @@
+{% load i18n %}
+
+<div class="row" v-if="question.base_texts.length">
+    <div class="col">
+        <p class="tx-10 mb-0 text-muted">{% translate "Esta questão possui" %} ${question.base_texts.length} {% translate "texto(s) base" %}</p>
+        <template v-if="question.baseTextRelations && question.baseTextRelations.length > 1">
+            <span class="tx-medium">{% translate "Leia os textos" %}:</span> 
+            <a @click="getBaseText(relation.baseText.id, relation.ref)" data-toggle="modal" data-target="#modalBaseTextDetail" href="javascript:void(0)" class="mr-2 text-uppercase link-smooth" v-for="(relation, i) in question.baseTextRelations">${relation.ref}<span v-if="i != question.baseTextRelations.length -1">,</span></a>
+        </template>
+        <template v-else>
+            <span class="tx-medium">{% translate "Leia o" %}</span>  <a @click="getBaseText(relation.baseText.id, relation.ref)" data-toggle="modal" data-target="#modalBaseTextDetail" href="javascript:void(0)" class="text-uppercase" v-for="relation in question.baseTextRelations">${relation.ref}</a>
+        </template>
+    </div>
+</div>

@@ -1,0 +1,323 @@
+{% extends 'redesign/base.html' %}
+{% load permissions %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+
+{% block title %}Listagem de habilidades - Lize{% endblock title %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+<div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                <li class="breadcrumb-item"><a href="#">HABILIDADES (BNCC)</a></li>
+                <li class="breadcrumb-item active" aria-current="page">LISTAGEM</li>
+            </ol>
+        </nav>
+        <h4>Habilidades da BNCC</h4>
+    </div>
+    <div class="d-flex">
+
+        <div class="dropdown mr-2">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButtonReport"
+                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                 <i class="fas fa-upload"></i> Importar
+            </button>
+            <div class="dropdown-menu">
+                <a href="#" data-target="#importAbilityModal" data-toggle="modal" class="dropdown-item nav-link">
+                    <i class="fas fa-upload"></i> Importar Habilidades
+                </a>
+
+                <!-- <a href="{% static 'template_imports/modelo_importacao_assuntos.xlsx' %}" class="dropdown-item nav-link">
+                    <i class="fas fa-download"></i> Baixar modelo de planilha
+                </a> -->
+            </div>
+
+        </div>
+
+        <a href="{% url 'bncc:abilities_create' %}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+            <i data-feather="plus" class="wd-10 mg-r-5"></i> Cadastrar novo Habilidade
+        </a>
+    </div>
+</div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+      <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1rem; justify-content: space-between;">
+        <div style="flex: 1;">
+          <!-- Empty -->
+        </div>
+        <div class="d-flex">
+            {% if user|has_perm:'bncc.add_abiliity' %}
+
+                <div class="dropdown mr-2">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButtonReport"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-upload"></i> Importar
+                    </button>
+                    <div class="dropdown-menu">
+                        <a href="#" data-target="#importAbilityModal" data-toggle="modal" class="dropdown-item nav-link">
+                            <i class="fas fa-upload"></i> Importar Habilidades
+                        </a>
+        
+                        <!-- <a href="{% static 'template_imports/modelo_importacao_assuntos.xlsx' %}" class="dropdown-item nav-link">
+                            <i class="fas fa-download"></i> Baixar modelo de planilha
+                        </a> -->
+                    </div>
+        
+                </div>
+            
+                <a href="{% url 'bncc:abilities_create' %}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+                    <i data-feather="plus" class="wd-10 mg-r-5"></i> Cadastrar nova Habilidade
+                </a>
+            {% endif %}
+        </div>
+      </div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+                <div>
+                    <h6 class="mg-b-5">Habilidades da BNCC</h6>
+                    <p class="tx-13 tx-color-03 mg-b-5">Gerencie todas as competências listadas abaixo</p>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-dashboard mg-b-1">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Disciplina</th>
+                            <th style="width: 60%;">Habilidade</th>
+                            <th class="text-wrap text-right"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ability in object_list %}
+                        <tr>
+                            <td class="tx-medium text-right">
+                                {% if ability.code %}
+                                {{ability.code}}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if ability.subject %}
+                                    {{ability.subject.name}}
+                                    <p class="text-muted">{{ability.subject.knowledge_area.name}}</p>
+                                {% else %}
+                                     {{ability.knowledge_area.name}}
+                                {% endif %}
+                            </td>
+                            <td style="width: 60%;">
+                               {{ability.text}}
+                            </td>
+                            <td class="text-wrap">
+                                {% if user|has_perm:'bncc.change_abiliity' or user|has_perm:'bncc.delete_abiliity' %}
+                                    <div class="d-flex float-right">
+                                        <div class="dropdown">
+                                            <button class="btn btn-secondary dropdown-toggle" type="button"
+                                                id="dropdownMenuButtonReport" data-toggle="dropdown"
+                                                aria-haspopup="true" aria-expanded="false">
+                                                Opções
+                                            </button>
+                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButtonReport">
+                                                {% if user|has_perm:'bncc.change_abiliity' %}
+                                                    <a href="{% url 'bncc:abilities_update' ability.pk %}" class="dropdown-item nav-link"><i class="fas fa-edit"></i>Editar</a>
+                                                {% endif %}                                
+                                                {% if user|has_perm:'bncc.delete_abiliity' %}
+                                                    <a href="javascript:void(0)" class="dropdown-item nav-link"
+                                                        onClick="confirmCancel('{% url "bncc:abilities_delete" ability.pk %}')"
+                                                        data-toggle="tooltip" data-placement="top" title="Deletar">
+                                                        <i class="fas fa-trash"></i> Deletar
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %} 
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4">
+                                Não há competências cadastradas até o momento.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div><!-- table-responsive -->
+        </div><!-- card -->
+        {% include 'includes/pagination.html' with objects=object_list %}
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+{% include 'includes/confirm_modal.html' %}
+
+<div aria-hidden="true" class="modal fade" id="importAbilityModal" role="dialog" tabindex="-1">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Importar novas Habilidades</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="max-height: fit-content; height: fit-content;">
+                
+                 <form action="{% url 'bncc:ability_import' %}" method="POST" enctype='multipart/form-data'>
+                     {% csrf_token %}
+
+                     <div class="form-row">
+                         <div class="col-6">
+                             <div class="form-group mb-2">
+                                 <label for="" class="mb-0 mt-1">Etapa do ensino</label>
+                                 <select v-model="selectedLevel" class="form-control" id="selectLevel">
+                                     <option value="0">Ensino médio</option>
+                                     <option value="1">Ensino fundamental 1</option>
+                                    <option value="2">Ensino fundamental 2</option>
+
+                                 </select>
+                             </div>
+                         </div>
+                         <div class="col-6">
+                             <div class="form-group mb-2">
+                                 <label for="" class="mb-0 mt-1">Ano/Série</label>
+                                 <select name="grade" class="form-control" id="selectGrade" v-model="selectedGrade">
+                                     <option value="">Selecione um Ano/Série</option>
+                                     <option v-for="grade in grades" :value="grade.id" v-html="grade.name"></option>
+                                 </select>
+                             </div>
+                         </div>
+                         <div class="col-12">
+                             <div class="form-group mb-2">
+                                 <label for="" class="mb-0 mt-1">Área de conhecimento</label>
+                                 <select class="form-control" id="selectArea" v-model="selectedArea">
+                                     <option value="">Selecione uma Área de conhecimento</option>
+                                     <option v-for="selectedArea in knowledgeAreas" :value="selectedArea.id" v-html="selectedArea.name"></option>
+                                 </select>
+                             </div>
+                         </div>
+                         <div class="col-12">
+                             <div class="form-group mb-2">
+                                 <label for="" class="mb-0 mt-1">Disciplina</label>
+                                 <select name="subject" class="form-control" id="selectSubject"
+                                     v-model="selectedSubject" required="required">
+                                     <option value="">Selecione uma disciplina</option>
+                                     <option v-for="subject in subjects" :value="subject.id" v-html="subject.name">
+                                     </option>
+                                 </select>
+                                 <small class="form-text text-muted">
+                                     {{ form.subject.help_text }}
+                                 </small>
+                                 {% if form.subject.errors %}
+                                 <label class="text-danger">
+                                     {{ form.subject.errors.0 }}</label>
+                                 {% endif %}
+                             </div>
+                         </div>
+                         <div class="col-12">
+                             <div class="form-group mb-2">
+                                 <label for="" class="mb-0 mt-1">Escolher planilha com as habilidades</label>
+                                 <input type="file" name="abilities_file" class="form-control-file" accept=".xlsx, .xls, .csv">
+                                <p class="text-muted"><b>Tipos permitidos:</b> .xlsx, .xls, .csv</p>
+                             </div>
+                         </div>
+                     </div>
+                     <div class="modal-footer pb-0">
+                        {% csrf_token %}
+                        <div class="form-buttons-w text-right">
+                            <button class="btn btn-secondary" data-dismiss="modal" type="button">
+                                <i class="os-icon os-icon-cancel-circle"></i>
+                                <span>Cancelar</span>
+                            </button>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-upload"></i>
+                                <span>Importar Habilidades</span>
+                            </button>
+                        
+                        </div>
+                     </div>
+
+
+                 </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+   
+    var app_question = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+            knowledgeAreas: [],
+            grades: [],
+            subjects: [],
+            currentKnowledgeArea: "{{form.instance.subject.knowledge_area.pk|default:current_knowledge_area|default:''}}",
+            current_subject: "{{form.instance.subject.pk|default:current_subject|default:''}}",
+            selectedArea: "",
+            selectedSubject: "",
+            selectedLevel: "0",
+            selectedGrade: "",
+        },
+        watch: {
+            selectedLevel: function(value){if (value){this.fetchGrades(value)}},
+            selectedGrade: function(value){if (value){this.fetchKnowledgeArea(value)}},
+            selectedArea: function (value) {
+                if (value) {
+                    this.fetchSubject(value)
+                }
+            },
+        },
+        methods: {
+             fetchGrades: function(level){
+                var self = this
+                var gradeListUrl = `{% url 'classes:grade_list_api' %}?level=${level}`
+                    axios.get(gradeListUrl).then(function(response) {
+                    self.grades = response.data
+                    self.selectedGrade = self.checkExist(self.currentGrade, self.grades)
+                })
+             },
+            fetchKnowledgeArea: function (grade) {
+                var self = this
+                var knowledgeAreaListUrl = `{% url 'subjects:knowledge_area_list_api' %}?grades=${grade}`
+                axios.get(knowledgeAreaListUrl).then(function (response) {
+                    self.knowledgeAreas = response.data
+                    self.selectedArea = self.checkExist(self.currentKnowledgeArea, self
+                        .knowledgeAreas)
+                })
+            },
+            fetchSubject: function (knowledgeArea) {
+                var self = this
+                var subjectListUrl =
+                    `{% url 'subjects:subject_list_api' %}?knowledge_area=${knowledgeArea}`
+                axios.get(subjectListUrl).then(function (response) {
+                    self.subjects = response.data
+                    self.selectedSubject = self.checkExist(self.current_subject, self.subjects)
+                })
+            },
+            checkExist(value, list) {
+                var elementExists = list.find(element => element.id == value)
+                return elementExists ? elementExists.id : ""
+            }
+        },
+        mounted: function () {
+            var self = this;
+            self.fetchGrades(self.selectedLevel)
+        }
+    })
+
+</script>
+
+{% endblock extra-modal %}

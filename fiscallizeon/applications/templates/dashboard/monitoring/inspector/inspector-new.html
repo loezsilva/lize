@@ -1,0 +1,784 @@
+{% extends 'dashboard/base_fixed.html' %}
+{% load static %}
+{% load compress %}
+
+{% block title %}
+  Lize - Sala de prova
+{% endblock title %}
+
+{% load remove_line_break %}
+{% block css-additional %}
+
+<style>
+.grid-container {
+  display: grid;
+  grid-gap: 0.1rem;
+}
+
+.expand_button {
+position: absolute;
+left: 50%;
+top: 50%;
+transform: translate(-50%, -50%)
+}
+
+.e-button {
+
+position: relative;
+float: left;
+overflow: hidden;
+max-width: 30px;
+-webkit-transition: max-width 0.3s ease-in-out;
+-moz-transition: max-width 0.3s ease-in-out;
+-o-transition: max-width 0.3s ease-in-out;
+transition: max-width 0.3s linear
+}
+
+.e-button-text {
+display: block;
+white-space: nowrap;
+}
+
+.e-button:hover {
+max-width: 280px
+}
+
+.grid-container--fit {
+
+  {% if students.count <= 2 %}
+    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+  {% elif students.count <= 8 %}
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  {% elif students.count <= 12 %}
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  {% else %}
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  {% endif %}
+
+  max-height: 200px;
+
+}
+
+.grid-element {
+  display: flex;
+  justify-content: center;
+  border: 0 solid #d2d6dc;
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,.1), 0 1px 2px 0 rgba(0,0,0,.06);
+  background-color:#3c3c3c;
+  /* height: 170px;
+  max-height: 170px;
+  min-height: 170px; */
+}
+
+.blink {
+    animation: blinker 1s cubic-bezier(.5, 0, 1, 1) infinite alternate;  
+}
+
+@keyframes blinker {  
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@media (min-width: 1366px){
+  .container {
+      max-width: 100% !important;
+  }
+}
+
+@media (min-width: 1200px){
+  .container {
+      max-width: 100% !important;
+  }
+}
+
+@media (min-width: 992px){
+  .container {
+      max-width: 100% !important;
+  }
+}
+
+@media (min-width: 720px){
+  .container {
+      max-width: 100% !important;
+  }
+  
+}
+
+@media (min-width: 576px) {
+  .container {
+      max-width: 100% !important;
+  }
+}
+.config-button{
+  position: fixed; 
+  bottom: 30px; 
+  right: 40px; 
+  z-index: 1;
+}
+
+i.icon-badge{
+  font-size:12px;
+}
+
+.badge-student{
+  background-color: #d2d2d2;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.badge-student:hover{
+  background-color: #cfcfcf;
+}
+
+/* A div não pode ser muito pequena  */
+.divScrollLab {
+  min-height: 140px;
+  overflow-x: hidden; 
+  overflow-y: scroll;
+}
+
+.shadow-bot {
+  -webkit-box-shadow: 0px 7px 4px 0px rgba(50, 50, 50, 0.20);
+  -moz-box-shadow: 0px 7px 4px 0px rgba(50, 50, 50, 0.20);
+  box-shadow: 0px 7px 4px 0px rgba(50, 50, 50, 0.20);
+}
+
+</style>
+
+{% endblock css-additional %}
+
+{% block breadcrumb-fixed %}
+  <div class="config-button">
+      <div class="d-none d-md-block float-left mr-2 mt-2">
+          <h3 class="tx-normal tx-rubik mg-b-0">
+            <small class="display-5"> ${time}</small>
+          </h3>
+      </div>
+
+      <button @click="application.notificationChatCount = 0;" style="z-index: 10;" data-toggle-off-canvas="#right-off-canvas" class="btn btn-lg btn-info btn-icon rounded-pill off-canvas-menu ">
+          <i class="fas fa-cog"></i> Op. Gerais
+          <span class="badge badge-danger" v-if="application.notificationChatCount > 0">
+            ${application.notificationChatCount}
+          </span>
+      </button>
+  </div>
+  
+{% endblock breadcrumb-fixed %}
+
+{% block content-fixed %}
+
+<div class="row row-xs" style="background-color: #f5f6fa;">
+    <div class="col-12">
+      <div class="float-right">
+      <h6>
+        <span>
+
+          <button class="btn btn-sm btn-success" @click="hiddenAbsent = !hiddenAbsent">
+            <span v-if="!hiddenAbsent"><i class="fas fa-eye-slash"></i> Esconder ausentes</span>
+            <span v-if="hiddenAbsent"><i class="fas fa-eye"></i> Mostrar ausentes</span>
+          </button>
+
+          <button v-if="!fullScreen" class="btn btn-sm btn-success" @click="maxmizeScreen()">
+            <i class="fas fa-expand-arrows-alt"></i> Tela cheia</span>
+          </button>
+          <button v-else class="btn btn-sm btn-success" @click="minimizeScreen()">
+            <i class="fas fa-compress-arrows-alt"></i> Diminuir tela</span>
+          </button>
+
+          <div class="btn-group">
+            <button class="btn btn-sm btn-primary" @click="resizeCams('-')">
+              <i class="fas fa-search-minus"></i> Diminuir
+            </button>
+            <button class="btn  btn-sm btn-primary" @click="resizeCams('+')">
+              <i class="fas fa-search-plus"></i> Aumentar
+            </button>
+          </div>
+
+          <div class="btn-group">
+            
+              <button v-bind:class="[shareVideo ? 'btn-danger' : 'btn-primary']" @click="toggleCam()" type="button" class="btn btn-sm">
+                <span v-show="shareVideo">
+                  <i class="fas fa-video"></i>
+                  Câmera ligada
+                  <i class="fas fa-circle blink text-white"></i>
+                </span>
+                <span v-show="!shareVideo">
+                  <i class="fas fa-video-slash"></i>
+                  Câmera desligada
+                </span>
+              </button>
+            
+              <button v-bind:class="[shareAudio ? 'btn-danger' : 'btn-primary']" @click="toggleAudio()" type="button" class="btn btn-sm">
+                <span v-show="shareAudio"><i class="fas fa-microphone"></i>
+                  Microfone ligado
+                  <i class="fas fa-circle blink text-white"></i>
+                </span>
+                <span v-show="!shareAudio"><i class="fas fa-microphone-slash"></i> Microfone desligado</span>
+              </button>
+            
+          </div>
+          
+        </span>
+        </h6>
+
+      </div>
+      
+      <label class="d-block tx-medium tx-10 tx-uppercase tx-sans tx-spacing-1 tx-color-03">
+          Alunos desta aplicação
+      </label>
+    </div>
+
+    <div class="col-12" style="display: contents;">
+      
+      <div class="mt-1 off-canvas-menu" v-for="student in students" v-on:click="setSelectStudent(student)"
+        data-toggle-off-canvas="#left-off-canvas" v-show="(!student.actived && (!hiddenAbsent && student.state == 'waiting')) || (!student.actived && student.state != 'waiting')">
+    
+          <div class="badge-student pl-2 pr-2 mr-2 mt-2" >
+            <i v-if="student.state == 'waiting'" alt="Aguardando" title="Aguardando" class="text-secondary fas fa-circle" data-toggle="tooltip"></i>
+            <i v-if="student.state == 'started'" alt="Realizando" title="Realizando" class="text-success fas fa-circle" data-toggle="tooltip"></i>
+            <i v-if="student.state == 'paused'" alt="Pausado" title="Pausado" class="text-warning fas fa-circle blink" data-toggle="tooltip"></i>
+            <i v-if="student.state == 'finished'" alt="Finalizado" title="Finalizado" class="text-info fas fa-circle" data-toggle="tooltip"></i>
+
+            <i v-if="student.device == 'pc'" class="fas fa-laptop"></i>
+            <i v-if="student.device == 'mobile'" class="fas fa-mobile-alt"></i>
+            <i v-if="student.device == 'tablet'" class="fas fa-tablet-alt"></i>
+
+            ${student.firstName}
+            
+            <span class="df-roboto text-danger"  v-if="student.notificationChatCount > 0">
+              <i class="fas fa-comment"></i>${student.notificationChatCount}
+            </span>
+
+            <span class="df-roboto text-primary" v-if="student.notificationPauseCount > 0">
+              <i class="fas fa-reply"></i>${student.notificationPauseCount} 
+            </span>
+
+            <span v-if="student.unreadAction">
+                <i class="fas fa-exclamation-circle text-danger"></i>
+            </span>
+            <span v-if="student.isOut && student.state !== 'finished'">
+              <i class="fas fa-sign-out-alt text-warning"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-container grid-container--fit">
+         <div class="pos-relative off-canvas-menu w-100 grid-element" v-for="student in students"
+           data-toggle-off-canvas="#left-off-canvas" v-on:click="setSelectStudent(student)"
+           v-show="student.actived"
+        >
+          
+          <div v-show="student.notificationChatCount > 0 || student.notificationPauseCount > 0" class="marker-icon marker-warning marker-top-right pos-absolute t-0 r-0">
+            <i class="fas fa-exclamation-triangle" style="margin-left: auto; margin-right: calc(30% - 8px); margin-top: calc(30% - 8px); margin-left: calc(30% - -8px); position: relative; z-index: 1;"></i>
+          </div>
+
+          <div class="marker pos-absolute b-0 l-0 p-1">
+
+              <i v-if="student.state == 'waiting'" alt="Aguardando" title="Aguardando" class="text-secondary fas fa-circle" data-toggle="tooltip"></i>
+              <i v-if="student.state == 'started'" alt="Realizando" title="Realizando" class="text-success fas fa-circle" data-toggle="tooltip"></i>
+              <i v-if="student.state == 'paused'" alt="Pausado" title="Pausado" 
+              class="text-warning fas fa-circle blink" data-toggle="tooltip"></i>
+              <i v-if="student.state == 'finished'" alt="Finalizado" title="Finalizado" class="text-info fas fa-circle" data-toggle="tooltip"></i>
+
+              <i v-if="student.device == 'pc'" class="fas fa-laptop"></i>
+              <i v-if="student.device == 'mobile'" class="fas fa-mobile-alt"></i>
+              <i v-if="student.device == 'tablet'" class="fas fa-tablet-alt"></i>
+
+            ${student.firstName}
+            
+            <span class="df-roboto text-danger"  v-if="student.notificationChatCount > 0">
+              <i class="fas fa-comment"></i>${student.notificationChatCount}
+            </span>
+
+            <span class="df-roboto text-primary" v-if="student.notificationPauseCount > 0">
+              <i class="fas fa-reply"></i>${student.notificationPauseCount} 
+            </span>
+
+            <span v-if="student.unreadAction">
+              <i class="fas fa-exclamation-circle text-danger"></i>
+            </span>
+
+            <span v-if="student.isOut && student.state !== 'finished'">
+              <i class="fas fa-sign-out-alt text-warning"></i>
+            </span>
+          </div>
+
+          <video :id="'remote-video-'+student.studentId" style="max-height: 300px; max-width: 100%; width: 100%; background-image: url('{% static 'administration/assets/img/cam-off-bg.png' %}'); background-size: cover; background-position: center; border: 2px solid black;"
+            autoplay playsinline />
+          
+      </div>
+    </div>
+    
+</div>
+{% endblock content-fixed %}
+
+
+{% block off-canvas %}
+<div id="left-off-canvas" class="off-canvas off-canvas-push wd-400 bg-white" v-if="selectedStudent"
+  style="background-color: #f5f6fa;
+overflow-x: hidden;">
+  <div class="row p-3">
+    <div class="col-12 input-group-send">
+      <figure class="pos-relative mg-b-0 wd-100p wd-100">
+        <div class="pos-relative off-canvas-menu" data-toggle-off-canvas="#left-off-canvas">
+            <video style="height: 250px;" id="selected-student" class="wd-100p bg-dark wd-100" autoplay playsinline muted="muted" />
+          </div>
+        <figcaption class="pos-absolute b-5 l-0 wd-100p pd-20 d-flex justify-content-center">             
+            <button v-if="selectedStudent.shareScreen === false && selectedStudent.device == 'pc'" class="btn btn-success btn-icon" @click="sendMessageData('requestShareScreen')">
+              <i class="fas fa-desktop"></i> Ver tela
+            </button>
+
+            <button v-if="selectedStudent.shareScreen !== false" class="btn btn-success btn-icon" @click="sendMessageData('requestShareVideo')">
+              <i class="fas fa-video"></i> Ver câmera
+            </button>
+
+            <button class="btn btn-info btn-icon ml-1" data-toggle="modal" data-target=".bd-example-modal-lg">
+              <i class="fas fa-compress"></i> Aumentar
+            </button>
+
+        </figcaption>
+      </figure>
+    </div>
+    <div class="col-12">
+        <h6 class="mt-2 mb-1">${selectedStudent.name}</h6>
+        <ul class="nav nav-line" id="myTab" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link active" id="chat-tab" data-toggle="tab" href="#chattab" role="tab" aria-controls="chat" aria-selected="true">Chat</a>
+          </li>
+          <li class="nav-item">
+              <a class="nav-link" id="requests" data-toggle="tab" href="#requeststab" role="tab" aria-controls="requests" aria-selected="false">Solicitações</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="annotations-tab" data-toggle="tab" href="#annotationstab" role="tab" aria-controls="annotations" aria-selected="false">Anotações</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link " id="about-tab" data-toggle="tab" href="#abouttab" role="tab" aria-controls="about" aria-selected="false">Sobre</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" 
+               id="actions-tab"
+               data-toggle="tab"
+               href="#actionstab"
+               role="tab"
+               aria-controls="actions"
+               aria-selected="false"
+               @click="selectedStudent.unreadAction = false">
+                Ações 
+                <template v-if="selectedStudent.unreadAction">
+                  <i class="fas fa-exclamation-circle text-danger"></i>
+                </template>
+            </a>
+          </li>
+        </ul>
+        <div class="tab-content bd bd-gray-300 bd-t-0 pd-20" id="myTabContent">
+          <div class="tab-pane fade show active" id="chattab" role="tabpanel" aria-labelledby="chat-tab">   
+            <div class="divScrollLab">
+              <template v-for="message in selectedStudent.messages">
+                  <div class="text-left" v-if="message.function == 'Aluno'">
+                      <p class="mb-0">
+                        <span class="font-weight-bold">${message.name} (Aluno)</span>
+                        <span class="text-muted">${message.date_time}</span>
+                      </p>
+                        <p class="p-2 bg-light mr-3">
+                            ${message.message}
+                        </p>
+                  </div>
+                  <div class="text-right" v-else>
+                      <p class="mb-0">
+                        <span class="text-muted"> ${message.date_time}</span>
+                        <span class="font-weight-bold"> ${message.name} (${message.function})</span>
+                      </p>
+                      <p class="p-2 bg-light ml-3 text-left">
+                          ${message.message}
+                      </p>
+                  </div>
+              </template>
+            </div>
+
+
+            <div class="input-group mb-3">
+              <textarea v-model="textMessage" @keyup.enter="sendMessage()" type="text" class="form-control" placeholder="Escreva mensagem para o aluno" rows="2" maxlength="255"></textarea>
+              <div class="input-group-append">
+                <button class="btn btn-primary" type="button" v-on:click="sendMessage()"
+                  :disabled="textMessage == '' || sendingMessage">
+                    <i v-if="sendingMessage" class="fas fa-spinner fa-spin"></i>
+                    <i v-else class="fas fa-paper-plane"></i>
+                </button>
+              </div>
+            </div>
+
+
+          </div>
+          <div class="tab-pane fade" id="requeststab" role="tabpanel" aria-labelledby="requests-tab">
+            <h6>${selectedStudent.name}</h6>
+            <template v-for="event in selectedStudent.events">
+              <div class="bg-light p-3 mb-2">
+                <div class="row mb-0">
+                  <div class="col-9 text-left">
+                    <h6>Solicitação de pausa</h6>
+                    <h6>Motivo: <span class="font-weight-normal">${event.get_event_type_display}</span></h6>
+                    <h6>Situação: 
+                      <span class="font-weight-normal">${event.get_response_display}</span>
+                    </h6>
+                    <h6 v-if="event.get_response_display != 'Pendente'">Fiscal: 
+                      <span class="font-weight-normal">
+                        ${event.inspector_first_name} 
+                        <span> 
+                          às ${momentConvert(event.response_datetime, 'HH:mm')}
+                        </span>
+                      </span>
+                    </h6>
+                  </div>
+                  <div class="col-3 text-right">
+                    <h6>${momentConvert(event.created_at, 'HH:mm')}</h6>
+                  </div>
+                  <div v-if="event.get_response_display == 'Pendente'" class="col-6">
+                    <button @click="answerRequest(event, 0)" class="btn btn-primary btn-block">
+                      <i class="fas fa-thumbs-up"></i>
+                      Aprovar
+                    </button>
+                  </div>
+                  <div @click="answerRequest(event, 1)" v-if="event.get_response_display == 'Pendente'" class="col-6">
+                    <button class="btn btn-danger btn-block">
+                      <i class="fas fa-thumbs-down"></i>
+                      Negar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+          </div>
+          <div class="tab-pane fade"  id="annotationstab" role="tabpanel" aria-labelledby="annotations-tab"> 
+
+            <div class="custom-checkbox">
+              <input type="checkbox" v-model="selectedStudent.suspicionTakingAdvantage" name="annotation-suspect"
+                id="annotation-suspect">
+              <label class="mb-0" for="annotation-suspect">Suspeita obtenção de vantagem</label>
+               <small class="form-text text-muted mt-0 mb-2" style="line-height: initial;">
+                 Marque esta opção caso esteja suspeitando que o aluno está tendo obtenção de vantagem indevida.
+               </small>
+            </div>
+          
+            <div class="input-group mb-3">
+              <textarea v-model="textAnnotation" type="text" class="form-control"
+              placeholder="Escreva a anotação" rows="2" maxlength="255"></textarea>
+              <div class="input-group-append">
+                <button class="btn btn-primary" type="button" v-on:click="sendNewAnnotation()"
+                  :disabled="textAnnotation == '' || sendingAnnotation">
+                    <i v-if="sendingAnnotation" class="fas fa-spinner fa-spin"></i>
+                    <i v-else class="fas fa-paper-plane"></i>
+                  </button>
+              </div>
+            </div>
+
+           
+            <hr>
+            <div class="divScrollLab">
+              <template v-for="annotation in selectedStudent.annotations">
+                <span class="font-weight-bold">${annotation.name} (${annotation.function})</span>
+                <span class=text-muted> às ${annotation.time}</span>
+                <p class="m-0"><span class="badge badge-danger" v-if="annotation.suspicionTakingAdvantage">Suspeita obtenção de
+                    vantagem</span></p>
+                <p>${annotation.annotation}</p>
+              </template>
+            </div>
+          </div>
+          <div class="tab-pane fade" id="abouttab" role="tabpanel" aria-labelledby="about-tab">
+            <h6>Sobre o aluno</h6>
+            <p><span class="font-weight-bold">Nome:</span> ${selectedStudent.name}</p>
+          </div>
+          <div class="tab-pane fade" id="actionstab" role="tabpanel" aria-labelledby="actions-tab">
+            <div class="row bg-light pt-3 pb-3 mt-2" v-for="report in selectedStudent.questionReports">
+                <div class="col-12 text-left">
+                    <div class="row mb-1">
+                      <h6 class="col-10">Erro em questão</h6> 
+                      <h6 class="col-2">${momentConvert(report.created_at, 'HH:mm')}</h6>
+                    </div>
+                    <h6>Enunciado: <span class="font-weight-normal">${report.question.enunciation}</span></h6> 
+                    <h6>Mensagem do aluno: <span class="font-weight-normal">${report.content}</span></h6> 
+                </div>
+                <div class="col-6 mt-2" @click="confirmBroadcastQuestionUpdate(report.question)">
+                  <button class="btn btn-danger btn-block">Atualizar</button>
+                </div>
+                <div class="col-6 mt-2" @click.prevent.default="openQuestionEdit(report.question.pk)" v-if="isCoordination">
+                  <button class="btn btn-primary btn-block">Editar</button>
+                </div>
+
+            </div>
+          </div>
+        </div>
+    </div>
+  </div>
+</div>
+
+<div id="right-off-canvas" class="off-canvas off-canvas-push off-canvas-right wd-400 bg-white"
+  style="overflow-y: auto; overflow-x: hidden; background-color: #f5f6fa;">
+  <div class="row p-3">
+    <div class="col-12">
+      <h5>Operações gerais</h5>
+    </div>
+    <div class="col-12">
+        <ul class="nav nav-line" id="myTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="about-tab" data-toggle="tab" href="#abouttab-2" role="tab" aria-controls="about" aria-selected="false">
+                    Ações
+                </a>
+              </li>
+            <li class="nav-item">
+              <a class="nav-link " id="announce-tab" data-toggle="tab" href="#chatcoordinationtab" role="tab" aria-controls="chat" aria-selected="false">
+                <i data-toggle="tooltip" title="Chat Coordenação" original-title="Chat coordenação" class="fas fa-comment"></i>
+                Coordenação
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="annotations-tab" data-toggle="tab" href="#annotationstab-2" role="tab" aria-controls="annotations" aria-selected="false">
+                <i  data-toggle="tooltip" title="Anotações" original-title="Anotações" class="fas fa-clipboard"></i>
+                Anotações
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="announce-tab" data-toggle="tab" href="#announcetab" role="tab" aria-controls="announce" aria-selected="false">
+                <i data-toggle="tooltip" title="Avisos" original-title="Avisos" class="fas fa-bullhorn"></i>
+                Avisos
+              </a>
+            </li>
+            
+          </ul>
+          <div class="tab-content bd bd-gray-300 bd-t-0 pd-20" id="myTabContent">
+
+              <div class="tab-pane fade show active" id="abouttab-2" role="tabpanel" aria-labelledby="about-tab">
+              
+                <div class="row">
+                <div class="col-12">
+                  <a class="btn btn-primary btn-block" href="{% url 'exams:exams_inspector_preview' pk=object.exam.pk %}" target="_blank"><i class="fas fa-sticky-note mr-1"></i>Visualizar prova</a>
+                </div>
+              </div>
+
+
+                <h6>Fiscais online</h6>
+                <div class="row">
+                  <template v-if="inspectors.length > 0">
+                      <div class="col-6 col-md-6">
+                        <div v-for="inspector in inspectors">
+                          <div class="marker pos-absolute p-1">
+                            <i alt="Online" title="Online" class="text-success fas fa-circle fa-blink"></i>
+                            ${inspector.displayName}
+                          </div>
+                          <video style="max-width: 110%; width: 110%; background-image: url('{% static 'administration/assets/img/inspector-icon.png' %}'); background-size: cover; background-position: center;"
+                            :id="'inspector-remote-video-'+inspector.id" autoplay playsinline muted="muted" />
+                        </div>
+                      </div>
+                    </template>
+                    <template v-else>
+                      <div class="col-12">
+                        <p>Não há outros fiscais online nessa aplicação!</p>
+                      </div>
+                    </template>
+                </div>
+              
+              <h6>Sua câmera</h6>
+              <div class="row">
+                <div class="col-12" >
+                  <button v-bind:class="[shareVideo ? 'btn-danger' : 'btn-primary']"  @click="toggleCam()" type="button" class="btn  btn-block mt-1">
+                      <span v-show="shareVideo"><i class="fas fa-video-slash"></i> Desligar câmera </span>
+                      <span v-show="!shareVideo"><i class="fas fa-video"></i> Ativar câmera</span>
+                  </button>
+                </div>
+                <div class="col-12" >
+                  <button v-bind:class="[shareAudio ? 'btn-danger' : 'btn-primary']" @click="toggleAudio()" type="button" class="btn btn-block mt-1">
+                    <span v-show="shareAudio"><i class="fas fa-microphone-slash"></i> Desligar microfone</span>
+                    <span v-show="!shareAudio"><i class="fas fa-microphone"></i> Ativar microfone</span>
+                  </button>
+                </div>
+              </div>
+              <div class="row">
+                  <div class="col-12" v-show="shareVideo">
+                      <video style="max-width: 100%; width: 100%; background: #3c3c3c;" id="local-stream" autoplay playsinline muted="muted"/>
+                  </div>
+              </div>
+            </div>
+            <div class="tab-pane fade " id="chatcoordinationtab" role="tabpanel" aria-labelledby="chat-tab">
+                <div style="max-height: 65vh; overflow: auto;" id="coordination-chat">
+                    <template v-if="application.messages" v-for="message in application.messages">
+                        <div class="text-left p-2">
+                            <p class="mb-0">
+                                <span class="font-weight-bold">${message.sender}</span> - 
+                                <span class="text-muted">${message.created_at}</span>
+                            </p>
+                                <p class="p-2 mb-0 bg-light mr-3">
+                                    ${message.content}
+                                </p>
+                        </div>
+                    </template>
+                    <template v-else>
+                    <p>Ainda não há mensagens entre você e o fiscal</p>
+                    </template>
+                </div>
+  
+                <div class="input-group">
+                    <textarea v-model="textMessageCoordination" @keyup.enter="sendMessageChat()" type="text" class="form-control" placeholder="Escreva a mensagem" rows="2" maxlength="255"></textarea>
+                    <div class="input-group-prepend">
+                        <div class="input-group-text border-0 bg-white">
+                        <button class="btn btn-primary" v-on:click="sendMessageChat()" :disabled="textMessageCoordination == '' || sendingMessage">
+                            <i v-if="sendingMessage" class="fas fa-spinner fa-spin"></i>
+                            <i v-else class="fas fa-paper-plane"></i>
+                        </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade"  id="annotationstab-2" role="tabpanel" aria-labelledby="annotations-tab">  
+                <p class="text-muted">Não será possível editar ou remover suas anotações acerca dessa aplicação após o cadastro.</p>
+                <div class="text-right">
+                <textarea @keyup.enter="sendNewApplicationAnnotation()" v-model="textApplicationAnnotation" type="text" class="form-control" placeholder="Escreva uma anotação para a aplicação" rows="2" maxlength="255"></textarea>
+                <button class="btn btn-primary mt-1" v-on:click="sendNewApplicationAnnotation()" :disabled="textApplicationAnnotation == '' || sendingApplicationAnnotation">
+                  <i v-if="sendingApplicationAnnotation" class="fas fa-spinner fa-spin"></i>
+                  <template v-else>Registrar anotação</template>
+                </button>
+              </div>
+               
+              <hr>
+              <template v-for="annotation in applicationAnnotations">
+                <span class="font-weight-bold">${annotation.name} (${annotation.function})</span><span class=text-muted> às ${annotation.time}</span>
+                <p>${annotation.annotation}</p>
+              </template>
+            </div>
+
+            <div class="tab-pane fade" id="announcetab" role="tabpanel" aria-labelledby="announce-tab">
+              <p class="text-muted">
+                As mensagem enviadas aqui serão direcionadas para todos os alunos ativos dessa aplicação.
+              </p>
+                
+              <div class="text-right">
+                <textarea v-model="textApplicationNotice" type="text" class="form-control" placeholder="Escreva o aviso que deseja enviar para todos os alunos" rows="2" maxlength="255"></textarea>
+              
+                <button class="btn btn-primary mt-1" v-on:click="sendNewApplicationNotice()" :disabled="textApplicationNotice.trim() == '' || sendingApplicationNotice">
+                    <i v-if="sendingApplicationNotice" class="fas fa-spinner fa-spin"></i>
+                    <template v-else>Enviar aviso</template>
+                </button>
+              </div>
+              <hr/>
+              <template v-for="notice in applicationNotices">
+                <span class="font-weight-bold">${notice.name} (${notice.function})</span><span class=text-muted> às ${notice.time}</span>
+                <p>${notice.notice}</p>
+              </template>
+            </div>
+          </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Transmissão de <b>${selectedStudent.name}</b></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <video controls="controls" style="height: 98%;" id="plus-selected-student" class="wd-100p bg-dark wd-100" autoplay playsinline muted="muted" />
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+
+
+{% block js-additional %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+
+
+<script>
+  $(function(){
+    'use strict'
+
+    $('.off-canvas-menu').on('click', function(e){
+      e.preventDefault();
+      var target = $(this).attr('data-toggle-off-canvas');
+      $(target).addClass('show');
+
+      $('.divScrollLab').height(window.innerHeight - $('.input-group-send').height() - 300)
+      if ($('.divScrollLab div').last()[0])
+      $('.divScrollLab div').last()[0].scrollIntoView()
+      
+    });
+    
+    $('.off-canvas .close').on('click', function(e){
+      e.preventDefault();
+      $(this).closest('.off-canvas').removeClass('show');
+    })
+    
+    $(document).on('click touchstart', function(e){
+      if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+        return
+      }
+      e.stopPropagation();
+      
+      if(!$(e.target).closest('.off-canvas-menu').length) {
+        var offCanvas = $(e.target).closest('.off-canvas').length;
+        if(!offCanvas) {
+          $('.off-canvas.show').removeClass('show');
+        }
+      }
+    });
+      
+    $('textarea, button').on("click keypress", () => {
+      setTimeout(() => {
+        if ($('.divScrollLab div').last()[0])
+        $('.divScrollLab div').last()[0].scrollIntoView()
+      }, 300)
+    })
+    $(window).on('resize', () => {
+      $('.divScrollLab').height(window.innerHeight - $('.input-group-send').height() - 300)
+    })
+});
+
+
+</script>
+
+{% compress js %}
+
+<script>
+  moment.locale('pt-br');
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {% include 'dashboard/monitoring/inspector/includes/inspector-new-data.js' with object=object %},
+    methods: {
+      {% include 'dashboard/monitoring/inspector/includes/inspector-new-function-general.js' with object=object %}
+      {% include 'dashboard/monitoring/inspector/includes/inspector-new-function-video.js' with object=object %}
+      {% include 'dashboard/monitoring/inspector/includes/inspector-new-function-chat.js' with object=object %}
+      {% include 'dashboard/monitoring/inspector/includes/inspector-new-function-error-report.js' with object=object %}
+    },
+    mounted: function(){
+      var self = this;
+      $('[data-toggle="tooltip"]').tooltip()
+      self.countDown()
+      Janus.init({debug: "true", callback: function() {
+        if(!Janus.isWebrtcSupported()) {
+            alert("No WebRTC support... ");
+            return;
+        }
+        self.createNewSession()
+        self.createNewTextSession()
+        self.createNewTextStudentSession()
+      }});
+    }
+  })
+</script>
+
+{% endcompress %}
+
+<div class="backdrop"></div>
+{% endblock js-additional %}

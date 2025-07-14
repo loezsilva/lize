@@ -1,0 +1,328 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    <!-- Twitter -->
+    <meta name="twitter:site" content="https://app.lizeedu.com.br">
+    <meta name="twitter:creator" content="Fiscallize">
+    <meta name="twitter:card" content="Monitoramento e aplicações de provas online">
+    <meta name="twitter:title" content="Fiscallize Remote">
+    <meta name="twitter:description" content="Monitoramento e aplicações de provas online">
+    <!-- <meta name="twitter:image" content="#"> -->
+
+    <!-- Facebook -->
+    <meta property="og:url" content="https://app.lizeedu.com.br">
+    <meta property="og:title" content="Fiscallize Remote">
+    <meta property="og:description" content="Monitoramento e aplicações de provas online">
+
+    <!-- Meta -->
+    <meta name="description" content="Monitoramento e aplicações de provas online">
+    <meta name="author" content="Fiscallize Remote">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}" />
+    <title>Lize - Envio de questões</title>
+    <!-- vendor css -->
+    <link href="{% static 'administration/lib/@fortawesome/fontawesome-free/css/all.min.css' %}" rel="stylesheet">
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="{% static 'administration/assets/css/app.css' %}">
+
+    <script src="{% static 'js/vue.min.js' %}"></script>
+    
+    <script src="{% static 'administration/lib/jquery/jquery.min.js' %}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <style>
+        .question-number{
+            width: 25px;
+            height: 25px;
+            line-height: 25px;
+            border-radius: 50%;
+            color: #fff;
+            display: inline-block;
+            text-align: center;
+            margin: 5px;
+            background: #000;
+        }
+        img {
+            max-height: 420px;
+            max-width: 100%;
+        }
+        #qrcode-tuto {
+            -webkit-filter: blur(0px);
+            -moz-filter: blur(0px);
+            -o-filter: blur(0px);
+            -ms-filter: blur(0px);
+            filter: blur(0px);
+        }
+        .fiscallize-exemple {
+            font-size: 0.875rem;
+            letter-spacing: normal;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid rgba(72, 94, 144, 0.16);
+            position: relative; }
+            @media (min-width: 992px) {
+              .fiscallize-exemple {
+                padding: 20px; } }
+            @media (min-width: 1200px) {
+              .fiscallize-exemple {
+                padding: 25px; 
+              } 
+          }
+          .fiscallize-exemple::before {
+            content: attr(data-label);
+            display: block;
+            position: absolute;
+            top: -6px;
+            left: 5px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: -apple-system, BlinkMacSystemFont, "Inter UI", Roboto, sans-serif;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            background-color: inherit;
+            color: #8392a5;
+            padding: 0 6px; 
+          }
+          .fiscallize-exemple.df-inverse {
+            background-color: #1c273c;
+            color: rgba(255, 255, 255, 0.7);
+            border-width: 0; 
+          }
+          .fiscallize-exemple.df-inverse::before {
+            background-color: #3b4863;
+            top: -16px;
+            left: 0; 
+          }
+    </style>
+  </head>
+  <body class="d-flex flex-column h-100">    
+      
+    <main id="app" class="pt-2">
+        <div class="container pb-5">
+            <div class="card border-0">
+                <div class="card-body">
+                    <template v-if="!answerSend">
+
+                        <div class="row m-0">
+                            <div class="col-12">
+                                <h4>{{application_student.application.exam.name}}</h4>
+                                <span class="bg-primary text-white rounded p-2 text-truncate">Você está respondendo a questão: <span class="question-number">{{number}}</span></span>
+                            </div>
+                            <div class="col-12 py-3">
+                                <h5>
+                                    Aluno: {{application_student.student}}
+                                </h5>
+                            <hr>
+                            </div>
+                            <div class="col-12 text-center p-2">
+                                {% if not question_response.arquivo.url %}
+                                <ol class="text-left">
+                                    <li>
+                                        Clique no botão <kbd class="bg-primary text-truncate">ABRIR CÂMERA <i class="fas fa-camera"></i></kbd>
+                                    </li>
+                                    <li>
+                                        Tire uma foto da resposta
+                                    </li>
+                                    <li>
+                                        Aguarde o carregamento da imagem
+                                    </li>
+                                    <li>
+                                        Clique no botão <kbd class="bg-success text-truncate">CONFIRMAR O ENVIO <i class="fas fa-paper-plane"></i></kbd>
+                                    </li>
+                                </ol>
+                                {% else %}
+                                <ol class="text-left">
+                                    <li>
+                                        Clique no botão <kbd class="bg-dark text-truncate"><i class="fas fa-camera"> ALTERAR RESPOSTA </i></kbd>
+                                    </li>
+                                    <li>
+                                        Tire uma foto da resposta
+                                    </li>
+                                    <li>
+                                        Aguarde o carregamento da imagem
+                                    </li>
+                                    <li>
+                                        Clique no botão <kbd class="bg-success text-truncate">CONFIRMAR O ENVIO <i class="fas fa-paper-plane"></i></kbd>
+                                    </li>
+                                </ol>
+                                {% endif %}
+                                <!-- <label for="input-file" v-if="!showPreview" class="btn btn-large btn-primary my-4 animate__animated animate__pulse animate__infinite">ABRIR CÂMERA <i class="fas fa-camera"></i></label> -->
+                                <input class="d-none" id="input-file" type="file" @change="readImage($event)" value="ABRIR CÂMERA" name="image" accept="image/*" capture="environment">
+                                <figure v-show="showPreview" class="pos-relative mg-b-0 wd-lg-50p">
+                                    <img id="preview" src="{{question_response.arquivo.url}}" class="img-fit-cover mt-4 img-thumbnail" alt="Responsive image">
+                                    <figcaption class="pos-absolute b-0 l-0 wd-100p pd-20 d-flex justify-content-center">
+                                        <div class="btn-group">
+                                            <label v-if="!(!file || question.saving && !question.error)"
+                                                class="btn btn-dark btn-icon" for="input-file">
+                                                <i class="fa fa-camera"></i> ALTERAR RESPOSTA
+                                            </label>
+                                        </div>
+                                    </figcaption>
+                                </figure>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <template v-else>
+                        <div class="row m-0">
+                            <div class="col-12 text-center">
+                                <blockquote class="blockquote text-center">
+                                    <img style="max-width: 150px;" src="{% static 'success.gif' %}" class="mt-2">
+                                    <h4 class="pb-3">Resposta enviada com sucesso!</h4>
+                                    <p style="line-height: 17px;" class="mb-0 font-weight-bold">
+                                        Volte a sua prova e valide sua resposta clicando em 
+                                        <span class="badge btn btn-primary text-truncate"> Validar Resposta Enviada </span> <br/><span>na questão <span class="question-number">{{number}}</span></span>
+                                    </p>
+                                </blockquote>
+
+                                <div data-label="Exemplo na sua prova" class="shadow fiscallize-exemple">
+                                    <img id="qrcode-tuto" src="{% static 'qrcode.png' %}" class="mt-2 px-5 pt-4">
+                                    <img src="{% static 'qrcode.gif' %}" class="mt-2 px-4">
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+        <footer class="bg-light shadow fixed-bottom text-center" >
+            <div class="container">
+                <div class="row m-0" v-if="!answerSend">
+                    <div class="col-12 py-2" v-if="showPreview">
+                        <button type="button" class="btn btn-primary" disabled v-if="question.saving">
+                            <div class="spinner-border text-info spinner-border-sm" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            ENVIANDO RESPOSTA
+                        </button>
+                        
+                        <button type="button" @click="saveAnswersFile()"
+                            class="btn btn-success animate__animated animate__pulse animate__infinite"  v-if="((!question.error && !question.saving) && !(!file || question.saving && !question.error))">CONFIRMAR
+                            O ENVIO <i class="fas fa-paper-plane"></i></button>
+
+                        <label v-if="(!file && !question.error) && !question.saving" class="btn btn-dark btn-icon" for="input-file"> <i class="fa fa-camera"></i> ALTERAR RESPOSTA
+                        </label>
+
+
+                        <button type="button" @click="saveAnswersFile()" class="btn btn-danger" v-if="!question.saving && question.error" :disabled="!file">TENTAR NOVAMENTE <i class="fas fa-paper-plane"></i></button>
+                    </div>
+                    <div class="col-12 py-2" v-else>
+                        <label for="input-file" class="btn btn-large btn-primary my-1 animate__animated animate__pulse animate__infinite">ABRIR CÂMERA <i class="fas fa-camera"></i></label>
+                    </div>
+                </div>
+                <div class="row m-0" v-else>
+                    <div class="col-12 py-2">
+                        <button class="btn btn-lg btn-primary animate__animated animate__pulse animate__infinite my-1" @click="window.close()">Ok, Entendi, fechar esta janela</button>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+
+    <script src="{% static 'administration/lib/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+
+    <script>
+
+
+        var app = new Vue({
+            delimiters: ['${', '}'],
+            el: '#app',
+            data: {
+                showPreview: false,
+                answerSend: false,
+                file: '',
+                question: {
+                    id: '{{question.id}}',
+                    timing: 0,
+                    answerId: '{{question_response.id}}',
+                    answerContent: '{{question_response.arquivo}}',
+                    saving: false,
+                    error: false,
+                },
+                timer: 0,
+            },
+            watch:{
+
+            },
+            methods: {
+                readImage(event) {
+                    if (event.target.files && event.target.files[0]) {
+                        var file = new FileReader();
+                        this.file = event.target.files[0]
+                        file.onload = function(e) {
+                            $("#preview").attr('src', e.target.result) 
+                        };       
+                        file.readAsDataURL(event.target.files[0]);
+                        this.showPreview = true
+                    }
+                },
+                saveAnswersFile() {
+
+                    this.question.saving = true
+
+                    let formData = new FormData()
+                    formData.append('question', this.question.id)
+                    formData.append('student_application', '{{application_student_pk}}')
+                    formData.append('duration', this.question.timing)
+                    formData.append('send_on_qrcode', true)
+                    formData.append('arquivo', this.file)
+
+                    if(this.question.answerId != '') {
+                        url = "{% url 'answers:file_retrieve_update_qrcode' pk='00000000-0000-0000-0000-000000000000'  %}"
+                        axios.put(url.replace("00000000-0000-0000-0000-000000000000", this.question.answerId), formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data'
+                            }
+                        }
+                        ).then((response) => {
+                                this.question.answerContent = response.data.arquivo
+                                this.question.saving = false
+                                this.question.error = false
+                                this.answerSend = true
+                        }).catch((err) => {
+                            this.question.error = true
+                            this.question.saving = false
+                        })
+                    } else {
+                        axios.post("{% url 'answers:file_create_qrcode'  %}", formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }}).then((response) => {
+                            
+                            this.question['answerId'] = response.data.id
+                            this.question['answerContent'] = response.data.arquivo
+                            this.question['saving'] = false
+                            this.question['error'] = false
+                            this.answerSend = true
+                        }).catch((err) => {
+                            this.question.error = true
+                            this.question.saving = false
+                        })
+                    }
+                },
+            },
+            mounted: function() {
+                var self = this;
+                if('{{question_response.arquivo}}'.length > 0) {
+                    this.showPreview = true
+                }
+                this.timer = setInterval(() => {
+                    this.question.timing += 1
+                }, 1000);
+            }
+
+        })
+    </script>
+
+  </body>
+</html>

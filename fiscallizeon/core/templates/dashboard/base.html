@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  {% include 'includes/header.html' with user=user only %}
+
+  {% block breadcrumb %}{% endblock breadcrumb %}
+
+  {% include 'includes/messages_container.html' with messages=messages only %}
+{% endblock header %}

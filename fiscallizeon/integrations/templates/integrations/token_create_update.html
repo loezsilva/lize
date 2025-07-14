@@ -1,0 +1,291 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Adicionar ou alterar chave de acesso - Lize{% endblock title %}
+
+{% block css-additional %}
+
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="{% url 'students:students_list' %}">CHAVES</a></li>
+          <li class="breadcrumb-item active" aria-current="page">GERENCIAR</li>
+        </ol>
+      </nav> 
+      <h4>Gerenciamento de chaves de acesso</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+{% block top-menu %}
+{% include "includes/configurations_header.html" %}
+{% endblock top-menu %}
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 0.5rem; margin-bottom: 1rem; justify-content: space-between;">
+      <!-- Empty -->
+    </div>
+<div class="row">
+    <div class="col-md-9">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+              <div>
+                <h6 class="mg-b-5">Chave de acesso</h6>
+                <p class="tx-13 tx-color-03 mg-b-5">Informe os dados da chave abaixo</p>
+              </div>
+              <div>
+                <a href="{% url 'integrations:integration_synconizations' %}" class="nav-sub-link d-flex align-items-center">
+                  <i data-feather="refresh-cw" class="mx-1"></i> Sincronizar alunos e turmas
+                </a>
+              </div>
+              <div>
+                <a href="{% url 'integrations:integration-notes' %}" class="nav-sub-link d-flex align-items-center">
+                  <i data-feather="refresh-cw" class="mx-1"></i> Composição de notas
+                </a>
+              </div>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="form-save" onsubmit="return false" @submit="save()">
+                    {% csrf_token %}
+                    <div class="row">
+                      <div class="col-lg-6">
+                        <div class="form-group">
+                          <div class="df-example demo-forms">
+                            <label for="{{ form.erp.auto_id }}">{{ form.erp.label }}</label>
+                            {% render_field form.erp class="form-control col-xl-6" v-model="form.erp" %}
+                            <small class="form-text text-muted">
+                              {{ form.erp.help_text }}
+                            </small>
+                            <template v-for="error in form.errors.erp">
+                              <small class="text-danger">${error}</small>
+                            </template>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                      
+                    <div class="row">
+                      <div class="col-lg-6">
+                        <div class="form-group">
+                          <div class="df-example demo-forms">
+                            <label for="{{ form.school_code.auto_id }}">{{ form.school_code.label }}</label>
+                            <input type="text" name="{{form.school_code.name}}" value="{{form.school_code.value|default:''}}" v-model="form.schoolCode" id="{{form.school_code.auto_id}}" class="form-control col-xl-6" :required="form.erp == 2">
+                            <small class="form-text text-muted">
+                              {{ form.school_code.help_text }}
+                            </small>
+                            <template v-for="error in form.errors.schoolCode">
+                              <small class="text-danger">${error}</small>
+                            </template>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <template v-if="form.erp != 1">
+                        <div class="col-12">
+                          <div class="form-group">
+                            {% if fake_token %}
+                              <p for="{{form.token.auto_id}}" class="text-muted">Token atual: {{fake_token}}</p>
+                            {% endif %}
+  
+                            {{ form.token.label }}
+                            
+                            {% if fake_token %}
+                              <br>
+                              <small class="text-muted">
+                                Digite um novo token abaixo para substituir o atual
+                              </small>
+                            {% endif %}
+                            <div class="df-example demo-forms">
+                                <textarea rows="2" name="{{form.token.name}}" v-model="form.token" id="{{form.token.auto_id}}" class="form-control" placeholder="Digite um token"></textarea>
+                                <small class="form-text text-muted">
+                                  {{ form.token.help_text }}
+                                </small>
+                                {% for error in form.token.errors %}
+                                    <label class="text-danger">{{ error }}</label>
+                                {% endfor %}
+                            </div>
+                          </div>
+                        </div>
+                      </template>
+                      <template v-else>
+                        <div class="col-12" v-for="(token, index) in form.tokens">
+                          <div class="form-group border p-2 rounded">
+                            <div class="df-example demo-forms">
+                              <div class="row">
+                                <div class="col-12 d-flex justify-content-between align-items-center">
+                                  <div>
+                                    <label>Token ${index + 1}:</label>
+                                    <span class="text-muted mb-0" v-if="token.fakeToken">Token atual: ${token.fakeToken}</span>
+                                  </div>
+                                  <div>
+                                    <button type="button" class="btn btn-danger btn-sm mx-2" :disabled="!token.canDelete" :title="token.canDelete ? '':'Não é possível remover o token, pois ele já foi utilizado para sincronizar pelo menos uma unidade, turma ou aluno.'" @click="removeToken(token)" v-if="index > 0"><i class="fas fa-minus"></i></button>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="row mb-1">
+                                <div class="col-6">
+                                  <label :for="'token_name' + token.id">Identificador</label>
+                                  <input v-model="token.name" :id="'token_name' + token.id" class="form-control" placeholder="Digite um nome" />
+                                </div>
+                                <div class="col-6">
+                                  <label :for="'token_expiration' + token.id">Data de expiração</label>
+                                  <input type="date" :id="'token_expiration' + token.id" v-model="token.expirationDate" class="form-control" />
+                                </div>
+                                <div class="col-12 mt-2">
+                                  <label :for="'token_' + token.id">Token</label>
+                                  <input v-model="token.token" :id="'token_' + token.id" class="form-control" placeholder="Digite um token" />
+                                </div>
+                              </div>
+                              <small class="text-muted">Digite um novo token acima para substituir o atual</small>
+                              <small class="text-danger" v-for="error in token.errors.token">${ error }</small>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-12 mb-2 d-flex justify-content-end">
+                          <button type="button" class="btn btn-primary btn-sm" @click="addToken()">NOVO TOKEN <i class="fas fa-plus"></i></button>
+                        </div>
+                      </template>
+                    </div>
+                    <button type="submit" :disabled="controls.loading" class="btn btn-warning float-right">Salvar alterações</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+<script>
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {
+      controls: {
+        loading: false,
+      },
+      form: {
+        erp: '{{form.erp.value|default:"1"|safe}}',
+        token: '',
+        fakeToken: '{{fake_token}}',
+        tokens: [
+          {% for token in user.client.integration.tokens.all %}
+            {
+              id: '{{token.id}}',
+              token: null,
+              name: '{{token.name}}',
+              expirationDate: '{{token.expiration_date|default:""|lower|safe}}',
+              fakeToken: "{{token.fake|safe}}",
+              canDelete: {{token.can_delete|lower}},
+              errors: {},
+            },
+          {% empty %}
+            {
+              token: '',
+              name: 'Token padrão',
+              expirationDate: '',
+              fakeToken: '',
+              canDelete: true,
+              errors: {},
+            },
+          {% endfor %}
+        ],
+        removedTokens: [],
+        schoolCode: '{{form.school_code.value|default:""|safe}}',
+        errors: {},
+      }
+    },
+    methods: {
+      addToken() {
+        this.form.tokens.push({
+          token: '',
+          name: 'Token padrão',
+          fakeToken: '',
+          expirationDate: '',
+          canDelete: true,
+          errors: {},
+        })
+      },
+      removeToken(token) {
+        if(token.canDelete) {
+          this.form.tokens.splice(this.form.tokens.indexOf(token), 1)
+          if(token.id) {
+            this.form.removedTokens.push(token.id)
+          }
+        }
+      },
+      save() {
+        this.controls.loading = true
+        {% if user.client.integration %}
+          axios.patch(`{% url 'integrations:integrations-detail' user.client.integration.id %}`, this.form).then((response) => {
+            Swal.fire({
+              title: "Sucesso",
+              text: "Os dados foram alterados com sucesso!",
+              icon: "success",
+              showCancelButton: true,
+              confirmButtonColor: "#3085d6",
+              cancelButtonColor: "#d33",
+              confirmButtonText: "Sincronizar",
+              cancelButtonText: "Continuar editando",
+            }).then((result) => {
+              if (result.isConfirmed) {
+                window.location.href = "{% url 'integrations:integration_synconizations' %}"
+              } else {
+                window.location.reload()
+              }
+            })
+          }).catch((e) => {
+            this.form.errors = e.response.data
+          }).finally(() => {
+            this.controls.loading = false
+          })
+        {% else %}
+          axios.post(`{% url 'integrations:integrations-list'  %}`, this.form).then((response) => {
+            Swal.fire({
+              title: "Sucesso",
+              text: "O token foi adicionado com sucesso",
+              icon: "success",
+              showCancelButton: true,
+              confirmButtonColor: "#3085d6",
+              cancelButtonColor: "#d33",
+              confirmButtonText: "Sincronizar",
+              cancelButtonText: "Continuar editando",
+            }).then((result) => {
+              if (result.isConfirmed) {
+                window.location.href = "{% url 'integrations:integration_synconizations' %}"
+              } else {
+                window.location.reload()
+              }
+            })
+          }).catch((e) => {
+            this.form.errors = e.response.data
+          }).finally(() => {
+            this.controls.loading = false
+          })
+        {% endif %}
+      },
+    },
+    mounted(){
+      
+    }
+  })
+</script>
+
+
+{% endblock %}

@@ -1,0 +1,322 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+  {% if not object %}
+    Lize - Adicionar página customizada
+  {% else %}
+    Lize - Alteração de página customizada
+  {% endif %}
+{% endblock title %}
+
+{% block css-additional %}
+<style>
+    kbd:hover {
+        cursor: pointer;
+    }
+</style>
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+            <li class="breadcrumb-item"><a href="#">PÁGINA</a></li>
+            <li class="breadcrumb-item active" aria-current="page">
+            {% if object %}
+                ATUALIZAR
+            {% else %}
+                CADASTRAR
+            {% endif %}
+            </li>
+        </ol>
+      </nav> 
+      <h4>Página customizada</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <button class="btn btn-sm pd-x-15 btn-white btn-uppercase" onclick="history.back();">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </button>
+    </div>
+</div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+<div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+      <nav class="ls" aria-label="Breadcrumb">
+        <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+          <li>
+            <div>
+              <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                  <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+              </a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="{% url 'exams:custom-pages-list' %}" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Páginas</a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">{% if object %}Atualizar{% else %}Cadastrar{% endif %}</a>
+            </div>
+          </li>
+        </ol>
+      </nav>
+      <div class="d-none d-md-block">
+        <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+          <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+      </div>
+    </div>
+<div class="row">
+    <div class="col-9">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+            <div>
+                <h6 class="mg-b-5">Cadastrar uma nova página</h6>
+                <p class="tx-13 tx-color-03 mg-b-5">Informe os dados abaixo e cadastre uma nova página</p>
+            </div>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            {{form.name.label}}
+                            {% render_field form.name v-model="name" class="form-control" %}
+                        </div>
+                        <div class="form-group col-md-12">
+                            {{form.location.label}}
+                            {% render_field form.location v-model="location" class="form-control" %}
+                        </div>
+                        <div class="form-group col-md-12">
+                            {{form.content.label}}
+                            {% render_field form.content v-model="content" %}
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="client" value="{{request.user.get_clients.0.id}}">
+                    <button type="submit" class="btn btn-primary float-right">Salvar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+            <div>
+                <h6 class="mg-b-5">Você pode usar estas variáveis para personalizar sua página customizada</h6>
+            </div>
+            </div>
+            <div class="card-body">
+
+                <div class="p-1">
+                    <span class="badge badge-dark">#Disciplina</span>
+                </div>
+                <div class="p-1">
+                    <span class="badge badge-dark">#Unidade</span>
+                </div>
+                <div class="p-1">
+                    <span class="badge badge-dark">#Segmento</span>
+                </div>
+                <div class="p-1">
+                    <span class="badge badge-dark">#Serie</span>
+                </div>
+                <div class="p-1">
+                    <span class="badge badge-dark">#NomeDaTurma</span>
+                </div>
+                <template v-if="['0', '2', '3'].includes(location)">
+                    <div class="p-1">
+                        <span class="badge badge-dark">#NomeDoAluno</span>
+                    </div>
+                </template>
+                <template v-if="['1'].includes(location)">
+                    <div class="p-1">
+                        <span class="badge badge-dark">#QuantidadeDeAlunos</span>
+                    </div>
+                </template>
+                <div>
+                    <p class="pt-4">As variáveis serão substituídas na hora da impressão da prova</p>
+                </div>
+                {% if object %}
+                <div>
+                    <button class="btn btn-primary btn-block" @click="previewPrint()"><i class="fas fa-eye"></i> Salvar e visualizar impressão</button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+<div class="modal fade bd-example-modal-lg" id="previewModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">{{object.name}}</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+              </button>
+          </div>
+          <div class="modal-body">
+              <div class="text-center w-100" v-show="statusPreviewPdf === 'loading'">
+                <p v-if="!alertStillLoading">Carregando visualização</p>
+                <p v-else>O carregamento parece estar demorando mais que o esperado. Recarrege a página e tente novamente.</p>
+                <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+              </div>
+              <div class="text-center text-danger w-100" v-show="statusPreviewPdf === 'error'">
+                <p>Ocorreu um erro ao gerar a visualização. Tente novamente mais tarde.</p>
+              </div>
+              <iframe
+                id="pdf-preview"
+                width="100%"
+                height="100%"
+                v-show="statusPreviewPdf === 'success'"
+                src=""
+              >
+              </iframe>
+          </div>
+          <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+          </div>
+      </div>
+  </div>
+</div>
+{% endblock extra-modal %}
+
+
+{% block js-additional %}
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/5.3.0/tinymce.min.js"></script>
+<script type="text/javascript" src="{% static 'django_tinymce/init_tinymce.js' %}"></script>
+
+<script>
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+            name: "{{object.name}}",
+            location: "{{object.location|default:0}}",
+            content: "{{object.content|escapejs}}",
+            statusPreviewPdf: 'idle',
+            alertStillLoading: false,
+        },
+        watch:{
+        },
+        methods: {
+          async convertBase64ToBlobWithFetch(dataURI) {
+            const r = await fetch(dataURI)
+            const blob = await r.blob()
+            return blob
+          },
+          sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+          },
+          async rebuildPdf() {
+            this.statusPreviewPdf = 'loading';
+
+            var iframePreview = document.getElementById('pdf-preview');
+            iframePreview.src = '';
+
+            const customPagePreviewUrl = `/api/v1/exams/{{ object.pk }}/custom-page-pdf-preview/`
+
+            let timeElapsed = setTimeout(() => {
+              this.alertStillLoading = true
+            }, 20000);
+            await this.sleep(1000);
+
+            const res = await fetch(customPagePreviewUrl)
+
+            if (!res.ok) {
+              this.statusPreviewPdf = 'error'
+              throw new Error(`HTTP error ${res.status}`);
+            }
+
+            const data = await res.json()
+
+            const blob = await this.convertBase64ToBlobWithFetch(data.url)
+
+            const file = new Blob([blob], {type: 'application/pdf'})
+            const fileURL = URL.createObjectURL(file)
+
+            this.pdfPreviewBase64 = data.url;
+            this.pdfTotalPages = data.totalPages;
+
+            iframePreview.src = fileURL + '#toolbar=0&navpanes=0';
+            await this.sleep(1000);
+            this.statusPreviewPdf = 'success';
+            this.alertStillLoading = false
+            clearTimeout(timeElapsed);
+
+          },
+          submitForm() {
+              document.getElementById('meuFormulario').addEventListener('submit', function(event) {
+              event.preventDefault(); // Impede o envio padrão do formulário
+
+              const formData = new FormData(this); // Cria um objeto FormData a partir do formulário
+
+              fetch('URL_DO_SEU_ENDPOINT', {
+                  method: 'POST',
+                  body: formData
+              })
+              .then(response => {
+                  if (!response.ok) {
+                      throw new Error('Erro na rede');
+                  }
+                  return response.json(); // Ou response.text() dependendo do que o servidor retorna
+              })
+              .then(data => {
+                  document.getElementById('resultado').innerText = 'Formulário enviado com sucesso!';
+                  console.log(data); // Exibe a resposta do servidor no console
+              })
+              .catch(error => {
+                  document.getElementById('resultado').innerText = 'Erro ao enviar o formulário.';
+                  console.error('Erro:', error);
+              });
+            });
+          },
+          previewPrint() {
+            this.updateCustomPage()
+            $('#previewModal').modal('show')
+            this.rebuildPdf()
+          },
+          {% if object %}
+          updateCustomPage(){
+            tinyMCE.triggerSave()
+
+            const url = "{% url 'exams:client_custom_page_update' pk=object.pk %}"
+            axios.patch(url, {
+              name: this.name,
+              location: this.location,
+              content: $('textarea').val(),
+            }).catch(error => {
+              this.statusPreviewPdf = 'error'
+            });
+          }
+          {% endif %}
+        },
+        mounted() {
+        }
+    })
+</script>
+
+{% endblock %}

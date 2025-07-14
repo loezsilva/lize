@@ -1,0 +1,676 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load permissions %}
+{% load static %}
+{% load widget_tweaks %}
+{% load remove_line_break %}
+
+
+{% block css-additional %}
+  <link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+  <style>
+    .errors span {
+      cursor: pointer;
+    }
+
+    .application-select-wrapper {
+      min-width: 400px !important;
+      max-width: 400px !important;
+    }
+  </style>
+{% endblock css-additional %}
+
+{% block title %}Listagem de gabaritos - Lize{% endblock title %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="{% url 'omr:omr_upload_list' %}">GABARITOS</a></li>
+          <li class="breadcrumb-item active" aria-current="page">ENVIAR</li>
+        </ol>
+      </nav> 
+      <h4>Gabaritos</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <a href="#" onclick="history.back(); return false;" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+      <nav class="ls" aria-label="Breadcrumb">
+        <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+          <li>
+            <div>
+              <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                  <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+              </a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="{% url 'omr:template_list' %}" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Gabaritos</a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Enviar</a>
+            </div>
+          </li>
+        </ol>
+      </nav>
+      <div class="d-none d-md-block">
+        <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+          <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+      </div>
+    </div>
+    <div class="mb-2">
+{% include "dashboard/breadcrumb-year.html" with year=year|force_escape %}
+</div>
+<div class="row">
+    {% if user|has_perm:'omr.add_omrupload' %}
+      <div class="col-12 mb-3">
+        <div class="card">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between pd-b-0">
+                <div>
+                    Enviar gabarito para correção
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{% url 'omr:import_answer_sheets' %}" enctype="multipart/form-data">
+                  <div class="d-flex justify-content-between mb-2">
+                    {% csrf_token %}
+
+                    {% if form.omr_category.field.queryset %}
+                    <div class="form-group col-3 mb-0">
+                      <label class="font-weight-bold">{{ form.omr_category.label }}</label>
+                      {% render_field form.omr_category class="form-control" v-model="selectedOmrCategory" @change="saveOmrChoice()" %}
+                    </div>
+                    {% endif %}
+
+                    <div class="form-group mb-0">
+                      <span class="text-danger">{{ form.pdf_scan.errors }}</span>
+                      <label class="font-weight-bold">{{form.pdf_scan.label}}</label>
+                      {% render_field form.pdf_scan class="form-control-file" accept="application/pdf" %}
+                    </div>
+
+                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#advancedOptionsCollapse">
+                      Exibir opções avançadas
+                    </button>
+
+                    <div class="form-group col-3 mt-4 mb-0">
+                      <button type="submit" class="btn btn-primary float-right">Enviar para correção automática</button>
+                    </div>
+                  </div>
+
+                  <div class="collapse" id="advancedOptionsCollapse">
+                    <div class="card card-body">
+                      <div class="d-flex justify-content-between mb-0">
+                        <div class="form-group mb-0">
+                          <label class="font-weight-bold">{{form.gamma_option.label}}</label>
+                          {% render_field form.gamma_option class="form-control" %}
+                        </div>
+
+                        {% if user.is_superuser %}
+                          <div class="form-group col-3 mb-0 application-select-wrapper">
+                            <label class="font-weight-bold">
+                              {{ form.application.label }} 
+                              <!-- <i class="fas fa-question-circle text-muted"></i> -->
+                              <i class="fas fa-exclamation-triangle text-warning" data-toggle="tooltip" title="{{form.application.help_text}}"></i>
+                            </label><br>
+                            {% render_field form.application class="form-control application-select" %}
+                          </div>
+                        {% endif %}
+
+                        <div class="form-group form-check">
+                          <input type="checkbox" class="form-check-input" id="ignore-qr-codes" name="{{form.ignore_qr_codes.name}}">
+                          <label class="form-check-label" for="ignore-qr-codes">{{form.ignore_qr_codes.label}}</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+            </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="col-12">
+        <div class="card mb-2">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between pd-b-0">
+             <div>
+               Histórico de uploads
+             </div> 
+             <div class="float-right text-right">
+
+              <button data-toggle-off-canvas="#right-off-canvas"
+                class="btn btn-sm btn-info btn-icon rounded-pill off-canvas-menu  mb-2">
+                <i class="fas fa-search"></i> Filtrar listagem
+
+                 {% if count_filters > 0 %}
+                 <span class="badge badge-danger">{{count_filters}} Aplicado(s)</span>
+                 {% endif %}
+               </button>
+               {% if count_filters > 0 %}
+               <a href="{% url 'omr:omr_upload_list' %}?year={{year|force_escape}}" class="btn btn-sm btn-info btn-icon rounded-pill mb-2">
+                 <i class="fas fa-eraser"></i> Apagar filtro(s)
+               </a>
+               {% endif %}
+             </div>
+            </div>           
+            <div class="table-responsive">
+                <table class="table mg-b-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Data de envio</th>                    
+                        <th scope="col">Arquivo</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Páginas lidas</th>
+                        <th scope="col">Erros de leitura</th>
+                        <th scope="col">Detalhes</th>
+                        <th scope="col">Deletar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="upload in uploads" :key="upload.id">
+                        <th style="width: 300px;">
+                            ${ upload.createdDate }<br/>
+                            <span class="text-muted">Por: ${ upload.user } </span><br />
+                            <tooltip :configs="{'objects': upload.classes, showNumber: 1, 'attribute': 'name'}"></tooltip>
+                        </th>
+                        <td @click="navigator.clipboard.writeText(upload.id)">${ upload.filename }</td>
+                        <td>
+                            <i class="fas fa-spinner fa-spin text-primary" v-if="upload.status === 0"></i>
+                            <div v-else-if="upload.status === 1" class="progress">
+                                <div
+                                    class="progress-bar bg-primary progress-bar-striped progress-bar-animated" 
+                                    role="progressbar"
+                                    :style="{ width: upload.progress + '%' }">
+                                </div>
+                            </div>
+                            <template v-else>${ upload.statusDescription }</template>
+                        </td>
+                        <td>
+                          <span :class="upload.errorsCounter > 0 ? '' : 'text-success'" :data-tippy-content="upload.errorsCounter ? 'Occorreu um erro na leitura de pelo menos uma página':'Todas as páginas foram lidas com sucesso.'" class="tooltips mr-1">${upload.totalPages - upload.errorsCounter}</span> / <span data-tippy-content="Quantidade total de páginas" class="tooltips mx-1">${upload.totalPages}</span> 
+                          <template v-if="(upload.totalPages - upload.errorsCounter) == upload.totalPages">
+                            <i data-tippy-content="Todas as páginas foram lidas com sucesso." class="tooltips fas fa-check text-success"></i>
+                          </template>
+                          <template v-else>
+                            <i data-tippy-content="Pelo menos um erro foi encontrado na leitura da(s) página(s)." class="tooltips fas fa-exclamation-triangle text-danger"></i>
+                          </template>
+                        </td>
+                        <td>
+                          <div class="d-flex justify-content-center align-items-center errors">
+                            <template v-if="upload.studentPageErrorCount">
+                              <span class="mx-1 text-danger tooltips" :data-tippy-content="'Encontramos um erro(s) de leitura em '+ upload.studentPageErrorCount + ' cartão(ões) de resposta'">
+                                <a :href="getUrl(omrUploadDetailUrl, upload.id)" class="text-danger">
+                                  ${upload.studentPageErrorCount} 
+                                  <i class="fas fa-exclamation-triangle text-danger"></i>
+                                </a>
+                              </span>
+                            </template>
+                            <template v-if="upload.studentPageErrorCountLoading">
+                              <span class="mr-2">Carregando</span>
+                              <div class="spinner-border text-primary" role="status" style="width: 20px; height: 20px;">
+                                <span class="sr-only">Loading...</span>
+                              </div>
+                            </template>
+                          </div>
+                        </td>
+                        <td>
+                            <a :href="getUrl(omrUploadDetailUrl, upload.id)" v-if="upload.status > 0">
+                                <i class="fas fa-search"></i>
+                            </a>
+                        </td>
+                        <td>
+                          <button type="button" class="btn btn-xs" @click="selectedUploadId = upload.id" title="Deletar" data-toggle="modal" data-target="#confirmCancelModal">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </td>
+                    </tr>
+                </tbody>
+                </table>
+            </div>
+        </div>
+        {% include 'includes/pagination.html' with objects=object_list %}
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block off-canvas %}
+<div id="right-off-canvas" class="off-canvas off-canvas-right wd-400 bg-white"
+  style="overflow-y: auto; overflow-x: hidden;">
+  <form action="" method="GET">
+  <div class="row p-3">
+      <div class="col-12">
+        <h5>Filtrar gabaritos</h5>
+        <p>Adiciona abaixo os filtros que você deseja aplicar na listagem abaixo</p>
+        <hr/>
+      </div>
+
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="exam_id" class="mb-1">Nome da prova</label>
+          <input type="text" value="{{q_exam}}" id="exam_id" name="q_exam" class="form-control" placeholder="Digite o nome da prova">
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="filename" class="mb-1">Nome do arquivo enviado</label>
+          <input type="text" value="{{q_filename}}" id="filename" name="q_filename" class="form-control" placeholder="Digite o nome do arquivo">
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="exam_id" class="mb-1">Status do Upload</label>
+          <select class="form-control" name="q_status" id="omr_status_id">
+            <option value="all" {% if q_status == "all" %}selected{%endif%}>Todos os status</option>
+            <option value="0" {% if q_status == "0" %}selected{%endif%}>Em fila</option>
+            <option value="1" {% if q_status == "1" %}selected{%endif%}>Processando</option>
+            <option value="2" {% if q_status == "2" %}selected{%endif%}>Finalizado</option>
+            <option value="3" {% if q_status == "3" %}selected{%endif%}>Erro</option>
+            <option value="4" {% if q_status == "4" %}selected{%endif%}>Desconhecido</option>
+            <option value="5" {% if q_status == "5" %}selected{%endif%}>Reprocessando</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="col-6">
+        <div class="form-group mb-3">
+          <label for="initial_date" class="mb-1">Data Inicial</label>
+          <input type="date" value="{{q_initial_date}}" id="initial_date" name="q_initial_date" class="form-control">
+        </div>
+      </div>
+
+      <div class="col-6">
+        <div class="form-group mb-3">
+          <label for="final_date" class="mb-1">Data Final</label>
+          <input type="date" value="{{q_final_date}}" id="final_date" name="q_final_date" class="form-control">
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="classe_id" class="mb-1">Turmas</label>
+          <select name="q_classes" id="classe_id" class="form-control" multiple="multiple">
+            {% for classe in classes %}
+            <option value="{{classe.pk}}" {% if classe.pk|stringformat:'s' in q_classes %}selected="selected" {% endif %}>
+              {{classe.full_name}}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="grade_id" class="mb-1">Séries</label>
+          <select name="q_grades" id="grade_id" class="form-control" multiple="multiple">
+            {% for grade in grades %}
+              <option value="{{grade.pk}}" {% if grade.pk|stringformat:'s' in q_grades %} selected="selected" {% endif %}>
+                {{grade}}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="unity_id" class="mb-1">Unidade</label>
+          <select name="q_unitys" id="unity_id" class="form-control" multiple="multiple">
+            {% for unity in unitys %}
+              <option value="{{unity.pk}}" {% if unity.pk|stringformat:'s' in q_unitys %} selected="selected" {% endif %}>
+                {{unity}}
+              </option>
+            {% endfor %}
+          </select>
+          <p class="text-muted">De acordo com as unidades do usuário que enviou o arquivo.</p>
+        </div>
+      </div>
+
+
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="category_id" class="mb-1">Categoria do erro</label>
+          <select name="q_categorys" id="category_id" class="form-control" multiple="multiple">
+            <option value="2" {% if "2" in q_categorys %} selected="selected" {% endif %}> Marcações não identificadas </option>
+            <option value="3" {% if "3" in q_categorys %} selected="selected" {% endif %}> Aluno não encontrado </option>
+            <option value="1" {% if "1" in q_categorys %} selected="selected" {% endif %}> QRCode não identificado </option>
+            <option value="0" {% if "0" in q_categorys %} selected="selected" {% endif %}> Outro </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="custom-control custom-switch">
+          <input {% if q_errors  %} checked="checked" {% endif %} type="checkbox" id="id_q_errors" name="q_errors" class="custom-control-input">
+          <label class="custom-control-label" for="id_q_errors">Provas com erro</label>
+          <small class="form-text text-muted mt-0">Exibe apenas provas com erros de correção.</small>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="custom-control custom-switch">
+          <input {% if q_repeated_file  %} checked="checked" {% endif %} type="checkbox" id="id_q_repeated_file" name="q_repeated_file" class="custom-control-input">
+          <label class="custom-control-label" for="id_q_repeated_file">Uploads com o mesmo arquivo</label>
+          <small class="form-text text-muted mt-0">Exibe apenas uploads que possuem pelo menos outro upload com o mesmo nome de arquivo.</small>
+        </div>
+      </div>
+
+      <div class="col-12 mt-5">
+        <button type="submit" class="btn btn-primary btn-block">
+          <i class="fas fa-search"></i>
+          Aplicar filtro
+        </button>
+      </div>
+    </div>
+    <input type="hidden" name="year" value="{{year}}">
+    </form>
+</div>
+
+<div aria-hidden="true" class="modal  fade" id="confirmCancelModal" role="dialog" tabindex="-1">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirme sua ação</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="max-height: fit-content; height: fit-content;">
+                <h6>Você tem certeza que deseja realizar esta operação?
+                    <span class="text-muted">
+                        As respostas enviadas nesse upload não serão excluídas.
+                    </span>
+                </h6>
+            </div>
+            <div class="modal-footer">
+              <div class="form-buttons-w text-right">
+                  <button class="btn btn-danger" type="submit" @click="softDeleteOmrUpload(selectedUploadId)">
+                      <i class="os-icon os-icon-check"></i>
+                      <span>Sim, confirmar</span>
+                  </button>
+                  <button class="btn btn-secondary" data-dismiss="modal" type="button">
+                      <i class="os-icon os-icon-cancel-circle"></i>
+                      <span>Não</span>
+                  </button>
+              </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block js-additional %}
+  <script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+  <script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+  <script src="{% static 'js/tippy/popper.min.js' %}"></script>
+  <script src="{% static 'js/tippy/tippy.min.js' %}"></script>
+
+  <script>
+      var tooltip = Vue.component('tooltip', {
+        delimiters: ['#{', '}'],
+        props: ['configs'],
+        // Parametros para o configs
+        // classes > Classes personalizadas
+        // objects > Array contendo os objetos
+        // attribute > Nome do atributo que será mostrado dentro do span
+        // showNumber > Número da quantidade de objetos que serão mostrados
+        template: `
+          <div>
+            <span style="cursor: pointer;" :class="configs.classes ? configs.classes : 'mx-1 badge badge-primary'" :key="index" class="tooltips" :data-tippy-content="configs.attribute ? object[configs.attribute] : object" v-for="(object, index) in configs.objects.slice(0, configs.showNumber)">
+              <span v-if="configs.attribute"> #{object[configs.attribute]} </span>
+              <span v-else>#{object}</span>
+            </span>
+            <span style="cursor: pointer;" v-if="configs.objects.length > configs.showNumber && configs.objects.slice(configs.showNumber, configs.objects.length - 1).length" :class="configs.classes ? configs.classes : 'mx-1 badge badge-primary'" class="tooltips" :data-tippy-content="configs.objects.slice(configs.showNumber, configs.objects.length - 1).map(object => object[configs.attribute]).join(', ')">
+              ...mais #{configs.objects.slice(configs.showNumber, configs.objects.length - 1).length }
+            </span>
+          </div>
+        `,
+      })
+      var app = new Vue({
+        delimiters: ['${', '}'],
+        components: {
+          'tooltip': tooltip,
+        },
+        el: '#app',
+        data: {
+          selectedOmrCategory: '',
+          omrUploadDetailUrl: "{% url 'omr:omr_upload_detail' '00000000-0000-0000-0000-000000000000' %}",
+          omrUploadStudentErrorsCount: "{% url 'omr:omr_upload_student_page_error_count' '00000000-0000-0000-0000-000000000000' %}",
+          uploads: [
+              {% for upload in object_list %}
+                  {
+                      'id': "{{ upload.pk }}",
+                      'createdDate': "{{ upload.created_at }}",
+                      'user': "{{ upload.user }}",
+                      'filename': "{{ upload.filename|default_if_none:'' }}",
+                      'status': {{ upload.status }},
+                      'statusDescription': "{{ upload.get_status_display }}",
+                      'errorsCounter': {{ upload.total_errors_count }},
+                      'totalPages': {{ upload.total_pages }},
+                      'classes': [
+                          {% for class in upload.get_classes %}
+                              {'name': '{{class}}'},
+                          {% endfor %}
+                      ],
+                      'studentPageErrorCountLoading': true,
+                      'studentPageErrorCount': null,
+                  },
+              {% endfor %}
+          ],
+          selectedUploadId: null,
+        },
+        methods: {
+          alertTop(text, icon = 'success') {
+            Swal.fire({
+              position: 'top-end',
+              text: text,
+              icon: icon,
+              showConfirmButton: false,
+              timer: 1500,
+              toast: true,
+              timerProgressBar: true,
+            })
+          },
+          softDeleteOmrUpload(uploadId) {
+            axios.delete("{% url 'omr:omr_soft_delete' '00000000-0000-0000-0000-000000000000' %}".replace('00000000-0000-0000-0000-000000000000', uploadId)).then((response) => {
+              if (response.status == 204) {
+                this.alertTop('Gabarito removido com sucesso', 'success')
+                window.location.reload();
+              }
+              else {
+                this.alertTop('Ocorreu um erro ao remover o gabarito', 'error')
+              }
+            }).catch((error) => {
+              if(error.response.status == 404) {
+                this.alertTop('Upload não encontrado', 'error')
+              }
+            })
+          },
+          getUrl(url, uploadID) {
+            return url.replace('00000000-0000-0000-0000-000000000000', uploadID)
+          },
+          fetchUploadStatus(pendingUploads) {
+            const self = this
+            pendingUploads.map(function(upload) {
+              let url = "{% url 'omr:omr_upload_task_status' pk='00000000-0000-0000-0000-000000000000' %}"
+              fetch(url.replace('00000000-0000-0000-0000-000000000000', upload.id))
+              .then(response => response.json())
+              .then(data => {
+                switch (data.status) {
+                  case 'STARTED':
+                    upload.status = 1
+                    upload.statusDescription = 'Processando'
+                    const {done, total} = data.details
+                    upload.progress = Math.round(done / total * 100)
+                    console.log(done, total)
+                    self.$forceUpdate()
+                    break
+                  case 'SUCCESS':
+                    upload.status = 2
+                    upload.statusDescription = 'Finalizado'
+                    upload.totalPages = data.total_pages
+                    upload.errorsCounter = data.error_pages
+                    break
+                  case 'ERROR':
+                    upload.status = 3
+                    upload.statusDescription = 'Erro'
+                    break;
+                  case 'FAILURE':
+                    upload.status = 3
+                    upload.statusDescription = 'Erro'
+                    break;
+                }
+              })
+            })          
+          },
+          async getData() {
+            
+            for (let upload of this.uploads) {
+              await axios(this.getUrl(this.omrUploadStudentErrorsCount, upload.id)).then((response) => {
+                up = this.uploads.find((omrUpload) => omrUpload.id == response.data.id)
+                up.studentPageErrorCountLoading = false
+                up.studentPageErrorCount = response.data.count
+              })
+            }
+          },
+          saveOmrChoice() {
+            sessionStorage.setItem("selectedOmrCategory", this.selectedOmrCategory)
+          }
+        },
+        mounted() {
+          this.selectedOmrCategory = sessionStorage.getItem("selectedOmrCategory")
+          this.getData()
+
+          setInterval(() => {
+              const pendingUploads = this.uploads.filter(upload => upload.status < 2)
+              if(pendingUploads) {
+                  this.fetchUploadStatus(pendingUploads)
+              }
+          }, {% if DEBUG %}1000{% else %}30000{% endif %})
+          tippy('.tooltips', {
+            placement: 'bottom',
+            followCursor: true,
+            followCursor: 'horizontal',
+            allowHTML: true,
+            theme: 'custom',
+          })
+          
+          $('.off-canvas-menu').on('click', function (e) {
+            e.preventDefault();
+            var target = $(this).attr('data-toggle-off-canvas');
+            $(target).addClass('show');
+          });
+
+          $('.off-canvas .close').on('click', function (e) {
+            e.preventDefault();
+            $(this).closest('.off-canvas').removeClass('show');
+          })
+
+          $(document).on('click touchstart', function (e) {
+            if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+              return
+            }
+          e.stopPropagation();
+
+          if (!$(e.target).closest('.off-canvas-menu').length) {
+            var offCanvas = $(e.target).closest('.off-canvas').length;
+            if (!offCanvas) {
+              $('.off-canvas.show').removeClass('show');
+            }
+          }
+          });
+
+          $('#classe_id').select2({
+            placeholder: "Selecione uma opção",
+            closeOnSelect: false
+            });
+    
+            $('#grade_id').select2({
+            placeholder: "Selecione uma opção",
+            closeOnSelect: false
+          });
+            
+          $('#unity_id').select2({
+                placeholder: "Selecione uma opção",
+                closeOnSelect: false
+            });
+
+          $('#category_id').select2({
+                placeholder: "Selecione uma opção",
+                closeOnSelect: false
+          });
+
+          $('.application-select').select2({
+            placeholder: 'Buscar pelo nome da aplicação...',
+            minimumInputLength: 3,
+            allowClear: true,  
+            closeOnSelect: false,
+            dropdownAutoWidth: true, 
+            width: "element",
+            escapeMarkup: function (text) {
+                return text;
+            },          
+            ajax: {
+                url: '{% url "applications:api_applications_list" %}',
+                delay: 250,              
+                data: function (params) {
+                    return {
+                        search: params.term
+                    }
+                },
+                processResults: function(results) {
+                    let new_results = $.map(results, function(element) {
+                        element.text = element.exam_name
+                        return element 
+                    })
+
+                    return {
+                        results: new_results,
+                    }
+                }
+            },            
+            templateResult: (data) => {
+                if(data.text){
+                    result = `<span class="font-weight-bold">
+                    <span class="mr-1">${data.text}</span>`
+                
+                    if (data.date){
+                        result += "<p class='m-0'>"                        
+                        result += `<span class="badge mr-1 badge-primary font-weight-bold">${data.date}</span>`
+                        result += "</p>"
+                    }
+                    result += "</span>"
+                    return result
+                } else {
+                    return "Buscar pela aplicação..."
+                }
+            }
+        })
+      },
+    }) 
+  </script>
+{% endblock %}      

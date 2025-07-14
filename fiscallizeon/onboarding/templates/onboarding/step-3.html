@@ -1,0 +1,461 @@
+{% load static %}
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Processar dados - Lize</title>
+  <link href="{% static 'favicon/favicon.ico' %}" rel="shortcut icon" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+  <link href="{% static 'tw/full/output.css' %}" rel="stylesheet">
+  <style>
+    ::backdrop {
+      background-color: #001737;
+      opacity: 0.6;
+    }
+  </style>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+  <div class="flex flex-col h-screen">
+    <header class="flex items-center justify-between border-b border-[#E5E7EA] px-[11.5rem] py-4">
+      <a class="flex-none text-primary-600" href="/">
+        <span class="sr-only">Lize</span>
+        <svg width="52" height="32" viewBox="0 0 52 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M15.362 21.6376C13.5956 20.8193 11.5161 20.3893 9.87081 20.1636C8.22555 19.938 4.7732 19.7265 2.71343 20.1197C3.46911 12.9932 3.92787 4.67531 4.08972 1.44461C4.12465 0.746213 3.64726 0.110763 2.96959 0.0133674C2.19645 -0.0970939 1.5153 0.490845 1.47571 1.26645C1.34879 3.81419 0.417295 15.6561 0.00627239 20.8276C-0.0892059 22.0272 0.919138 23.0131 2.08933 22.8622C2.96261 22.7506 4.05595 22.6556 5.31812 22.6164C6.5803 22.5772 8.11378 22.671 8.60747 22.7173C11.4148 22.981 13.2801 23.601 14.3257 24.0571C14.937 24.3232 15.6449 24.0737 15.9663 23.481C16.3331 22.804 16.0524 21.956 15.362 21.6365V21.6376ZM13.6996 2.87095C14.4286 2.91699 15.0538 2.32674 15.1977 1.61019C15.351 0.849951 14.9971 1.41725e-09 14.0075 1.41725e-09C13.3458 1.41725e-09 12.638 0.495805 12.5507 1.43783C12.4811 2.17564 12.9577 2.82373 13.7008 2.87095H13.6996ZM48.6574 10.4645C48.9523 9.78699 49.7227 9.44167 50.3917 9.72983L50.3905 9.72864C51.07 10.0216 51.38 10.8182 51.0933 11.5029C49.9697 14.1797 47.5595 19.269 41.4359 19.269C40.6561 19.269 39.8904 19.1713 39.1596 18.9725C37.0326 18.3926 35.3449 16.9327 34.6421 14.8274C32.923 17.1447 30.8717 18.982 28.5826 19.8631C28.9987 21.4421 29.1385 23.2866 28.9311 25.3549C28.4847 29.8929 25.8728 32.3482 23.0546 31.96C20.5196 31.6111 18.7107 28.9938 19.3762 25.7681C20.2772 21.4183 22.6898 19.4119 25.015 18.2521C24.7527 17.8996 24.4753 17.6174 24.1921 17.3983C23.8203 17.1101 23.6035 16.66 23.635 16.1849L23.6944 15.2799C23.7481 14.4607 24.1991 13.7153 24.9077 13.3259C26.3157 12.5531 27.8472 11.0647 27.8472 8.24616C27.8472 7.09589 27.4346 6.5279 26.5837 6.32428C25.107 5.96705 23.1839 7.34595 21.8215 10.3002L21.7445 10.2633L21.8226 10.3014C21.7475 10.4614 21.6524 10.6789 21.5381 10.9404C20.4805 13.3593 17.7795 19.5366 14.0487 18.7081C12.5521 18.3795 11.6337 17.1506 11.5358 15.4228C11.4029 13.1044 12.15 5.92895 12.1932 5.54315C12.2771 4.80488 12.9391 4.27261 13.657 4.35358C14.375 4.43455 14.8832 5.11566 14.8261 5.85036C14.721 7.20467 14.6146 8.39185 14.5201 9.446C14.3546 11.2929 14.2256 12.7314 14.2048 13.9451C14.1827 15.2549 15.0615 16.3207 16.3925 14.4333C17.4473 12.9377 18.6967 10.7682 19.452 9.16065C20.9298 5.95515 23.6816 2.87109 27.1851 3.71891C29.4369 4.25951 30.4404 6.26117 30.4707 8.20567C30.5115 10.8349 28.9847 14.0939 26.3308 15.7431C26.8064 16.2087 27.2294 16.7612 27.5872 17.384C29.874 16.5159 32.2679 14.0356 34.1269 10.761C34.5057 10.0942 34.8239 9.39404 35.113 8.68197C35.1444 8.60219 35.1782 8.52241 35.212 8.44263C37.0162 4.24522 40.1258 2.60913 42.6958 3.74868C44.9009 4.72629 45.8928 7.4936 44.7075 10.1811C43.6154 12.6448 40.3414 14.1654 36.881 12.5222C36.8706 15.1085 38.7668 16.5921 41.4382 16.5921C45.8415 16.5921 47.5257 13.0663 48.6574 10.4645ZM41.6527 6.2052C40.9394 5.88965 39.1433 5.95634 37.613 9.51907H37.6142C37.5741 9.61297 37.5695 9.62227 37.5655 9.63178C37.5606 9.643 37.5565 9.65451 37.4953 9.80604C40.0069 11.3254 41.81 10.2252 42.3193 9.07611C43.0023 7.52575 42.359 6.51837 41.6527 6.2052ZM23.4054 29.3082C24.2457 29.4237 25.9555 28.8379 26.325 25.0846C26.4963 23.3747 26.3809 21.897 26.0896 20.7002C24.3599 21.5635 22.6466 22.9281 21.9427 26.323C21.5359 28.2949 22.5487 29.1903 23.4054 29.3082Z" fill="#FF8F3D"/>
+        </svg>
+      </a>
+      <nav aria-label="Progress">
+        <ol role="list" class="space-x-6 divide-y divide-gray-300 md:flex md:divide-y-0">
+          <li class="relative md:flex md:flex-1">
+            <a href="#" class="flex items-center text-sm font-semibold" aria-current="step">
+              <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#FFF2E9] border border-[#FFE0C9]">
+                <span class="text-primary-600">1</span>
+              </span>
+              <span class="ml-3 text-[#384250]">Usuários</span>
+            </a>
+          </li>
+          <li class="relative md:flex md:flex-1">
+            <a href="#" class="group flex items-center">
+              <span class="flex items-center text-sm text-[#667085]">
+                <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#F9FAFA] group-hover:border-gray-400">
+                  <span class="group-hover:text-gray-900">2</span>
+                </span>
+                <span class="ml-3 group-hover:text-gray-900">Segmentos</span>
+              </span>
+            </a>
+          </li>
+          <li class="relative md:flex md:flex-1">
+            <a href="#" class="group flex items-center">
+              <span class="flex items-center text-sm text-[#667085]">
+                <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#F9FAFA] group-hover:border-gray-400">
+                  <span class="group-hover:text-gray-900">3</span>
+                </span>
+                <span class="ml-3 group-hover:text-gray-900">Permissões</span>
+              </span>
+            </a>
+          </li>
+        </ol>
+      </nav>
+    </header>
+    <main class="h-full overflow-y-auto">
+      <div class="bg-[#F9FAFA]">
+        <div class="flex flex-col gap-4 px-[11.5rem] py-10">
+          <div class="flex gap-8">
+            <h1 class="text-3xl leading-[2.125rem] font-medium tracking-[-0.01em] text-[#101828]">Usuários</h1>
+            <span class="flex items-center gap-2">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g clip-path="url(#clip0_864_1725)">
+                  <path d="M10.0003 4.99999V9.99999L13.3337 11.6667M18.3337 9.99999C18.3337 14.6024 14.6027 18.3333 10.0003 18.3333C5.39795 18.3333 1.66699 14.6024 1.66699 9.99999C1.66699 5.39762 5.39795 1.66666 10.0003 1.66666C14.6027 1.66666 18.3337 5.39762 18.3337 9.99999Z" stroke="#D2D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_864_1725">
+                    <rect width="20" height="20" fill="white"/>
+                  </clipPath>
+                </defs>
+              </svg>
+              <span class="text-sm text-[#9BA3AF]">Tempo médio: </span><span class="text-sm font-semibold text-[#9BA3AF]">3 min</span>
+            </span>
+          </div>
+          <div class="flex justify-between items-center">
+            <p class="text-sm text-[#667085]">
+              Anexe as planilhas que você possui referente aos perfis de usuários abaixo identificados. É importante que a planilha<br /> esteja atualizada para que o sistema possa identificar corretamente os dados. Assista ao vídeo ao lado.
+            </p>
+            <button id="buttonWatchVideo" type="button" class="flex items-center gap-3 text-start bg-white rounded-full border border-[#E5E7EA] px-4 py-2">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3.33301 3.32642C3.33301 2.67898 3.33301 2.35526 3.468 2.17681C3.5856 2.02135 3.76536 1.92515 3.95994 1.91353C4.1833 1.9002 4.45265 2.07977 4.99135 2.4389L12.0017 7.11248C12.4469 7.40923 12.6694 7.55761 12.747 7.74462C12.8148 7.90813 12.8148 8.09188 12.747 8.25538C12.6694 8.4424 12.4469 8.59077 12.0017 8.88752L4.99135 13.5611C4.45265 13.9202 4.1833 14.0998 3.95994 14.0865C3.76536 14.0749 3.5856 13.9787 3.468 13.8232C3.33301 13.6447 3.33301 13.321 3.33301 12.6736V3.32642Z" stroke="#FF8F3D" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="text-xs leading-[0.875rem] font-medium text-[#384250]">
+                Assista ao vídeo <br />explicativo
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="px-[11.5rem] py-10">
+        {% if messages %}
+          <div class="mb-8 flex rounded-3xl p-6 bg-green-50">
+            <svg aria-hidden="true" viewBox="0 0 32 32" fill="none" class="h-8 w-8 flex-none [--icon-foreground:theme(colors.green.900)] [--icon-background:theme(colors.green.100)]">
+              <defs>
+                <radialGradient cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" id=":S5:-gradient" gradientTransform="rotate(65.924 1.519 20.92) scale(25.7391)">
+                  <stop stop-color="#bbf7d0" offset=".08"></stop> <!-- color.200 -->
+                  <stop stop-color="#22c55e" offset=".837"></stop> <!-- color.500 -->
+                </radialGradient>
+              </defs>
+              <g>
+                <circle cx="20" cy="20" r="12" fill="url(#:S5:-gradient)"></circle>
+                <path d="M3 16c0 7.18 5.82 13 13 13s13-5.82 13-13S23.18 3 16 3 3 8.82 3 16Z" fill-opacity="0.5" class="fill-[var(--icon-background)] stroke-[color:var(--icon-foreground)]" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="m15.408 16.509-1.04-5.543a1.66 1.66 0 1 1 3.263 0l-1.039 5.543a.602.602 0 0 1-1.184 0Z" class="fill-[var(--icon-foreground)] stroke-[color:var(--icon-foreground)]" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="M16 23a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" fill-opacity="0.5" stroke="currentColor" class="fill-[var(--icon-background)] stroke-[color:var(--icon-foreground)]" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+              </g>
+            </svg>
+            <div class="ml-4 flex-auto">
+              <p class="m-0 font-display text-xl text-green-900">
+                Sucesso! Operação realizada com sucesso!
+              </p>
+              <div class="prose max-w-none mt-2.5 text-green-800 [--tw-prose-underline:theme(colors.green.400)] [--tw-prose-background:theme(colors.green.50)] prose-a:text-green-900 prose-code:text-green-900">
+                {% for message in messages %}
+                  {{ message }}
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+        <p class="text-xs leading-[1.125rem] text-[#6C727F]">Lista de arquivos para anexar</p>
+        <div class="flex flex-col gap-2 mt-6">
+          <div class="flex justify-between rounded-xl border border-[#E5E7EA] p-6">
+            <div>
+              <div class="flex justify-center items-center gap-6">
+                {% if user.client_uncached.already_onboarded_coordinators %}
+                  <div class="flex justify-center items-center w-5 h-5 rounded-full bg-primary-600">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M11.6663 3.5L5.24967 9.91667L2.33301 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </div>
+                {% else %}
+                  <div class="flex justify-center items-center">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M5.83333 9.16667C5.05836 9.16667 4.67087 9.16667 4.35295 9.25185C3.49022 9.48302 2.81635 10.1569 2.58519 11.0196C2.5 11.3375 2.5 11.725 2.5 12.5V13.5C2.5 14.9001 2.5 15.6002 2.77248 16.135C3.01217 16.6054 3.39462 16.9878 3.86502 17.2275C4.3998 17.5 5.09987 17.5 6.5 17.5H13.5C14.9001 17.5 15.6002 17.5 16.135 17.2275C16.6054 16.9878 16.9878 16.6054 17.2275 16.135C17.5 15.6002 17.5 14.9001 17.5 13.5V12.5C17.5 11.725 17.5 11.3375 17.4148 11.0196C17.1836 10.1569 16.5098 9.48302 15.647 9.25185C15.3291 9.16667 14.9416 9.16667 14.1667 9.16667M13.3333 5.83333L10 2.5M10 2.5L6.66667 5.83333M10 2.5V12.5" stroke="#E5E7EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </div>
+                {% endif %}
+                <div class="flex flex-col gap-1">
+                  <p class="text-sm font-semibold text-[#384250]">Planilha de Coordenadores</p>
+                  <p class="text-sm text-[#667085]">Nome, Email, Unidade e Segmento.</p>
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-center items-center">
+              <div class="flex items-center text-sm leading-4">
+                <a id="buttonAttachCoordinators" href="{% url 'onboarding:upload-file-coordinators' 4 %}" class="relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500">
+                  Anexar
+                </a>
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-between rounded-xl border border-[#E5E7EA] p-6">
+            <div>
+              <div class="flex justify-center items-center gap-6">
+                {% if user.client_uncached.already_onboarded_teachers %}
+                  <div class="flex justify-center items-center w-5 h-5 rounded-full bg-primary-600">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M11.6663 3.5L5.24967 9.91667L2.33301 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </div>
+                {% else %}
+                  <div class="flex justify-center items-center">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M5.83333 9.16667C5.05836 9.16667 4.67087 9.16667 4.35295 9.25185C3.49022 9.48302 2.81635 10.1569 2.58519 11.0196C2.5 11.3375 2.5 11.725 2.5 12.5V13.5C2.5 14.9001 2.5 15.6002 2.77248 16.135C3.01217 16.6054 3.39462 16.9878 3.86502 17.2275C4.3998 17.5 5.09987 17.5 6.5 17.5H13.5C14.9001 17.5 15.6002 17.5 16.135 17.2275C16.6054 16.9878 16.9878 16.6054 17.2275 16.135C17.5 15.6002 17.5 14.9001 17.5 13.5V12.5C17.5 11.725 17.5 11.3375 17.4148 11.0196C17.1836 10.1569 16.5098 9.48302 15.647 9.25185C15.3291 9.16667 14.9416 9.16667 14.1667 9.16667M13.3333 5.83333L10 2.5M10 2.5L6.66667 5.83333M10 2.5V12.5" stroke="#E5E7EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </div>
+                {% endif %}
+                <div class="flex flex-col gap-1">
+                  <p class="text-sm font-semibold text-[#384250]">Planilha de Professores</p>
+                  <p class="text-sm text-[#667085]">Nome, Email, Unidade, Segmento, Disciplinas e Turmas.</p>
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-center items-center">
+              <div class="flex items-center text-sm leading-4">
+                <a id="buttonAttachTeachers" href="{% url 'onboarding:upload-file-teachers' 4 %}" class="relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500">
+                  Anexar
+                </a>
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-between rounded-xl border border-[#E5E7EA] p-6">
+            <div>
+              <div class="flex justify-center items-center gap-6">
+                {% if user.client_uncached.already_onboarded_students %}
+                  <div class="flex justify-center items-center w-5 h-5 rounded-full bg-primary-600">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M11.6663 3.5L5.24967 9.91667L2.33301 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </div>
+                {% else %}
+                  <div class="flex justify-center items-center">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M5.83333 9.16667C5.05836 9.16667 4.67087 9.16667 4.35295 9.25185C3.49022 9.48302 2.81635 10.1569 2.58519 11.0196C2.5 11.3375 2.5 11.725 2.5 12.5V13.5C2.5 14.9001 2.5 15.6002 2.77248 16.135C3.01217 16.6054 3.39462 16.9878 3.86502 17.2275C4.3998 17.5 5.09987 17.5 6.5 17.5H13.5C14.9001 17.5 15.6002 17.5 16.135 17.2275C16.6054 16.9878 16.9878 16.6054 17.2275 16.135C17.5 15.6002 17.5 14.9001 17.5 13.5V12.5C17.5 11.725 17.5 11.3375 17.4148 11.0196C17.1836 10.1569 16.5098 9.48302 15.647 9.25185C15.3291 9.16667 14.9416 9.16667 14.1667 9.16667M13.3333 5.83333L10 2.5M10 2.5L6.66667 5.83333M10 2.5V12.5" stroke="#E5E7EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </div>
+                {% endif %}
+                <div class="flex flex-col gap-1">
+                  <p class="text-sm font-semibold text-[#384250]">Planilha de Alunos</p>
+                  <p class="text-sm text-[#667085]">Nome, Email, Matrícula, Unidade, Série e Turma.</p>
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-center items-center">
+              <div class="flex items-center text-sm leading-4">
+                <button id="buttonAttachStudents" type="button" class="relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500">
+                  Anexar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <dialog id="modal1" class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:w-full sm:max-w-[45.5rem] sm:p-6">
+        <div>
+          <form method="dialog" class="absolute right-0 top-0 hidden pr-6 pt-6 sm:block">
+            <button type="submit" class="rounded-md bg-white text-[#D0D3D9] hover:text-[#BEC2CA] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+              <span class="sr-only">Fechar</span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </form>
+          <div>
+            <div class="mx-auto flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-[#FFF9F5] sm:mx-0">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M9.33333 14.6667C8.09337 14.6667 7.47339 14.6667 6.96472 14.803C5.58436 15.1728 4.50617 16.251 4.1363 17.6314C4 18.1401 4 18.76 4 20V21.6C4 23.8402 4 24.9603 4.43597 25.816C4.81947 26.5686 5.43139 27.1805 6.18404 27.564C7.03969 28 8.15979 28 10.4 28H21.6C23.8402 28 24.9603 28 25.816 27.564C26.5686 27.1805 27.1805 26.5686 27.564 25.816C28 24.9603 28 23.8402 28 21.6V20C28 18.76 28 18.1401 27.8637 17.6314C27.4938 16.251 26.4156 15.1728 25.0353 14.803C24.5266 14.6667 23.9066 14.6667 22.6667 14.6667M21.3333 9.33333L16 4M16 4L10.6667 9.33333M16 4V20" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="mt-4">
+              <h3 class="text-2xl font-medium text-[#101928]" id="modal-title">
+                Importe os grupos de pessoas da sua instituição
+              </h3>
+              <p class="text-sm text-[#6C727F] mt-2">Esse é o método mais ágil para ingressar todas as informações dentro da Lize.</p>
+              <div class="flex items-center justify-between mt-[2.125rem]">
+                <div>
+                  <ol role="list" class="space-y-3">
+                    <li class="relative md:flex md:flex-1">
+                      <p class="flex items-center">
+                        <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-[#E5E7EA]">
+                          <span class="text-sm font-semibold text-[#9BA3AF]">1</span>
+                        </span>
+                        <span class="text-sm leading-4 font-medium text-[#384250] ml-3">Prepare as planilhas de acordo com os dados pedidos.</span>
+                      </p>
+                    </li>
+                    <li class="relative md:flex md:flex-1">
+                      <p class="flex items-center">
+                        <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-[#E5E7EA]">
+                          <span class="text-sm font-semibold text-[#9BA3AF]">2</span>
+                        </span>
+                        <span class="text-sm leading-4 font-medium text-[#384250] ml-3">Faça o upload das planilhas de acordo com os perfis.</span>
+                      </p>
+                    </li>
+                    <li class="relative md:flex md:flex-1">
+                      <p class="flex items-center">
+                        <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-[#E5E7EA]">
+                          <span class="text-sm font-semibold text-[#9BA3AF]">3</span>
+                        </span>
+                        <span class="text-sm leading-4 font-medium text-[#384250] ml-3">Clique para processar assim selecionar todos.</span>
+                      </p>
+                    </li>
+                  </ol>
+                </div>
+                <div class="relative">
+                  <img src="{% static 'onboarding/thumbnail.png' %}" alt="Thumbnail do vídeo" class="rounded-xl border border-[#E6E8EC]" style="box-shadow: 0px 12px 16px -4px rgba(16, 24, 40, 0.08),0px 4px 6px -2px rgba(16, 24, 40, 0.03);" />
+                  <button id="buttonWatch" type="button" class="absolute left-4 bottom-4 flex items-center gap-1 rounded-2xl bg-primary-600 text-xs leading-[1.125rem] font-medium text-white px-3 py-[0.188rem]">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M2.5 2.49482C2.5 2.00924 2.5 1.76644 2.60125 1.63261C2.68945 1.51601 2.82426 1.44386 2.9702 1.43515C3.13772 1.42515 3.33973 1.55982 3.74376 1.82918L9.00154 5.33436C9.33538 5.55693 9.5023 5.66821 9.56047 5.80847C9.61133 5.9311 9.61133 6.06891 9.56047 6.19154C9.5023 6.3318 9.33538 6.44308 9.00154 6.66564L3.74376 10.1708C3.33973 10.4402 3.13772 10.5749 2.9702 10.5649C2.82426 10.5561 2.68945 10.484 2.60125 10.3674C2.5 10.2336 2.5 9.99077 2.5 9.50519V2.49482Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Assistir
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-[2.125rem]">
+            <form method="dialog">
+              <button type="submit" class="inline-flex w-full justify-center rounded-lg bg-primary-600 px-4 py-3 text-sm font-semibold text-white hover:bg-primary-500 sm:w-auto">Entendi, quero começar!</button>
+            </form>
+          </div>
+        </div>
+      </dialog>
+      <dialog id="modal2" class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:w-full sm:max-w-[45.5rem] sm:p-6">
+        <div>
+          <form method="dialog" class="absolute right-0 top-0 hidden pr-6 pt-6 sm:block">
+            <button type="submit" class="rounded-md bg-white text-[#D0D3D9] hover:text-[#BEC2CA] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+              <span class="sr-only">Fechar</span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </form>
+          <div>
+            <div>
+              <h3 class="text-2xl font-medium text-[#101928]" id="modal-title">
+                Veja o vídeo explicativo
+              </h3>
+            </div>
+            <div class="mt-4">
+              <iframe class="rounded" width="680" height="382.50" src="https://www.youtube.com/embed/YC8TVAtt5Og?si=6RX6LKTMhqZYFiQO" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture;" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            </div>
+          </div>
+        </div>
+      </dialog>
+      <dialog id="modal3" class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:w-full sm:max-w-[32.5rem] sm:p-6">
+        <div>
+          <form method="dialog" class="absolute right-0 top-0 hidden pr-6 pt-6 sm:block">
+            <button type="submit" class="rounded-md bg-white text-[#D0D3D9] hover:text-[#BEC2CA] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+              <span class="sr-only">Fechar</span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </form>
+          <div>
+            <h3 class="text-2xl font-medium text-[#101928]" id="modal-title">
+              Selecione uma opção
+            </h3>
+            <div class="grid grid-cols-2 gap-4 mt-6">
+              <a id="linkUploadFileIntegration" href="#" class="bg-white rounded-xl border border-[#E5E7EA]" style="box-shadow: 0px 12px 16px -4px rgba(16, 24, 40, 0.08),0px 4px 6px -2px rgba(16, 24, 40, 0.03);">
+                <div class="flex justify-center items-center py-9">
+                  <div class="flex justify-center items-center w-16 h-16 rounded-full bg-[#FFF9F5]">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M9.33333 14.6667C8.09337 14.6667 7.47339 14.6667 6.96472 14.803C5.58436 15.1728 4.50617 16.251 4.1363 17.6314C4 18.1401 4 18.76 4 20V21.6C4 23.8402 4 24.9603 4.43597 25.816C4.81947 26.5686 5.43139 27.1805 6.18404 27.564C7.03969 28 8.15979 28 10.4 28H21.6C23.8402 28 24.9603 28 25.816 27.564C26.5686 27.1805 27.1805 26.5686 27.564 25.816C28 24.9603 28 23.8402 28 21.6V20C28 18.76 28 18.1401 27.8637 17.6314C27.4938 16.251 26.4156 15.1728 25.0353 14.803C24.5266 14.6667 23.9066 14.6667 22.6667 14.6667M21.3333 9.33333L16 4M16 4L10.6667 9.33333M16 4V20" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+                <div class="flex flex-col gap-2 border-t border-[#F5F5F7] p-4">
+                  <p class="font-['Roboto'] leading-5 font-medium text-[#001737]">Subir Planilhas</p>
+                  <p class="font-['Roboto'] text-xs text-[#6C727F]">Faça upload de suas planilhas e deixe nossa IA organizar para você.</p>
+                </div>
+              </a>
+              <a id="linkExternalSystemIntegration" href="#" class="bg-white rounded-xl border border-[#E5E7EA]">
+                <div class="flex justify-center items-center py-9">
+                  <div class="flex justify-center items-center w-16 h-16 rounded-full bg-[#FFF9F5]">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M16.0003 20C18.2095 20 20.0003 18.2091 20.0003 16C20.0003 13.7909 18.2095 12 16.0003 12C13.7912 12 12.0003 13.7909 12.0003 16C12.0003 18.2091 13.7912 20 16.0003 20Z" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M24.97 19.6364C24.8087 20.002 24.7605 20.4075 24.8318 20.8007C24.9031 21.1939 25.0906 21.5568 25.37 21.8424L25.4428 21.9152C25.6681 22.1403 25.847 22.4077 25.969 22.702C26.091 22.9963 26.1537 23.3117 26.1537 23.6303C26.1537 23.9489 26.091 24.2643 25.969 24.5586C25.847 24.8529 25.6681 25.1203 25.4428 25.3455C25.2176 25.5709 24.9502 25.7497 24.6559 25.8717C24.3616 25.9937 24.0462 26.0565 23.7276 26.0565C23.409 26.0565 23.0936 25.9937 22.7993 25.8717C22.505 25.7497 22.2376 25.5709 22.0124 25.3455L21.9397 25.2727C21.654 24.9933 21.2912 24.8058 20.898 24.7345C20.5048 24.6632 20.0993 24.7114 19.7337 24.8727C19.3752 25.0264 19.0694 25.2815 18.854 25.6067C18.6387 25.9319 18.5231 26.313 18.5215 26.703V26.9091C18.5215 27.552 18.2661 28.1687 17.8115 28.6233C17.3569 29.0779 16.7402 29.3333 16.0973 29.3333C15.4543 29.3333 14.8377 29.0779 14.3831 28.6233C13.9285 28.1687 13.6731 27.552 13.6731 26.9091V26.8C13.6637 26.3988 13.5338 26.0097 13.3003 25.6833C13.0669 25.3569 12.7406 25.1082 12.364 24.9697C11.9984 24.8083 11.5928 24.7602 11.1996 24.8315C10.8064 24.9028 10.4436 25.0903 10.1579 25.3697L10.0852 25.4424C9.86003 25.6678 9.59266 25.8466 9.29836 25.9686C9.00406 26.0906 8.68861 26.1534 8.37002 26.1534C8.05144 26.1534 7.73598 26.0906 7.44168 25.9686C7.14738 25.8466 6.88002 25.6678 6.65487 25.4424C6.42947 25.2173 6.25066 24.9499 6.12867 24.6556C6.00667 24.3613 5.94387 24.0459 5.94387 23.7273C5.94387 23.4087 6.00667 23.0932 6.12867 22.7989C6.25066 22.5046 6.42947 22.2373 6.65487 22.0121L6.7276 21.9394C7.00704 21.6537 7.19449 21.2909 7.26579 20.8977C7.33708 20.5045 7.28895 20.0989 7.1276 19.7333C6.97395 19.3748 6.71882 19.0691 6.39362 18.8537C6.06842 18.6383 5.68734 18.5228 5.2973 18.5212H5.09123C4.44829 18.5212 3.83167 18.2658 3.37704 17.8112C2.9224 17.3565 2.66699 16.7399 2.66699 16.097C2.66699 15.454 2.9224 14.8374 3.37704 14.3828C3.83167 13.9281 4.44829 13.6727 5.09123 13.6727H5.20033C5.60153 13.6633 5.99063 13.5335 6.31705 13.3C6.64347 13.0666 6.8921 12.7403 7.03063 12.3636C7.19198 11.998 7.24011 11.5925 7.16882 11.1993C7.09752 10.8061 6.91007 10.4432 6.63063 10.1576L6.5579 10.0848C6.3325 9.8597 6.15369 9.59234 6.0317 9.29804C5.9097 9.00374 5.8469 8.68828 5.8469 8.3697C5.8469 8.05112 5.9097 7.73566 6.0317 7.44136C6.15369 7.14706 6.3325 6.87969 6.5579 6.65455C6.78305 6.42915 7.05041 6.25034 7.34471 6.12834C7.63901 6.00634 7.95447 5.94355 8.27305 5.94355C8.59164 5.94355 8.90709 6.00634 9.20139 6.12834C9.49569 6.25034 9.76306 6.42915 9.9882 6.65455L10.0609 6.72727C10.3466 7.00671 10.7094 7.19417 11.1026 7.26546C11.4958 7.33676 11.9014 7.28863 12.267 7.12727H12.364C12.7225 6.97362 13.0282 6.71849 13.2436 6.39329C13.459 6.06809 13.5745 5.68702 13.5761 5.29697V5.09091C13.5761 4.44796 13.8315 3.83135 14.2861 3.37671C14.7408 2.92208 15.3574 2.66667 16.0003 2.66667C16.6433 2.66667 17.2599 2.92208 17.7145 3.37671C18.1692 3.83135 18.4246 4.44796 18.4246 5.09091V5.2C18.4261 5.59005 18.5417 5.97112 18.7571 6.29632C18.9724 6.62152 19.2782 6.87665 19.6367 7.0303C20.0023 7.19166 20.4078 7.23979 20.801 7.16849C21.1942 7.0972 21.5571 6.90974 21.8428 6.6303L21.9155 6.55758C22.1406 6.33218 22.408 6.15337 22.7023 6.03137C22.9966 5.90937 23.312 5.84658 23.6306 5.84658C23.9492 5.84658 24.2647 5.90937 24.559 6.03137C24.8533 6.15337 25.1206 6.33218 25.3458 6.55758C25.5712 6.78272 25.75 7.05009 25.872 7.34439C25.994 7.63869 26.0568 7.95415 26.0568 8.27273C26.0568 8.59131 25.994 8.90677 25.872 9.20107C25.75 9.49537 25.5712 9.76273 25.3458 9.98788L25.2731 10.0606C24.9936 10.3463 24.8062 10.7091 24.7349 11.1023C24.6636 11.4955 24.7117 11.9011 24.8731 12.2667V12.3636C25.0267 12.7221 25.2818 13.0279 25.607 13.2433C25.9322 13.4586 26.3133 13.5742 26.7034 13.5758H26.9094C27.5524 13.5758 28.169 13.8312 28.6236 14.2858C29.0782 14.7404 29.3337 15.3571 29.3337 16C29.3337 16.643 29.0782 17.2596 28.6236 17.7142C28.169 18.1688 27.5524 18.4242 26.9094 18.4242H26.8003C26.4103 18.4258 26.0292 18.5414 25.704 18.7567C25.3788 18.9721 25.1237 19.2779 24.97 19.6364Z" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+                <div class="flex flex-col gap-2 border-t border-[#F5F5F7] p-4">
+                  <p class="font-['Roboto'] leading-5 font-medium text-[#001737]">Integrar com ERP</p>
+                  <p class="font-['Roboto'] text-xs text-[#6C727F]">Conecte nossa plataforma diretamente com seu ERP.</p>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </dialog>
+    </main>
+    <footer class="flex justify-between border-t border-[#E5E7EA] px-[11.5rem] py-4">
+      <a href="{% url 'onboarding:detail' 2 %}" class="flex items-center gap-2 rounded-lg text-[#667085] py-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12.5 5L7.5 10L12.5 15" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Voltar
+      </a>
+      {% if user.client_uncached.already_onboarded_users %}
+        <a
+          href="{% url 'onboarding:detail-segments' 5 %}"
+          class="flex items-center gap-4 rounded-lg bg-primary-600 text-white px-[8.375rem] py-3 text-sm font-semibold hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+        >
+          Continuar
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4.1665 10H15.8332M15.8332 10L9.99984 4.16669M15.8332 10L9.99984 15.8334" stroke="white" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      {% else %}
+        <button
+          type="button"
+          class="flex items-center gap-4 rounded-lg bg-[#D2D6DB] text-white px-[8.375rem] py-3 text-sm font-semibold"
+          disabled="true"
+        >
+          Continuar
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4.1665 10H15.8332M15.8332 10L9.99984 4.16669M15.8332 10L9.99984 15.8334" stroke="white" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      {% endif %}
+    </footer>
+  </div>
+  <script>
+    let dialog1 = document.getElementById("modal1");
+    let dialog2 = document.getElementById("modal2");
+    let dialog3 = document.getElementById("modal3");
+
+    let buttonWatch = document.getElementById("buttonWatch");
+    let buttonWatchVideo = document.getElementById("buttonWatchVideo");
+    // let buttonAttachCoordinators = document.getElementById("buttonAttachCoordinators");
+    // let buttonAttachTeachers = document.getElementById("buttonAttachTeachers");
+    let buttonAttachStudents = document.getElementById("buttonAttachStudents");
+
+    let linkUploadFileIntegration = document.getElementById("linkUploadFileIntegration");
+    let linkExternalSystemIntegration = document.getElementById("linkExternalSystemIntegration");
+
+    dialog1.addEventListener("click", function onClick(event) {
+      if (event.target === dialog1) {
+        dialog1.close();
+      }
+    });
+
+    dialog2.addEventListener("click", function onClick(event) {
+      if (event.target === dialog2) {
+        dialog2.close();
+      }
+    });
+
+    dialog3.addEventListener("click", function onClick(event) {
+      if (event.target === dialog3) {
+        dialog3.close();
+      }
+    });
+
+    buttonWatch.addEventListener("click", function onClick(event) {
+      dialog1.close();
+      dialog2.showModal();
+    });
+
+    buttonWatchVideo.addEventListener("click", function onClick(event) {
+      dialog2.showModal();
+    });
+
+    // buttonAttachCoordinators.addEventListener("click", function onClick(event) {
+    //   linkUploadFileIntegration.href = "{% url 'onboarding:upload-file-coordinators' 4 %}";
+    //   linkExternalSystemIntegration.href = "#";
+    //   dialog3.showModal();
+    // });
+
+    // buttonAttachTeachers.addEventListener("click", function onClick(event) {
+    //   linkUploadFileIntegration.href = "{% url 'onboarding:upload-file-teachers' 4 %}";
+    //   linkExternalSystemIntegration.href = "#";
+    //   dialog3.showModal();
+    // });
+
+    buttonAttachStudents.addEventListener("click", function onClick(event) {
+      linkUploadFileIntegration.href = "{% url 'onboarding:upload-file-students' 4 %}";
+      linkExternalSystemIntegration.href = "{% url 'onboarding:external-system-students' 4 %}";
+      dialog3.showModal();
+    });
+
+    //////////////////////////////////////////////////////////////////////
+    /// INIT
+    //////////////////////////////////////////////////////////////////////
+
+    const showModalInitial = localStorage.getItem("showModalInitial");
+
+    if (!showModalInitial) {
+      dialog1.showModal();
+      localStorage.setItem("showModalInitial", true);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,580 @@
+{% extends 'redesign/base.html' %}
+
+{% load static %}
+{% load widget_tweaks %}
+{% load format_duration %}
+
+{% block title %}
+  Lize - Importar professores
+{% endblock title %}
+
+{% block css-additional %}
+  <link rel="stylesheet" href="{% static 'administration/lib/datatables.net-responsive-dt/css/responsive.dataTables.min.css' %}">
+  <link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+  <style>
+    td {
+      font-size: 0.6rem;
+    }
+    th {
+      color:#8392a5;
+      font-size: .7rem !important;
+    }
+    i {
+      opacity: .8;
+    }
+  </style>
+{% endblock %}
+
+{% block breadcrumb-fixed %}
+<div class="ard cer dcv tw-mb-16">
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-30">
+    <div class="w-100">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="{% url 'inspectors:teachers_list' %}">PROFESSORES</a></li>
+          <li class="breadcrumb-item active" aria-current="page">IMPORTAR</li>
+        </ol>
+      </nav>
+      <a href="{% static 'modelo_importacao_professores.csv' %}" download>
+        <div class="card card-body ht-lg-100">
+          <div class="media">
+            <span class="tx-color-04"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download wd-60 ht-60"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></span>
+            <div class="media-body mg-l-20">
+              <h6 class="mg-b-10">Importação de professores via (CSV)</h6>
+              <p class="tx-color-03 mg-b-0 text-primary">O campos marcado com (<span class="text-danger">*</span>) são obrigatórios. Você pode baixar o modelo de arquivo clicando nesse card</p>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock breadcrumb-fixed %}
+
+
+{% block content-fixed %}
+<div class="ard cer dcv tw-mb-16">
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}  
+    <div class="row">
+      <div class="form-group col-12">
+        <div class="custom-file">
+          <input type="file" id="file_id" class="custom-file-input" @change="changeFile()">
+          <label class="custom-file-label" for="file_id">Selecione o arquivo CSV...</label>
+        </div>
+      </div>
+      <template v-if="file">
+        <div class="form-group col-12 mb-0">
+            <div class="custom-control custom-switch ">
+              <input type="checkbox" v-model="replaceSubjects"  id="replaceSubjects" class="custom-control-input">
+              <label class="custom-control-label" for="replaceSubjects">Remover as disciplinas anteriores</label>
+              <small class="form-text text-muted mt-0">Caso você deseja apenas uma importação incremental deixe essa opção desmarcada.</small>
+            </div>
+        </div>
+  
+        <div class="form-group col-12 my-3">
+            <div class="custom-control custom-switch ">
+              <input type="checkbox" v-model="replaceCoordinations"  id="replaceCoordinations" class="custom-control-input">
+              <label class="custom-control-label" for="replaceCoordinations">Remover as coordenações anteriores</label>
+              <small class="form-text text-muted mt-0">Caso você deseja apenas uma importação incremental deixe essa opção desmarcada.</small>
+            </div>
+        </div>
+  
+        <div class="form-group col-12">
+            <div class="custom-control custom-switch ">
+              <input type="checkbox" v-model="replacePermissions"  id="replacePermissions" class="custom-control-input">
+              <label class="custom-control-label" for="replacePermissions">Remover as permissões anteriores</label>
+              <small class="form-text text-muted mt-0">Marque essa opção caso você queria remover as permissões anteriores dessas professores que serão importados ou atualizados.</small>
+            </div>
+        </div>
+  
+        <div class="col-12" v-if="table.rows.length">
+          <button type="button" class="btn btn-primary btn-block" @click="convertToCsv()" :disabled="saving">
+            <template v-if="saving">
+              Importando professores, aguarde...
+            </template>
+            <template v-else>
+              Confirmar e enviar arquivo
+            </template>
+          </button>
+        </div>
+      </template>
+
+    </div>
+  </form>
+  <div class="card mg-b-10" v-show="table.header.length">
+    <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+      <div>
+        <h6 class="mg-b-5">Prévia da importação</h6>
+        <p class="tx-13 tx-color-03 mg-b-0">Você pode modificar os valores das coordenações, segmento, turmas e permissões dinamicamente</p>
+      </div>
+    </div>
+    <div class="card-body pd-y-15">
+      <div class="d-flex justify-content-between">
+        <div class="d-flex">
+          <div class="media mg-t-10">
+            <div class="wd-40 wd-md-50 ht-40 ht-md-50 bg-pink tx-white mg-r-10 mg-md-r-10 d-flex align-items-center justify-content-center rounded op-5">
+              <i data-feather="bar-chart-2"></i>
+            </div>
+            <div class="media-body">
+              <h6 class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold mg-b-5 mg-md-b-8">Linhas</h6>
+              <h4 class="tx-20 tx-sm-18 tx-md-24 tx-normal tx-rubik mg-b-0">${table.rows.length}</h4>
+            </div>
+          </div>
+          <div class="media mg-t-10 mg-sm-l-15 mg-md-l-40">
+            <div class="wd-40 wd-md-50 ht-40 ht-md-50 bg-primary tx-white mg-r-10 mg-md-r-10 d-flex align-items-center justify-content-center rounded op-5">
+              <i data-feather="bar-chart-2"></i>
+            </div>
+            <div class="media-body">
+              <h6 class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold mg-b-5 mg-md-b-8">Colunas</h6>
+              <h4 class="tx-20 tx-sm-18 tx-md-24 tx-normal tx-rubik mg-b-0">${table.header.length}</h4>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="cp border  text-center" @click="downloadCsv()">
+            <div class="p-2">
+              <div class="ht-md-50 bg-secondary tx-white d-flex align-items-center justify-content-center rounded op-5">
+                <i data-feather="download"></i>
+              </div>
+              <div class="media-body d-flex flex-column justify-content-center">
+                <h6 class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold mb-0 mt-1">Baixar a prévia do csv</h6>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- card-body -->
+    <div class="table-responsive">
+      <table class="table table-dashboard mg-b-0">
+        <thead>
+          <tr>
+            <th class="text-uppercase" v-for="key in table.header">
+              ${key} <span v-if="table.requiredFields.includes(key)" class="text-danger">*</span>
+            </th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(row, indexRow) in table.rows">
+            <td @click="table.selectedRowIndex = indexRow, table.selectedValueIndex = index" v-for="(value, index) in row">
+              <div class="d-flex justify-content-between flex-nowrap">
+                <div class="table-responsive">
+                  <template v-if="editing && table.selectedRowIndex == indexRow && table.selectedValueIndex == index">
+                    <input type="text" v-model="value" @input="table.rows[indexRow][index] = $event.target.value" @blur="editing = false" class="form-control form-control-sm">
+                  </template>
+                  <template v-else>
+                    <span @click="editing = true" v-if="table.editableFields.includes(table.header[index])">${value}</span>
+                    <span v-else>${value}</span>
+                  </template>
+                </div>
+                <div class="d-flex">
+                  <template v-if="['coordenacao', 'disciplinas', 'turmas', 'permissoes'].includes(table.header[index])">
+                    <span class="m-1 cp" data-toggle="modal" :data-target="getModal(table.header[index])[0]" @click="openedModal = getModal(table.header[index]), setValues(value)">
+                      <i class="fa fa-plus" v-if="!value"></i>
+                      <i class="fa fa-sync" v-else></i>
+                    </span>
+                    <span 
+                      v-if="indexRow > 0 && table.rows[indexRow - 1][index] && !table.rows[indexRow][index]" 
+                      title="Copiar o valor de cima"
+                      class="m-1 cp" 
+                      @click="table.rows[indexRow][index] = table.rows[indexRow - 1][index], $forceUpdate()" 
+                      ><i class="far fa-copy"></i>
+                    </span>
+                    <span 
+                      v-if="table.rows[indexRow][index]" 
+                      title="Copiar este valor para todos abaixo"
+                      class="m-1 cp text-primary" 
+                      @click="copyForAll(indexRow, index, table.rows[indexRow][index])" 
+                      ><i class="fa fa-clone"></i>
+                    </span>
+                  </template>
+                </div>
+              </div>
+            </td>
+            <td class="align-middle"><i class="fas fa-times text-danger cp" @click="table.rows.splice(indexRow, 1)"></i></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12" v-if="table.rows.length">
+      <button type="button" class="btn btn-primary btn-block" @click="convertToCsv()" :disabled="saving">
+        <template v-if="saving">
+          Importando professores, aguarde...
+        </template>
+        <template v-else>
+          Confirmar e enviar arquivo
+        </template>
+      </button>
+    </div>
+  </div>
+</div>
+<!-- <div class="row my-5" v-show="table.header.length">
+  <div class="col-12 py-2">
+    <h6>Legendas</h6>
+    <div class="row">
+      <div class="col">
+        <small>Valores possíveis para permissões dos professores</small>
+        <ul>
+          <li>coord - Coordenador de disciplina</li>
+          <li>coge - Corrige erratas</li>
+          <li>elab - Elabora questões</li>
+          <li>cog - Corretor provas de outros professores</li>
+          <li>cogeo - Corrige erratas de outros professores</li>
+          <li>qf - O professor pode utilizar o formatador de questões</li>
+        </ul>
+      </div>
+      <div class="col">
+        <small>Valores possíveis para segmentos</small>
+        <ul>
+          <li>1 - Anos iniciais (1º ano, 2º ano, 3º ano, 5º ano e 5º ano)</li>
+          <li>2 - Anos Finais (6º ano, 7º ano, 8º ano e 9º ano)</li>
+          <li>0 - Ensino Médio (1ª Série, 2ª Série e 3ª Série)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div> -->
+
+<div class="modal fade" id="modalCoordination" role="dialog" tabindex="-1">
+  <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Selecionar coordenacão</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body h-100" style="max-height: fit-content; height: fit-content;">          
+        <select id="coordination_id">
+          {% for coordination in coordinations %}
+            <option value="{{coordination.id}}">{{coordination}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="modal-footer">
+          <div class="form-buttons-w text-right">
+            <button class="btn btn-primary" @click="addValues()"><i class="os-icon os-icon-check"></i>Confirmar</button>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalSubjects" role="dialog" tabindex="-1">
+  <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Selecionar disciplinas</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body h-100" style="max-height: fit-content; height: fit-content;">          
+        <select id="subjects_id">
+          <option :value="subject.id" v-for="subject in subjects">${subject.name}</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+          <div class="form-buttons-w text-right">
+            <button class="btn btn-primary" @click="addValues()"><i class="os-icon os-icon-check"></i>Confirmar</button>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalSegments" role="dialog" tabindex="-1">
+  <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Selecionar segmento</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body h-100" style="max-height: fit-content; height: fit-content;">          
+        <select id="segments_id">
+          <option value="1">Anos iniciais (1º ano, 2º ano, 3º ano, 5º ano e 5º ano)</option>
+          <option value="2">Anos Finais (6º ano, 7º ano, 8º ano e 9º ano)</option>
+          <option value="0">Ensino Médio (1ª Série, 2ª Série e 3ª Série)</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+          <div class="form-buttons-w text-right">
+            <button class="btn btn-primary" @click="addValues()"><i class="os-icon os-icon-check"></i>Confirmar</button>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="modalClasses" role="dialog" tabindex="-1">
+  <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Selecionar turmas</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body h-100" style="max-height: fit-content; height: fit-content;">          
+        <select id="classes_id">
+          <option :value="classe.id" v-for="classe in classes">${classe.name}</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+          <div class="form-buttons-w text-right">
+            <button class="btn btn-primary" @click="addValues()"><i class="os-icon os-icon-check"></i>Confirmar</button>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="modalPermissions" role="dialog" tabindex="-1">
+  <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Selecionar permissões</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body h-100" style="max-height: fit-content; height: fit-content;">          
+        <select id="permissions_id">
+          <option value="coord">Coordenador de disciplina</option>
+          <option value="coge">Corrige erratas</option>
+          <option value="elab">Elabora questões</option>
+          <option value="cog">Corretor respostas de alunos de outros professores</option>
+          <option value="cogeo">Corrige erratas de outros professores</option>
+          <option value="qf">O professor pode utilizar o formatador de questões</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+          <div class="form-buttons-w text-right">
+            <button type="button" class="btn btn-primary" @click="addValues()"><i class="os-icon os-icon-check"></i>Confirmar</button>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalErrors" role="dialog" tabindex="-1">
+  <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Lista de erros na importação</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body h-100" style="max-height: fit-content; height: fit-content;" v-if="importResponse">          
+        <table class="table table-striped">
+          <tbody>
+            <tr v-for="error in importResponse.errors">
+              <td>${error.name}</td>
+              <td>${error.text}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+          <div class="form-buttons-w text-right">
+            <button type="button" class="btn btn-primary" data-dismiss="modal"><i class="os-icon os-icon-check"></i>Ok</button>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/datatables.net-responsive-dt/js/responsive.dataTables.min.js' %}"></script>
+<script src="{% static 'administration/lib/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'js/papaparse.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+<script>
+  
+  new Vue({
+    delimiters: ["${", "}"],
+    el: "#app",
+    data: {
+      file: null,
+      table: {
+        header: [],
+        rows: [],
+        selectedRowIndex: null,
+        selectedValueIndex: null,
+        requiredFields: ['nome', 'email', 'coordenacao'],
+        editableFields: ['nome', 'email'],
+      },
+      editing: false,
+      openedModal: null,
+      selecteInput: null,
+      saving: false,
+      importResponse: null,
+      replaceSubjects: false,
+      replaceCoordinations: false,
+      replacePermissions: false,
+      subjects: [
+        {% for subject in subjects %}
+          {
+            id: '{{subject.id}}',
+            name: '{{subject}}',
+          },
+        {% endfor %}
+      ],
+      classes: [
+        {% for classe in classes %}
+          {
+            id: '{{classe.id}}',
+            name: '{{classe.name}}',
+          },
+        {% endfor %}
+      ],
+    },
+    watch: {
+
+    },
+    methods: {
+      changeFile() {
+        this.file = document.getElementById('file_id')
+        Papa.parse(this.file.files[0], {
+          complete: (results) => {
+            console.log(results)
+            if(results.data.length) {
+              this.table.header = results.data[0]
+              this.table.rows = results.data.slice(1, results.data.length)
+            }
+          }
+        });
+      },
+      addValues() {
+        let selectModal = this.openedModal[0]
+        let selectedInput = this.openedModal[1]
+        let values = $(selectedInput).val()
+        let names = ""
+
+        if(selectedInput.includes('subjects') || selectedInput.includes('classes')) {
+          if(selectedInput.includes('subjects')) {
+            names = this.subjects.filter((s) => values.includes(s.id)).map((s) => s.name.split(' - ').slice(1, 4).join(' - '))
+          } else {
+            names = this.classes.filter((c) => values.includes(c.id)).map((c) => c.name)
+          }
+          this.table.rows[this.table.selectedRowIndex][this.table.selectedValueIndex] = typeof(names) == 'string' ? names:names.join(',')
+        } else {
+          this.table.rows[this.table.selectedRowIndex][this.table.selectedValueIndex] = typeof(values) == 'string' ? values:values.join(',')
+        }
+
+        $(selectedInput).val([]).trigger('change')
+        $(selectModal).modal('hide')
+        this.$forceUpdate()
+      },
+      copyForAll(indexRow, index, value) {
+        this.table.rows.slice(indexRow, this.table.rows.length).forEach((row) => {
+          row[index] = value
+          this.$forceUpdate()
+        })
+      },
+      getModal(header) {
+        let modals = {
+          'coordenacao': ['#modalCoordination', '#coordination_id'],
+          'turmas': ['#modalClasses', '#classes_id'],
+          'permissoes': ['#modalPermissions', '#permissions_id'],
+          'disciplinas': ['#modalSubjects', '#subjects_id'],
+        }
+        return modals[header]
+      },
+      setValues(values) {
+        let selectedInput = this.openedModal[1]
+        $(selectedInput).val(values.split(',')).trigger('change')
+      },
+      getCsvData() {
+        let data = [this.table.header]
+        data = data.concat(this.table.rows)
+        return data
+      },
+      convertToCsv() {
+        this.saving = true
+        let csv = Papa.unparse(this.getCsvData());
+        // Converter o CSV em um objeto File
+        const csvBlob = new Blob([csv], { type: 'text/csv' });
+        const csvFile = new File([csvBlob], 'professores.csv');
+
+        // Criar um objeto FormData e adicionar o arquivo a ele
+        let formData = new FormData();
+        formData.append('csrfmiddlewaretoken', $('[name="csrfmiddlewaretoken"]').val());
+        formData.append('file', csvFile); 
+        formData.append('replace_coordinations', this.replaceCoordinations);
+        formData.append('replace_subjects', this.replaceSubjects);
+        formData.append('replace_permissions', this.replacePermissions);
+        formData.append('teachers_emails', this.table.rows.map((row) => row[1]));
+
+        axios.post("{% url 'api:inspectors-import-teachers' %}", formData).then((response) => {
+          this.importResponse = response.data
+          let icon = 'info'
+          let message = 'Os professores foram importados com sucesso'
+
+          if(response.data.errors.length) {
+            icon = 'warning'
+            message = 'Nem todos os professores foram importados, certifique-se de que os dados obrigagórios estão corretos, ou que não tenha nenhum professor com o email repetido'
+          }
+          Swal.fire({
+            icon: icon,
+            title: 'Concluído',
+            text: message,
+            showCancelButton: response.data.errors.length ? true:false,
+            confirmButtonText: 'Ok, concluir',
+            cancelButtonText: 'Ver erros',
+          }).then((result) => {
+            if (result.dismiss == 'cancel') {
+              $("#modalErrors").modal('show')
+            }
+          })
+        }).catch((e) => {
+          alert('Algum erro', e)
+        }).finally(() => {
+          this.saving = false
+        })
+      },
+      downloadCsv() {
+        let csv = Papa.unparse(this.getCsvData());
+        
+        const csvBlob = new Blob([csv], { type: 'text/csv' });
+
+        let csvUrl = URL.createObjectURL(csvBlob);
+        // cria um link para baixar o arquivo
+        let downloadLink = $('<a>')
+          .attr('href', csvUrl)
+          .attr('target', '_blank')
+          .attr('download', 'importacao_professores.csv')
+
+        // simula um clique no link
+        downloadLink.get(0).click();
+      }
+    },
+    mounted() {
+      $('.custom-file input').change(function (e) {
+        if (e.target.files.length) {
+          $(this).next('.custom-file-label').html(e.target.files[0].name);
+        }
+      });
+
+      let options = {
+        placeholder: "Selecione uma opção",
+        width: '100%',
+      }
+      $('#coordination_id').select2({ ...options, closeOnSelect: true });
+      $('#classes_id').select2({ ...options, closeOnSelect: false, multiple: true });
+      $('#permissions_id').select2({ ...options, closeOnSelect: false, multiple: true });
+      $('#subjects_id').select2({ ...options, closeOnSelect: false, multiple: true });
+    }
+  })
+</script>
+{% endblock %}

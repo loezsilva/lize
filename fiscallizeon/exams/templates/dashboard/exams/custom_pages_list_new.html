@@ -1,0 +1,293 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load cleaned_params %}
+{% load call_function_with_params %}
+{% load get_value_from_dict %}
+{% load permissions %}
+
+{% block title %}Listagem de páginas customizáveis - Lize{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'administration/lib/datatables.net-responsive-dt/css/responsive.dataTables.min.css' %}">
+<link rel="stylesheet" href="https://unpkg.com/@sjmc11/tourguidejs/dist/css/tour.min.css">
+<style>
+  .tg-backdrop{
+    z-index: 9999 !important;
+  }
+  .select2-selection__choice__remove {
+    display: none !important;
+  }
+  .dropdown-menu { margin-top: 0 !important; }
+</style>
+
+{% endblock %}
+
+
+{% block content-fixed %}
+<div class="tw-flex tw-justify-center">
+  <div class="ard cer dcv tw-pb-8 tw-max-w-[100rem] tw-flex-1 tw-mb-16">
+    <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1.5rem; justify-content: space-between;">
+      <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-6 sm:tw-flex-nowrap tw-w-full">
+        <h1 class="tw-text-xl tw-font-semibold tw-leading-7 tw-text-[#374151] sm:tw-truncate sm:tw-text-2xl sm:tw-tracking-tight tw-mb-0">
+          Páginas Customizadas
+        </h1>  
+        <div class="tw-ml-auto tw-flex tw-gap-3">
+          {% if user_type == 'coordination' %}
+            {% if user|has_perm:'exams.add_clientcustompage' %}
+              <div>
+                <a href="{% url 'exams:custom-pages-create' %}" class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600 hover:tw-text-white">
+                  Cadastrar Página
+                </a>
+              </div>
+            {% endif %}              
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="tw-bg-white sm:tw-rounded-lg tw-pt-5 tw-border tw-border-[#E5E7EA]">
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8">
+        <div class="tw-flow-root">
+          <div class="tw--mx-4 tw--my-2 tw-overflow-x-auto sm:tw--mx-6 lg:tw--mx-8">
+            <div class="tw-inline-block tw-min-w-full tw-py-2 tw-align-middle sm:tw-px-6 lg:tw-px-8">
+              <div class="tw-relative">
+                <div v-if="selectionList.length > 0" class="tw-absolute tw-top-0 tw-left-14 tw-flex tw-h-12 tw-items-center tw-space-x-3 tw-bg-white sm:tw-left-12">
+                  <button type="button" class="tw-inline-flex tw-items-center tw-rounded tw-bg-white tw-px-2 tw-py-1 tw-text-sm tw-font-semibold tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 disabled:tw-cursor-not-allowed disabled:tw-opacity-30 disabled:hover:tw-bg-white" @click="removeAllSelected()">Remover selecionadas</button>
+                </div>
+                <table class="tw-min-w-full tw-table-fixed tw-divide-y tw-divide-gray-300">
+                  <thead>
+                    <tr>
+                      <th data-tg-title="Selecione vários" data-tg-order="2" data-tg-tour="Selecione vários instrumentos avaliativos ao mesmo tempo e aplique ações em massa." data-tg-group="default-exam-list" scope="col" class="tw-relative tw-px-7 sm:tw-w-12 sm:tw-px-6">
+                          <input type="checkbox" class="tw-absolute tw-left-4 tw-top-1/2 tw--mt-2 tw-h-4 tw-w-4 tw-rounded tw-border-gray-300 tw-text-primary-600 focus:tw-ring-primary-600" :checked="isIndeterminate || selectionList.length === pages.length" :indeterminate.prop="isIndeterminate" @change="selectionList = $event.target.checked ? pages.map((e) => e.pk) : []" />
+                      </th>
+                      <th scope="col" class="tw-min-w-[12rem] tw-py-3.5 tw-pr-3 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900">Nome</th>
+                      <th scope="col" class="tw-px-3 tw-py-3.5 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900">Local</th>
+                      <th scope="col" class="tw-relative tw-py-3.5 tw-pl-3 tw-pr-4 sm:tw-pr-3">
+                        <span class="tw-sr-only">Ações</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody class="tw-divide-y tw-divide-gray-200 tw-bg-white">
+                    {% for page in object_list %}
+                      
+                        <tr id="tr-{{ page.pk }}" :class="[selectionList.includes('{{ page.pk }}') && 'bg-gray-50']">
+                          <td class="tw-relative tw-px-7 sm:tw-w-12 sm:tw-px-6">
+                            <div v-if="selectionList.includes('{{ page.pk }}')" class="tw-absolute tw-inset-y-0 tw-left-0 tw-w-0.5 tw-bg-primary-600">
+                            </div>
+                            <input type="checkbox" class="tw-absolute tw-left-4 tw-top-1/2 tw--mt-2 tw-h-4 tw-w-4 tw-rounded tw-border-gray-300 tw-text-primary-600 focus:tw-ring-primary-600" value="{{ page.pk }}" v-model="selectionList" />
+                          </td>
+                          <td :class="['tw-py-4 tw-pr-3 tw-text-sm tw-font-medium', selectionList.includes('{{ page.pk }}') ? 'tw-text-primary-600' : 'tw-text-gray-900']">
+                            <div class="tw-font-medium tw-text-gray-900">{{ page.name }}</div>
+                          </td>
+                          <td :class="['tw-py-4 tw-pr-3 tw-text-sm tw-font-medium', selectionList.includes('{{ page.pk }}') ? 'tw-text-primary-600' : 'tw-text-gray-900']">
+                            <div class="tw-font-medium tw-text-gray-900">{{ page.get_location_display }}</div>
+                          </td>
+                          <td class="tw-whitespace-nowrap tw-py-4 tw-pl-3 tw-pr-4 tw-text-sm tw-font-medium sm:tw-pr-3">
+                            <div class="tw-flex tw-items-center tw-justify-end tw-space-x-4">
+                              
+                                
+                                  <a 
+                                   href="#" @click="duplicatePage('{{page.pk}}', '{{page.name}}')" class="tw-rounded-full tw-bg-[#F9FAFA] tw-p-2 tw-text-primary-600 tw-shadow-sm hover:tw-bg-[#fff4ec] focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:outline-offset-2 focus-visible:tw-outline-[#ffdec7]" data-toggle="tooltip" data-placement="top" title="Duplicar Página"> 
+                                    <svg class="tw-h-5 tw-w-5" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <g clip-path="url(#clip0_1_2)">
+                                      <path d="M54.375 0H16.875C13.7695 0 11.25 2.51953 11.25 5.625V11.25H5.625C2.51953 11.25 0 13.7695 0 16.875V54.375C0 57.4805 2.51953 60 5.625 60H43.125C46.2305 60 48.75 57.4805 48.75 54.375V48.75H54.375C57.4805 48.75 60 46.2305 60 43.125V5.625C60 2.51953 57.4805 0 54.375 0ZM42.4219 54.375H6.32812C6.14164 54.375 5.9628 54.3009 5.83094 54.1691C5.69908 54.0372 5.625 53.8584 5.625 53.6719V17.5781C5.625 17.3916 5.69908 17.2128 5.83094 17.0809C5.9628 16.9491 6.14164 16.875 6.32812 16.875H11.25V43.125C11.25 46.2305 13.7695 48.75 16.875 48.75H43.125V53.6719C43.125 53.8584 43.0509 54.0372 42.9191 54.1691C42.7872 54.3009 42.6084 54.375 42.4219 54.375ZM53.6719 43.125H17.5781C17.3916 43.125 17.2128 43.0509 17.0809 42.9191C16.9491 42.7872 16.875 42.6084 16.875 42.4219V6.32812C16.875 6.14164 16.9491 5.9628 17.0809 5.83094C17.2128 5.69908 17.3916 5.625 17.5781 5.625H53.6719C53.8584 5.625 54.0372 5.69908 54.1691 5.83094C54.3009 5.9628 54.375 6.14164 54.375 6.32812V42.4219C54.375 42.6084 54.3009 42.7872 54.1691 42.9191C54.0372 43.0509 53.8584 43.125 53.6719 43.125Z" fill="#FF8F3D"/>
+                                      </g>
+                                      <defs>
+                                      <clipPath id="clip0_1_2">
+                                      <rect width="60" height="60" fill="white"/>
+                                      </clipPath>
+                                      </defs>
+                                    </svg>
+                                      
+                                  </a>
+                                  {% if user|has_perm:'exams.change_clientcustompage' %}
+                                  <a href="{% url 'exams:custom-pages-update' page.pk %}" class="tw-rounded-full tw-bg-[#F9FAFA] tw-p-2 tw-text-primary-600 tw-shadow-sm hover:tw-bg-[#fff4ec] focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:outline-offset-2 focus-visible:tw-outline-[#ffdec7]" data-toggle="tooltip" data-placement="top" title="Alterar Página">
+                                    <svg class="tw-h-5 tw-w-5" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M11 3.99998H6.8C5.11984 3.99998 4.27976 3.99998 3.63803 4.32696C3.07354 4.61458 2.6146 5.07353 2.32698 5.63801C2 6.27975 2 7.11983 2 8.79998V17.2C2 18.8801 2 19.7202 2.32698 20.362C2.6146 20.9264 3.07354 21.3854 3.63803 21.673C4.27976 22 5.11984 22 6.8 22H15.2C16.8802 22 17.7202 22 18.362 21.673C18.9265 21.3854 19.3854 20.9264 19.673 20.362C20 19.7202 20 18.8801 20 17.2V13M7.99997 16H9.67452C10.1637 16 10.4083 16 10.6385 15.9447C10.8425 15.8957 11.0376 15.8149 11.2166 15.7053C11.4184 15.5816 11.5914 15.4086 11.9373 15.0627L21.5 5.49998C22.3284 4.67156 22.3284 3.32841 21.5 2.49998C20.6716 1.67156 19.3284 1.67155 18.5 2.49998L8.93723 12.0627C8.59133 12.4086 8.41838 12.5816 8.29469 12.7834C8.18504 12.9624 8.10423 13.1574 8.05523 13.3615C7.99997 13.5917 7.99997 13.8363 7.99997 14.3255V16Z" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                  </a>
+                                  {% endif %}
+                                  {% if user|has_perm:'exams.delete_clientcustompage' %}
+                                  <a href="javascript:void(0)" class="nav-link p-2" onClick="confirmCancel('{% url "exams:custom-pages-delete" page.pk %}')" data-toggle="tooltip" data-placement="top" title="Remover">
+                                    <svg class="tw-h-5 tw-w-5" viewBox="0 0 57 65" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <g clip-path="url(#clip0_3_2)">
+                                      <path d="M34.0982 52.8125H37.1518C37.5567 52.8125 37.9451 52.652 38.2314 52.3663C38.5177 52.0806 38.6786 51.6931 38.6786 51.2891V23.8672C38.6786 23.4631 38.5177 23.0757 38.2314 22.79C37.9451 22.5043 37.5567 22.3438 37.1518 22.3438H34.0982C33.6933 22.3438 33.3049 22.5043 33.0186 22.79C32.7323 23.0757 32.5714 23.4631 32.5714 23.8672V51.2891C32.5714 51.6931 32.7323 52.0806 33.0186 52.3663C33.3049 52.652 33.6933 52.8125 34.0982 52.8125ZM54.9643 10.1563H44.4804L40.1545 2.95801C39.6114 2.05502 38.843 1.30789 37.9243 0.789477C37.0056 0.271063 35.9679 -0.000937712 34.9125 2.42887e-06H22.0875C21.0321 -0.000937712 19.9944 0.271063 19.0757 0.789477C18.157 1.30789 17.3886 2.05502 16.8455 2.95801L12.5196 10.1563H2.03571C1.49581 10.1563 0.978017 10.3703 0.596247 10.7512C0.214476 11.1321 0 11.6488 0 12.1875L0 14.2188C0 14.7575 0.214476 15.2741 0.596247 15.6551C0.978017 16.036 1.49581 16.25 2.03571 16.25H4.07143V58.9063C4.07143 60.5224 4.71486 62.0724 5.86017 63.2152C7.00548 64.358 8.55886 65 10.1786 65H46.8214C48.4411 65 49.9945 64.358 51.1398 63.2152C52.2851 62.0724 52.9286 60.5224 52.9286 58.9063V16.25H54.9643C55.5042 16.25 56.022 16.036 56.4038 15.6551C56.7855 15.2741 57 14.7575 57 14.2188V12.1875C57 11.6488 56.7855 11.1321 56.4038 10.7512C56.022 10.3703 55.5042 10.1563 54.9643 10.1563ZM21.8585 6.46192C21.9271 6.34841 22.0243 6.25474 22.1403 6.19017C22.2563 6.1256 22.3872 6.09237 22.5201 6.09375H34.4799C34.6128 6.09237 34.7437 6.1256 34.8597 6.19017C34.9757 6.25474 35.0729 6.34841 35.1415 6.46192L37.3554 10.1563H19.6446L21.8585 6.46192ZM46.8214 58.9063H10.1786V16.25H46.8214V58.9063ZM19.8482 52.8125H22.9018C23.3067 52.8125 23.6951 52.652 23.9814 52.3663C24.2677 52.0806 24.4286 51.6931 24.4286 51.2891V23.8672C24.4286 23.4631 24.2677 23.0757 23.9814 22.79C23.6951 22.5043 23.3067 22.3438 22.9018 22.3438H19.8482C19.4433 22.3438 19.0549 22.5043 18.7686 22.79C18.4823 23.0757 18.3214 23.4631 18.3214 23.8672V51.2891C18.3214 51.6931 18.4823 52.0806 18.7686 52.3663C19.0549 52.652 19.4433 52.8125 19.8482 52.8125Z" fill="#FF8F3D"/>
+                                      </g>
+                                      <defs>
+                                      <clipPath id="clip0_3_2">
+                                      <rect width="57" height="65" fill="white"/>
+                                      </clipPath>
+                                      </defs>
+                                      </svg>
+                                      
+                                  </a>  
+                                  {% endif %}
+
+                            </div>
+                          </td>
+                        </tr>
+                      
+                    {% empty %}
+                      <tr>
+                        <td colspan="4"><p class="tw-py-4">Não há páginas cadastradas</p></td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% if is_paginated %}
+        {% include 'redesign/includes/pagination.html' with objects=object_list %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+  {% include 'includes/confirm_modal.html' %}
+{% endblock extra-modal %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.20/lodash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="{% static 'js/tippy/popper.min.js' %}"></script>
+<script src="{% static 'js/tippy/tippy.min.js' %}"></script>
+<script src="{% static 'administration/lib/datatables.net-responsive-dt/js/responsive.dataTables.min.js' %}"></script>
+<script src="{% static 'administration/lib/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+<script src="https://unpkg.com/@sjmc11/tourguidejs/dist/tour.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    components: {
+      {% include 'includes/components/vue-filters.html' %}
+    },
+    el: '#app',
+    data: {
+      pages: [
+        {% for page in object_list %}
+          { 
+            pk: "{{ page.pk }}", 
+          },
+        {% endfor %}
+      ],
+      selectionList: [],
+
+    },
+    methods: {
+
+
+      activeCancelSelection(param) {
+        if (param == true) {
+          $("#btn-remove").show();
+          $('.check-selection').show();
+          $("#btn-cancel-selection").show();
+          $("#btn-change-status").show();
+          $('.selectbox').show();
+          $("#btn-selection-all").hide();
+        } else {
+          $('.check-selection').hide();
+          $("#btn-remove").hide();
+          $("#btn-cancel-selection").hide();
+          $("#btn-change-status").hide();
+          $("#btn-selection-all").show();
+          $('.selectbox').hide().prop('checked', false)
+          this.selectionList = []
+        }
+      },
+      removeAllSelected(){
+        if (this.selectionList.length > 0){
+          Swal.fire({
+            title: 'Tem certeza?',
+            text: "Você não será capaz de reverter isso!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sim, exclua!'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              this.selectionList.forEach((item, index) => {
+                urls = "{% url 'exams:exams_api_custom_pages_delete_all' pk='00000000-0000-0000-0000-000000000000' %}"
+                axios.delete(urls.replace("00000000-0000-0000-0000-000000000000", item ))
+                .then(response => {
+                  window.location.reload()
+                  this.selectionList = [];
+                })
+              }) 
+            }
+          })   
+        } else {
+          Swal.fire(
+          'Atenção!',
+          'Não há cadernos selecionados.',
+          'warning'
+          )
+        }
+      },
+      duplicatePage(pk, name){
+        Swal.fire({
+          title: 'Duplicar página',
+          text: `Deseja duplicar a página ${name}?`,
+          icon: 'info',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Duplicar'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            url = "{% url 'exams:custom-pages-duplicate' '00000000-0000-0000-0000-000000000000' %}"
+            const formData = new FormData();
+
+            const headers = { 'Content-Type': 'multipart/form-data'};
+            
+            axios.post(url.replace("00000000-0000-0000-0000-000000000000", pk), {}, headers
+            )
+            .then(response => {
+              this.alertTop("Página duplicada com sucesso!");
+              window.location.reload()
+              {% comment %} window.location.href = "{% url 'exams:custom-pages-update' '00000000-0000-0000-0000-000000000000' %}".replace("00000000-0000-0000-0000-000000000000", response.data.id); {% endcomment %}
+            }).catch((e) => {
+              this.alertTop('Ocorreu um erro ao tentar duplicar a pagina, tente novamente, caso o erro persista entre em contato com o suporte', 'error')
+      
+            })
+          }
+        })   
+      },
+
+      alertTop(text) {
+        Swal.fire({
+          position: 'top-end',
+          text: text,
+          icon: 'success',
+          showConfirmButton: false,
+          timer: 1500,
+          toast: true,
+          timerProgressBar: true,
+        })
+      },
+
+    },
+    mounted() {
+      this.activeCancelSelection()
+
+    },
+    computed: {
+
+      isIndeterminate() {
+        return this.selectionList.length > 0 && this.selectionList.length < this.pages.length
+      },
+    },
+  })
+
+</script>
+{% endblock %}

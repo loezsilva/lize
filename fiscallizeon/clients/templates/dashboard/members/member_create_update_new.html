@@ -1,0 +1,390 @@
+{% extends 'redesign/base.html' %}
+
+{% load static %}
+
+{% block title %}
+  {% if not object %}
+    Cadastrar membro - Lize
+  {% else %}
+    Editar membro - Lize
+  {% endif %}
+{% endblock title %}
+
+{% block js-header-additional %}
+<script src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
+  integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
+  integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa" crossorigin="anonymous"></script>
+
+<script src="{% static 'js/treeselectjs.umd.js' %}"></script>
+<link rel="stylesheet" href="{% static 'css/treeselectjs.css' %}" />
+{% endblock js-header-additional %}
+
+{% block content-fixed %}
+<div class="tw-flex tw-justify-center">
+  <div class="ard cer dcv tw-max-w-[100rem] tw-flex-1">
+    <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1.5rem; justify-content: space-between;">
+      <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-8 sm:tw-flex-nowrap tw-w-full">
+        <h1 class="tw-text-xl tw-font-semibold tw-leading-7 tw-text-[#374151] sm:tw-truncate sm:tw-text-2xl sm:tw-tracking-tight tw-mb-0">
+          {% if not object %}
+            Cadastrar membro
+          {% else %}
+            Editar membro
+          {% endif %}
+        </h1>
+        <div class="tw-ml-auto tw-flex tw-gap-4">
+          <button type="submit"  form="form-member-create-update" class="tw-flex tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 hover:tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600">
+            Salvar membro
+          </button>
+        </div>
+      </div>
+    </div>
+    <form method="POST" id="form-member-create-update" onsubmit="return false">
+    {% csrf_token %}
+      <div class="tw-space-y-4">
+        <div data-tg-title="Informações Básicas" data-tg-order="2" data-tg-tour='Insira informações básicas do membro, como nome, email e as coordenações que ele pertence.' data-tg-group="default-member-create-update" class="tw-bg-white sm:tw-rounded-lg tw-py-8 tw-border tw-border-[#E5E7EA]">
+          <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8">
+            <h2 class="tw-text-base tw-font-semibold tw-leading-7 tw-text-gray-900 tw-border-b tw-border-gray-900/10 tw-pb-6">
+              Informações básicas
+            </h2>
+            <div class="tw-mt-8 tw-grid tw-grid-cols-1 tw-gap-x-9 tw-gap-y-6 sm:tw-grid-cols-6">
+              <div class="sm:tw-col-span-2">
+                <label for="{{ form.name.label }}" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                  {{ form.name.label }}
+                </label>
+                <div class="tw-mt-2">
+                  <input type="text" name="{{ form.name.html_name }}" id="{{ form.name.auto_id }}" autocomplete="on" required class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" v-model="member.name">
+                </div>
+                <div class="tw-mt-2">
+                  <label v-if="errors.name" v-for="err in errors.name" class="text-danger">${err}</label>
+                </div>
+              </div>
+              <div class="sm:tw-col-span-2">
+                <label for="{{ form.email.label }}" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                  {{ form.email.label }}
+                </label>
+                <div class="tw-mt-2">
+                  <input type="text" name="{{ form.email.html_name }}" id="{{ form.email.auto_id }}" autocomplete="on" required class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" v-model="member.email">
+                </div>
+                <div class="tw-mt-2">
+                  <label v-if="errors.email" v-for="err in errors.email" class="text-danger">${err}</label>
+                </div>
+              </div>
+              <div class="sm:tw-col-span-4" >
+                <label for="coordinations-id-treeselect" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                  Coordenações que o membro pertence
+                </label>
+                <div class="tw-mt-2" >
+                  
+                  
+                  <div data-tg-title="Coordenações autorizadas" data-tg-order="2" data-tg-tour='Selecione 1 ou mais coordenações que terão acesso a este instrumento avaliativo.' data-tg-group="default-member-create-update" id="coordinations-id-treeselect"></div>
+                  
+                  
+                  <div data-tg-title="Coordenações autorizadas" data-tg-order="2" data-tg-tour='Você também pode selecionar todas as coordenações de um segmento.' data-tg-group="default-member-create-update" class="tw-flex tw-gap-2 tw-mt-3">
+                    <button type="button" class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-px-3 tw-py-1.5 tw-text-xs tw-font-medium tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2" :class="[coordinationsToSelect2.includes('elementarySchool') ? 'tw-text-primary-600 tw-border tw-border-primary-600 hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline-primary-600' : 'tw-text-[#384250] tw-bg-[#F9FAFA] hover:tw-bg-[#ececec] focus-visible:tw-outline-gray-600']" @click="addCoordinationsToSelect2('elementarySchool')">
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                        <path d="M8.00001 3.33331V12.6666M3.33334 7.99998H12.6667" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      Anos Iniciais
+                    </button>
+                    <button type="button" class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-px-3 tw-py-1.5 tw-text-xs tw-font-medium tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2" :class="[coordinationsToSelect2.includes('elementarySchool2') ? 'tw-text-primary-600 tw-border tw-border-primary-600 hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline-primary-600' : 'tw-text-[#384250] tw-bg-[#F9FAFA] hover:tw-bg-[#ececec] focus-visible:tw-outline-gray-600']" @click="addCoordinationsToSelect2('elementarySchool2')">
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                        <path d="M8.00001 3.33331V12.6666M3.33334 7.99998H12.6667" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      Anos Finais
+                    </button>
+                    <button type="button" class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-px-3 tw-py-1.5 tw-text-xs tw-font-medium tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2" :class="[coordinationsToSelect2.includes('highSchool') ? 'tw-text-primary-600 tw-border tw-border-primary-600 hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline-primary-600' : 'tw-text-[#384250] tw-bg-[#F9FAFA] hover:tw-bg-[#ececec] focus-visible:tw-outline-gray-600']" @click="addCoordinationsToSelect2('highSchool')">
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                        <path d="M8.00001 3.33331V12.6666M3.33334 7.99998H12.6667" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      Ensino médio
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% if object %}
+          <div data-tg-title="Dados de usuário" data-tg-order="2" data-tg-tour='Se necesário, insira informações para criação do usuário.' data-tg-group="default-member-create-update" class="tw-bg-white sm:tw-rounded-lg tw-py-8 tw-border tw-border-[#E5E7EA]">
+            <div  class="tw-px-4 sm:tw-px-6 lg:tw-px-8">
+              <h2 class="tw-text-base tw-font-semibold tw-leading-7 tw-text-gray-900 tw-border-b tw-border-gray-900/10 tw-pb-6">
+                Dados de usuário
+              </h2>
+              <div>
+                <div>
+                  <div class="tw-mt-8 tw-grid tw-grid-cols-1 tw-gap-x-9 tw-gap-y-6 sm:tw-grid-cols-6">
+                    <div class="sm:tw-col-span-2 sm:tw-col-start-1" >
+                      <label for="{{ form.username.id_for_label }}" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                        {{ form.username.label }}
+                      </label>
+                      <input type="text" name="{{ form.username.html_name }}" id="{{ form.username.auto_id }}" autocomplete="on" required class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" v-model="member.username">
+                      <div class="tw-mt-2">
+                        <label v-if="errors.username" v-for="err in errors.username" class="text-danger">${err}</label>
+                      </div>
+                    </div>
+                    <div class="sm:tw-col-span-2 sm:tw-col-start-1" >
+                      <label for="{{ form.password.id_for_label }}" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                        {{ form.password.label }}
+                      </label>
+                      <input type="password" name="{{ form.password.html_name }}" id="{{ form.password.auto_id }}" autocomplete="on" {% if not object %}required{% endif %} class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" v-model="member.password">
+                      <div class="tw-mt-2">
+                        <label v-if="errors.password" v-for="err in errors.password" class="text-danger">${err}</label>
+                      </div>
+                    </div>
+                    <div class="sm:tw-col-span-2 sm:tw-col-start-1" >
+                      <label for="{{ form.confirmation_password.id_for_label }}" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                        {{ form.confirmation_password.label }}
+                      </label>
+                      <input type="password" name="{{ form.confirmation_password.html_name }}" id="{{ form.confirmation_password.auto_id }}" autocomplete="on" {% if not object %}required{% endif %} class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" v-model="member.confirmationPassword">
+                    </div>
+                    <div class="sm:tw-col-span-2 sm:tw-col-start-1">
+                      <div class="custom-control custom-switch" >
+                        <input type="checkbox" id="must_change_password_id" name="must_change_password" class="custom-control-input" v-model="member.must_change_password" />
+                        <label class="custom-control-label" for="must_change_password_id">
+                          <span class="tw-font-semibold tw-text-[#101928]">Mudar a senha no próximo acesso</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+      <div class="tw-mt-6 tw-mb-9">
+        <button type="submit" class="tw-w-full tw-flex tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2.5 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 hover:tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600">Salvar membro</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+
+
+<script src="{% static 'administration/lib/typeahead.js/typeahead.bundle.min.js' %}"></script>
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'administration/assets/vendor/jquery.mask.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+<script src="{% static 'js/numeric.js' %}"></script>
+<script src="https://unpkg.com/isotope-layout@3/dist/isotope.pkgd.min.js"></script>
+<script src="//unpkg.com/focus-overlay@latest/dist/focusoverlay.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="https://unpkg.com/@sjmc11/tourguidejs/dist/tour.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script type="text/javascript">
+  moment.locale('pt-br');
+  var app_question = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {
+        member: {
+            name: '{{ object.name|default:"" }}',
+            email: '{{ object.email|default:"" }}',
+            coordinations: '{{ object.coordinations|default:'[]'|safe }}',
+            username: '{{ object.username|default:"" }}',
+            password: '',
+            confirmationPassword: '',
+            must_change_password: {{ object.must_change_password|default:False|lower }},
+        },
+        errors: {},
+        coordinations: [
+            {% for coordination in coordinations %}
+            {
+                pk: '{{coordination.pk}}',  
+                highSchool: {{coordination.high_school|lower}}, 
+                elementarySchool: {{coordination.elementary_school|lower}}, 
+                elementarySchool2: {{coordination.elementary_school2|lower}}, 
+            },
+            {% endfor %}
+        ],
+        coordinationsToSelect2: [],
+        treeselect: null,
+        initialEmail: '{{ object.email|default:"" }}',
+
+    },
+    computed: {
+    },
+    watch: {
+    },
+    methods: {
+        async checkInspectorAssociation() {
+          email = this.member.email
+          if (this.initialEmail) {
+            email = this.initialEmail
+          }
+          const url = `{% url 'api2:check-inspector-association-api' %}?email=${email}`;
+      
+          try {
+              const response = await axios.get(url);
+              if (response.data.email_exists) {
+                  return true;
+              } else {
+                  return false;
+              }
+          } catch (error) {
+              return false;
+          }
+        },
+        processAndSendForm(){
+          const form = document.getElementById('form-member-create-update');
+          const formData = new FormData(form);
+          this.member.coordinations = this.treeselect.value
+          
+          // inserindo coordenações manualmente
+          formData.append('coordinations', this.member.coordinations);
+          axios.post(form.action, formData).then((res) => {
+              if (res.data.success) {
+                  Swal.fire({
+                      icon: 'success',
+                      title: 'Membro salvo com sucesso!',
+                      showConfirmButton: false,
+                      timer: 1500
+                  })
+                  window.location.href = res.data.redirect_url;
+              } else {
+                  this.errors = res.data.errors
+              }
+          }).catch((err) => {
+              Swal.fire({
+                  icon: 'error',
+                  title: 'Erro ao salvar membro!',
+                  text: 'Ocorreu um erro inesperado, tente novamente mais tarde.',
+              })
+          })
+        },
+        showSwal(htmlContent) {
+          Swal.fire({
+            title: 'Atenção!',
+            html: htmlContent,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Confirmar e salvar membro',
+            cancelButtonText: 'Cancelar'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              this.processAndSendForm();
+            } 
+          });
+        },
+        async saveMember() {
+          let html = `No primeiro acesso, essas serão as credenciais do usuário <br/><strong>usuário: ${this.member.email}<br/>Senha: ${this.member.email}</strong><br/> Salve-as antes de prosseguir`;
+          const inspectorAssociation = await this.checkInspectorAssociation();
+
+          {% if not object %}
+            if(inspectorAssociation) {            
+              html = 'O email que você adicionou pertence a um professor existente. Ao salvar este coordenador, ele será associado a este professor. <br/><br/>';
+              html += `No primeiro acesso, essas serão as credenciais do usuário <br/><strong>usuário: ${this.member.email}<br/>Senha: ${this.member.email}</strong><br/> Salve-as antes de prosseguir`;
+              }
+              this.showSwal(html)
+            {% else %}
+              if(inspectorAssociation) {
+                html = 'Este coordenador está associado a um professor existente. Ao fazer alterações no usuário, isso irá refletir no professor associado. <br/><br/>';
+                this.showSwal(html)
+              } else {
+                this.processAndSendForm();
+              }
+          {% endif %}
+        },
+        isOnlyPropertyTrue(coordination, coordinationsToSelect2, propertyName) {
+            for (const prop in coordination) {
+                if (prop !== propertyName && coordinationsToSelect2.includes(prop) && coordination[prop] === true) {
+                return false
+                }
+            }
+            return coordination[propertyName] === true
+        },
+        addCoordinationsToSelect2(type) {
+            let coordinationsToSelect2 = []
+            let memberCoordinations = []
+            if (!this.coordinationsToSelect2.includes(type)) {
+              coordinationsToSelect2 = [...this.coordinationsToSelect2, type]
+              memberCoordinations = [
+                ...this.member.coordinations,
+                ...this.coordinations.filter(coordination => coordination[type]).map(coordination => coordination.pk),
+              ]
+            } else {
+              coordinationsToSelect2 = this.coordinationsToSelect2.filter(element => element !== type)
+              memberCoordinations = this.member.coordinations.filter(
+                    coordination => {
+                        const foundCoordination = this.coordinations.find(coordinationObj => coordinationObj.pk === coordination);
+                        return !foundCoordination || !this.isOnlyPropertyTrue(foundCoordination, coordinationsToSelect2, type);
+                    }
+                )
+            }
+    
+            this.coordinationsToSelect2 = coordinationsToSelect2
+            this.member.coordinations = memberCoordinations
+            this.treeselect.updateValue(memberCoordinations)
+    
+            $('#coordinations-id').val(memberCoordinations)
+            $('#coordinations-id').trigger('change')
+        },
+        initializeSelect2: function() {
+            self = this
+            $("#coordinations-id").select2({
+            closeOnSelect: false,
+            width: '100%',
+            })
+        },
+        select2LoadData(selector='', loading = true) {
+            $(selector).select2({
+            disabled: loading ? true:false,
+            placeholder: loading ? "Aguarde, carregando dados...":"Selecione",
+            width: '100%',
+            });
+        },
+    },
+    mounted() {
+        $('#form-member-create-update').on('submit', (e) => {
+            this.saveMember()
+        })
+        const options = [
+            {% for unity in unities %}
+            {
+                name: '{{ unity }}',
+                value: '{{ unity.id }}',
+                children: [
+                {% for coordination in unity.coordinations.all %}
+                    {
+                    name: '{{ coordination }}',
+                    value: '{{ coordination.id }}',
+                    children: []
+                    },
+                {% endfor %}
+                ]
+            },
+            {% endfor %}
+        ]
+        
+        const domElement = document.getElementById('coordinations-id-treeselect')
+        this.treeselect = new Treeselect({
+          parentHtmlContainer: domElement,
+          value: [
+            {% for coordination in user_coordinations %}
+            '{{ coordination }}',
+            {% endfor %}
+          ],
+          options: options,
+          showTags: false,
+          showCount: true,
+          showItemIfOnlyOneSelected: false,
+          showSelectedItemsCount: true,
+          tagsCountText: 'selecionada(s)',
+          placeholder: 'Digite o nome de uma unidade que deseja autorizar',
+          clearable: false,
+          emptyText: 'Nenhum resultado encontrado...',
+        })
+    }
+  })
+
+
+</script>
+
+{% endblock %}

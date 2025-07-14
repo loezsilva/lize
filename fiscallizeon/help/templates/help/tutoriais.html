@@ -1,0 +1,170 @@
+{% extends 'redesign/base.html' %}
+{% load static %}
+
+{% block title %}Tutoriais - Lize{% endblock title %}
+
+{% block css-additional %}
+{% endblock css-additional %}
+    
+
+{% block main %}<main style="padding-top: 1rem; padding-bottom: 2.5rem;">{% endblock main %}
+{% block content-fixed %}
+<div class="ard cex ddc">
+    <div class="row d-flex justify-content-center align-items-center text-white" style="height: 320px; background-color: #FF8F3E; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+        <div class="col-lg-6 col-12 text-center">
+            <h2 class="mb-0 text-white tx-bold">Central de Ajuda da Lize</h2>
+            <p class="mt-3 tx-16 tx-medium">
+                Tudo que você precisa saber sobre a nossa plataforma você encontrará aqui.
+            </p>
+            <div>
+                {% include 'help/includes/search.html' %}
+            </div>
+            <div class="mt-3">
+                <button class="btn" type="button" :class="viewType == 'cards' ? 'btn-white border-white':'btn-outline-secondary border-0 text-white'" @click="viewType = 'cards'"><i class="fas fa-th-large"></i></button>
+                <button class="btn" type="button" :class="viewType == 'table' ? 'btn-white border-white':'btn-outline-secondary border-0 text-white'" @click="viewType = 'table'"><i class="fas fa-stream"></i></button>
+            </div>
+        </div>
+    </div>
+    <div class="hos" v-if="shownCategories.length">
+        <div class="row d-flex justify-content-center" style="margin-top: -50px;">
+            <div class="col-12 col-lg-9">
+                <div class="row">
+                    <template  v-for="category in shownCategories">
+                        <div class="col-sm-6 col-lg-4 mb-2" v-if="viewType == 'cards'">
+                            <div class="lize-card shadow-sm card-help lize-hover-warning cp" @click="goTo(category.urls.detail)">
+                                <div class="card-body tx-13">
+                                    <div class="tx-60 lh-0 mg-b-25 lize-text-warning">
+                                        <template v-if="category.icon">
+                                            <div v-html="category.icon"></div>
+                                        </template>
+                                        <template v-else>
+                                            <i class="icon ion-ios-cog"></i>
+                                        </template>
+                                    </div>
+                                    <h5>
+                                        ${category.name}
+                                    </h5>
+                                    <template v-if="category.descriptionStr">
+                                        <p class="tx-color-03 mg-b-0 text-muted text-truncate" style="max-width: 10rem;">${category.descriptionStr}</p>
+                                    </template>
+                                    <template v-else>
+                                        <p class="tx-color-03 mg-b-0 text-muted">&nbsp;</p>
+                                    </template>
+                                </div>
+                                <div class="card-footer">
+                                    <a :href="category.urls.detail" class="text-muted tx-14 w-100 lh-0 d-flex align-items-center justify-content-between">
+                                        <span>${category.tutoriaisCount > 1 ? category.tutoriaisCount+' Tópicos':category.tutoriaisCount+' Tópico'}</span>
+                                        <i class="icon ion-md-arrow-forward"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12" v-if="viewType == 'table'">
+                            <div class="shadow-smd lize-card lize-hover-warning cp mb-2" @click="goTo(category.urls.detail)">
+                                <div class="card-body tx-13">
+                                    <div class="row mb-0 d-flex align-items-center">
+                                        <div class="col-3 col-lg-1 tx-50 text-center lize-text-warning">
+                                            <template v-if="category.icon">
+                                                <div v-html="category.icon"></div>
+                                            </template>
+                                            <template v-else>
+                                                <i class="icon ion-ios-cog"></i>
+                                            </template>
+                                        </div>
+                                        <div class="col ml-4 border-left flex-grow-2">
+                                            <h6>${category.name}</h6>
+                                            <template v-if="category.descriptionStr">
+                                                <p class="tx-color-03 mg-b-0 text-muted text-truncate" style="max-width: 30rem;">${category.descriptionStr}</p>
+                                            </template>
+                                            <template v-else>
+                                                <p class="tx-color-03 mg-b-0 text-muted">&nbsp;</p>
+                                            </template>
+                                            <span class="text-muted">${category.tutoriaisCount > 1 ? category.tutoriaisCount+' Tópicos':category.tutoriaisCount+' Tópico'}</span>
+                                        </div>
+                                        <div class="col-3 col-lg-1 border-left h-100">
+                                            <i class="icon ion-md-arrow-forward tx-26"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12" v-if="!shownCategories.length">
+                            <div class="shadow-smd lize-card lize-hover-warning cp mb-2">
+                                <div class="card-body tx-13">
+                                    <div class="row mb-0 d-flex align-items-center">
+                                        <div class="col-3 col-lg-1 tx-50 text-center lize-text-warning">
+                                                <i class="icon ion-ios-cog"></i>
+                                        </div>
+                                        <div class="col ml-4 border-left flex-grow-2">
+                                            <h6>Nenhum item encontrado.</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content-fixed %}
+{% block endmain %}</main>{% endblock endmain %}
+
+{% block js-additional %}
+
+<script>
+
+    moment.locale('pt-br')
+    
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        components: {
+            {% include 'includes/components/vue-pagination_v2.html' %},
+        },
+        el: '#app',
+        data: {
+            categories: [],
+            shownCategories: [],
+            viewType: 'cards',
+            searchInput: '',
+        },
+        methods: {
+            filterCategories() {
+                let filtredCategories = this.categories.filter(c => c.name.toLowerCase().includes(this.searchInput.toLowerCase()))
+                this.shownCategories = Object.assign([], filtredCategories)
+            },
+            getCategories() {
+                url = "{% url 'api:clients:tutoriais-categories' %}"
+                axios.get(url).then((response) => {
+                    this.categories = response.data
+                    this.shownCategories = Object.assign([], this.categories)
+                })
+            },
+            extractYouTubeVideoId(url) {
+                const match = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+                if (match && match[1]) {
+                    return match[1];
+                } else {
+                    return null;
+                }
+            },
+            getThumbnail(tutorial) {
+                if(tutorial.thumbnail) {
+                    return tutorial.thumbnail
+                } 
+                id = this.extractYouTubeVideoId(tutorial.youtubeUrl)
+                return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
+            },
+            goTo(url) {
+                window.location.href = url
+            },
+        },
+        mounted() {    
+            this.getCategories()
+        },
+    })
+
+</script>
+
+{% endblock %}

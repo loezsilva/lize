@@ -1,0 +1,741 @@
+{% load cache %}
+{% load static %}
+{% load get_exemteacher_count %}
+{% load get_wrongs_count %}
+
+{% block css-additional %}
+<style>
+  .menu {
+    left: -300px;
+  }
+  .menu::after {
+    display: block;
+    left: 300px;
+  }
+
+</style>
+
+{% endblock css-additional %}
+
+{% if not is_popup %}
+  {% cache 600 navbar request.user.pk %}
+  <header class="navbar navbar-header navbar-header-fixed" style="z-index: 6; background-color: #009ede;">
+    <a href="" id="mainMenuOpen" class="burger-menu"><i data-feather="menu"></i></a>
+    <div class="navbar-brand">
+      <a href="{% url 'core:redirect_dashboard' %}" class="df-logo">
+        <img src="{% static 'fiscallize-remote-logo.png' %}" alt="" style="max-width: 150px;">
+        </span>
+      </a>
+    </div>
+
+    <div id="navbarMenu" class="navbar-menu-wrapper">
+      <div class="navbar-menu-header">
+        <a href="{% url 'core:redirect_dashboard' %}" class="df-logo">
+          <img src="{% static 'fiscallize-remote-logo.png' %}" alt="" style="max-width: 150px;">
+          </span></a>
+        <a id="mainMenuClose" href=""><i data-feather="x"></i></a>
+      </div>
+      <!-- navbar-menu-header -->
+      <ul class="nav navbar-menu" style="max-width: 900px;">
+        <li class="nav-label pd-l-20 pd-lg-l-25 d-lg-none">Menu principal</li>
+        <li class="nav-item active">
+          <a href="{% url 'core:redirect_dashboard' %}" class="nav-link">Início</a>
+        </li>
+        {% if user_type == 'teacher' and user.client_has_exam_elaboration and user.client_teachers_can_elaborate_exam %}
+          <li class="nav-item">
+            <a href="{% url 'applications:applications_list' %}" class="nav-link">Lista de Aplicações</a>
+          </li>
+        {% endif %}
+        {% if user_type == 'coordination' %}
+          <li class="nav-item with-sub">
+            <a href="" class="nav-link"> Lista de Aplicações
+            </a>
+            <div class="navbar-menu-sub">
+              <div class="d-lg-flex">
+                <ul>
+                  {% if user.client_has_exam_elaboration or user.client_allow_online_abstract_application %}
+                    <li class="nav-label">ONLINE</li>
+                    <li class="nav-sub-item">
+                      <a href="{% url 'applications:applications_list' %}?category=online" class="nav-sub-link">
+                        <i data-feather="globe"></i> Aplicação de Prova
+                      </a>
+                    </li>
+                    <li class="nav-sub-item mg-b-20">
+                      <a href="{% url 'applications:applications_list' %}?category=homework" class="nav-sub-link">
+                        <i data-feather="home"></i> Aplicação de Atividade
+                      </a>
+                    </li>
+                  {% endif %}
+                  <li class="nav-label">PRESENCIAL</li>
+                  <li class="nav-sub-item">
+                    <a href="{% url 'applications:applications_list' %}?category=presential" class="nav-sub-link">
+                      <i data-feather="edit"></i> Aplicação Presencial
+                    </a>
+                  </li>
+                  {% if user.client_has_distribution %}
+                    <li class="nav-sub-item">
+                      <a href="{% url 'distribution:distribution_list' %}" class="nav-sub-link">
+                        <i data-feather="grid"></i> Ensalamento
+                      </a>
+                    </li>
+                  {% endif %}
+                </ul>
+              </div>
+            </div>
+          </li>
+        {% endif %}
+        {% if user_type == 'coordination' or user_type == 'teacher' and user.inspector.can_elaborate_questions %}
+          {% if user.client_has_exam_elaboration %}
+            <li class="nav-item with-sub">
+              <a href="" class="nav-link"> Banco de Questões
+              </a>
+              <div class="navbar-menu-sub">
+                <div class="d-lg-flex">
+                  <ul>
+                    <li class="nav-sub-item">
+                      <a href="{% url 'questions:questions_list' %}" class="nav-sub-link">
+                        <i data-feather="lock" class="mr-1"></i> Questões Privadas
+                      </a>
+                      <p style="font-size: 12px; line-height: 14px; margin-top: 3px;" class="text-muted">Questões elaboradas por você e sua instituição.</p>
+                    </li>
+                    {% if user_type == 'teacher' and user.client_has_public_questions %}
+                      <li class="nav-sub-item">
+                        <a href="{% url 'questions:public_questions_list' %}" class=" nav-sub-link">
+                          <i data-feather="book-open" class="mr-1"></i> Questões Lize<br/>
+                        </a>
+                        <p style="font-size: 12px; line-height: 14px; margin-top: 3px;" class="text-muted">Centenas de questões que a Lize disponibiliza para você utilizar gratuitamente.</p>
+                      </li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </div>
+            </li>
+          {% endif %}
+        {% endif %}
+
+        {% if user_type == 'coordination' or user_type == 'teacher' %}
+          {% if user.client_has_exam_elaboration %}
+            {% if user_type == 'coordination' %}
+              <li class="nav-item with-sub">
+                <a href="" class="nav-link"><i data-feather="book"></i> 
+                  Cadernos
+                </a>
+                <div class="navbar-menu-sub">
+                  <div class="d-lg-flex">
+                    <ul>
+                      <li class="nav-label">CADERNOS</li>
+                      <li class="nav-sub-item">
+                        <a href="{% url 'exams:exams_list' %}?category=exam" class="nav-sub-link d-flex">
+                          <div class="row m-0">
+                            <div class="col pl-0 pr-2">
+                              <i class="fas fa-book text-dark"></i> 
+                            </div>
+                            <div class="col pl-0">
+                              Caderno de prova
+                            </div>
+                          </div>
+                        </a>
+                      </li>
+                      <li class="nav-sub-item">
+                        <a href="{% url 'exams:exams_list' %}?category=homework" class="nav-sub-link d-flex">
+                          <div class="row m-0">
+                            <div class="col pl-0 pr-1">
+                              <i class="fas fa-book-reader text-dark"></i> 
+                            </div>
+                            <div class="col pl-0 pr-2">
+                              Caderno de Atividade
+                            </div>
+                          </div>
+                        </a>
+                      </li>
+                      {% if user.client_has_study_material %}
+                        <li class="nav-label mt-3">MATERIAIS</li>
+                        <li class="nav-sub-item">
+                          <a href="{% url 'materials:study_material_list' %}" class="nav-sub-link d-flex">
+                            <div class="row m-0">
+                              <div class="col pl-0 pr-2">
+                                <i class="fas fa-file-pdf text-dark"></i> 
+                              </div>
+                              <div class="col pl-0">
+                                Material de estudo
+                              </div>
+                            </div>
+                          </a>
+                        </li>
+                      {% endif %}
+                    </ul>
+                    {% if user.client_has_wrongs %}
+                      <ul>
+                        <li class="nav-label">ERRRATAS</li>
+                        <li class="nav-sub-item">
+                          <a href="{% url 'exams:wrongs_list' %}" class="nav-sub-link d-flex">
+                            <div class="row m-0">
+                              <div class="col pl-0 pr-2">
+                                <i class="fas fa-comment-slash text-dark"></i>
+                                Responder Erratas
+                              </div>
+                            </div>
+                          </a>
+                        </li>
+                      </ul>
+                    {% endif %}
+                  </div>
+                </div>
+              </li>
+            {% endif %}
+            
+            {% if user_type == 'teacher' and user.client_has_exam_elaboration %}
+              <li class="nav-item with-sub">
+                <a href="" class="nav-link"><i data-feather="book"></i> 
+                  Cadernos
+                </a>
+                <div class="navbar-menu-sub">
+                  <div class="d-lg-flex">
+                    <ul>
+                      <li class="nav-label">CADERNOS</li>
+                      <li class="nav-sub-item">
+                        <a href="{% url 'exams:exams_list' %}" class="nav-sub-link d-flex">
+                          <div class="row m-0">
+                            <div class="col pl-0 pr-2">
+                              <i class="fas fa-book text-dark"></i> Meus Cadernos
+                            </div>
+                          </div>
+                        </a>
+                      </li>
+                      {% if user_type == 'teacher' and user.client_teachers_can_elaborate_exam %}
+                        <li class="nav-sub-item">
+                          <a href="{% url 'exams:exams_list' %}?q_created_by=me" class="nav-sub-link d-flex">
+                            <div class="row m-0">
+                              <div class="col pl-0 pr-2">
+                                <i class="fas fa-book text-dark"></i> Criados por mim
+                              </div>
+                            </div>
+                          </a>
+                        </li>
+                      {% endif %}
+                      <li class="nav-sub-item">
+                        <a href="{% url 'exams:exams_list' %}?q_unanswered=true" class="nav-sub-link d-flex">
+                          <div class="row m-0">
+                            <div class="col pl-0 pr-1">
+                              <i class="fas fa-clock text-dark"></i> Aguardando correção
+                            </div>
+                          </div>
+                        </a>
+                      </li>
+                      
+                      {% if user.client_has_wrongs %}                        
+                        {% if user_type == 'teacher' and user.inspector.can_response_wrongs %}
+                          <li class="nav-label mg-t-20">ERRRATAS</li>
+                          <li class="nav-sub-item">
+                            <a href="{% url 'exams:wrongs_list' %}" class="nav-sub-link d-flex">
+                              <div class="row m-0">
+                                <div class="col pl-0 pr-2">
+                                  <i class="fas fa-comment-slash text-dark"></i>
+                                </div>
+                                <div class="col pl-0">
+                                  Responder Erratas
+                                </div>
+                              </div>
+                            </a>
+                          </li>
+                        {% endif %}
+                      {% endif %}
+                    </ul>
+                  </div>
+                </div>
+              </li>
+            {% endif %}
+          
+            {% if user_type == 'teacher' and user.inspector.is_discipline_coordinator and request.user|examteachersubject_count > 0 %}
+              <li class="nav-item">
+                <a href="{% url 'exams:exams_review' %}" class="nav-link">
+                  Cadernos para Revisar 
+                  <span class="badge bg-danger rounded-circle m-1 font-weight-bold">{{request.user|examteachersubject_count}}</span>
+                </a>
+              </li>
+            {% endif %}
+          {% endif %}
+        {% elif user_type == 'student' and user.client_has_exam_elaboration or user.client_has_template %}
+          <li class="nav-item">
+            <a href="{% url 'applications:application_student_list' %}?category=online" class="nav-link">
+              Minhas Provas
+            </a>
+          </li>
+          {% if user.client_has_exam_elaboration %}
+            <li class="nav-item">
+              <a href="{% url 'applications:application_student_list' %}?category=homework" class="nav-link">
+                Listas de exercício
+              </a>
+            </li>
+          {% endif %}
+          
+          {% if user.client_has_study_material %}
+            <li class="nav-item">
+              <a href="{% url 'students:study_material_students_list' %}" class="nav-link">
+                Materiais de Estudo
+              </a>
+            </li>
+          {% endif %}
+          
+          {% if user.client_has_wrongs %}
+            <li class="nav-item">
+              <a href="{% url 'exams:student_wrongs_list' user.student.pk %}" class="nav-link">
+                Erratas <span class="badge badge-danger ml-2">{{user.student|get_opened_student_wrongs}}</span>
+              </a>
+            </li>
+          {% endif %}
+            
+        {% endif %}
+
+        {% if user_type == 'coordination' %}
+        {% if user.client_has_omr %}
+          <li class="nav-item with-sub">
+            <a href="" class="nav-link"> 
+              Gabaritos
+            </a>
+            <div class="navbar-menu-sub">
+              <div class="d-lg-flex">
+                <ul>
+                  {% if user.client_has_template %}
+                    <li class="nav-sub-item">
+                      <a href="{% url 'omr:template_list' %}" class="nav-sub-link">
+                        <i class="fas fa-grip-vertical ml-1 mr-2 text-dark"></i> Listar Gabaritos
+                      </a>
+                    </li>
+                  {% endif %}
+                  <li class="nav-sub-item">
+                    <a href="{% url 'omr:omr_upload_list' %}" class="nav-sub-link">
+                      <i data-feather="upload-cloud" class="mr-1"></i> Enviar Respostas dos Alunos
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </li>
+        {% endif %}
+        <li class="nav-item with-sub">
+          <a href="" class="nav-link"> Gerenciamento
+          </a>
+          <div class="navbar-menu-sub menu">
+            <div class="d-lg-flex">
+              <ul>
+                <li class="nav-label">Turmas</li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'classes:classes_list' %}" class="nav-sub-link">
+                    <i data-feather="list"></i></i> Listagem de Turmas
+                  </a>
+                </li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'classes:courses_list' %}" class="nav-sub-link">
+                    <i data-feather="file-text"></i> Cursos
+                  </a>
+                </li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'classes:courses_type_list' %}" class="nav-sub-link">
+                    <i data-feather="type"></i> Tipo de Cursos
+                  </a>
+                </li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'classes:stage_list' %}" class="nav-sub-link">
+                    <i data-feather="flag"></i> Etapa
+                  </a>
+                </li>
+                <li class="nav-label mg-t-20">Configurações</li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'clients:obligation_teacher_configuration' %}" class="nav-sub-link">
+                    <i data-feather="list"></i></i> Campos obrigatórios
+                  </a>
+                </li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'clients:update_client_omr_configuration' %}" class="nav-sub-link">
+                    <i data-feather="list"></i></i> Malotes
+                  </a>
+                </li>
+                <li class="nav-sub-item">
+                  <a class="nav-sub-link" href="{% url 'clients:config_notifications_create' %}">
+                    <i data-feather="bell"></i></i> Notificações
+                  </a>
+                </li>
+                <li class="nav-sub-item">
+                  <a class="nav-sub-link" href="{% url 'clients:question_tag_list' %}">
+                    <i data-feather="tag"></i></i> Tags de correção
+                  </a>
+                </li>
+                <li class="nav-label mg-t-20">Questões</li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'clients:questions_configurations' %}" class="nav-sub-link">
+                    <i class="fas fa-tools mr-3"></i> Configurações
+                  </a>
+                </li>
+              </ul>
+              <ul>
+                <li class="nav-label">Salas</li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'distribution:room_create' %}" class="nav-sub-link">
+                    <i class="fas fa-door-open text-dark mr-3"></i> Adiciona Sala
+                  </a>
+                </li>
+                <li class="nav-sub-item mg-b-20">
+                  <a href="{% url 'distribution:room_list' %}" class="nav-sub-link">
+                    <i data-feather="list"></i> Listar Salas
+                  </a>
+                </li>
+
+                <li class="nav-label">Provas</li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'exams:custom-pages-list' %}" class="nav-sub-link">
+                    <i class="fas fa-file-alt mr-3"></i> Páginas customizadas
+                  </a>
+                </li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'exams:exam_header_list' %}" class="nav-sub-link">
+                    <i class="fas fa-heading mr-3"></i> Padrões de Cabeçalhos
+                  </a>
+                </li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'exams:exam_orientations_list' %}" class="nav-sub-link">
+                    <i class="fas fa-info-circle mr-3"></i> Padrões de Orientações
+                  </a>
+                </li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'clients:print-configs-list' %}" class="nav-sub-link">
+                    <i class="fas fa-print mr-3"></i> Padrões de Impressão
+                  </a>
+                </li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'clients:teaching-stage-list' %}" class="nav-sub-link">
+                    <i class="fa fa-filter mr-3"></i> Etapas do ensino
+                  </a>
+                </li>
+                <li class="nav-sub-item mg-b-20">
+                  <a href="{% url 'clients:education-system-list' %}" class="nav-sub-link">
+                    <i class="fa fa-clipboard-check mr-3"></i> Sistemas de ensino
+                  </a>
+                </li>
+
+                <li class="nav-label mg-t-20">Coordenações</li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'clients:members_list' %}" class="nav-sub-link">
+                    <i data-feather="users"></i> Membros de Coordenação
+                  </a>
+                </li>
+                <li class="nav-sub-item">
+                  <a href="#" style="pointer-events: none;" class=" nav-sub-link disabled">
+                    <i data-feather="grid"></i> Coordenações <span class="badge badge-primary ml-2"> Em breve</span>
+                  </a>
+                </li>
+              </ul>
+                
+              <ul>
+                <li class="nav-label">Disciplinas</li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'subjects:subjects_list' %}" class="nav-sub-link ">
+                    <i data-feather="bookmark"></i> Disciplinas Extras
+                  </a>
+                </li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'integrations:integration_subject_code_list_create' %}" class="nav-sub-link ">
+                    <i data-feather="code"></i> Código de Disciplina (ERP)
+                  </a>
+                </li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'subjects:topic_list' %}" class="nav-sub-link disabled">
+                    <i data-feather="book"></i> Assuntos
+                  </a>
+                </li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'subjects:subjects_relation_list' %}" class="nav-sub-link ">
+                    <i data-feather="bookmark"></i> Relacionar Disciplinas <span class="badge badge-primary">Novo</span>
+                  </a>
+                </li>
+                <li class="nav-label mg-t-20">BNCC</li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'bncc:competences_list' %}" class="nav-sub-link">
+                     Competências
+                  </a>
+                </li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'bncc:abilities_list' %}" class="nav-sub-link">
+                     Habilidades
+                  </a>
+                </li>
+                <li class="nav-label mg-t-20">Pessoal</li>
+                <li class="nav-sub-item">
+                  <a href="{% url 'inspectors:inspectors_list' %}" class="nav-sub-link ">
+                    <i data-feather="user"></i> Fiscais
+                  </a>
+                </li>
+                
+                {% if user.client_has_integration %}
+                  <li class="nav-label mg-t-20">Integrações</li>
+                  <li class="nav-sub-item">
+                    <a href="{% url 'integrations:integration_create_update' %}" class="nav-sub-link ">
+                      <i data-feather="lock"></i> Chave de acesso
+                    </a>
+                  </li>
+                  <li class="nav-sub-item">
+                    <a href="{% url 'integrations:integration_synconizations' %}" class="nav-sub-link ">
+                      <i data-feather="refresh-cw"></i> Sincronizar alunos e turmas
+                    </a>
+                  </li>
+                  <li class="nav-sub-item">
+                    <a href="{% url 'integrations:integration-notes' %}" class="nav-sub-link ">
+                      <i data-feather="refresh-cw"></i> Composição de notas
+                    </a>
+                  </li> 
+                {% endif %}
+              </ul>
+            </div>
+          </div>
+        </li>
+        {% endif %}
+
+        {% if user_type == 'coordination'  %}
+          {% if user.client_has_dashboard %}
+            <li class="nav-item with-sub">
+              <a href="" class="nav-link"> Dashboards
+              </a>
+              <div class="navbar-menu-sub">
+                <div class="d-lg-flex">
+                  <ul>
+                    <li class="nav-label">Desempenho</li>
+                    <li class="nav-sub-item">
+                      <a href="{% url 'analytics:analytics_exams_detail' %}" class="nav-sub-link">
+                        <i data-feather="pie-chart"></i> Administrativo
+                      </a>
+                    </li>
+                    {% comment %}
+                      <li class="nav-sub-item">
+                        <a href="{% url 'analytics:analytics_detail' %}" class="nav-sub-link">
+                          <i data-feather="pie-chart"></i> Desempenho geral
+                        </a>
+                      </li>
+                    {% endcomment %}
+                    <li class="nav-sub-item">
+                      <a href="{% url 'analytics:grade_map' %}" class="nav-sub-link">
+                        <i data-feather="map"></i> Mapão de notas <span class="badge badge-primary ml-2">Novo</span>
+                      </a>
+                    </li>
+                    <li class="nav-sub-item">
+                      <a href="#" style="pointer-events: none;" class=" nav-sub-link disabled">
+                        <i data-feather="pie-chart"></i> BNCC e Assuntos abordados <span class="badge badge-primary ml-2">
+                          Em breve</span>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </li>
+          {% endif %}
+        {% endif %}
+      </ul>
+    </div>
+
+    <div class="navbar-right">
+
+      {% comment %}
+      {% if user_type == 'coordination' %}
+      <div class="dropdown dropdown-message">
+        <a href="" class="dropdown-link new-indicator" data-toggle="dropdown">
+          <i style="font-size: 22px;" class="far fa-comment"></i>
+          <span v-if="countNotifications > 0">${countNotifications}</span>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right">
+          <div class="dropdown-header">MENSAGENS</div>
+          <a v-for="application in applications" href=""
+            @click="downScroll(); selectedApplication = application;application.chatNotificationCount=0;"
+            class="dropdown-item" data-toggle="modal" data-target="#chatModal">
+            <div class="media">
+              <div class="media-body">
+                <strong>
+                  <template v-if="application.subject">
+                    ${application.subject}
+                  </template>
+                  <template v-else>
+                    Hoje
+                  </template>
+                </strong>
+                <span class="float-right" v-if="application.chatNotificationCount > 0">
+                  <span class="badge badge-danger text-white font-weight-bold">
+                    ${application.chatNotificationCount}
+                  </span>
+                </span>
+                <span>de ${application.start} às ${application.end}</span><br />
+                <span class="badge badge-light" v-for="school_class in application.classes">
+                  ${school_class.name}
+                </span>
+              </div>
+            </div>
+          </a>
+          <template v-if="applications.length === 0">
+            <span class="dropdown-item">
+              <p>Não há aplicações ativas no momento</p>
+            </span>
+          </template>
+        </div>
+      </div>
+      {% endif %}
+      {% endcomment %}
+  {% endcache %}
+
+      {% if help_links %}
+      <div class="dropdown dropdown-notification">
+        <a href="" class="dropdown-link new-indicator" data-toggle="dropdown" aria-expanded="true">
+          <i data-feather="help-circle"></i>
+          <span id="notifications-count" class="bg-secondary">{{ help_links.count }}</span>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right">
+          <div class="dropdown-header">Ajuda</div>
+            <div style="max-height: 280px; overflow: auto;">
+              {% for help in help_links %}
+              <a href="{{ help.article_url }}" target="_blank" class="dropdown-item pl-0">
+                <div class="media">            
+                  <div class="media-body">
+                    <h6 class="mb-0">{{ help.article_name }}</h6>
+                    <p>{{ help.article_description }}</p>
+                  </div>
+                </div>
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+      </div>
+      {% endif %}
+
+      
+      {% comment %}
+      <div class="dropdown dropdown-notification">
+        <a href="" class="dropdown-link new-indicator" data-toggle="dropdown" aria-expanded="true">
+          <i data-feather="bell"></i>
+          <span id="notifications-count" class="d-none"></span>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right">
+          <div class="dropdown-header">Notificações</div>
+          {% for notification in notifications %}
+          <a href="#" 
+            onClick="updateCounter('{{notification.pk}}')" 
+            data-toggle="modal" 
+            data-target="#modal-{{notification.pk}}" 
+            class="dropdown-item pl-0"
+          >
+            <div class="media">            
+              <div class="media-body">
+                <h6 class="mb-0">{{ notification.title }} 
+                  <span class="badge badge-success text-white">{{ notification.get_category_display }}</span>
+                </h6>
+                <p>{{ notification.description }}</p>
+              </div>
+            </div>
+          </a>
+          {% empty %}
+            <div class="media">            
+              <div class="media-body">
+                <p class="pt-3 pb-3">Sem novas notificações 🙂</p>
+              </div>
+            </div>
+          {% endfor %}
+          <!-- <div class="dropdown-footer"><a href="">View all Notifications</a></div> -->
+        </div>
+      </div>
+        
+      {% endcomment %}
+        
+
+      <div class="dropdown dropdown-profile">
+        <a href="" class="dropdown-link" data-toggle="dropdown" data-display="static">
+          <div class="avatar avatar-sm"><img src="{% static 'administration/assets/img/avatar.png' %}"
+              class="rounded-circle" alt=""></div>
+        </a><!-- dropdown-link -->
+        <div class="dropdown-menu dropdown-menu-right tx-13">
+          <div class="avatar avatar-lg mg-b-15"><img src="{% static 'administration/assets/img/avatar.png' %}"
+              class="rounded-circle" alt=""></div>
+          <h6 class="tx-semibold mg-b-5" style="overflow-wrap: anywhere;">{{ user }}</h6>
+          <p class="mg-b-25 tx-12 tx-color-03" style="overflow-wrap: anywhere;">{{ user.email }}</p>
+          <div class="dropdown-divider"></div>
+          <!-- <a href="" class="dropdown-item">
+              <i data-feather="user"></i>Atualizar perfil
+            </a> -->
+          <a href="{% url 'accounts:password_change' %}" class="dropdown-item">
+            <i data-feather="lock"></i>Alterar senha
+          </a>
+          <a href="{% url 'accounts:logout' %}" class="dropdown-item">
+            <i data-feather="log-out"></i>Sair
+          </a>
+
+          <div class="dropdown-divider"></div>
+
+          <a href="{% url 'terms' slug='aviso-privacidade' %}" target="_blank" class="dropdown-item">
+            <i data-feather="bookmark"></i> Aviso de Privacidade
+          </a>
+
+          <a href="{% url 'terms' slug='condicoes-uso' %}" target="_blank" class="dropdown-item">
+            <i data-feather="bookmark"></i> Condições de Uso
+          </a>
+
+
+        </div><!-- dropdown-menu -->
+      </div>
+
+    </div>
+  </header>
+  {% comment %}
+  {% if user_type == 'coordination' %}
+  <div class="modal pr-0" tabindex="-1" role="dialog" id="chatModal">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header bg-white">
+
+          <h5 class="modal-title">
+            <i style="cursor: pointer;" class="fas fa-arrow-left mr-2" data-dismiss="modal" aria-label="Close"></i>
+            Chat com fiscal
+          </h5>
+          <button @click="openedChat=false;" type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <i class="fas fa-times-circle"></i>
+          </button>
+        </div>
+        <div id="chat-body" class="modal-body p-2">
+          <template v-if="selectedApplication.messages" v-for="message in selectedApplication.messages">
+            <div class="text-left p-2">
+              <p class="mb-0">
+                <span class="font-weight-bold">${message.sender}</span> -
+                <span class="text-muted">${message.created_at}</span>
+              </p>
+              <p class="p-2 mb-0 bg-light mr-3">
+                ${message.content}
+              </p>
+            </div>
+          </template>
+          <template v-else>
+            <p>Ainda não há mensagens entre você e o fiscal</p>
+          </template>
+        </div>
+        <div class="modal-footer bg-dark p-2">
+          <div class="input-group">
+            <div class="input-group-text border-0 bg-white">
+              <button class="btn btn-default" data-dismiss="modal" aria-label="Close">
+                <i class="fas fa-arrow-left"></i>
+              </button>
+            </div>
+            <textarea @keyup.enter="sendMessageChat()" v-model="textMessage" type="text" class="form-control"
+              placeholder="Escreva sua mensagem" rows="2" maxlength="255"></textarea>
+            <div class="input-group-prepend">
+              <div class="input-group-text border-0 bg-white">
+                <button class="btn btn-primary" v-on:click="sendMessageChat()"
+                  :disabled="textMessage == '' || sendingMessage">
+                  <i v-if="sendingMessage" class="fas fa-spinner fa-spin"></i>
+                  <i v-else class="fas fa-paper-plane"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endcomment %}
+  
+{% endif %}
+{% block js-additional %}
+
+
+{% endblock %}

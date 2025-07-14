@@ -1,0 +1,280 @@
+<div class="card-container col-12 mb-4 px-0">
+  <div class="media-body {% if application_student.application.category == 2 or application_student.application.automatic_creation %}event-panel-primary{% elif application_student.application.category == 4 %}event-panel-green{% endif %} event-panel-border bg-white rounded ml-0 mb-2">
+    {% if application_student.application.category == 2 %}
+      <span class="event-time">das {{ application_student.application.start }} até às {{ application_student.application.end }}</span>
+    {% elif application_student.application.category == 4 %}
+      <span class="event-time">
+        Encerra: {{ application_student.application.date_end|date:'d/m/Y' }} às {{ application_student.application.end }}          
+      </span>
+    {% endif %}
+
+    {% if application_student.custom_time_finish and application_student. %}
+      <span class="event-time">
+        Você possui um tempo final personalizado para essa aplicação: {{ application_student.custom_time_finish|date:'d/m/Y' }} até as 
+        {{ application_student.custom_time_finish|date:'H:i' }}
+      </span>
+    {% endif %}
+    <span class="badge-custom {% if application_student.application.category == 2 or application_student.application.automatic_creation %}badge-custom-blue{% elif application_student.application.category == 4 %}badge-custom-green{% endif %}">{% if application_student.application.automatic_creation %} Prova de nivelamento {% elif application_student.application.category == 2 %}Prova{% elif application_student.application.category == 4 %}Lista de Exercício{% endif %}</span>
+    <h6 class="event-title text-truncate" title="{{application_student.application.exam.name}}">{{ application_student.application.exam.name }}</h6>
+    <div class="card-todo">
+      {% if application_student.application.category == 4 %}
+        <div class="card-progress pt-2 pb-0">
+          <label class="content-label mg-b-0">Progresso</label>
+          
+          {% with application_student.get_progress as progress %}
+            <div class="progress">
+              <div class="progress-bar {% if application_student.application.category == 2 %}bg-r-blue{% elif application_student.application.category == 4 %}bg-r-green{% endif %}" role="progressbar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ progress }}%;"></div>
+            </div>
+            <label class="content-label mg-b-0">{{ progress }}%</label>
+          {% endwith %}
+          
+        </div>
+      {% endif %}
+      {% if application_student.application.category == 2 and not application_student.end_time and not application_student.is_blocked_by_tolerance %}
+        {% if not application_student.application.is_time_finished or application_student.student_released_for_custom_time %}
+        <div id="buttom-start-{{ application_student.application.pk }}" class="card-footer {% if application_student.application.category == 2 %}card-footer-blue{% elif application_student.application.category == 4 %}card-footer-green{% endif %} bg-transparent bd-t-0 pt-2 px-0 pb-0">
+          <a 
+            {% if not application_student.application.is_happening and not application_student.student_released_for_custom_time %}
+              id="buttom-{{ application_student.application.pk }}" class="btn d-none"
+            {% else %}
+              class="btn btn-block"
+            {% endif %} 
+            
+            {% if application_student.application.token_online %}
+              data-toggle="modal" data-target="#modalRequestToken"
+            {% else %}
+              href="{% url 'applications:applications_monitoring_student' pk=application_student.pk %}"
+            {% endif %}  
+          > 
+            {% if application_student.start_time %}
+              Continuar
+            {% else %}
+              &plus; Começar
+            {% endif %}
+          </a>
+        {% endif %}
+        </div>
+      {% endif %}
+      {% if application_student.application.category == 4 and not application_student.end_time and not application_student.already_reached_max_time_finish %}
+        {% if not application_student.application.is_time_finished or application_student.student_released_for_custom_time %}
+        <div class="card-footer {% if application_student.application.category == 2 %}card-footer-blue{% elif application_student.application.category == 4 %}card-footer-green{% endif %} bg-transparent bd-t-0 pt-2 px-0 pb-0">
+          {% if application_student.application.max_time_finish and application_student.start_time and application_student.time_left_to_finish %}
+            <p class="text-center text-muted mb-1" id="stopwatch-{{application_student.id}}" style="font-size: .8rem;"></p>
+          {% endif %}
+          <a 
+            @click="showHomeworkStartConfirmation(
+              '{{application_student.application.max_time_finish.seconds|default:0|safe}}', 
+              '{{application_student.start_time|default:''|safe}}', 
+              '{% url 'applications:applications_homework_student' pk=application_student.pk %}')
+            " 
+            {% if not application_student.application.is_happening and not application_student.student_released_for_custom_time %}
+              id="buttom-{{ application_student.application.pk }}" 
+              class="btn btn-block d-none"
+            {% else %}
+              class="btn btn-block"
+            {% endif %} 
+            href="javascript:void(0)"
+          >
+            {% if application_student.start_time %}
+              Continuar lista de exercício
+            {% else %}
+              &plus; Começar
+            {% endif %}
+          </a>
+        </div>
+        {% endif %}
+      {% endif %}
+      {% if application_student.already_reached_max_time_finish %}
+        <div class="card-footer card-footer-red bg-transparent bd-t-0 pt-2 px-0 pb-0">
+          <a class="btn btn-block" href="#">
+            O tempo máximo para finalizar essa lista de exercício foi atingido.
+          </a>
+        </div>
+      {% endif %}
+      {% if application_student.application.category == 2 %}
+        {% if application_student.end_time %}
+          {% if application_student.application.release_result_at_end %}
+          <a href="{% url 'applications:application_exam_student_detail_v2' application_student.pk %}" class="btn btn-primary mt-2 btn-block font-weight-bold">
+            <i class="fas fa-search"></i> Ver Resultado
+          </a>
+          {% else %}
+            <button type="button" disabled="disabled" class="btn btn-danger disabled btn-block font-weight-bold  mt-2 mb-2">Aplicação já realizada</button>
+          {% endif %}
+        {% elif application_student.application.is_time_finished and not application_student.student_released_for_custom_time %}
+          <button type="button" disabled="disabled" class="btn btn-danger disabled btn-block font-weight-bold mt-2 mb-2">Horário de prova encerrado!</button>
+        {% elif application_student.is_blocked_by_tolerance %}
+          <button type="button" disabled="disabled" class="btn btn-danger disabled btn-block font-weight-bold  mt-2 mb-2">Tempo de tolerância esgotado!</button>
+        {% else %}
+          {% if not application_student.application.is_happening and not application_student.student_released_for_custom_time %}
+            <div id="span-count-down-{{ application_student.application.pk }}" class="d-none">
+              <p style="font-size: 12px; margin-bottom: 0; color: #8392a5;">Liberação em:</p>
+              <p id="count-down-{{ application_student.application.pk }}" style="margin-bottom: 0; font-family: 'Rubik', sans-serif; font-size: 20px; line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums;">-</p>
+            </div>
+          {% endif %}
+        {% endif %}
+      {% elif application_student.application.category == 4 %}
+        {% if application_student.application.allow_student_redo_list and application_student.end_time and not application_student.application.is_time_finished and not application_student.already_reached_max_time_finish  %}
+          <div class="card-footer bg-transparent bd-t-0 pt-2 px-0 pb-0">
+            <a {% if not application_student.application.is_happening %}id="buttom-{{ application_student.application.pk }}" class="btn d-none" {% else %}class="btn btn-block" {% endif %}
+              href="#" onclick="confirmAndRedirect(event, '{{ application_student.pk }}')">
+              &plus; Refazer Lista
+            </a>
+          </div>
+        {% elif application_student.end_time and not application_student.appliocation.allow_student_redo_list %}
+          <button type="button" disabled="disabled" class="btn btn-danger disabled btn-block font-weight-bold">Aplicação já realizada</button>
+        {% elif application_student.application.is_time_finished and not application_student.student_released_for_custom_time %}
+          <button type="button" disabled="disabled" class="btn btn-danger disabled btn-block font-weight-bold">Horário de prova encerrado!</button>
+        {% elif not application_student.application.is_happening and not application_student.application.end_time and not application_student.student_released_for_custom_time %}
+          <button type="button" disabled="disabled" class="btn btn-light disabled btn-block font-weight-bold">Aguardando liberação.</button>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>    
+</div>
+
+<div class="modal fade" id="modalRequestToken" tabindex="-1" role="dialog" aria-labelledby="modalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered max-w-[400px]" role="document">
+    <div class="modal-content modal-custom-height">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalLabel">Essa aplicação requer um código de acesso</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body tw-flex tw-items-start tw-justify-center tw-flex-col">
+        <div>
+          <input type="text" id="tokenOnline" 
+          class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6">
+          <label for="tokenOnline">Digite aqui o token dessa aplicação</label>
+        </div>
+      </div>
+      <div class="modal-footer tw-flex" style="justify-content: space-between;">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Voltar</button>
+        <button type="button" class="btn btn-primary" id="follow-application">Avançar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script type="application/javascript"> 
+
+
+  $(document).ready(function() {
+
+    {% if application_student.application.token_online %}
+
+      axios.get("{% url 'applications:application_token_online' pk=application_student.application.pk %}").then(response => {
+
+        if (response.data.already_response) {
+          
+          const appPk = "{{ application_student.application.pk }}";
+          const elementId = "#buttom-start-" + appPk + " a";
+
+          $(elementId)
+            .removeAttr('data-toggle')
+            .removeAttr('data-target')
+            .attr('href', "{% url 'applications:applications_monitoring_student' pk=application_student.pk %}")
+        }
+
+      }).catch(error => {
+        console.error("Erro ao buscar o token online:", error);
+      });
+
+    {% endif %}
+
+    $('#follow-application').click(() => {
+      axios.post("{% url 'applications:application_token_online' pk=application_student.application.pk %}", {
+        application_student_pk: '{{ application_student.pk }}',
+        token: $('#tokenOnline').val()
+      }).then(response => {
+        Swal.fire({
+          position: 'top-end',
+          text: "Token respondido com sucesso",
+          icon: 'success',
+          showConfirmButton: false,
+          timer: 1500,
+          toast: true,
+          timerProgressBar: true,
+        })
+        setTimeout(() => {
+          window.location.href = response.data.url_application;
+        }, 1000);
+      }).catch(error => {
+        Swal.fire({
+          position: 'top-end',
+          text: "Verifique o token para essa aplicação",
+          icon: 'error',
+          showConfirmButton: false,
+          timer: 1500,
+          toast: true,
+          timerProgressBar: true,
+        })
+      })
+    })
+  })
+
+  function confirmAndRedirect(event, applicationStudentPk) {
+    event.preventDefault(); 
+    const textConfirm = "Todas as respostas das questões serão apagadas e você reiniciará a prova. Deseja continuar?";
+    const confirmButton = "Sim, quero refazer!";
+    
+    Swal.fire({
+        title: "Tem certeza?",
+        text: textConfirm,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: confirmButton,
+    }).then((result) => {
+        if (result.isConfirmed) {
+          const url = "{% url 'applications:clear_all_answers' pk='00000000-0000-0000-0000-000000000000' %}".replace('00000000-0000-0000-0000-000000000000', applicationStudentPk);
+          axios.post(url, {})
+          .then(response => {
+            window.location.href = response.data.redirect_url; 
+          })
+          .catch(error => {
+            console.error("Erro ao limpar as respostas:", error);
+          });   
+        }       
+
+    });
+  }
+
+  function countDown() {
+    var time = '';
+
+    $('#span-count-down-{{ application_student.application.pk }}').toggleClass('d-none');
+
+    var countDownDate = moment(
+      '{{ application_student.date_time_start_tz|date:"Y-m-d H:i:s" }}',
+      'YYYY-MM-DD HH:mm:ss'
+    ).toDate().getTime();
+    var now_datetime = moment('{% now "Y-m-d H:i:s" %}', 'YYYY-MM-DD HH:mm:ss');
+
+    var x = setInterval(function () {
+      var now = now_datetime.toDate().getTime();
+
+      var distance = countDownDate - now;
+
+      if (distance < 0) {
+        clearInterval(x);
+        $('#span-count-down-{{ application_student.application.pk }}').toggleClass('d-none');
+        $('#buttom-{{ application_student.application.pk }}').toggleClass('d-none');
+      } else {
+        var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        time = ('0' + hours).slice(-2) + ':' + ('0' + minutes).slice(-2) + ':' + ('0' + seconds).slice(-2);
+
+        $('#count-down-{{ application_student.application.pk }}').html(time);
+
+        now_datetime = now_datetime.add(1, 'seconds');
+      }
+    }, 1000);
+  }
+  
+  countDown();
+</script>

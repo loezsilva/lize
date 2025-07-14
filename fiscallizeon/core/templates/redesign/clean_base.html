@@ -1,0 +1,9 @@
+{% extends 'redesign/base_without_sidebar.html' %}
+
+{% block header %}
+
+  {% block breadcrumb %}{% endblock breadcrumb %}
+
+  {% include 'includes/messages_container.html' with messages=messages only %}
+  
+{% endblock header %}

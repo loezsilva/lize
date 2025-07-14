@@ -1,0 +1,309 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+  {% if not object %}
+    Adicionar membro - Lize
+  {% else %}
+    Alteração de membro - Lize
+  {% endif %}
+{% endblock title %}
+
+{% block css-additional %}
+
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+{% endblock css-additional %}
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+      <nav class="ls" aria-label="Breadcrumb">
+        <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+          <li>
+            <div>
+              <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                  <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+              </a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="{% url 'clients:members_list' %}" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Coordenações</a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">{% if not object %}Cadastrar{% else %}Editar{% endif %}</a>
+            </div>
+          </li>
+        </ol>
+      </nav>
+      <div class="d-none d-md-block">
+        <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+          <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+      </div>
+    </div>
+<div class="row">
+    <div class="col-md-9">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+              <div>
+                <h6 class="mg-b-5">{% if not object %}Cadastrar um novo{% else %}Editar o{% endif %} membro</h6>
+                <p class="tx-13 tx-color-03 mg-b-5">Informe os dados abaixo e {% if not object %}cadastre um novo{% else %}edite o{% endif %} membro</p>
+              </div>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs mb-4">
+                  <li class="nav-item">
+                    <a class="{% if form.password.errors or form.username.errors %}nav-link{% else %}nav-link active{% endif %}"
+                      data-toggle="tab" href="#member-data" aria-current="page">
+                      <i class="fas fa-align-right mr-1"></i>
+                      Dados do membro</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="{% if form.password.errors or form.username.errors %}nav-link active{% else %}nav-link{% endif %}" data-toggle="tab" href="#user-data">
+                      <i class="fas fa-user mr-1"></i> Dados de usuário
+                    </a>
+                  </li>
+                </ul>
+                <form method="post">
+                  {% csrf_token %}
+                  <div class="tab-content">
+                    <div class="form-row {% if form.password.errors or form.username.errors %}tab-pane fade{% else %}tab-pane fade show active{% endif %}" id="member-data" role="tabpanel" aria-labelledby="member-data">
+                      <div class="form-row">
+                          <div class="form-group col-md-6">
+                              <label for="{{ form.name.auto_id }}">{{ form.name.label }}</label>
+                              {% render_field form.name class="form-control" %}
+                              <small class="form-text text-muted">
+                                  {{ form.name.help_text }}
+                              </small>
+                              {% if form.name.errors %}
+                                  <label class="text-danger">
+                                  {{ form.name.errors.0 }}</label>
+                              {% endif %}
+                          </div>
+                          <div class="form-group col-md-6">
+                              <label for="{{ form.email.auto_id }}">{{ form.email.label }}</label>
+                              {% render_field form.email class="form-control" %}
+                              <small class="form-text text-muted">
+                                  {{ form.email.help_text }}
+                              </small>
+                              {% if form.email.errors %}
+                                  <label class="text-danger">
+                                  {{ form.email.errors.0 }}</label>
+                              {% endif %}
+                          </div>
+                      </div>
+                      <div class="form-row d-none">
+                        <div class="form-group col-md-6">
+                            <label for="{{ form.custom_groups.auto_id }}">{{ form.custom_groups.label }}</label>
+                            {% render_field form.custom_groups class="form-control" %}
+                            <small class="form-text text-muted">
+                                {{ form.custom_groups.help_text }}
+                            </small>
+                            {% if form.custom_groups.errors %}
+                                <label class="text-danger">
+                                {{ form.custom_groups.errors.0 }}</label>
+                            {% endif %}
+                        </div>
+                      </div>
+                      
+                      {{coordination_member_formset.management_form}}
+
+                        {% for dict in coordination_member_formset.errors %}
+                          {% for error in dict.values %}
+                            <p class="text-danger">{{ error.0 }}</p>
+                          {% endfor %}
+                        {% endfor %}
+
+                        {% for form in coordination_member_formset %}                 
+
+                        {% if form.id.value %}
+                          {{form.id}}
+                          {{form.user}}
+                        {% endif %}
+
+                        <div class="row mb-1">
+                          <div class="col-3">
+                            <label for="form.coordination.auto_id" class="mb-0">Escolha a coordenação</label>
+                            {% render_field form.coordination class="form-control" %}
+                            <small class="text-danger">
+                              {{form.coordination.errors}}
+                            </small>
+                            {% if form.id.value %}
+                              <div class="custom-control custom-switch mt-1 ">
+                                {% render_field form.DELETE class="custom-control-input" %}
+                                <label class="custom-control-label" for="{{form.DELETE.auto_id}}">
+                                <i class="fas fa-trash"></i> Remover</label>
+                              </div>
+                            {% endif %}
+                          </div>
+                          <div class="col-3">
+                            <div class="custom-control custom-switch mt-4 ">
+                              {% render_field form.is_coordinator class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.is_coordinator.auto_id}}">
+                                {{ form.is_coordinator.label }}</label>
+                              <small class="text-muted text-justify">
+                                Este usuário terá acesso a todos os alunos, turmas, aplicações e prova dessa coordenação.
+                              </small>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.is_coordinator.help_text }}
+                              </small>
+                              {% if form.is_coordinator.errors %}
+                              <label class="text-danger">
+                                {{ form.is_coordinator.errors.0 }}
+                              </label>
+                              {% endif %}
+                            </div>
+                          </div>
+                          <div class="col-3">
+                            <div class="custom-control custom-switch mt-4 ">
+                              {% render_field form.is_pedagogic_reviewer class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.is_pedagogic_reviewer.auto_id}}">
+                                {{ form.is_pedagogic_reviewer.label }}</label>
+                              <small class="text-muted text-justify">
+                                Poderá criar cadernos de prova, solicitar questões ao professor e aprovar ou reprovar questões.
+                              </small>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.is_pedagogic_reviewer.help_text }}
+                              </small>
+                              {% if form.is_pedagogic_reviewer.errors %}
+                              <label class="text-danger">
+                                {{ form.is_pedagogic_reviewer.errors.0 }}
+                              </label>
+                              {% endif %}
+                            </div>
+                          </div>
+                          
+                          <div class="col-3">
+
+                            <div class="custom-control custom-switch mt-4 ">
+                              {% render_field form.is_reviewer class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.is_reviewer.auto_id}}">
+                                {{ form.is_reviewer.label }}</label>
+                              <small class="text-muted text-justify">
+                                Poderá acessar a prova na integra e revisar tanto a estrutura como o conteúdo das
+                                questões.
+                              </small>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.is_reviewer.help_text }}
+                              </small>
+                              {% if form.is_reviewer.errors %}
+                              <label class="text-danger">
+                                {{ form.is_reviewer.errors.0 }}
+                              </label>
+                              {% endif %}
+                            </div>
+                          </div>
+                          
+                        </div>
+                        <hr class="mt-2 mb-2" />
+                      {% endfor %}
+                    </div>
+                    <div class="{% if form.password.errors or form.username.errors %}tab-pane fade show active{% else %}tab-pane fade{% endif %}" id="user-data" role="tabpanel" aria-labelledby="contact-tab">
+                      <h5>Dados de usuário</h5>
+                      <p class="tx-13 tx-color-03 mg-b-5">Informe os dados do usuário abaixo</p><hr>
+                      <div class="row">
+                        <div class="col-sm-7">
+                          <div class="form-group">
+                            <label for="{{form.username.auto_id}}">{{ form.username.label }}</label>
+                            <div class="input-group mb-2">
+                              <div class="input-group-prepend">
+                                <div class="input-group-text"><i class="fas fa-user mr-1"></i></div>
+                              </div>
+                              <input class="form-control" autocomplete="new-password" type="text" name="{{form.username.name}}" id="{{form.username.auto_id}}" placeholder="{{object.username}}">
+                            </div>
+                            {% if form.username.errors %}
+                            {% for error in form.username.errors %}
+                            <small class="text-danger">{{error}}</small>
+                            {% endfor %}
+                            {% endif %}
+                          </div>
+                          <div class="form-group">
+                            <label for="{{form.password.auto_id}}">{{ form.password.label }}</label>
+                            <div class="input-group mb-2">
+                              <div class="input-group-prepend">
+                                <div class="input-group-text"><i class="fas fa-key mr-1"></i></div>
+                              </div>
+                              <input class="form-control" autocomplete="new-password" name="{{form.password.name}}" type="password" id="{{form.password.auto_id}}">
+                            </div>
+                            <div class="invalid-feedback">{{ form.errors.old_password }}</div>
+                            {% if form.password.errors %}
+                            {% for error in form.password.errors %}
+                            <small class="text-danger">
+                              <li>{{error}}</li>
+                            </small>
+                            {% endfor %}
+                            {% endif %}
+                          </div>
+                          <div class="form-group">
+                            <label for="{{form.confirmation_password.auto_id}}">{{ form.confirmation_password.label }}</label>
+                            <div class="input-group mb-2">
+                              <div class="input-group-prepend">
+                                <div class="input-group-text"><i class="fas fa-key mr-1"></i></div>
+                              </div>
+                              <input class="form-control" autocomplete="new-password" name="{{form.confirmation_password.name}}" type="password" id="{{form.confirmation_password.auto_id}}">
+                            </div>
+                            <div class="invalid-feedback">{{ form.errors.old_password }}</div>
+                            {% if form.confirmation_password.errors %}
+                            {% for error in form.confirmation_password.errors %}
+                            <small class="text-danger">
+                              <li>{{error}}</li>
+                            </small>
+                            {% endfor %}
+                            {% endif %}
+                          </div>
+                          <div class="form-group">
+                            <div class="custom-control custom-switch">
+                              {% render_field form.must_change_password class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.must_change_password.auto_id}}">
+                                {{ form.must_change_password.label }}</label>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.must_change_password.help_text }}
+                              </small>
+                              {% if form.must_change_password.errors %}
+                              <label class="text-danger">
+                                {{ form.must_change_password.errors.0 }}
+                              </label>
+                              {% endif %}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {% if not object %}
+                    <button type="submit" id="saveAndChangePermissions" class="btn btn-secondary float-right m-2">Salvar e alterar permissões</button>
+                    <input type="hidden" value="false" name="redirect_to_change_permissions">
+                  {% endif %}
+                  <button type="submit" class="btn btn-primary float-right m-2">Salvar membro</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script>
+  $('#{{form.custom_groups.auto_id}}').select2({closeOnSelect: false})
+  $('#saveAndChangePermissions').on('click', () => {
+    $('[name="redirect_to_change_permissions"]').val(true)
+    $('[name="redirect_to_change_permissions"]').prop('checked', true)
+  })
+</script>
+{% endblock %}

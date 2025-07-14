@@ -1,0 +1,1309 @@
+{% extends 'redesign/base_exam_elaboration.html' %}
+
+{% block title %}Correção de redaçao - Lize{% endblock title %}
+
+{% load static %}
+
+{% block css-additional %}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@recogito/annotorious-openseadragon@2.6.0/dist/annotorious.min.css">
+
+<style>
+  .row {
+    margin: 0; 
+  }
+  * {
+    color: #70798D;
+  }
+  .nav-hover:hover path {
+    stroke: #FF8F3D !important;
+  }
+  .hovable:hover {
+    background-color: #FF8F3D !important;
+    outline: 5px solid #FF8F3D50 !important;
+  }
+  .hovable:hover path {
+    stroke: white !important;
+  }
+  .activated {
+    background-color: #FF8F3D !important;
+    outline: 5px solid #FF8F3D50 !important;
+  }
+  .activated path {
+    stroke: white !important;
+  }
+  .openseadragon-canvas.focus-visible {
+    border: none !important;
+  }
+  #annotation-component textarea {
+    border-radius: 8px;
+    background-color: #F9FAFB;
+    border: 1px solid #D2D6DB;
+    padding: 10px 14px;
+  }
+  .r6o-editor {
+    visibility: hidden;
+  }
+  .custom-textarea::placeholder {
+    color: #A1A5AF;
+  }
+  .custom-textarea > span:hover path {
+    stroke: red !important;
+  }
+  .mic {
+    background-color: white;
+    cursor: pointer;
+  }
+  .mic.active {
+    background-color: #FF3D34;
+  }
+  .mic.active i {
+    color: white;
+  }
+  .mic:hover {
+    background-color: #FF3D34;
+    color: white;
+  }
+  .mic:hover i {
+    color: white;
+  }
+</style>
+
+{% endblock css-additional %}
+
+{% block header %}
+  
+{% endblock header %}
+
+{% block content-fixed %}
+  <div class="d-flex aling-items-center w-100" style="background-color: #fff; border-bottom: 1px solid #E5E7EA; height: 60px; top:0; position: fixed; width: 100%; z-index: 2;">
+    <div class="row d-flex align-items-center px-4 py-1 w-100">
+      <div class="col-3">
+        <a href="javascript:;" onclick="history.back()" class="text-muted"><i class="fas fa-arrow-left"></i>
+            Voltar
+        </a>
+      </div>
+      
+      <div class="col d-flex justify-content-end align-items-center">
+        <template>
+          <div class="d-flex aling-items-center justify-content-center">
+            <div id="vueNotifications">
+              <notifications-component :custom-html="true" ref="notifications"></notifications-component>
+            </div>
+          </div>
+        </template>
+        <div class="d-flex align-items-center">
+          <template v-if="selectedApplicationStudent && selectedApplicationStudent.answer">
+            <span class="text-muted mx-3" style="font-size: 10px;" v-if="selectedApplicationStudent.answer">Atualizado ${moment(selectedApplicationStudent.answer.updatedAt).fromNow()}</span>
+            <span v-html="getEssayCorrectionStatus()"></span>
+            <template v-if="selectedApplicationStudent.answer.essayWasCorrected">
+              <svg width="24" height="24" class="cp" data-toggle="tooltip" title="Desmarque esta opção para continuar criando marcações na redação do aluno." viewBox="0 0 24 24" @click="finishCorrection()" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 12L11 14L15.5 9.5M7.33377 3.8187C8.1376 3.75455 8.90071 3.43846 9.51447 2.91542C10.9467 1.69486 13.0533 1.69486 14.4855 2.91542C15.0993 3.43846 15.8624 3.75455 16.6662 3.8187C18.5421 3.96839 20.0316 5.45794 20.1813 7.33377C20.2455 8.1376 20.5615 8.90071 21.0846 9.51447C22.3051 10.9467 22.3051 13.0533 21.0846 14.4855C20.5615 15.0993 20.2455 15.8624 20.1813 16.6662C20.0316 18.5421 18.5421 20.0316 16.6662 20.1813C15.8624 20.2455 15.0993 20.5615 14.4855 21.0846C13.0533 22.3051 10.9467 22.3051 9.51447 21.0846C8.90071 20.5615 8.1376 20.2455 7.33377 20.1813C5.45794 20.0316 3.96839 18.5421 3.8187 16.6662C3.75455 15.8624 3.43846 15.0993 2.91542 14.4855C1.69486 13.0533 1.69486 10.9467 2.91542 9.51447C3.43846 8.90071 3.75455 8.1376 3.8187 7.33377C3.96839 5.45794 5.45794 3.96839 7.33377 3.8187Z" stroke="#41C588" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </template>
+            <template v-else>
+              <svg class="mx-2 nav-hover rounded-circle cp" data-toggle="tooltip" title="Marcar a redação do aluno como corrigida." @click="finishCorrection()" width="24" height="24" viewBox="0 0 24 24" fill="transparent" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22 11.0857V12.0057C21.9988 14.1621 21.3005 16.2604 20.0093 17.9875C18.7182 19.7147 16.9033 20.9782 14.8354 21.5896C12.7674 22.201 10.5573 22.1276 8.53447 21.3803C6.51168 20.633 4.78465 19.2518 3.61096 17.4428C2.43727 15.6338 1.87979 13.4938 2.02168 11.342C2.16356 9.19029 2.99721 7.14205 4.39828 5.5028C5.79935 3.86354 7.69279 2.72111 9.79619 2.24587C11.8996 1.77063 14.1003 1.98806 16.07 2.86572M22 4L12 14.01L9 11.01" stroke="#667085" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </template>
+          </template>
+          <svg class="mx-2 cp nav-hover" onclick="$('#modalChangeSchoolClass').modal('show')" data-toggle="tooltip" title="Alterar turma" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8.6 3.3999L5 6.9999L8.6 10.5999" stroke="#667085" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M19 7H5" stroke="#667085" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M15.4 20.5999L19 16.9999L15.4 13.3999" stroke="#667085" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 17H19" stroke="#667085" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          {% comment %}
+            <svg class="mx-2" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M12 21V21C7.029 21 3 16.971 3 12V12C3 7.029 7.029 3 12 3V3C16.971 3 21 7.029 21 12V12C21 16.971 16.971 21 12 21Z" stroke="#667085" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 17V12H11" stroke="#667085" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M11.749 8C11.611 8 11.499 8.112 11.5 8.25C11.5 8.388 11.612 8.5 11.75 8.5C11.888 8.5 12 8.388 12 8.25C12 8.112 11.888 8 11.749 8" stroke="#667085" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <svg class="mx-2" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5 7H19" stroke="#667085" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M18 7V18C18 19.105 17.105 20 16 20H8C6.895 20 6 19.105 6 18V7" stroke="#667085" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M15 3.75H9" stroke="#667085" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M10 11V16" stroke="#667085" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M14 11V16" stroke="#667085" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          {% endcomment %}
+          <button type="button" class="btn lize-btn-primary" style="height: 40px;" @click="getNextApplicationStudent()">Próximo aluno 
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5 4.98951C5 4.01835 5 3.53277 5.20249 3.2651C5.37889 3.03191 5.64852 2.88761 5.9404 2.87018C6.27544 2.85017 6.67946 3.11953 7.48752 3.65823L18.0031 10.6686C18.6708 11.1137 19.0046 11.3363 19.1209 11.6168C19.2227 11.8621 19.2227 12.1377 19.1209 12.383C19.0046 12.6635 18.6708 12.886 18.0031 13.3312L7.48752 20.3415C6.67946 20.8802 6.27544 21.1496 5.9404 21.1296C5.64852 21.1122 5.37889 20.9679 5.20249 20.7347C5 20.467 5 19.9814 5 19.0103V4.98951Z" stroke="#FFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="min-height: calc(100vh - 60px); overflow-x: hidden;">
+      <div class="d-lg-none d-block">
+        <div class="row">
+          <div class="col-12 d-flex flex-column align-items-center justify-content-center" style="min-height: calc(100vh - 60px);">
+            <img src="{% static 'assets/img/svg/intro.svg' %}" width="400" height="300" class="img-fluid" alt="">
+            <h2 class="text text-center text-muted my-3">
+              Experiência Limitada em Dispositivos Móveis
+            </h2>
+            <p class="text text-muted text-center">Olá! Parece que você está acessando nossa ferramenta pelo celular. No momento, nossa plataforma é otimizada para uso em computadores, garantindo a melhor experiência possível. Estamos trabalhando para tornar nossa ferramenta acessível em dispositivos móveis em breve. Enquanto isso, recomendamos acessar a plataforma em um computador para aproveitar todos os recursos disponíveis. Agradecemos sua compreensão e paciência!</p>
+          </div>
+        </div>
+      </div>
+      {% comment %}
+        <template v-if="controls.loading">
+          <div class="row">
+            <div class="col-12 d-flex flex-column align-items-center justify-content-center" style="min-height: calc(100vh - 60px);">
+              <img src="{% static 'assets/img/svg/intro.svg' %}" width="400" height="300" class="img-fluid" alt="">
+              <h2 class="text text-muted my-3">Aguarde enquanto carregamos o ambiente...</h2>
+              <p class="text text-muted">Em breve você poderá adicionar questões a esta solicitação.</p>
+            </div>
+          </div>
+        </template>
+      {% endcomment %}
+      <div class="row" v-if="selectedApplicationStudent">
+        <div :class="controls.correctionWithIA ? 'col-1':'col-lg-4 col-xl-3'" style="min-height: calc(100vh - 60px);">
+          <template v-if="controls.correctionWithIA">
+            <div class="row m-0 p-3 mt-3">
+              <div class="col-12 cp d-flex justify-content-center" @click="controls.correctionWithIA = !controls.correctionWithIA">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 18L15 12L9 6" stroke="#D0D3D9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </template>
+          <template v-else>
+            <div class="row m-0 p-3">
+              <div class="col-12 px-2 d-flex align-items-center justify-content-between">
+                <div class="d-flex">
+                  <h5 class="mb-0 text-truncate font-weight-bold" style="max-width: 10rem; font-size: 1rem;">
+                    ${selectedApplicationStudent.student.name} 
+                  </h5>
+                  <h5 style="color: #FF8F3D; font-weight: normal; font-size: 1rem;" class="mx-2 mb-0 cp" @click="showHistorical()">
+                    Histórico
+                  </h5>
+                </div>
+                <div class="cp" @click="controls.showSummary = !controls.showSummary">
+                  <template v-if="controls.showSummary">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M18 15L12 9L6 15" stroke="#D0D3D9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </template>
+                  <template v-else>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M6 9L12 15L18 9" stroke="#D0D3D9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </template>
+                </div>
+              </div>
+              <div class="col-12 px-2 mt-3" v-if="controls.showSummary">
+                <table class="table border-0">
+                  <tbody>
+                    <tr v-if="selectedApplicationStudent.answer && selectedApplicationStudent.answer.whoCorrected">
+                      <td class="border-0 py-1 px-0" style="font-size: .8rem;">Prof.</td>
+                      <td class="border-0 py-1" style="font-size: .8rem;"><p class="text-muted mb-0 text-truncate font-weight-bold" style="max-width: 15rem;">${selectedApplicationStudent.answer.whoCorrected}</p></td>
+                    </tr>
+                    <tr>
+                      <td class="border-0 py-1 px-0" style="font-size: .8rem;">Turma</td>
+                      <td class="border-0 py-1" style="font-size: .8rem;"><p class="text-muted text-truncate mb-0 text-truncate font-weight-bold" style="max-width: 15rem;">${selectedSchoolClass.name} - ${selectedSchoolClass.gradeName}</p></td>
+                    </tr>
+                    <tr v-if="selectedApplicationStudent.answer">
+                      <td class="border-0 py-1 px-0" style="font-size: .8rem;">Tema</td>
+                      <td class="border-0 py-1" style="font-size: .8rem;"><p class="text-muted mb-0 text-truncate font-weight-bold" style="max-width: 15rem;">${selectedApplicationStudent.answer.theme}</p></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="row m-0">
+              <div class="col-12">
+                <hr class="my-0">
+              </div>
+            </div>
+            <div class="row m-0 px-3 pt-3">
+              <div class="col-12 px-2 d-flex justify-content-between align-items-center">
+                <h5 style="font-size: 1rem;">Nota geral</h5>
+                {% comment %}
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 8V12M12 16H12.01M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#D0D3D9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                {% endcomment %}
+              </div>
+            </div>
+            <div class="row m-0 p-3">
+              <div class="col-12 d-flex justify-content-center align-items-center">
+                <svg id="points" width="160" height="160" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke="#FFF4EC" stroke-width="1.5" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                  <path stroke="#FF8F3D" stroke-width="1.5" :stroke-dasharray="getTotalPercent" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                  <text x="1%" y="1%" fill="#101828">
+                    <div class="d-flex flex-column align-items-center" style="position: absolute;">
+                      <span style="line-height: 3rem; font-size: 40px; font-weight: bold; color: #000;">${getTotalPoints}</span>
+                      <span>pontos</span>
+                    </div>
+                  </text>
+                </svg>
+              </div>
+            </div>
+            <div class="row m-0 px-2 pb-4">
+              <div class="col-3 px-0">
+                <div class="text-center cp" @click="controls.selectedTab = 'grade'" :style="controls.selectedTab == 'grade' ? 'background-color: #FFFFFF; outline: 3px solid #EAECEE; border-radius: 10px;':'background-color: #F9FAFB;'">
+                  <div style="padding: 8px 16px;">
+                    <h6 class="mb-0" style="font-size: .8rem;" :style="controls.selectedTab == 'grade' ? 'font-weight: bold; color: #384250;':''">Nota</h6>
+                  </div>
+                </div>
+              </div>
+              <div class="col-3 px-0">
+                <div class="text-center cp" @click="controls.selectedTab = 'deviations'" :style="controls.selectedTab == 'deviations' ? 'background-color: #FFFFFF; outline: 3px solid #EAECEE; border-radius: 10px;':'background-color: #F9FAFB;'">
+                  <div style="padding: 8px 16px;">
+                    <h6 class="mb-0" style="font-size: .8rem;" :style="controls.selectedTab == 'deviations' ? 'font-weight: bold; color: #384250;':''">Desvios</h6>
+                  </div>
+                </div>
+              </div>
+              <div class="col-3 px-0">
+                <div class="text-center cp" @click="controls.selectedTab = 'comment', startAudioComment()" :style="controls.selectedTab == 'comment' ? 'background-color: #FFFFFF; outline: 3px solid #EAECEE; border-radius: 10px;':'background-color: #F9FAFB;'">
+                  <div style="padding: 8px 16px;">
+                    <h6 class="mb-0" style="font-size: .8rem;" :style="controls.selectedTab == 'comment' ? 'font-weight: bold; color: #384250;':''">Comentário</h6>
+                  </div>
+                </div>
+              </div>
+              <div class="col-3 px-0">
+                <div class="text-center cp" @click="controls.selectedTab = 'theme'" :style="controls.selectedTab == 'theme' ? 'background-color: #FFFFFF; outline: 3px solid #EAECEE; border-radius: 10px;':'background-color: #F9FAFB;'">
+                  <div style="padding: 8px 16px;">
+                    <h6 class="mb-0" style="font-size: .8rem;" :style="controls.selectedTab == 'theme' ? 'font-weight: bold; color: #384250;':''">Tema</h6>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <template v-if="controls.selectedTab == 'grade'">
+              <template v-for="criterion in criterions">
+                <div class="row m-0 d-flex justify-content-between align-items-center cp" @click="criterion.expanded = !criterion.expanded">
+                  <div class="col-8 text-truncate" style="font-size: .8rem;">
+                    ${criterion.name}
+                  </div>
+                  <div class="col px-0 d-flex justify-content-end align-items-center">
+                    <span style="font-weight: bold;">${getCriterionValue(criterion)}</span>
+                    <span class="mx-2">
+                      <template v-if="criterion.expanded">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M18 15L12 9L6 15" stroke="#D0D3D9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </template>
+                      <template v-else>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M6 9L12 15L18 9" stroke="#D0D3D9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </template>
+                    </span>
+                  </div>
+                </div>
+                <div class="row my-2">
+                  <div class="col-12">
+                    <div>
+                      <div class="tw-overflow-hidden tw-rounded-sm tw-bg-[#F9FAFB]">
+                        <div class="tw-h-1 tw-rounded-sm" :style="{ backgroundColor: criterion.color, width: getCriterionPercent(criterion) + '%' }"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="row" v-if="criterion.expanded">
+                  <div class="col-12 py-2">
+                    <p>${criterion.description}</p>
+                  </div>
+                  <div class="col-12">
+                    <hr class="mt-0">
+                  </div>
+                </div>
+              </template>
+            </template>
+            <template v-if="controls.selectedTab == 'deviations'">
+              <template v-for="annotation in annotations">
+                <div class="row m-0 my-2" style="outline: 1px solid #E5E7EA; border-radius: 12px;">
+                  <div class="col-12 py-3">
+                    <div class="row">
+                      <div class="col px-1 d-flex align-items-center">
+                        <div :style="{ backgroundColor: annotation.deviation.criterion.color }" style="width: 8px; height: 8px; border-radius: 50%;">&nbsp;</div>
+                        <span class="mx-2 cp" @click="selectAnnotation(annotation)" style="font-size: .8rem;" :style="selectedAnnotation == annotation ? 'font-weight: bold; color: #384250;':''">${annotation.deviation.shortName}</span>
+                      </div>
+                      <div class="col-4 px-0 d-flex justify-content-end" v-if="selectedAnnotation == annotation">
+                        <svg @click="removeAnnotation(annotation)" class="cp" width="24" height="24" class="mx-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M16 6V5.2C16 4.0799 16 3.51984 15.782 3.09202C15.5903 2.71569 15.2843 2.40973 14.908 2.21799C14.4802 2 13.9201 2 12.8 2H11.2C10.0799 2 9.51984 2 9.09202 2.21799C8.71569 2.40973 8.40973 2.71569 8.21799 3.09202C8 3.51984 8 4.0799 8 5.2V6M10 11.5V16.5M14 11.5V16.5M3 6H21M19 6V17.2C19 18.8802 19 19.7202 18.673 20.362C18.3854 20.9265 17.9265 21.3854 17.362 21.673C16.7202 22 15.8802 22 14.2 22H9.8C8.11984 22 7.27976 22 6.63803 21.673C6.07354 21.3854 5.6146 20.9265 5.32698 20.362C5 19.7202 5 18.8802 5 17.2V6" stroke="#E5E7EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                  <template v-if="selectedAnnotation == annotation">
+                    <div class="col-12">
+                      <p>
+                        ${annotation.deviation.description}
+                      </p>
+                    </div>
+                  </template>
+                </div>
+              </template>
+              <template v-if="!annotations.length">
+                <div class="row m-0 my-2">
+                  <div class="col-12 py-3">
+                    <p>Nenhum desvio encontrado</p>
+                  </div>
+                </div>
+              </template>
+            </template>
+            <template v-if="controls.selectedTab == 'comment'">
+              <template v-if="controls.audio.showControls">
+                <div class="row">
+                  <div class="col-12 align-items-center d-flex justify-content-center flex-column">
+                    <span style="width: 60px; height: 60px; border: 1px solid #A1A5AF;" @click="controls.audio.isRecording ? stopRecording() : startRecording()" :class="{ 'active': controls.audio.isRecording }" class="mic d-flex align-items-center justify-content-center rounded-circle">
+                      <i class="fas fa-microphone-alt" :class="controls.audio.isRecording ? 'fa-spin':''" style="font-size: 28px;"></i>
+                      <!-- <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 10V12C19 15.866 15.866 19 12 19M5 10V12C5 15.866 8.13401 19 12 19M12 19V22M8 22H16M12 15C10.3431 15 9 13.6569 9 12V5C9 3.34315 10.3431 2 12 2C13.6569 2 15 3.34315 15 5V12C15 13.6569 13.6569 15 12 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg> -->
+                    </span>
+                    <p style="text-align: center; font-size: .9rem;">
+                      <template v-if="controls.audio.isRecording">
+                        Gravando, clique no ícone de microfone parar o áudio.
+                      </template>
+                      <template v-else>
+                        Clique para gravar o áudio.
+                      </template>
+                    </p>
+                  </div>
+                  <div class="col-12 px-0 mb-3 d-flex justify-content-center" v-show="controls.audio.audioBlob">
+                    <audio ref="audioPlayer" controls></audio>
+                  </div>
+                  <div class="col-12">
+                    <button ref="" :disabled="!controls.audio.audioBlob || controls.audio.sending" @click="sendAudio()" class="btn btn-white btn-block" class="icon-button" style="border-radius: 8px;">
+                      <template v-if="controls.audio.sending">
+                        Salvando... <i class="fas fa-spinner fa-spin"></i>
+                      </template>
+                      <template v-else>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M7 3V6.4C7 6.96005 7 7.24008 7.10899 7.45399C7.20487 7.64215 7.35785 7.79513 7.54601 7.89101C7.75992 8 8.03995 8 8.6 8H15.4C15.9601 8 16.2401 8 16.454 7.89101C16.6422 7.79513 16.7951 7.64215 16.891 7.45399C17 7.24008 17 6.96005 17 6.4V4M17 21V14.6C17 14.0399 17 13.7599 16.891 13.546C16.7951 13.3578 16.6422 13.2049 16.454 13.109C16.2401 13 15.9601 13 15.4 13H8.6C8.03995 13 7.75992 13 7.54601 13.109C7.35785 13.2049 7.20487 13.3578 7.10899 13.546C7 13.7599 7 14.0399 7 14.6V21M21 9.32548V16.2C21 17.8802 21 18.7202 20.673 19.362C20.3854 19.9265 19.9265 20.3854 19.362 20.673C18.7202 21 17.8802 21 16.2 21H7.8C6.11984 21 5.27976 21 4.63803 20.673C4.07354 20.3854 3.6146 19.9265 3.32698 19.362C3 18.7202 3 17.8802 3 16.2V7.8C3 6.11984 3 5.27976 3.32698 4.63803C3.6146 4.07354 4.07354 3.6146 4.63803 3.32698C5.27976 3 6.11984 3 7.8 3H14.6745C15.1637 3 15.4083 3 15.6385 3.05526C15.8425 3.10425 16.0376 3.18506 16.2166 3.29472C16.4184 3.4184 16.5914 3.59135 16.9373 3.93726L20.0627 7.06274C20.4086 7.40865 20.5816 7.5816 20.7053 7.78343C20.8149 7.96237 20.8957 8.15746 20.9447 8.36154C21 8.59171 21 8.8363 21 9.32548Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Salvar áudio
+                      </template>
+                    </button>
+                  </div>
+                  <div class="col-12 my-2">
+                    <button class="btn btn-white btn-block" :disabled="controls.audio.sending" @click="controls.audio.showControls = false" class="icon-button" style="border-radius: 8px;">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17 7L7 17M7 7L17 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      Voltar
+                    </button>
+                  </div>
+                </div>
+              </template>
+              <template v-else>
+                <div class="row m-0">
+                  <div class="col-12 px-0" style="max-height: 260px; overflow-y: auto;">
+                    <div style="padding: 10px; min-height: 240px; border-radius: 8px; border: 1px solid #888;" onblur="app.updateComment()" contenteditable>
+                      <template v-if="selectedApplicationStudent.answer.teacherFeedback">
+                        ${selectedApplicationStudent.answer.teacherFeedback.length ? selectedApplicationStudent.answer.teacherFeedback:'Comentário'}
+                      </template>
+                    </div>
+                  </div>
+                  <div class="col-12 my-3 px-0 d-flex justify-content-between align-items-center" v-if="selectedApplicationStudent.answer && !selectedApplicationStudent.answer.teacherAudioFeedback">
+                    <button class="btn btn-block btn-white" @click="controls.audio.showControls = !controls.audio.showControls">
+                      Gravar áudio 
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 10V12C19 15.866 15.866 19 12 19M5 10V12C5 15.866 8.13401 19 12 19M12 19V22M8 22H16M12 15C10.3431 15 9 13.6569 9 12V5C9 3.34315 10.3431 2 12 2C13.6569 2 15 3.34315 15 5V12C15 13.6569 13.6569 15 12 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="row my-2" v-show="selectedApplicationStudent.answer && selectedApplicationStudent.answer.teacherAudioFeedback">
+                  <div class="col-12 px-0 d-flex justify-content-between align-items-center">
+                    <div style="height: 50px; border: 1px solid #A1A5AF; border-radius: 6px; width: 100%;">
+                      <div class="d-flex align-items-center justify-content-between h-100 px-3">
+                        <template v-if="!controls.loaded">
+                          <i class="fas fa-spin fa-spinner"></i>
+                        </template>
+                        <template v-else>
+                          <i class="fas cp" :class="controls.playing ? 'fa-pause':'fa-play'" @click="controls.wavesurfer.playPause()"></i>
+                        </template>
+                        <div class="px-2 w-100">
+                          <div id="waveform"></div>
+                        </div>
+                        <template v-if="controls.loaded">
+                          <span>${formatTime(Number(controls.duration))}</span>
+                        </template>
+                      </div>
+                    </div>
+                    <div class="mx-2">
+                      <span class="cp nav-hover" @click="controls.audio.showControls = !controls.audio.showControls">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M19 10V12C19 15.866 15.866 19 12 19M5 10V12C5 15.866 8.13401 19 12 19M12 19V22M8 22H16M12 15C10.3431 15 9 13.6569 9 12V5C9 3.34315 10.3431 2 12 2C13.6569 2 15 3.34315 15 5V12C15 13.6569 13.6569 15 12 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </span>
+                    </div>
+                    <div>
+                      <span class="cp nav-hover" @click="removeAudio()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M16 6V5.2C16 4.0799 16 3.51984 15.782 3.09202C15.5903 2.71569 15.2843 2.40973 14.908 2.21799C14.4802 2 13.9201 2 12.8 2H11.2C10.0799 2 9.51984 2 9.09202 2.21799C8.71569 2.40973 8.40973 2.71569 8.21799 3.09202C8 3.51984 8 4.0799 8 5.2V6M10 11.5V16.5M14 11.5V16.5M3 6H21M19 6V17.2C19 18.8802 19 19.7202 18.673 20.362C18.3854 20.9265 17.9265 21.3854 17.362 21.673C16.7202 22 15.8802 22 14.2 22H9.8C8.11984 22 7.27976 22 6.63803 21.673C6.07354 21.3854 5.6146 20.9265 5.32698 20.362C5 19.7202 5 18.8802 5 17.2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </template>
+            <template v-if="controls.selectedTab == 'theme'">
+              <div class="row m-0">
+                <div class="col-12">
+                  <p>${theme}</p>
+                </div>
+              </div>
+            </template>
+          </template>
+        </div>
+        <div :class="controls.correctionWithIA ? 'col-11':'col-lg-8 col-xl-9'" style="max-height: calc(100vh - 60px); background-color: #EEF0F1; overflow-y: scroll;">
+          <div class="row">
+            <div class="col-2 pt-4" v-if="controls.correctionWithIA">
+              <div class="row">
+                <div class="col-12">
+                  <div class="mt-2 d-flex justify-content-center align-items-center" style="width: 48px; height: 48px; border-radius: 100%; background-color: #FF8F3D20; padding: 5px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M4.5 22V17M4.5 7V2M2 4.5H7M2 19.5H7M13 3L11.2658 7.50886C10.9838 8.24209 10.8428 8.60871 10.6235 8.91709C10.4292 9.1904 10.1904 9.42919 9.91709 9.62353C9.60871 9.84281 9.24209 9.98381 8.50886 10.2658L4 12L8.50886 13.7342C9.24209 14.0162 9.60871 14.1572 9.91709 14.3765C10.1904 14.5708 10.4292 14.8096 10.6235 15.0829C10.8428 15.3913 10.9838 15.7579 11.2658 16.4911L13 21L14.7342 16.4911C15.0162 15.7579 15.1572 15.3913 15.3765 15.0829C15.5708 14.8096 15.8096 14.5708 16.0829 14.3765C16.3913 14.1572 16.7579 14.0162 17.4911 13.7342L22 12L17.4911 10.2658C16.7579 9.98381 16.3913 9.8428 16.0829 9.62353C15.8096 9.42919 15.5708 9.1904 15.3765 8.91709C15.1572 8.60871 15.0162 8.24209 14.7342 7.50886L13 3Z" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+                <div class="col-12 py-3">
+                  <p class="mb-1 font-weight-bold">Sugestões da nossa IA</p>
+                  <p class="text-muted mb-0">
+                    Selecione as que você considera <br> adequadas e click em aplicar.
+                  </p>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-12">
+                  <div class="card" style="border-radius: 12px;">
+                    <div class="card-body px-1">
+                      <div class="row m-0">
+                        <div class="col-12">
+                          <h6>Concordância verbal</h6>
+                        </div>
+                      </div>
+                      <div class="row m-0">
+                        <div class="col-12">
+                          <p class="mb-1">
+                            Avaliação de como o aluno organiza suas ideias e contrói uma argumentação clara e coerente.
+                            Avaliação de como o aluno organiza suas ideias e contrói uma argumentação clara e coerente.
+                          </p>
+                        </div>
+                      </div>
+                      <div class="row m-0">
+                        <div class="col-12">
+                          <button class="btn btn-white btn-block" style="padding: 10px 14px; border-radius: 8px;">Aplicar</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row m-0 mt-3 px-2">
+                <div class="col-12 d-flex justify-content-between align-items-center">
+                  <span style="color: #FF8F3D; font-weight: bold;" class="cp">Anterior</span>
+                  <span style="font-size: 12px;">
+                    <span class="text-muted">1</span>
+                    <span class="text-muted mx-1">de</span>
+                    <span class="text-muted">12</span>
+                  </span>
+                  <span style="color: #FF8F3D; font-weight: bold;" class="cp">Próximo</span>
+                </div>
+              </div>
+            </div>
+            <div :class="controls.correctionWithIA ? 'col-10':'col-12'">
+              <div class="bg-white mt-2 rounded-pill text-center p-1">
+                Segure a tecla <strong>SHIFT</strong> e <strong>arraste</strong> para criar uma seleção
+              </div>
+              <annotation-component ref="annotation-component" v-show="selectedAnnotation" :annotation="selectedAnnotation" :readonly="selectedApplicationStudent && selectedApplicationStudent.answer ? selectedApplicationStudent.answer.essayWasCorrected : false"></annotation-component>
+              <div class="row">
+                <div class="col-12 pt-3">
+                  <div class="overlay-content w-100" id="img-content" style="height: calc(100vh - 115px);"></div>
+                  <div id="toolbarDiv">
+                    <div class="" style="position: fixed; right: 30px; top: 100px;">
+                      <div id="home" data-toggle="tooltip" title="Centralizar" data-placement="left" class="hovable cp mt-2 d-flex justify-content-center align-items-center" style="width: 48px; height: 48px; border-radius: 100%; background-color: white; padding: 5px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M20 12C20 16.4183 16.4183 20 12 20M20 12C20 7.58172 16.4183 4 12 4M20 12H22M12 20C7.58172 20 4 16.4183 4 12M12 20V22M4 12C4 7.58172 7.58172 4 12 4M4 12H2M12 4V2M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </div>
+                      <div id="zoom-in" data-toggle="tooltip" title="Mais zoom" data-placement="left" class="hovable cp mt-2 d-flex justify-content-center align-items-center" style="width: 48px; height: 48px; border-radius: 100%; background-color: white; padding: 5px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M21 21L16.65 16.65M11 8V14M8 11H14M19 11C19 15.4183 15.4183 19 11 19C6.58172 19 3 15.4183 3 11C3 6.58172 6.58172 3 11 3C15.4183 3 19 6.58172 19 11Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </div>
+                      <div id="zoom-out" data-toggle="tooltip" title="Menos zoom" data-placement="left" class="hovable cp mt-2 d-flex justify-content-center align-items-center" style="width: 48px; height: 48px; border-radius: 100%; background-color: white; padding: 5px;">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M19 19L14.65 14.65M6 9H12M17 9C17 13.4183 13.4183 17 9 17C4.58172 17 1 13.4183 1 9C1 4.58172 4.58172 1 9 1C13.4183 1 17 4.58172 17 9Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </div>
+                      {% comment %}
+                        <i class="fas fa-home m-2 text-white" style="font-size: 1.1rem;" id="home"></i>
+                        <i class="fas fa-search-plus m-2 text-white" style="font-size: 1.1rem;" id="zoom-in"></i>
+                        <i class="fas fa-search-minus m-2 text-white" style="font-size: 1.1rem;" id="zoom-out"></i>
+                        <i class="fas fa-undo m-2 text-white" style="font-size: 1.1rem;" id="rotate-left"></i>
+                        <i class="fas fa-undo m-2 text-white" style="transform: rotate(-90deg); transform: scaleX(-1); font-size: 1.1rem;" id="rotate-right"></i>
+                        <i class="fas fa-expand-arrows-alt m-2 text-white" style="font-size: 1.1rem;" id="full-page"></i>
+                      {% endcomment %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {% comment %}
+                <div class="row" style="position: fixed; right: 30px; bottom: 40px;">
+                  <div class="col-12">
+                    <div id="ia" @click="controls.correctionWithIA = !controls.correctionWithIA" :class="{ 'activated': controls.correctionWithIA }" class="hovable havable-bg-yellow cp mt-2 d-flex justify-content-center align-items-center" style="width: 48px; height: 48px; border-radius: 100%; background-color: white; padding: 5px;">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4.5 22V17M4.5 7V2M2 4.5H7M2 19.5H7M13 3L11.2658 7.50886C10.9838 8.24209 10.8428 8.60871 10.6235 8.91709C10.4292 9.1904 10.1904 9.42919 9.91709 9.62353C9.60871 9.84281 9.24209 9.98381 8.50886 10.2658L4 12L8.50886 13.7342C9.24209 14.0162 9.60871 14.1572 9.91709 14.3765C10.1904 14.5708 10.4292 14.8096 10.6235 15.0829C10.8428 15.3913 10.9838 15.7579 11.2658 16.4911L13 21L14.7342 16.4911C15.0162 15.7579 15.1572 15.3913 15.3765 15.0829C15.5708 14.8096 15.8096 14.5708 16.0829 14.3765C16.3913 14.1572 16.7579 14.0162 17.4911 13.7342L22 12L17.4911 10.2658C16.7579 9.98381 16.3913 9.8428 16.0829 9.62353C15.8096 9.42919 15.5708 9.1904 15.3765 8.91709C15.1572 8.60871 15.0162 8.24209 14.7342 7.50886L13 3Z" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              {% endcomment %}
+                
+            </div>
+          </div>
+        </div>
+      </div>
+  </div>
+
+  <canvas id="snapshot-canvas" style="display:none;"></canvas>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+  <div class="modal fade" id="modalChangeSchoolClass" tabindex="-1" aria-labelledby="modalChangeSchoolClassLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalChangeSchoolClassLabel">Selecione uma turma</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <select ref="inputSchoolClass" v-model="selectedSchoolClassID" class="form-control">
+            <option :value="schoolClass.id" v-for="schoolClass in schoolClasses">${schoolClass.name}</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+          <button type="button" @click="changeSchoolClass()" class="btn btn-primary" :disabled="controls.loading">Confirmar <i class="fas fa-spin fa-spinner" v-if="controls.loading"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal fade" id="modalHistorical" tabindex="-1" aria-labelledby="modalHistoricalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title mb-0" id="modalHistoricalLabel">Histórico de redações</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="card shadow my-2" style="border-radius: 8px;" v-for="applicationStudent in historical">
+            <div class="card-body">
+              <div class="row m-0">
+                <div class="col-12 d-flex justify-content-between align-items-center">
+                  <div>
+                    <h5 class="text-truncate mb-0" style="max-width: 15rem;">${applicationStudent.student.name}</h5>
+                    <p class="mb-0">Tema: ${applicationStudent.answer.theme}</p>
+                  </div>
+                  <div class="d-flex align-items-center justify-content-end">
+                    <svg id="points" width="80" height="80" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke="#FFF4EC" stroke-width="1.5" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                      <path stroke="#FF8F3D" stroke-width="1.5" :stroke-dasharray="getTotalPercent" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                      <text x="1%" y="1%" fill="#101828">
+                        <div class="d-flex flex-column align-items-center" style="position: absolute; right: 32px;">
+                          <span style="line-height: 1rem; font-size: 1.1rem; font-weight: bold; color: #000;">${getTotalPoints}</span>
+                          <span style="font-size: .8rem;">pontos</span>
+                        </div>
+                      </text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div class="row m-0 my-2">
+                <div class="col-12 d-flex justify-content-between align-items-center">
+                  <template v-for="criterion in selectedApplicationStudent.answer.textCorrection.criterions">
+                    <div class="d-flex align-items-center">
+                      <div :style="{ backgroundColor: criterion.color + '20', borderColor: criterion.color }" style="height: 32px; width: 32px; border-radius: 9px; border: 2px solid;" class="d-flex align-items-center justify-content-center m-1">
+                        <span style="color: #384250; font-size: 12px; line-height: 16px; font-weight: 700;">${criterion.shortName}</span>
+                      </div>
+                      <span class="mx-2">${getCriterionValue(criterion)}</span>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock extra-modal %}
+
+{% block js-additional %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="{% static 'js/tippy/popper.min.js' %}"></script>
+<script src="{% static 'js/tippy/tippy.min.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+<script src="{% static 'js/annotorious/openseadragon.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/@recogito/annotorious@2.6.0/dist/annotorious.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@recogito/annotorious-openseadragon@2.6.0/dist/openseadragon-annotorious.min.js"></script>
+<script src="https://unpkg.com/wavesurfer.js@7"></script>
+
+<script type="text/javascript">
+    moment.locale('pt-br');
+
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        components: {
+          {% include 'includes/components/vue-notifications.html' %},
+          'annotation-component': Vue.component('annotation-component', {
+            props: ['annotation', 'readonly'],
+            delimiters: ["#{", "}"],
+            data: function() {
+                return {
+                  deviation: null,
+                  foundedDeviations: [],
+                }
+            },
+            computed: {
+              criterions: function() {
+                return this.$parent && this.$parent.criterions ? this.$parent.criterions : []
+              },
+              selectedCriterion: function() {
+                return this.$parent && this.$parent.selectedCriterion ? this.$parent.selectedCriterion : []
+              },
+              selectedAnnotation: function() {
+                return this.$parent && this.$parent.selectedAnnotation ? this.$parent.selectedAnnotation : null
+              },
+            },
+            template: `
+              <div id="annotation-component" style="position:absolute; z-index: 1;">
+                <template v-if="!readonly">
+                  <div class="p-2" style="border-radius: 8px; width: 256px; height: 284px; border: 1px solid #E6E8EC; background-color: white;">
+                    <div class="d-flex flex-column aling-items-center" v-if="deviation">
+                      <div style="max-height: 200px; overflow-y: auto;">
+                        <div class="d-flex align-items-center justify-content-center">
+                          <div v-for="criterion in criterions" @click="$parent.selectedCriterion = criterion" :style="{ backgroundColor: criterion.color + '20', borderColor: criterion == selectedCriterion ? criterion.color:'' }" style="height: 32px; width: 32px; border-radius: 9px; border: 2px solid;" class="d-flex align-items-center justify-content-center m-1 cp">
+                            <span style="color: #384250; font-size: 12px; line-height: 16px; font-weight: 700;">#{criterion.shortName}</span>  
+                          </div>
+                          <div @click="removeAnnotation()" style="background: #F9FAFA20; border: 1px solid #E5E7EA; height: 32px; width: 32px; border-radius: 9px;" class="cp d-flex align-items-center justify-content-center m-1">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M16 6V5.2C16 4.0799 16 3.51984 15.782 3.09202C15.5903 2.71569 15.2843 2.40973 14.908 2.21799C14.4802 2 13.9201 2 12.8 2H11.2C10.0799 2 9.51984 2 9.09202 2.21799C8.71569 2.40973 8.40973 2.71569 8.21799 3.09202C8 3.51984 8 4.0799 8 5.2V6M10 11.5V16.5M14 11.5V16.5M3 6H21M19 6V17.2C19 18.8802 19 19.7202 18.673 20.362C18.3854 20.9265 17.9265 21.3854 17.362 21.673C16.7202 22 15.8802 22 14.2 22H9.8C8.11984 22 7.27976 22 6.63803 21.673C6.07354 21.3854 5.6146 20.9265 5.32698 20.362C5 19.7202 5 18.8802 5 17.2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-12 px-0">
+                            <textarea :disabled="deviation.id" rows="4" v-model="deviation.shortName" class="form-control" placeholder="/c"></textarea>
+                          </div>
+                          <div class="d-flex justify-content-end col-12 p-0" v-if="deviation.id">
+                            <a href="javascript:;" @click="clearDeviation()">Limpar</a>
+                          </div>
+                        </div>
+                        <template v-for="deviation in foundedDeviations">
+                          <div @click="selectDeviation(deviation)" class="cp p-3 text-center bg-white" style="border-radius: 8px; top: -10px; width: 264px; position: absolute; z-index: 2; box-shadow: 0px 2px 4px -2px #1018280F; box-shadow: 0px 4px 8px -2px #1018281A;">
+                            <p style="font-size: 14px; font-weight: 600;" class="mb-2 text-truncate" :title="deviation.shortName">#{deviation.shortName}</p>
+                            <p class="text-truncate mb-0" :title="deviation.description" style="color: #667085; line-height: 20px; font-size: 14px; font-weight: 400;">#{deviation.description}</p>
+                          </div>
+                        </template>
+                        <div class="row my-3">
+                          <div class="col px-0 d-flex align-items-center" style="font-size: 12px;">
+                            Nota competência
+                          </div>
+                          <div class="col px-0 d-flex justify-content-end">
+                            <input type="number" v-model.number="deviation.score" :max="selectedCriterion.maximumScore" class="form-control" style="max-width: 80px; height: 32px;" placeholder="200">
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <div class="row my-3">
+                          <div class="col px-0">
+                            <template v-if="annotation && annotation.deviation">
+                              <button class="btn btn-white btn-block" :disabled="!deviation.score || !deviation.shortName" style="padding: 10px 14px; border-radius: 8px;" @click="saveAnnotation(true)">Atualizar</button>
+                            </template>
+                            <template v-else>
+                              <button class="btn btn-white btn-block" :disabled="!deviation.score || !deviation.shortName" style="padding: 10px 14px; border-radius: 8px;" @click="saveAnnotation()">Finalizar</button>
+                            </template>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  </template>
+                  <template v-else>
+                    <div class="p-2" style="border-radius: 8px; width: 256px; border: 1px solid #E6E8EC; background-color: white;">
+                      <div class="d-flex flex-column aling-items-center" v-if="annotation && deviation">
+                        <div style="max-height: 200px; overflow-y: auto;">
+                          <div class="d-flex align-items-center justify-content-between">
+                            <p class="font-weight-bold mb-0">#{annotation.deviation.shortName}</p>
+                            <div :style="{ backgroundColor: annotation.deviation.criterion.color + '20', borderColor: annotation.deviation.criterion.color }" style="height: 32px; width: 32px; border-radius: 9px; border: 2px solid;" class="d-flex align-items-center justify-content-center m-1 cp">
+                              <span style="color: #384250; font-size: 12px; line-height: 16px; font-weight: 700;">#{annotation.deviation.criterion.shortName}</span>  
+                            </div>
+                          </div>
+                          <div class="row m-0 my-2 pt-2" style="border-top: 1px solid #E5E7EA;">
+                            <div class="col-12 px-0">
+                              <p>#{deviation.description}</p>
+                            </div>
+                          </div>
+                          <div class="row m-0 my-2 pt-2" style="border-top: 1px solid #E5E7EA;">
+                            <div class="col-12 px-0">
+                              <p class="text-right mb-0">Pontos: <strong style="font-size: 1.1rem;">#{deviation.score}</strong></p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+            `,
+            methods: {
+              searchDeviations(searchTerm) {
+                searchTerm = searchTerm.trim()
+                if(searchTerm.length > 2) {
+                  axios.get(`{% url 'corrections:text-corrections-deviations' %}?criterion=${this.selectedCriterion.id}&search=${searchTerm}`).then((response) => {
+                    this.foundedDeviations = response.data
+                  })
+                }
+              },
+              selectDeviation(deviation) {
+                this.deviation = deviation
+                this.foundedDeviations = []
+              },
+              clearDeviation() {
+                this.deviation = {
+                  id: null,
+                  criterion: null,
+                  shortName: '',
+                  description: '', 
+                  color: '',
+                  score: null,
+                }
+              },
+              saveAnnotation(update = false) {
+                this.deviation['criterion'] = this.selectedCriterion
+                if(update) {
+                  this.$parent.updateAnnotation(this.deviation)
+                } else {
+                  this.$parent.saveAnnotation(this.deviation)
+                }
+                this.clearDeviation()
+              },
+              removeAnnotation() {
+                this.$parent.removeAnnotation(this.selectedAnnotation)
+              },
+            },
+            watch: {
+              selectedAnnotation: function(val) {
+                if(val && val.deviation) {
+                  this.$parent.selectedCriterion = this.$parent.criterions.find(c => c.id == val.deviation.criterion.id)
+                  this.deviation = Object.assign({}, val.deviation)
+                }
+              },
+              // selectedCriterion: function(val) {
+              //   if(this.deviation.id) {
+              //     this.clearDeviation()
+              //   }
+              // },
+              'deviation.shortName': function(val) {
+                if(val.length > 2) {
+                  if(val.slice(0, 2).toLowerCase() == '/c') {
+                    let searchTerm = val.split('/c')[1]
+                    this.searchDeviations(searchTerm)
+                  }
+                } else {
+                  this.foundedDeviations = []
+                }
+              },
+            },
+            mounted() {
+              this.clearDeviation()
+            }
+          })
+        },
+        el: '#app',
+        data: {
+          controls: {
+            selectedTab: 'grade',
+            loading: false,
+            currentIndex: 0,
+            showSummary: true,
+            correctionWithIA: false,
+            audio: {
+              showControls: false,
+              isRecording: false,
+              mediaRecorder: null,
+              audioBlob: null,
+              audioChunks: [],
+              sending: false,
+              wavesurfer: null,
+              loaded: false,
+              currentTime: 0,
+              duration: 0,
+              playing: false,
+            }
+          },
+          schoolClasses: [
+            {% for school_class in school_classes %}
+              {
+                id: '{{school_class.id}}',
+                name: '{{school_class}}',
+                gradeName: '{{school_class.grade}}'
+              },
+            {% endfor %}
+          ],
+          selectedSchoolClass: null,
+          selectedSchoolClassID: null,
+          selectedApplicationStudent: null,
+          selectedAnnotation: null,
+          selectedCriterion: null,
+          criterions: [],
+          deviations: [],
+          annotations: [],
+          selectedAnnotation: null,
+          selectedQuestion: {
+            img_annotations: [],
+          },
+          annotationsList: [],
+          historical: [],
+          viewer: null,
+          anno: null,    
+          imgUrl: null,      
+        },
+        computed: {
+          theme: function() {
+            return this.selectedApplicationStudent.answer.theme
+          },
+          getTotalPoints: function(val) {
+            let score = 0
+            this.criterions.map((c) => score += this.getCriterionValue(c))
+            return score
+          },
+          getTotalPercent: function(val) {
+            let score = 0
+            let maxScore = this.criterions.reduce((c, total = 0) => total += c.maximumScore, 0)
+            this.criterions.map((c) => score += this.getCriterionValue(c))
+            return `${score / maxScore * 100}, 100`
+          }
+        },
+        watch: {
+          selectedApplicationStudent: function(val) {
+            this.getApplicationStudentData()
+          },
+        },
+        updated() {
+          if(this.anno) {
+            const selection = this.anno.getAnnotations();
+            if (selection.length > 0) {
+              const lastSelection = selection[selection.length - 1]; // Obtenha a última seleção
+              this.showCustomTooltip(lastSelection);
+            }
+          }
+          $('[data-toggle="tooltip"]').tooltip()
+        },
+        methods: {
+          finishCorrection() {
+            if(this.selectedApplicationStudent.answer) {
+              let essayWasCorrected = !this.selectedApplicationStudent.answer.essayWasCorrected
+              axios.patch("{% url 'answers:file_update_teacher_feedback' pk='10000000-1000-4000-8000-100000000000' %}".replace('10000000-1000-4000-8000-100000000000', this.selectedApplicationStudent.answer.id), { essay_was_corrected: essayWasCorrected }).then((response) => {
+                this.selectedApplicationStudent.answer.essayWasCorrected = essayWasCorrected
+                this.$forceUpdate()
+              }).catch(() => {
+                
+              }).finally(() => {
+
+              })
+            }
+          },
+          showHistorical() {
+            $('#modalHistorical').modal('show')
+            this.getApplicationsStudentFromStudent()
+          },
+          formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = Math.floor(seconds % 60);
+
+            // Adiciona um zero à esquerda se o número for menor que 10
+            const formattedMinutes = String(minutes).padStart(2, '0');
+            const formattedSeconds = String(remainingSeconds).padStart(2, '0');
+            return `${formattedMinutes}:${formattedSeconds}`;
+          },
+          async startRecording() {
+            this.controls.audio.audioChunks = [];
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            this.controls.audio.mediaRecorder = new MediaRecorder(stream);
+            this.controls.audio.mediaRecorder.ondataavailable = event => {
+              this.controls.audio.audioChunks.push(event.data);
+            };
+            this.controls.audio.mediaRecorder.onstop = this.createAudioBlob;
+            this.controls.audio.mediaRecorder.start();
+            this.controls.audio.isRecording = true;
+          },
+          stopRecording() {
+            this.controls.audio.mediaRecorder.stop();
+            this.controls.audio.isRecording = false;
+            this.controls.audio.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+          },
+          createAudioBlob() {
+            this.controls.audio.audioBlob = new Blob(this.controls.audio.audioChunks, { type: 'audio/wav' });
+            this.playAudio()
+          },
+          playAudio() {
+            if (this.controls.audio.audioBlob) {
+              const audioUrl = URL.createObjectURL(this.controls.audio.audioBlob);
+              this.$refs.audioPlayer.src = audioUrl;
+              this.$refs.audioPlayer.play().catch(error => {
+                console.error("Erro ao reproduzir o áudio:", error);
+              });
+            } else {
+              console.log("Nenhum áudio disponível para reprodução.");
+            }
+          },
+          async sendAudio() {
+            const formData = new FormData();
+            const headers = { 'Content-Type': 'multipart/form-data' };
+            formData.append('teacher_audio_feedback', this.controls.audio.audioBlob, 'audio.wav');
+            this.controls.audio.sending = true
+            axios.patch("{% url 'answers:file_update_teacher_feedback' pk='10000000-1000-4000-8000-100000000000' %}".replace('10000000-1000-4000-8000-100000000000', this.selectedApplicationStudent.answer.id), formData, { headers }).then((response) => {
+              this.selectedApplicationStudent.answer.teacherAudioFeedback = response.data.teacher_audio_feedback
+              this.controls.audio.showControls = false
+              this.startAudioComment()
+              this.$forceUpdate()
+            }).catch(() => {
+              
+            }).finally(() => {
+              this.controls.audio.sending = false
+            })
+          },
+          removeAudio() {
+            axios.patch("{% url 'answers:file_update_teacher_feedback' pk='10000000-1000-4000-8000-100000000000' %}".replace('10000000-1000-4000-8000-100000000000', this.selectedApplicationStudent.answer.id), { teacher_audio_feedback: null }).then((response) => {
+              this.selectedApplicationStudent.answer.teacherAudioFeedback = null
+              this.$forceUpdate()
+            }).catch(() => {
+              
+            }).finally(() => {
+              
+            })
+          }, 
+          updateComment() {
+            let comment = $(event.target).text()
+            axios.patch("{% url 'answers:file_update_teacher_feedback' pk='10000000-1000-4000-8000-100000000000' %}".replace('10000000-1000-4000-8000-100000000000', this.selectedApplicationStudent.answer.id), { teacher_feedback: comment }).then((response) => {
+              this.selectedApplicationStudent.answer.teacherFeedback = comment
+              this.$refs['inputComment'].value = ''
+              this.$forceUpdate()
+            })
+          },
+          moment(date) {
+            return moment(date)
+          },
+          getEssayCorrectionStatus() {
+            let status = `
+              <span class="d-flex align-items-center justify-content-between mx-3 rounded-pill px-2 py-0" style="background-color: #FF8F3D20; font-size: 12px; font-weight: 500;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="mx-1" style="color: #101928">
+                  Aguardando correção
+                </span>
+              </span>
+            `
+            if (this.selectedApplicationStudent && this.selectedApplicationStudent.answer) {
+              if(this.selectedApplicationStudent.answer.essayWasCorrected) {
+                status = `
+                  <span class="d-flex align-items-center justify-content-between mx-3 rounded-pill px-2 py-0" style="background-color: #41C58820; font-size: 12px; font-weight: 500;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 6V12L16 14M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#41C588" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="mx-1" style="color: #101928">
+                      Corrigida
+                    </span>
+                  </span>
+                `
+              } else if (this.selectedApplicationStudent.answer.imgAnnotations && this.selectedApplicationStudent.answer.imgAnnotations.length) {
+                status = `
+                  <span class="d-flex align-items-center justify-content-between mx-3 rounded-pill px-2 py-0" style="background-color: #FF8F3D20; font-size: 12px; font-weight: 500;">
+                    <svg class="fa-flip" width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 12L7.72711 8.43926C7.09226 7.91022 6.77484 7.6457 6.54664 7.32144C6.34444 7.03413 6.19429 6.71354 6.10301 6.37428C6 5.99139 6 5.57819 6 4.7518V2M12 12L16.2729 8.43926C16.9077 7.91022 17.2252 7.6457 17.4534 7.32144C17.6556 7.03413 17.8057 6.71354 17.897 6.37428C18 5.99139 18 5.57819 18 4.7518V2M12 12L7.72711 15.5607C7.09226 16.0898 6.77484 16.3543 6.54664 16.6786C6.34444 16.9659 6.19429 17.2865 6.10301 17.6257C6 18.0086 6 18.4218 6 19.2482V22M12 12L16.2729 15.5607C16.9077 16.0898 17.2252 16.3543 17.4534 16.6786C17.6556 16.9659 17.8057 17.2865 17.897 17.6257C18 18.0086 18 18.4218 18 19.2482V22M4 2H20M4 22H20" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="mx-1" style="color: #101928">
+                      Correção iniciada
+                    </span>
+                  </span>
+                `
+              } 
+            }
+
+            return status
+          },
+          uuid() {
+            return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
+              (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+            );
+          },
+          removeAnnotation(annotation) {
+            this.annotations.splice(this.annotations.indexOf(this.annotations.find(a => a.id == annotation.id)), 1)
+            this.anno.removeAnnotation(annotation)
+            this.selectedAnnotation = null
+            this.updateAnnotations()
+          },
+          selectAnnotation(annotation) {
+            new Promise((resolve) => {
+              this.anno.selectAnnotation(annotation)
+              resolve()
+            }).then(() => {
+              this.selectedAnnotation = annotation
+            })
+          },
+          getCriterionValue(criterion, applicationStudent = null) {
+            let subtract = 0
+            if(applicationStudent && applicationStudent.answer && applicationStudent.answer.imgAnnotations) {
+              applicationStudent.answer.imgAnnotations.filter(a => a.deviation.criterion.id == criterion.id).forEach((a) => subtract += a.deviation.score)
+            } else {
+              this.annotations.filter(a => a.deviation.criterion.id == criterion.id).forEach((a) => subtract += a.deviation.score)
+            }
+            return criterion.maximumScore - subtract
+          },
+          getCriterionPercent(criterion) {
+            return this.getCriterionValue(criterion) / criterion.maximumScore * 100
+          },
+          getTextCorrection() {
+            axios.get("{% url 'corrections:text-corrections-list' %}").then((response) => {
+              let textCorrection = response.data.results.at(0)
+              this.criterions = textCorrection.criterions.map((c) => ({ ...c, expanded: false, }))
+              this.selectedCriterion = this.criterions.at(0)
+            })
+          },
+          saveAnnotation(deviation) {
+            this.selectedAnnotation['deviation'] = deviation
+            this.selectedAnnotation['type'] = 'Annotation'
+            this.selectedAnnotation['id'] = `${this.uuid()}`
+            this.anno.addAnnotation(this.selectedAnnotation)
+            this.anno.setAnnotations(this.anno.getAnnotations().filter(a => a.id))
+            this.annotations = this.anno.getAnnotations()
+            this.selectedAnnotation = null
+            this.updateAnnotations()
+          },
+          updateAnnotation(deviation) {
+            this.selectedAnnotation['deviation'] = deviation
+            let annotation = this.anno.getSelected()
+            this.selectedAnnotation['target']['selector']['value'] = annotation['target']['selector']['value']
+            this.anno.setAnnotations(this.annotations)
+            this.selectedAnnotation = null
+            this.updateAnnotations()
+          },
+          showCustomTooltip(annotation) {
+            const position = annotation.selector ? annotation.selector.value : annotation.target.selector.value
+            setTimeout(() => {
+              const editor = document.querySelector('.r6o-editor')
+              if(editor) {
+                const editorRect = editor.getBoundingClientRect();
+                if($(editor).css('left') && $(editor).css('top')) {
+                  const customTooltip = this.$refs['annotation-component'].$el
+                  customTooltip.style.left = $(editor).css('left')
+                  customTooltip.style.top = $(editor).css('top')
+                }
+              }
+            }, 250)
+          },
+          changeSchoolClass(event) {
+            let classeID = this.$refs['inputSchoolClass'].value
+            this.selectedSchoolClass = this.schoolClasses.find(s => s.id == classeID)
+            this.getApplicationsStudent()
+          },
+          getApplicationStudentData() {
+            let imgUrl = null
+            if(!this.selectedApplicationStudent.answer) {
+              axios.get(this.selectedApplicationStudent.urls.getApplicationStudentEssayQuestion).then((response) => {
+                this.selectedApplicationStudent.answer = response.data
+                if(this.selectedApplicationStudent.answer['imgAnnotations']) {
+                  this.annotations = this.selectedApplicationStudent.answer['imgAnnotations']
+                } else {
+                  this.annotations = []
+                }
+                if(response.data.textCorrection) {
+                  this.criterions = response.data.textCorrection.criterions.map((c) => ({ ...c, expanded: false, }))
+                  this.selectedCriterion = this.criterions.at(0)
+                }
+
+                imgUrl = response.data.fileUrl
+                this.showAnnotorious(imgUrl)
+              })
+            } else {
+              if(this.selectedApplicationStudent.answer) {
+                if(this.selectedApplicationStudent.answer['imgAnnotations']) {
+                  this.annotations = this.selectedApplicationStudent.answer['imgAnnotations']
+                } else {
+                  this.annotations = []
+                }
+                imgUrl = this.selectedApplicationStudent.answer['fileUrl']
+                this.showAnnotorious(imgUrl)
+              }
+            }
+          },
+          startAudioComment() {
+            this.controls.loaded = false
+            let audioUrl = this.selectedApplicationStudent.answer['teacherAudioFeedback']
+            if(audioUrl) {
+
+              setTimeout(() => {
+                if(document.getElementById('waveform')) {
+  
+                  this.controls.wavesurfer = WaveSurfer.create({
+                    container: "#waveform",
+                    waveColor: "#A1A5AF",
+                    progressColor: "#A1A5AF80",
+                    height: 20,
+                    responsive: true,
+                    barGap: 1,
+                    barWidth: 2,
+                    barRadius: 5,
+                  });
+      
+                  this.controls.wavesurfer.load(audioUrl);
+      
+                  this.controls.wavesurfer.on("audioprocess", () => {
+                    this.controls.currentTime = this.controls.wavesurfer.getCurrentTime();
+                  });
+                  this.controls.wavesurfer.on("ready", () => {
+                    this.controls.duration = this.controls.wavesurfer.getDuration();
+                    this.controls.loaded = true
+                    this.$forceUpdate()
+                  });
+    
+                  this.controls.wavesurfer.on("play", () => {
+                    this.controls.playing = true
+                    this.$forceUpdate()
+                  });
+    
+                  this.controls.wavesurfer.on("pause", () => {
+                    this.controls.playing = false
+                    this.$forceUpdate()
+                  });
+                }
+              }, 500)
+            }
+          },
+          getNextApplicationStudent() {
+            let maxIndex = this.applicationsStudent.length
+            let nextIndex = this.controls.currentIndex + 1
+            if(nextIndex < maxIndex) {
+              this.controls.currentIndex = nextIndex
+            } else {
+              this.controls.currentIndex = 0
+            }
+            this.selectedApplicationStudent = this.applicationsStudent.at(this.controls.currentIndex)
+          },
+          getApplicationsStudent(applicationStudentID = null) {
+            if(this.selectedSchoolClass) {
+              this.controls.loading = true 
+              axios.get(`{{object.urls.get_applications_student}}?school_class=${this.selectedSchoolClass.id}`).then((response) => {
+                this.applicationsStudent = response.data.map(s => ({ ...s, answer: null }))
+                if (applicationStudentID) {
+                  this.selectedApplicationStudent = this.applicationsStudent.find(s => s.id == applicationStudentID)
+                  this.controls.currentIndex = this.applicationsStudent.indexOf(this.selectedApplicationStudent)
+                } else {
+                  this.selectedApplicationStudent = this.applicationsStudent.at(this.controls.currentIndex)
+                }
+              }).finally(() => {
+                this.controls.loading = false
+                $('#modalChangeSchoolClass').modal('hide')
+              })
+            }
+          },
+          getApplicationsStudentFromStudent() {
+            axios.get(`{% url 'exams:api-exam-get-applications-student-with-essay-answer' object.id %}?student=${this.selectedApplicationStudent.student.id}`).then((response) => {
+              this.historical = response.data
+            }).finally(() => {
+            })
+          },
+          updateAnnotations() {
+            let url = "{% url 'answers:api_fileanswer_annotations_create_or_update' pk='00000000-0000-0000-0000-000000000000'  %}"
+            axios.put(url.replace('00000000-0000-0000-0000-000000000000', this.selectedApplicationStudent['answer']['id']), { img_annotations: this.annotations.length > 0 ? this.annotations : [] })
+          },
+          showAnnotorious(imgUrl) {
+            this.selectedAnnotation = null
+            this.imgUrl = imgUrl
+            if(this.anno) {
+              this.anno.clearAnnotations()
+            }
+            if(this.viewer) {
+              this.viewer.open({
+                type: "image",
+                url: this.imgUrl ? this.imgUrl : "{% static 'empty_file.png' %}"
+              });
+              this.viewer.forceRedraw();
+            } else {
+              this.viewer = new OpenSeadragon.Viewer({
+                  id: "img-content",
+                  showRotationControl: true,
+                  toolbar: "toolbarDiv",
+                  homeButton : "home",
+                  zoomInButton : "zoom-in",
+                  zoomOutButton : "zoom-out",
+                  // rotateLeftButton: "rotate-left",
+                  // rotateRightButton: "rotate-right",
+                  // fullPageButton : "full-page",
+                  prefixUrl: "https://cdn.jsdelivr.net/npm/openseadragon@3.0/build/openseadragon/images/",
+                  tileSources: {
+                    type: "image",
+                    url: this.imgUrl ? this.imgUrl : "{% static 'empty_file.png' %}"
+                  }
+              });
+            }
+            let formatter = function(annotation) {
+              if(annotation.underlying && annotation.underlying.deviation) {
+                return {
+                  'style': `stroke: ${annotation.underlying.deviation.criterion.color}; stroke-width: 1; fill: ${annotation.underlying.deviation.criterion.color}10;`
+                }
+              }
+            }
+            
+            this.anno = OpenSeadragon.Annotorious(this.viewer, {
+              readOnly: this.selectedApplicationStudent.answer.essayWasCorrected || !imgUrl,
+              locale: 'auto',
+              formatter: formatter,
+            });
+            
+            this.anno.setAnnotations(this.annotations)
+
+            const imageElement = document.querySelector('#img-content'); // Certifique-se de substituir pelo seletor correto
+            
+            this.anno.on('createSelection', (annotation) => {
+              this.selectedAnnotation = annotation
+            });
+            this.anno.on('selectAnnotation', (annotation) => {
+              this.selectedAnnotation = this.annotations.find(a => a.id == annotation.id)
+            });
+            this.anno.on('cancelSelected', (selection) => {
+              this.selectedAnnotation = null
+            });
+            imageElement.addEventListener('mousemove', (event) => {
+              const selection = this.anno.getAnnotations();
+              if (selection.length > 0) {
+                const lastSelection = selection[selection.length - 1]; // Obtenha a última seleção
+                this.showCustomTooltip(lastSelection);
+              }
+            })
+          },
+        }, 
+        mounted() {
+          // this.selectedAnnotation = this.deviations.at(1)
+          if('{{school_class}}') {
+            this.selectedSchoolClass = this.schoolClasses.find(c => c.id == '{{school_class}}')
+            this.selectedSchoolClassID = this.selectedSchoolClass.id 
+            this.getApplicationsStudent(applicationStudentID = '{{application_student}}')
+          } else {
+            this.selectedSchoolClass = this.schoolClasses.at(0)
+            this.getApplicationsStudent()
+          }
+        },
+    })
+</script>
+{% endblock %}

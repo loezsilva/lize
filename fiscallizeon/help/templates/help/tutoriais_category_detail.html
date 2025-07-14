@@ -1,0 +1,172 @@
+{% extends 'redesign/base.html' %}
+{% load static %}
+
+{% block title %}Tutoriais - Categoria: {{object.name}} - Lize{% endblock title %}
+
+{% block css-additional %}
+{% endblock css-additional %}
+    
+
+{% block main %}<main style="padding-top: 1rem; padding-bottom: 2.5rem;">{% endblock main %}
+{% block content-fixed %}
+    <div class="ard cex ddc">
+        <div class="row d-flex justify-content-center align-items-center text-white" style="height: 180px; background-color: #FF8F3E; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+            <div class="col-12 col-lg-10">
+                <div class="text-white d-flex justify-content-between"><span class="tx-26 tx-medium">Categoria: {{object.name}}</span><a href="javascript:;" class="btn btn-white rounded-pill" onclick="history.back()">Voltar</a></div>
+                <p class="mt-3 tx-16 tx-medium">
+                    {{object.description}}
+                </p>
+                <div>
+                    {% include 'help/includes/search.html' %}    
+                </div>
+            </div>
+        </div>
+        <div class="hos" v-if="tutoriais">
+            <div class="row d-flex justify-content-center">
+                <div class="col-lg-2">
+                    <div class="lize-card">
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-12 tx-60 lize-text-warning">
+                                    {% if object.icon %}
+                                        {{object.icon|safe}}
+                                    {% else %}
+                                        <i class="icon ion-ios-cog"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="col-12 mt-3">
+                                    <h5>
+                                        {{object.name}}
+                                    </h5>
+                                    <p class="text-muted">Atualizado ${moment("{{object.updated_at|safe}}").fromNow()}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lize-card my-3">
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-12 tx-26">
+                                    <i class="fas fa-exclamation-circle text-muted lize-text-warning"></i>
+                                </div>
+                                <div class="col-12 mt-3">
+                                    <h6>
+                                        Artigo para
+                                    </h6>
+                                    <p class="text-muted">${segments.join(', ')}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-7">
+                    <div class="row">
+                        <template  v-for="tutorial in tutoriais.results">
+                            <div class="col-12">
+                                <div class="card lize-card lize-hover-warning cp mb-2" @click="goTo(tutorial.urls.detail)">
+                                    <div class="card-body tx-13">
+                                        <div class="row mb-0 d-flex align-items-center">
+                                            <div class="col-3 col-lg-2 text-center">
+                                                <img :src="getThumbnail(tutorial)" class="img-thumbnail" style="min-width: 100px;">
+                                            </div>
+                                            <div class="col ml-4 border-left flex-grow-2">
+                                                <h6>${tutorial.title}</h6>
+                                                <p class="tx-color-03 mg-b-0 text-muted">${moment(tutorial.createdAt).fromNow()}</p>
+                                            </div>
+                                            <div class="col-3 col-lg-1 border-left h-100">
+                                                <i class="icon ion-md-arrow-forward tx-26 lize-text-warning"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <pagination-component :label="'tutoriais'" :objects="tutoriais"></pagination-component>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content-fixed %}
+{% block endmain %}</main>{% endblock endmain %}
+
+{% block js-additional %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+<script>
+
+    moment.locale('pt-br')
+    
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        components: {
+            {% include 'includes/components/vue-pagination_v2.html' %},
+        },
+        el: '#app',
+        data: {
+            url: "{% url 'api:clients:tutoriais-list' %}?category={{object.id}}&page_size=6",
+            tutoriais: null,
+            segments: eval("{{object.get_segments|safe}}"),
+            searchInput: '',
+        },
+        methods: {
+            getTutoriais() {
+                axios.get(this.url).then((response) => {
+                    this.tutoriais = response.data
+                })
+            },
+            extractYouTubeVideoId(url) {
+                const match = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+                if (match && match[1]) {
+                    return match[1];
+                } else {
+                    return null;
+                }
+            },
+            getThumbnail(tutorial) {
+                if(tutorial.thumbnail) {
+                    return tutorial.thumbnail
+                } 
+                id = this.extractYouTubeVideoId(tutorial.youtubeUrl)
+                return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
+            },
+            async searchTutorial() {
+                axios.get(`${this.url}&search=${this.searchInput}`).then((response) => {
+                    if(response.data.count) {
+                        this.tutoriais = response.data
+                    } else {
+                        this.alertTop('Nenhum conteúdo encontrado', icon='error')
+                    }
+                })
+                
+            },
+            goTo(url) {
+                window.location.href = url
+            },
+            moment(date) {
+                return moment(date)
+            },
+            alertTop(text, icon = 'success') {
+                Swal.fire({
+                    position: 'top-end',
+                    text: text,
+                    icon: icon,
+                    showConfirmButton: false,
+                    timer: 1500,
+                    toast: true,
+                    timerProgressBar: true,
+                })
+            },
+        },
+        mounted() {    
+            this.getTutoriais()
+        },
+    })
+
+</script>
+
+{% endblock %}

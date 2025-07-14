@@ -1,0 +1,315 @@
+{% load static %}
+
+{% load static %}
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Implantação 5 - Lize</title>
+  <link href="{% static 'favicon/favicon.ico' %}" rel="shortcut icon" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+  <link href="{% static 'tw/full/output.css' %}" rel="stylesheet">
+</head>
+<body class="flex flex-col h-screen">
+  <header class="flex items-center justify-between border-b border-[#E5E7EA] px-[11.5rem] py-4">
+    <svg width="52" height="32" viewBox="0 0 52 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M15.362 21.6376C13.5956 20.8193 11.5161 20.3893 9.87081 20.1636C8.22555 19.938 4.7732 19.7265 2.71343 20.1197C3.46911 12.9932 3.92787 4.67531 4.08972 1.44461C4.12465 0.746213 3.64726 0.110763 2.96959 0.0133674C2.19645 -0.0970939 1.5153 0.490845 1.47571 1.26645C1.34879 3.81419 0.417295 15.6561 0.00627239 20.8276C-0.0892059 22.0272 0.919138 23.0131 2.08933 22.8622C2.96261 22.7506 4.05595 22.6556 5.31812 22.6164C6.5803 22.5772 8.11378 22.671 8.60747 22.7173C11.4148 22.981 13.2801 23.601 14.3257 24.0571C14.937 24.3232 15.6449 24.0737 15.9663 23.481C16.3331 22.804 16.0524 21.956 15.362 21.6365V21.6376ZM13.6996 2.87095C14.4286 2.91699 15.0538 2.32674 15.1977 1.61019C15.351 0.849951 14.9971 1.41725e-09 14.0075 1.41725e-09C13.3458 1.41725e-09 12.638 0.495805 12.5507 1.43783C12.4811 2.17564 12.9577 2.82373 13.7008 2.87095H13.6996ZM48.6574 10.4645C48.9523 9.78699 49.7227 9.44167 50.3917 9.72983L50.3905 9.72864C51.07 10.0216 51.38 10.8182 51.0933 11.5029C49.9697 14.1797 47.5595 19.269 41.4359 19.269C40.6561 19.269 39.8904 19.1713 39.1596 18.9725C37.0326 18.3926 35.3449 16.9327 34.6421 14.8274C32.923 17.1447 30.8717 18.982 28.5826 19.8631C28.9987 21.4421 29.1385 23.2866 28.9311 25.3549C28.4847 29.8929 25.8728 32.3482 23.0546 31.96C20.5196 31.6111 18.7107 28.9938 19.3762 25.7681C20.2772 21.4183 22.6898 19.4119 25.015 18.2521C24.7527 17.8996 24.4753 17.6174 24.1921 17.3983C23.8203 17.1101 23.6035 16.66 23.635 16.1849L23.6944 15.2799C23.7481 14.4607 24.1991 13.7153 24.9077 13.3259C26.3157 12.5531 27.8472 11.0647 27.8472 8.24616C27.8472 7.09589 27.4346 6.5279 26.5837 6.32428C25.107 5.96705 23.1839 7.34595 21.8215 10.3002L21.7445 10.2633L21.8226 10.3014C21.7475 10.4614 21.6524 10.6789 21.5381 10.9404C20.4805 13.3593 17.7795 19.5366 14.0487 18.7081C12.5521 18.3795 11.6337 17.1506 11.5358 15.4228C11.4029 13.1044 12.15 5.92895 12.1932 5.54315C12.2771 4.80488 12.9391 4.27261 13.657 4.35358C14.375 4.43455 14.8832 5.11566 14.8261 5.85036C14.721 7.20467 14.6146 8.39185 14.5201 9.446C14.3546 11.2929 14.2256 12.7314 14.2048 13.9451C14.1827 15.2549 15.0615 16.3207 16.3925 14.4333C17.4473 12.9377 18.6967 10.7682 19.452 9.16065C20.9298 5.95515 23.6816 2.87109 27.1851 3.71891C29.4369 4.25951 30.4404 6.26117 30.4707 8.20567C30.5115 10.8349 28.9847 14.0939 26.3308 15.7431C26.8064 16.2087 27.2294 16.7612 27.5872 17.384C29.874 16.5159 32.2679 14.0356 34.1269 10.761C34.5057 10.0942 34.8239 9.39404 35.113 8.68197C35.1444 8.60219 35.1782 8.52241 35.212 8.44263C37.0162 4.24522 40.1258 2.60913 42.6958 3.74868C44.9009 4.72629 45.8928 7.4936 44.7075 10.1811C43.6154 12.6448 40.3414 14.1654 36.881 12.5222C36.8706 15.1085 38.7668 16.5921 41.4382 16.5921C45.8415 16.5921 47.5257 13.0663 48.6574 10.4645ZM41.6527 6.2052C40.9394 5.88965 39.1433 5.95634 37.613 9.51907H37.6142C37.5741 9.61297 37.5695 9.62227 37.5655 9.63178C37.5606 9.643 37.5565 9.65451 37.4953 9.80604C40.0069 11.3254 41.81 10.2252 42.3193 9.07611C43.0023 7.52575 42.359 6.51837 41.6527 6.2052ZM23.4054 29.3082C24.2457 29.4237 25.9555 28.8379 26.325 25.0846C26.4963 23.3747 26.3809 21.897 26.0896 20.7002C24.3599 21.5635 22.6466 22.9281 21.9427 26.323C21.5359 28.2949 22.5487 29.1903 23.4054 29.3082Z" fill="#FF8F3D"/>
+    </svg>
+    <nav aria-label="Progress">
+      <ol role="list" class="space-x-6 divide-y divide-gray-300 md:flex md:divide-y-0">
+        <li class="relative md:flex md:flex-1">
+          <!-- Completed Step -->
+          <a href="#" class="group flex w-full items-center">
+            <span class="flex items-center text-sm text-[#667085]">
+              <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 group-hover:bg-primary-800">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 3L4.5 8.5L2 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span class="ml-3">Grupos</span>
+            </span>
+          </a>
+        </li>
+        <li class="relative md:flex md:flex-1">
+          <!-- Current Step -->
+          <a href="#" class="flex items-center text-sm font-semibold" aria-current="step">
+            <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#FFF2E9] border border-[#FFE0C9]">
+              <span class="text-primary-600">2</span>
+            </span>
+            <span class="ml-3 text-[#384250]">Segmentos</span>
+          </a>
+        </li>
+        <li class="relative md:flex md:flex-1">
+          <!-- Upcoming Step -->
+          <a href="#" class="group flex items-center">
+            <span class="flex items-center text-sm text-[#667085]">
+              <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#F9FAFA] group-hover:border-gray-400">
+                <span class="group-hover:text-gray-900">3</span>
+              </span>
+              <span class="ml-3 group-hover:text-gray-900">Permissões</span>
+            </span>
+          </a>
+        </li>
+      </ol>
+    </nav>
+  </header>
+  <main class="h-full overflow-y-auto">
+    <div class="bg-[#F9FAFA]">
+      <div class="flex flex-col gap-4 px-[11.5rem] py-10">
+        <div class="flex gap-8">
+          <h1 class="text-3xl leading-[2.125rem] font-medium tracking-[-0.01em] text-[#101828]">Grupos</h1>
+          <span class="flex items-center gap-2">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g clip-path="url(#clip0_864_1725)">
+                <path d="M10.0003 4.99999V9.99999L13.3337 11.6667M18.3337 9.99999C18.3337 14.6024 14.6027 18.3333 10.0003 18.3333C5.39795 18.3333 1.66699 14.6024 1.66699 9.99999C1.66699 5.39762 5.39795 1.66666 10.0003 1.66666C14.6027 1.66666 18.3337 5.39762 18.3337 9.99999Z" stroke="#D2D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </g>
+              <defs>
+                <clipPath id="clip0_864_1725">
+                  <rect width="20" height="20" fill="white"/>
+                </clipPath>
+              </defs>
+            </svg>
+            <span class="text-sm text-[#9BA3AF]">Tempo médio: </span><span class="text-sm font-semibold text-[#9BA3AF]">3 min</span>
+          </span>
+        </div>
+        <div class="flex justify-between items-center">
+          <p class="text-sm text-[#667085]">
+            Anexe as planilhas que você possui referente aos perfis de usuários abaixo identificados. É importante que a planilha<br /> esteja atualizada para que o sistema possa identificar corretamente os dados. Assista ao vídeo ao lado.
+          </p>
+        </div>
+      </div>
+      <div class="flex justify-between px-[11.5rem]">
+        <div class="flex gap-4" role="tablist" aria-orientation="horizontal">
+          <button class="inline-flex items-center justify-center gap-x-2 rounded-full py-1 px-3 text-sm/6 font-semibold focus:outline-none data-[selected]:bg-black/10 data-[hover]:bg-black/5 data-[selected]:data-[hover]:bg-black/10 data-[focus]:outline-1 data-[focus]:outline-white" id="headlessui-tabs-tab-:b1:" role="tab" type="button" aria-selected="true" tabindex="0" data-headlessui-state="selected" data-selected="" aria-controls="headlessui-tabs-panel-:b1:">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6.25008 9.16667H3.83341C3.3667 9.16667 3.13335 9.16667 2.95509 9.25749C2.79829 9.33739 2.6708 9.46487 2.59091 9.62167C2.50008 9.79993 2.50008 10.0333 2.50008 10.5V17.5M13.7501 9.16667H16.1667C16.6335 9.16667 16.8668 9.16667 17.0451 9.25749C17.2019 9.33739 17.3294 9.46487 17.4093 9.62167C17.5001 9.79993 17.5001 10.0333 17.5001 10.5V17.5M13.7501 17.5V5.16667C13.7501 4.23325 13.7501 3.76654 13.5684 3.41002C13.4086 3.09641 13.1537 2.84144 12.8401 2.68166C12.4835 2.5 12.0168 2.5 11.0834 2.5H8.91675C7.98333 2.5 7.51662 2.5 7.1601 2.68166C6.84649 2.84144 6.59153 3.09641 6.43174 3.41002C6.25008 3.76654 6.25008 4.23325 6.25008 5.16667V17.5M18.3334 17.5H1.66675M9.16675 5.83333H10.8334M9.16675 9.16667H10.8334M9.16675 12.5H10.8334" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <p>Coordenadores</p>
+          </button>
+          <button class="inline-flex items-center justify-center gap-x-2 rounded-full py-1 px-3 text-sm/6 font-semibold focus:outline-none data-[selected]:bg-black/10 data-[hover]:bg-black/5 data-[selected]:data-[hover]:bg-black/10 data-[focus]:outline-1 data-[focus]:outline-white" id="headlessui-tabs-tab-:b2:" role="tab" type="button" aria-selected="false" tabindex="-1" data-headlessui-state="" aria-controls="headlessui-tabs-panel-:b2:">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="10.8337" y="12.501" width="4.1684" height="2.50104" stroke="#D3D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M7.49909 17.5031H2.08017C1.84996 17.5031 1.66333 17.3165 1.66333 17.0863V16.7478C1.66608 15.7848 2.44606 15.0048 3.40906 15.0021H6.17021C7.13321 15.0048 7.91319 15.7848 7.91593 16.7478V17.0863C7.91593 17.3165 7.72931 17.5031 7.49909 17.5031Z" stroke="#D3D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M4.78962 12.9179C3.86895 12.9161 3.12384 12.1687 3.12476 11.2481C3.12568 10.3274 3.87228 9.58154 4.79295 9.58154C5.71362 9.58154 6.46023 10.3274 6.46115 11.2481C6.46207 12.1687 5.71695 12.9161 4.79629 12.9179H4.78962Z" stroke="#D3D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M3.33057 7.49897V4.16425C3.33057 3.24339 4.07707 2.49689 4.99793 2.49689H16.6695C17.5903 2.49689 18.3368 3.24339 18.3368 4.16425V13.3347C18.3368 14.2556 17.5903 15.0021 16.6695 15.0021H10" stroke="#D3D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <p>Professores</p>
+          </button>
+          <button class="inline-flex items-center justify-center gap-x-2 rounded-full py-1 px-3 text-sm/6 font-semibold focus:outline-none data-[selected]:bg-black/10 data-[hover]:bg-black/5 data-[selected]:data-[hover]:bg-black/10 data-[focus]:outline-1 data-[focus]:outline-white" id="headlessui-tabs-tab-:b3:" role="tab" type="button" aria-selected="false" tabindex="-1" data-headlessui-state="" aria-controls="headlessui-tabs-panel-:b3:">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13.3334 2.8898C14.5682 3.50343 15.4167 4.77762 15.4167 6.25C15.4167 7.72238 14.5682 8.99657 13.3334 9.6102M15.0001 13.972C16.2596 14.5419 17.3938 15.4708 18.3334 16.6667M1.66675 16.6667C3.28882 14.6021 5.49106 13.3333 7.91675 13.3333C10.3424 13.3333 12.5447 14.6021 14.1667 16.6667M11.6667 6.25C11.6667 8.32107 9.98782 10 7.91675 10C5.84568 10 4.16675 8.32107 4.16675 6.25C4.16675 4.17893 5.84568 2.5 7.91675 2.5C9.98782 2.5 11.6667 4.17893 11.6667 6.25Z" stroke="#D3D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <p>Alunos</p>
+          </button>
+        </div>
+        <div>
+          <button type="button" class="inline-flex items-center justify-center gap-x-2">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g clip-path="url(#clip0_864_2891)">
+                <path d="M10.0001 6.66669V13.3334M6.66675 10H13.3334M18.3334 10C18.3334 14.6024 14.6025 18.3334 10.0001 18.3334C5.39771 18.3334 1.66675 14.6024 1.66675 10C1.66675 5.39765 5.39771 1.66669 10.0001 1.66669C14.6025 1.66669 18.3334 5.39765 18.3334 10Z" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </g>
+              <defs>
+                <clipPath id="clip0_864_2891">
+                  <rect width="20" height="20" fill="white"/>
+                </clipPath>
+              </defs>
+            </svg>
+            <p>Adicionar Coordenador</p>
+          </button>
+          <button type="button" class="inline-flex items-center justify-center gap-x-2">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1.66675 8.33333C1.66675 8.33333 3.33757 6.05685 4.69494 4.69854C6.05232 3.34022 7.92808 2.5 10.0001 2.5C14.1422 2.5 17.5001 5.85786 17.5001 10C17.5001 14.1421 14.1422 17.5 10.0001 17.5C6.58084 17.5 3.69601 15.2119 2.79322 12.0833M1.66675 8.33333V3.33333M1.66675 8.33333H6.66675" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <p>Atualizar Planilha</p>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="px-[11.5rem] pt-2 pb-10">
+      <div>
+
+        <div>
+          <p>Lista de arquivos para anexar</p>
+        </div>
+
+        <div class="w-full">
+          <div class="border border-gray-600 p-3" id="headlessui-tabs-panel-:b1:" role="tabpanel" tabindex="0" data-headlessui-state="selected" data-selected="" aria-labelledby="headlessui-tabs-tab-:b1:">
+            <p>Content Coordenadores</p>
+
+            <table class="min-w-full text-left text-sm/6 text-zinc-950 dark:text-white">
+              <thead class="text-zinc-500 dark:text-zinc-400">
+                <tr>
+                  <th class="border-b border-b-zinc-950/10 px-4 py-2 font-medium first:pl-[var(--gutter,theme(spacing.2))] last:pr-[var(--gutter,theme(spacing.2))] dark:border-b-white/10 sm:first:pl-1 sm:last:pr-1">
+                    Name
+                  </th>
+                  <th class="border-b border-b-zinc-950/10 px-4 py-2 font-medium first:pl-[var(--gutter,theme(spacing.2))] last:pr-[var(--gutter,theme(spacing.2))] dark:border-b-white/10 sm:first:pl-1 sm:last:pr-1">
+                    Email
+                  </th>
+                  <th class="border-b border-b-zinc-950/10 px-4 py-2 font-medium first:pl-[var(--gutter,theme(spacing.2))] last:pr-[var(--gutter,theme(spacing.2))] dark:border-b-white/10 sm:first:pl-1 sm:last:pr-1">
+                    Access
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="font-medium relative px-4 first:pl-[var(--gutter,theme(spacing.2))] last:pr-[var(--gutter,theme(spacing.2))] border-b border-zinc-950/5 dark:border-white/5 py-4 sm:first:pl-1 sm:last:pr-1">
+                    Leslie Alexander
+                  </td>
+                  <td class="relative px-4 first:pl-[var(--gutter,theme(spacing.2))] last:pr-[var(--gutter,theme(spacing.2))] border-b border-zinc-950/5 dark:border-white/5 py-4 sm:first:pl-1 sm:last:pr-1">
+                    leslie.alexander@example.com
+                  </td>
+                  <td class="text-zinc-500 relative px-4 first:pl-[var(--gutter,theme(spacing.2))] last:pr-[var(--gutter,theme(spacing.2))] border-b border-zinc-950/5 dark:border-white/5 py-4 sm:first:pl-1 sm:last:pr-1">
+                    Admin
+                  </td>
+                </tr>
+                <tr>
+                  <td class="font-medium relative px-4 first:pl-[var(--gutter,theme(spacing.2))] last:pr-[var(--gutter,theme(spacing.2))] border-b border-zinc-950/5 dark:border-white/5 py-4 sm:first:pl-1 sm:last:pr-1">
+                    Michael Foster
+                  </td>
+                  <td class="relative px-4 first:pl-[var(--gutter,theme(spacing.2))] last:pr-[var(--gutter,theme(spacing.2))] border-b border-zinc-950/5 dark:border-white/5 py-4 sm:first:pl-1 sm:last:pr-1">
+                    michael.foster@example.com
+                  </td>
+                  <td class="text-zinc-500 relative px-4 first:pl-[var(--gutter,theme(spacing.2))] last:pr-[var(--gutter,theme(spacing.2))] border-b border-zinc-950/5 dark:border-white/5 py-4 sm:first:pl-1 sm:last:pr-1">
+                    Owner
+                  </td>
+                </tr>
+                <tr>
+                  <td class="font-medium relative px-4 first:pl-[var(--gutter,theme(spacing.2))] last:pr-[var(--gutter,theme(spacing.2))] border-b border-zinc-950/5 dark:border-white/5 py-4 sm:first:pl-1 sm:last:pr-1">
+                    Dries Vincent
+                  </td>
+                  <td class="relative px-4 first:pl-[var(--gutter,theme(spacing.2))] last:pr-[var(--gutter,theme(spacing.2))] border-b border-zinc-950/5 dark:border-white/5 py-4 sm:first:pl-1 sm:last:pr-1">
+                    dries.vincent@example.com
+                  </td>
+                  <td class="text-zinc-500 relative px-4 first:pl-[var(--gutter,theme(spacing.2))] last:pr-[var(--gutter,theme(spacing.2))] border-b border-zinc-950/5 dark:border-white/5 py-4 sm:first:pl-1 sm:last:pr-1">
+                    Member
+                  </td>
+                </tr>
+                <tr>
+                  <td class="font-medium relative px-4 first:pl-[var(--gutter,theme(spacing.2))] last:pr-[var(--gutter,theme(spacing.2))] border-b border-zinc-950/5 dark:border-white/5 py-4 sm:first:pl-1 sm:last:pr-1">
+                    Lindsay Walton
+                  </td>
+                  <td class="relative px-4 first:pl-[var(--gutter,theme(spacing.2))] last:pr-[var(--gutter,theme(spacing.2))] border-b border-zinc-950/5 dark:border-white/5 py-4 sm:first:pl-1 sm:last:pr-1">
+                    lindsay.walton@example.com
+                  </td>
+                  <td class="text-zinc-500 relative px-4 first:pl-[var(--gutter,theme(spacing.2))] last:pr-[var(--gutter,theme(spacing.2))] border-b border-zinc-950/5 dark:border-white/5 py-4 sm:first:pl-1 sm:last:pr-1">
+                    Member
+                  </td>
+                </tr>
+                <tr>
+                  <td class="font-medium relative px-4 first:pl-[var(--gutter,theme(spacing.2))] last:pr-[var(--gutter,theme(spacing.2))] border-b border-zinc-950/5 dark:border-white/5 py-4 sm:first:pl-1 sm:last:pr-1">
+                    Courtney Henry
+                  </td>
+                  <td class="relative px-4 first:pl-[var(--gutter,theme(spacing.2))] last:pr-[var(--gutter,theme(spacing.2))] border-b border-zinc-950/5 dark:border-white/5 py-4 sm:first:pl-1 sm:last:pr-1">
+                    courtney.henry@example.com
+                  </td>
+                  <td class="text-zinc-500 relative px-4 first:pl-[var(--gutter,theme(spacing.2))] last:pr-[var(--gutter,theme(spacing.2))] border-b border-zinc-950/5 dark:border-white/5 py-4 sm:first:pl-1 sm:last:pr-1">
+                    Admin
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+          </div>
+          <div class="border border-gray-600 p-3" aria-hidden="true" id="headlessui-tabs-panel-:b2:" role="tabpanel" tabindex="-1" style="position:fixed;top:1px;left:1px;width:1px;height:0;padding:0;margin:-1px;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border-width:0" aria-labelledby="headlessui-tabs-tab-:b2:">
+            <p>Content Professores</p>
+          </div>
+          <div class="border border-gray-600 p-3" aria-hidden="true" id="headlessui-tabs-panel-:b3:" role="tabpanel" tabindex="-1" style="position:fixed;top:1px;left:1px;width:1px;height:0;padding:0;margin:-1px;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border-width:0" aria-labelledby="headlessui-tabs-tab-:b3:">
+            <p>Content Alunos</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+  <!-- <div class="absolute w-full bg-white opacity-70" style="height: calc(100% - 77px);"></div> -->
+  <footer class="flex justify-between border-t border-[#E5E7EA] px-[11.5rem] py-4">
+    <a href="{% url 'onboarding:detail' 2 %}" class="flex items-center gap-2 rounded-lg text-[#667085] py-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12.5 5L7.5 10L12.5 15" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Voltar
+    </a>
+    <a href="#" class="flex items-center gap-4 rounded-lg bg-primary-600 text-white px-[8.375rem] py-3 text-sm font-semibold">
+      Sincronizar
+      <!-- class="animate-spin" -->
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g clip-path="url(#clip0_864_1942)">
+          <path d="M10.0001 1.66669V5.00002M10.0001 15V18.3334M5.00008 10H1.66675M18.3334 10H15.0001M15.8988 15.8987L13.5417 13.5417M15.8988 4.16664L13.5417 6.52366M4.10139 15.8987L6.45841 13.5417M4.10139 4.16664L6.45841 6.52366" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+        <defs>
+          <clipPath id="clip0_864_1942">
+            <rect width="20" height="20" fill="white"/>
+          </clipPath>
+        </defs>
+      </svg>
+    </a>
+  </footer>
+  <script>
+    const tablists = Array.from(document.querySelectorAll('[role="tablist"]'));
+    tablists.forEach(tablist => {
+      const tabs = Array.from(tablist.querySelectorAll('[role="tab"]'));
+      const panels = tabs.map(tab => document.getElementById(tab.getAttribute('aria-controls')));
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => {
+            t.setAttribute('aria-selected', t === tab);
+            t.setAttribute('tabindex', t === tab ? '0' : '-1');
+            if (t === tab) {
+              t.dataset.headlessuiState = 'selected';
+              t.dataset.selected = '';
+            } else {
+              delete t.dataset.headlessuiState;
+              delete t.dataset.selected;
+            }
+          });
+          panels.forEach(panel => {
+            panel.setAttribute('tabindex', '0');
+            if (panel.id === tab.getAttribute('aria-controls')) {
+              panel.removeAttribute('aria-hidden');
+              panel.dataset.headlessuiState = 'selected';
+              panel.dataset.selected = '';
+              panel.style.cssText = '';
+            } else {
+              panel.setAttribute('aria-hidden', 'true');
+              delete panel.dataset.headlessuiState;
+              delete panel.dataset.selected;
+              panel.style.cssText = 'position:fixed;top:1px;left:1px;width:1px;height:0;padding:0;margin:-1px;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border-width:0';
+            }
+          });
+        });
+      });
+    });
+
+    // Handle keyboard navigation
+    // tablist.addEventListener('keydown', (event) => {
+    //   const currentTab = document.activeElement;
+    //   let nextTab;
+
+    //   switch (event.key) {
+    //     case 'ArrowRight':
+    //       nextTab = currentTab.nextElementSibling || tabs[0];
+    //       break;
+    //     case 'ArrowLeft':
+    //       nextTab = currentTab.previousElementSibling || tabs[tabs.length - 1];
+    //       break;
+    //     case 'Home':
+    //       nextTab = tabs[0];
+    //       break;
+    //     case 'End':
+    //       nextTab = tabs[tabs.length - 1];
+    //       break;
+    //     default:
+    //       return;
+    //   }
+
+    //   event.preventDefault();
+    //   nextTab.focus();
+    //   nextTab.click(); // Simulate click to activate the tab
+    // });
+  </script>
+</body>
+</html>

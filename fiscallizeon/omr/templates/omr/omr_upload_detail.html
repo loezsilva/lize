@@ -1,0 +1,1180 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load permissions %}
+{% load static %}
+{% load widget_tweaks %}
+{% load cdn_url %}
+{% load s3_url %}
+{% load math %}
+{% load increment %}
+{% load escape_single_quotes %}
+
+{% block title %}
+  Detalhes do gabarito - Lize
+{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<link rel="stylesheet" href="{% static 'administration/lib/datatables.net-responsive-dt/css/responsive.dataTables.min.css' %}">
+<link rel="stylesheet" href="{% static 'administration/assets/css/app.filemgr.css' %}">
+<link rel="stylesheet" href="{% static 'css/jquery-ui.min.css' %}">
+<style>
+    .formset-select {
+        width: 300px;
+    }
+    .omr-thumb {
+        margin-bottom: 30px;
+    }
+</style>
+
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="{% url 'omr:omr_upload_list' %}">GABARITOS</a></li>
+          <li class="breadcrumb-item active" aria-current="page">DETALHES</li>
+        </ol>
+      </nav> 
+      <h4 onclick="window.location.href = `{% url 'omr:omr_correction_detail' object.id %}`">Detalhes da correção</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+        {% if object.can_be_reprocessed %}
+        <a href="{% url 'omr:retry_import_answer_sheets' pk=object.pk %}" class="btn btn-sm pd-x-15 btn-info btn-uppercase">
+            Reprocessar upload
+        </a>
+        {% endif %}
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+<div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+        <nav class="ls" aria-label="Breadcrumb">
+        <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+            <li>
+            <div>
+                <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                    <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+                </a>
+            </div>
+            </li>
+            <li>
+            <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="{% url 'omr:omr_upload_list' %}" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Gabaritos</a>
+            </div>
+            </li>
+            <li>
+            <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Detalhes</a>
+            </div>
+            </li>
+        </ol>
+        </nav>
+        <div class="d-none d-md-block">
+        <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+        {% if object.can_be_reprocessed %}
+            <button @click.prevent.default="openReprocessModal()" class="btn btn-sm pd-x-15 btn-info btn-uppercase">
+                Reprocessar upload
+            </button>
+        {% endif %}
+        </div>
+    </div>
+    <h4 onclick="window.location.href = `{% url 'omr:omr_correction_detail' object.id %}`">Detalhes da correção</h4>
+<div class="row">
+    <div class="col-sm-4 col-lg-4">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Usuário</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <h5 class="tx-small tx-rubik mg-b-0 mg-r-5 lh-1">
+                    {{ object.user }}
+                </h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4 col-lg-4">
+            <div class="card card-body">
+                <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Status do envio</h6>
+                <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                    <h5 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">
+                        {{ object.get_status_display }}
+                        {% if object.status == 5 %}
+                        <i class="fas fa-spinner fa-spin text-primary"></i>
+                        {% endif %}
+                    </h5>
+                </div>
+            </div>
+    </div>
+    <div class="col-sm-4 col-lg-2">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Páginas lidas</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <h5 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">
+                    {{ object.total_pages }}
+                </h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4 col-lg-2">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Páginas com erro</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <h5 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">
+                    #{totalErrorsCount}
+                </h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if object.status == 5 %}
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-primary fade show" role="alert">            
+            Aguarde enquanto as folhas de resposta estão sendo recorrigidas. Ao final do processo, atualizaremos esta página.
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if object.processing_log %}
+<div class="row">
+    <div class="col-12 mb-3">
+        <div class="card">
+            <div class="card-header">Erros registrados</div>
+            <div class="card-body">
+                {{ object.processing_log|linebreaksbr }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div v-show="showMovableWindow" class="card" id="movableWindow" style="clear:both; float:left; position: absolute; z-index: 10000 !important;">
+    <div class="card-header py-1">
+        <div class="d-flex justify-content-between align-items-center">
+            <span>Resposta do aluno</span> <i class="fas fa-times-circle text-danger cp tx-18" @click="showMovableWindow = false, selectedError = ''"></i>
+        </div>
+    </div>
+    <div class="card-body py-0" style="overflow-y: scroll;">
+        <template v-if="imgLoading">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h4>Carregando, aguarde...</h4>
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <img :src="selectedImage" v-show="!imgLoading" onLoad="app.imgLoading = false" style="max-width: 100%;">
+    </div>
+</div>
+
+<!-- Card de arquivos associados -->
+{% if object.get_associateds_files %}
+<div class="row">
+    <div class="col-12 mb-3">
+        <div class="card">
+            <div class="card-header">
+                Arquivos associados ao upload
+                <i class="fas fa-question-circle" data-toggle="tooltip" title="
+                    Abaixo estão a listagem de arquivos que foram marcados como associados a este upload.">
+                </i>
+            </div>
+            <div class="card-body p-0">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Página</th>
+                            <th>Ver arquivo</th>
+                            <th>Desfazer</th>
+                            <th>Deletar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for file in object.get_associateds_files %}
+                        <tr>
+                            <td>
+                                {{file.page_number}}
+                            </td>
+                            <td>
+                                <a href="{{ file.error_image.url }}" class="tw-text-inherit" target="_blank" rel="noopener noreferrer">
+                                    <i class="far fa-file-image cp"></i>
+                                </a>
+                            </td>
+                            <td>
+                                <i @click="alterAssociatedFile('{{file.pk}}','Desfazer')" class="fa fa-undo-alt cp"></i>
+                            </td>
+                            <td>
+                                <i @click="deletedAssociatedFile('{{file.pk}}')" class="fa fa-trash cp"></i>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Table de erros de leitura -->
+{% if object.get_unsolved_errors and object.status != 5 %}
+    <div class="row">
+        <div class="col-12 mb-3">
+            <div class="card">
+                <div class="card-header">Corrigir erros de leitura
+                    <i class="fas fa-question-circle" data-toggle="tooltip" 
+                    title="Abaixo estão relacionadas as páginas cujo aluno não pôde ser identificado pelo sistema.
+                    Selecione o nome e a aplicação em cada registro para que os arquivos sejam reprocessados."></i>
+                </div>
+                <div class="card-body p-0"> 
+                    <form method="POST" action="{% url 'omr:omr_upload_fix' pk=object.pk %}">
+                        {% csrf_token %}
+
+                        <!--
+                            errors --
+                            {{ formset.errors }}
+                            {{ formset.non_field_errors }}
+
+                        -->
+
+                        {{ formset.management_form }}
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Problema</th>
+                                    <th>Página</th>
+                                    <th>Gabarito</th>
+                                    <th>Versão 
+                                        <i class="fas fa-question-circle" data-toggle="tooltip" 
+                                        title="Informe a versão da randomização (verificar acima do QRCode), caso o caderno de provas seja randomizado. 
+                                        Não havendo randomização, mantenha o valor zero."></i>
+                                    </th>
+                                    <th>Aluno</th>
+                                    <th>Aplicação</th>
+                                    <th>Arquivo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for form in formset %}
+                                    <!--
+                                        {{form.errors}}
+                                        {{form.non_field_errors}}
+                                    -->
+                                    {{ form.omr_error.as_hidden }}
+                                    {{ form.category_description.as_hidden }}
+                                    {{ form.page_number.as_hidden }}
+                                    <tr id="{{form.omr_error.value}}" :class="{ 'bg-warning-light': selectedError == 'formset-{{forloop.counter}}' }">
+                                        <td>{{ form.category_description.value }}</td>
+                                        <td>{{ form.page_number.value }}</td>
+                                        <td>
+                                            <span class="same-row d-flex align-center">
+                                                {% render_field form.omr_category class="form-control omr_category_input mr-1" %}
+                                                
+                                                {% if forloop.counter0 == 0 %}
+                                                <a href="#" id="copy-category" data-toggle="tooltip" title="Copiar tipo de gabarito para campos vazios abaixo">
+                                                    <i class="far fa-copy"></i>
+                                                </a>
+                                                {% endif %}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% render_field form.randomization_version class="form-control formset-select" style="max-width: 80px;" required="required" %}
+                                        </td>
+                                        <td>
+                                            <select 
+                                                name="{{ form.student.html_name }}"
+                                                id="{{ form.student.id_for_label }}"
+                                                class="form-control student-formset formset-select"
+                                            >
+                                                {% if form.student.initial %}
+                                                <option value="{{ form.student.initial.pk }}" selected="selected">{{ form.student.initial }}</option>
+                                                {% endif %}
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <select 
+                                                name="{{ form.application.html_name }}"
+                                                id="{{ form.application.id_for_label }}"
+                                                class="form-control application-formset formset-select"
+                                            >
+                                                {% if form.application.initial %}
+                                                    <option value="{{ form.application.initial.pk }}" selected="selected">{{ form.application.initial.exam.name }}</option>
+                                                {% endif %}
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <div class="actions" class="d-flex">
+                                                {% if forloop.counter0 == 0 %}
+                                                <a href="#" id="copy-application"
+                                                    data-toggle="tooltip" title="Copiar aplicação para campos abaixo">
+                                                    <i class="far fa-copy"></i>
+                                                </a>
+                                                {% endif %}
+                                                {% if form.error_image %}
+                                                    <a href="{{ form.error_image.value|cdn_url }}" class="mx-2"
+                                                        target="_blank" rel="noopener noreferrer"
+                                                        data-toggle="tooltip" title="Ver folha de respostas escaneada">
+                                                        <i class="far fa-file-image"></i>
+                                                    </a>
+        
+                                                    <span class="text-primary cp" @click="selectedError = 'formset-{{forloop.counter}}', startMovableWindow('{{ form.error_image.value|cdn_url }}')" rel="noopener noreferrer"
+                                                        data-toggle="tooltip" title="Ver folha de respostas escaneada">
+                                                        <i class="fa fa-window-maximize"></i>
+                                                    </span>
+                                                    {% endif %}
+                                                    <span class="text-primary cp mx-2" data-toggle="tooltip" title="Deletar este erro">
+                                                        <i v-if="loadingErrorDelete" class="fas fa-spinner fa-spin"></i>
+                                                        <i v-else @click="deleteError('{{form.omr_error.value}}')" class="fa fa-trash"></i>
+                                                    </span>
+                                                    <span class="text-primary cp mx-2" data-toggle="tooltip" title="Marcar esse arquivo como associado ao upload">
+                                                        <i @click="alterAssociatedFile('{{form.omr_error.value}}')" class="fa fa-link"></i>
+                                                    </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>                        
+                        </table>
+                        <button type="submit" class="btn btn-primary float-right m-3">Corrigir erros</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% if object.get_unsolved_discursive_errors and object.status != 5 %}
+<div class="row">
+    <div class="col-12 mb-3">
+        <div class="card">
+            <div class="card-header">Corrigir erros de leitura (questões discursivas)
+                <i class="fas fa-question-circle" data-toggle="tooltip" 
+                title="Abaixo estão relacionadas as respostas cujas questões não puderam ser identificadas pelo sistema.
+                Selecione a questão correta em cada registro para que os arquivos sejam reprocessados."></i>
+            </div>
+            <div class="card-body p-0"> 
+                <form method="POST" action="{% url 'omr:omr_discursive_upload_fix' pk=object.pk %}">
+                    {% csrf_token %}
+                    {{ formset_discursive.management_form }}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Problema</th>
+                                <th>Gabarito</th>
+                                <th>Questão</th>
+                                <th>Arquivo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for form in formset_discursive %}
+                                {{ form.omr_error.as_hidden }}
+                                {{ form.application_student.as_hidden }}
+                                <tr>
+                                    <td>{{ form.category_description.value }}</td>
+                                    <td>
+                                        {% render_field form.omr_category class="form-control" %}
+                                    </td>
+                                    <td>
+                                        <select 
+                                            name="{{ form.exam_question.html_name }}"
+                                            id="{{ form.exam_question.id_for_label }}"
+                                            class="form-control formset-select"
+                                        >
+                                            <option value="" selected="selected">Selecione a questão da prova...</option>
+                                            {% for exam_question in form.exam_question.field.queryset %}
+                                                {% if exam_question.randomized_print_number %}
+                                                <option value="{{ exam_question.pk }}">Questão {{ exam_question.randomized_print_number }}</option>
+                                                {% else %}
+                                                <option value="{{ exam_question.pk }}">Questão {{ exam_question.exam_question_number }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td>
+                                        {% if form.error_image %}
+                                            <a href="{{ form.error_image.value|cdn_url }}"
+                                                target="_blank" rel="noopener noreferrer"
+                                                data-toggle="tooltip" title="Ver folha de respostas escaneada">
+                                                <i class="far fa-file-image"></i>
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <button type="submit" class="btn btn-primary float-right m-3">Corrigir erros</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-12 mb-3">
+        <div class="card">
+            <div class="card-header">Alunos</div>
+            <div class="card-body">                                
+                <table class="table" id="table-uploadstudents">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Prova</th>
+                            <th>Lidas/Corrigidas/Total</th>
+                            <th>Opções</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for omr_student in omr_students %}
+                            {% with omr_student.count_questions as questions_count %}
+                                {% with omr_student.application_student.total_answered_questions as answered_questions_count %}
+                                    <tr data-trchecked="{{omr_student.id}}" class="{% if answered_questions_count < questions_count and not omr_student.checked %}bg-warning-light{% endif %}">
+                                        <td>
+                                            {{ omr_student.application_student.student.name|upper }}
+                                            {% if omr_student.checked %}
+                                                <p class="m-0 p-0 text-muted font-weight-bold">Checado por: {{omr_student.checked_by}} <span class="fas fa-clock" style="cursor: pointer;" data-toggle="modal" data-target="#historicalModal" @click="uploadGetHistorical('{{omr_student.id}}')"></span></p>
+                                            {% elif not omr_student.checked is None and not omr_student.checked %}
+                                                <p class="m-0 p-0 text-muted font-weight-bold">{{omr_student.checked_by}} removeu o checado. <span class="fas fa-clock" style="cursor: pointer;" data-toggle="modal" data-target="#historicalModal" @click="uploadGetHistorical('{{omr_student.id}}')"></span></p>
+                                            {% endif %}
+                                            <p class="text-muted m-0 p-0">
+                                                {{ omr_student.application_student.student.enrollment_number|upper }}
+                                            </p>
+                                        </td>
+                                        <td>{{ omr_student.application_student.application.exam }}</td>
+                                        <td>
+                                            <div class="d-flex justify-content-between">
+                                                <div>
+                                                    <span data-toggle="tooltip" data-questioncount="{{omr_student.id}}" title="Questões lidas" style="cursor: pointer;">{{ answered_questions_count|sub:omr_student.application_student.total_corrected_answers }}</span> /
+                                                    <span data-toggle="tooltip" title="Total de questões corrigidas" style="cursor: pointer;">{{omr_student.application_student.total_corrected_answers}}</span> / 
+                                                    <span data-toggle="tooltip" title="Total de questões objetivas ou discursivas" style="cursor: pointer;">{{questions_count}}</span>
+                                                </div>
+                                                <div>
+                                                    {% if omr_student.application_student.duplicated_answers.exists %}
+                                                        <span data-toggle="tooltip" title="Possível marcação dupla ou resposta em branco" class="cp"><i class="far fa-object-group" style="font-size: 1.2rem;"></i> {{omr_student.application_student.duplicated_answers.count}}</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td> 
+                                            <div class="d-flex">
+                                                <div class="dropdown">
+                                                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButtonConfig"
+                                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                        <i class="fas fa-cog"></i> Opções
+                                                    </button>
+                                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButtonConfig">
+                                                        <!-- <a href="{% url 'exams:exams_detail_v2' pk=omr_student.application_student.application.exam.pk %}?turma={{ omr_student.application_student.get_last_class_student.pk }}#{{ omr_student.application_student.pk }}" 
+                                                            class="dropdown-item nav-link"
+                                                            target="_blank" 
+                                                            data-toggle="tooltip" title="Ver respostas do aluno">
+                                                            <i class="fas fa-arrow-circle-right"></i> Ver respostas do aluno 
+                                                        </a> -->
+                                                        {% if user|has_perm:'exams.can_correct_answers_exam' %}
+                                                            <a href="{% url 'exams:exams_detail_v2' pk=omr_student.application_student.application.exam.pk %}?turma={{ omr_student.application_student.get_last_class_student.pk }}#{{ omr_student.application_student.pk }}" class="dropdown-item nav-link"><i class="fas fa-eraser"></i> Correção de respostas</a>
+                                                            <div class="dropdown-divider"></div>
+                                                            <button 
+                                                                type="button" 
+                                                                class="dropdown-item nav-link" 
+                                                                title="Zerar prova do aluno" 
+                                                                @click="clearApplicationStudent(
+                                                                    {
+                                                                        omrID: '{{ omr_student.id }}',
+                                                                        id: '{{ omr_student.application_student.id }}',
+                                                                        student_name: '{{ omr_student.application_student.student.name|escape_single_quotes }}',
+                                                                    }
+                                                                )"
+                                                            >
+                                                                <i class="fas fa-trash"></i> Zerar prova
+                                                            </button>
+                                                            <button 
+                                                                type="button" 
+                                                                class="dropdown-item nav-link" 
+                                                                title="O aluno faltou" 
+                                                                @click="clearApplicationStudent(
+                                                                    {
+                                                                        omrID: '{{ omr_student.id }}',
+                                                                        id: '{{ omr_student.application_student.id }}',
+                                                                        student_name: '{{ omr_student.application_student.student.name|escape_single_quotes }}',
+                                                                    },
+                                                                    {{ omr_student.application_student.missed|lower }}
+                                                                )"
+                                                            >
+                                                                <i class="fas fa-times"></i>
+                                                                {% if omr_student.application_student.missed %}
+                                                                    Remover falta
+                                                                {% else %}
+                                                                    Marcar falta
+                                                                {% endif %}
+                                                            </button>
+                                                        {% endif %}
+                                                        <div class="dropdown-divider"></div>
+                                                        {% comment %} 
+                                                            <button 
+                                                                type="button" 
+                                                                @click="startMovableWindow(getFilesUrls('{{omr_student.pk}}').at(getFilesUrls('{{omr_student.pk}}').length - 1))" 
+                                                                v-if="getFilesUrls('{{omr_student.pk}}').length" 
+                                                                class="dropdown-item nav-link"
+                                                                data-toggle="tooltip" 
+                                                                title="Ver folha de respostas escaneada"
+                                                            >
+                                                                <i class="far fa-file-image"></i> Ver folha de respostas 
+                                                            </button> 
+                                                        {% endcomment %}
+                                                        <a href="javascript:;" @click.prevent="showDiscursiveScansModal('{{omr_student.pk}}')" v-if="getFilesUrls('{{omr_student.pk}}', 'discursive').length" 
+                                                            target="_blank" class="dropdown-item nav-link"
+                                                            data-toggle="tooltip" title="Ver folha de respostas discursivas escaneadas">
+                                                            <i class="far fa-file-image"></i> Ver folhas de respostas discursivas  
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <button 
+                                                    class="btn btn-outline-primary ml-2" 
+                                                    @click="startMovableWindow(getFilesUrls('{{omr_student.pk}}').at(getFilesUrls('{{omr_student.pk}}').length - 1))" 
+                                                    v-if="getFilesUrls('{{omr_student.pk}}').length" 
+                                                >
+                                                    <i class="fa fa-window-maximize"></i>
+                                                </button>
+                                                <span class="sr-only">{{omr_student.checked}}</span>
+                                                {% if omr_student.checked or answered_questions_count < questions_count %}
+                                                    <button data-check="{{omr_student.id}}" @click="uploadCheck('{{omr_student.id}}')" title="{% if omr_student.checked %}Remover checado.{% elif answered_questions_count < questions_count %}Marcar como checado.{% endif %}" class="btn btn-xs {% if omr_student.checked %}btn-outline-danger{% elif answered_questions_count < questions_count %}btn-success{% endif %} ml-2">
+                                                        {% if answered_questions_count < questions_count %}
+                                                            <i class="fas fa-check"></i>
+                                                        {% else %}
+                                                            <i class="fas fa-times"></i>
+                                                        {% endif %}
+                                                    </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endwith %}
+                            {% endwith %}
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="font-weight-bold">Nenhuma folha de resposta lida</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+    <div class="modal fade" id="reprocess-modal" tabindex="-1" aria-labelledby="reprocessModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reprocess-modal">Reprocessar upload</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" style="height: 20vh;">
+                    <div class="alert alert-warning">Atenção! O reprocessamento do upload irá sobrescrever as respostas que tiverem sido lidas anteriormente.</div>
+                    <div class="form-group mb-0">
+                        <label class="font-weight-bold">{{reprocess_form.gamma_option.label}}</label>
+                        {% render_field reprocess_form.gamma_option class="form-control" v-model="reprocessData.gamma_option" %}
+                    </div>
+                    {% comment %}
+                    <div class="form-group form-check mt-3">
+                        <input type="checkbox" class="form-check-input" id="ignore-qr" name="{{reprocess_form.ignore_qr_codes.name}}">
+                        <label class="form-check-label" for="ignore-qr">{{reprocess_form.ignore_qr_codes.label}}</label>
+                    </div>
+                    {% endcomment %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary float-left" data-dismiss="modal">Cancelar</button>
+                    <button type="button" @click="reprocessUpload()" :disabled="reprocessData.loading" class="btn btn-primary float-right">
+                        <i class="fas fa-spinner fa-spin" v-if="reprocessData.loading"></i>
+                        #{reprocessData.loading ? 'Aguarde' : 'Reprocessar'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="historicalModal" tabindex="-1" aria-labelledby="historicalModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="historicalModalLabel">Histórico de alterações</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Ação</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="history in historical">
+                            <td>#{history.checked_by}</td>
+                            <td>
+                                <span class="badge badge-success" v-if="history.checked">Adicionou o checado</span>
+                                <span class="badge badge-danger" v-else>Removeu o checado.</span>
+                            </td>
+                            <td>#{momentRef(history.history_date).format('LLL')}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="discursiveScans" tabindex="-1" aria-labelledby="discursiveScansLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="discursiveScansLabel">Arquivos escaneados de respostas discursivas</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body h-100">
+                    <div v-if="selectedStudent">
+                        <div class="row">
+                            <template  v-for="(url, index) in selectedStudent.scans.discursive_urls">
+                                <div @click="startMovableWindow(url)">
+                                    <div class="col-6 col-lg-3 col-xl mg-t-10">
+                                        <div class="card card-file">
+                                            <div class="dropdown-file"></div>
+                                            <div class="card-file-thumb tx-pink">
+                                                <i class="far fa-file-pdf"></i>
+                                            </div>
+                                            <div class="card-body">
+                                                <h6>
+                                                    <a href="javascript:;" class="link-02">Folha escaneada #{index+1}</a>
+                                                </h6>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock extra-modal %}
+
+{% block js-additional %}
+    <script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+    <script src="{% static 'administration/assets/vendor/jquery-ui.min.js' %}"></script>
+    <script src="{% static 'administration/lib/datatables.net-responsive-dt/js/responsive.dataTables.min.js' %}"></script>
+    <script src="{% static 'administration/lib/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+    <script>
+        moment.locale('pt-br')
+        var app = new Vue({
+            delimiters: ["#{", "}"],
+            el: '#app',
+            data: {
+                totalErrorsCount: {{object.total_errors_count}},
+                loadingErrorDelete: false,
+                errorList: [
+                    {% for form in formset %}
+                        {
+                            pk: '{{form.omr_error.value}}',
+                            errorElement: '{{form.omr_error.auto_id}}',
+                            categoryDescriptionElement: '{{form.category_description.auto_id}}',
+                            errorImageElement: '{{form.error_image.auto_id}}',
+                            pageNumberElement: '{{form.page_number.auto_id}}',
+                        },
+                    {% endfor %}
+                ],
+                selectedStudent: null,
+                historical: [],
+                omrStudents: [
+                    {% for student in omr_students %}
+                        {
+                            "id": "{{student.pk}}",
+                            "name": "{{student.application_student.student.name}}",
+                            "scans": {{student.application_student.get_files_urls|safe}},
+                        },
+                    {% endfor %}
+                ],
+                showMovableWindow: false,
+                selectedError: '',
+                selectedImage: '',
+                imgLoading: false,
+                reprocessData: {
+                    loading: false,
+                    ignore_qr_codes: false,
+                    gamma_option: '1',
+                },
+            },
+            methods: {
+                deleteError(errorPk) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Remover esse erro?',
+                        text: 'Certifique-se de que o erro não impacta na leitura das respostas.',
+                        showConfirmButton: true,
+                        showCancelButton: true,
+                        confirmButtonText: 'Sim, remover o erro',
+                        cancelButtonText: 'Voltar'
+                      }).then((value) => {
+                          if(value.isConfirmed){
+                            this.loadingErrorDelete = true
+                            axios.post("{% url 'omr:omr_delete_error' %}", {
+                                pk: errorPk
+                            }).then((res) => {
+                                let errorInputs = this.errorList.find((object) => object.pk == errorPk)
+
+                                $(`#${errorPk}`).remove()
+                                $(`#${errorInputs.errorElement}`).remove()
+                                $(`#${errorInputs.categoryDescriptionElement}`).remove()
+                                $(`#${errorInputs.errorImageElement}`).remove()
+                                $(`#${errorInputs.pageNumberElement}`).remove()
+                                this.totalErrorsCount = this.totalErrorsCount - 1
+
+                                window.location.reload()
+
+                                swal.fire({
+                                    toast: true,
+                                    icon: 'success',
+                                    text: 'erro removido',
+                                    position: 'top',
+                                    showConfirmButton: false,
+                                    timer: 2000
+                                })
+                                this.loadingErrorDelete = false
+                            }).catch((err) => {
+                                this.loadingErrorDelete = false
+                            })
+                        }
+                        return
+                      });
+                },
+                deletedAssociatedFile(errorPk) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Remover esse arquivo associado?',
+                        text: 'Esse arquivo não poderá ser restaurado.',
+                        showConfirmButton: true,
+                        showCancelButton: true,
+                        confirmButtonText: 'Sim, remover o arquivo',
+                        cancelButtonText: 'Voltar'
+                    }).then((value) => {
+                        if (value.isConfirmed) {
+                            axios.post("{% url 'omr:omr_delete_error' %}", {
+                                pk: errorPk
+                            }).then((res) => {
+                                this.alertTop("Arquivo removido com sucesso")
+                                setTimeout(() => {
+                                    window.location.reload()
+                                }, 1000);
+                            })
+                        }
+                    })
+                },
+                alterAssociatedFile(errorPk,unmake) {
+
+                    let title, text, confirmButtonText;
+
+                    if (unmake) {
+                        title = 'Desfazer associação deste arquivo ao upload?';
+                        text = 'Esse arquivo deixará de ser considerado como parte do upload e voltará a ser listado como erro.';
+                        confirmButtonText = 'Desfazer associação';
+                    } else {
+                        title = 'Associar este arquivo ao upload?';
+                        text = 'Esse arquivo será considerado como parte do upload e não mais como erro.';
+                        confirmButtonText = 'Confirmar associação';
+                    }
+
+                    Swal.fire({
+                        icon: 'warning',
+                        title: title,
+                        text: text,
+                        showConfirmButton: true,
+                        showCancelButton: true,
+                        confirmButtonText: confirmButtonText,
+                        cancelButtonText: 'Voltar'
+
+                    }).then((value) => {
+
+                        if(value.isConfirmed) {
+                            let url = "{% url 'omr:omr_is_associated_file' pk='00000000-0000-0000-0000-000000000000' %}"
+                            url = url.replace('00000000-0000-0000-0000-000000000000', errorPk)
+                            axios.patch(url).then((res) => {
+                                this.alertTop("Arquivo associado atualizado com sucesso")
+                                setTimeout(() => {
+                                    window.location.reload()
+                                }, 1000);
+                            })
+                        }
+                    return
+                    });
+                },
+                alertTop(text, icon = 'success') {
+                    Swal.fire({
+                    position: 'top-end',
+                    text: text,
+                    icon: icon,
+                    showConfirmButton: false,
+                    timer: 1500,
+                    toast: true,
+                    timerProgressBar: true,
+                    })
+                },
+                momentRef(args) {
+                  return moment(args)
+                },
+                uploadCheck(id) {
+                    $('[data-check]').attr('disabled', true)
+                    
+                    let element = $(`[data-check="${id}"]`)
+                    
+                    url = "{% url 'omr:omr_students_upload_check' pk='00000000-0000-0000-0000-000000000000'  %}"
+                    
+                    axios.put(url.replace("00000000-0000-0000-0000-000000000000", id), { checked: true }).then((response) => {
+                        if(response.data) {
+                            element.addClass('btn-outline-danger')
+                            element.removeClass('btn-success')
+                            $(`[data-trchecked="${id}"]`).removeClass('bg-warning-light')
+                            element.html('<i class="fas fa-times"></i>')
+                            element.prop('title', 'Remover checado')
+                        } else {
+                            element.addClass('btn-success')
+                            element.removeClass('btn-outline-danger')
+                            $(`[data-trchecked="${id}"]`).addClass('bg-warning-light')
+                            element.html('<i class="fas fa-check"></i>')
+                            element.prop('title', 'Marcar como checado')
+                        }
+                    }).finally(
+                        $('[data-check]').attr('disabled', false)
+                    )
+
+                },
+                uploadGetHistorical(id) {
+                    this.historical = []
+                    url = "{% url 'omr:omr_students_upload_historical' pk='00000000-0000-0000-0000-000000000000' %}"
+                    axios.get(url.replace("00000000-0000-0000-0000-000000000000", id)).then((response) => {
+                        this.historical = response.data.history
+                    })
+                },
+                showDiscursiveScansModal(studentId) {
+                    const filteredStudents = this.omrStudents.filter(x => x.id == studentId);
+                    this.selectedStudent = filteredStudents ? filteredStudents[0] : []
+                    $('#discursiveScans').modal('show');
+                },
+                getFilesUrls(id, type = 'objective') {
+                    omr = this.omrStudents.find(s => s.id == id)
+                    
+                    if(type == 'discursive') {
+                        return omr.scans.discursive_urls
+                    } else {
+                        return omr.scans.objectives_urls
+                    }
+
+                    return []
+                },
+                startMovableWindow(image) {
+                    let movableWindowConfigs = JSON.parse(localStorage.getItem('movableWindowConfigs'))
+                    $("#movableWindow").draggable({
+                        stop: () => {
+                            this.movableWindowSaveData()
+                        }
+                    }).resizable({
+                        stop: () => {
+                            this.movableWindowSaveData()
+                        }
+                    });
+                    if(movableWindowConfigs) {
+                        $("#movableWindow").css({ ...movableWindowConfigs })
+                    } else {
+                        $("#movableWindow").css({ 
+                            'height': '300px', 
+                            'width': '300px',
+                            'top': 100,
+                            'left': 100,
+                        })
+                    }
+                    this.showMovableWindow = true
+                    this.selectedImage = image
+                },
+                movableWindowSaveData() {
+                    object = {
+                        top: $("#movableWindow").css('top'),
+                        left: $("#movableWindow").css('left'),
+                        width: $("#movableWindow").css('width'),
+                        height: $("#movableWindow").css('height'),
+                    }
+                    localStorage.setItem('movableWindowConfigs', JSON.stringify(object))
+                },
+                getUrl(url, id1, id2 = '') {
+                    return url.replace('00000000-0000-0000-0000-000000000000', id1).replace('11111111-1111-1111-1111-111111111111', id2)
+                },
+                clearApplicationStudent(applicationStudent, missed = null) {
+                    cleanUrl = "{% url 'applications:api_clear_and_missed_applicationstudent' pk='00000000-0000-0000-0000-000000000000' %}"
+                    url = this.getUrl(cleanUrl, applicationStudent.id)
+                    
+                    let element = $(`[data-check="${applicationStudent.omrID}"]`)
+
+                    if (missed != null) {
+                        Swal.fire({
+                            title: `Você confirma?`,
+                            html: `Você esta prestes a marcar ou remover falta no aluno(a) <br/><strong>${applicationStudent.student_name}<strong>`,
+                            showCancelButton: true,
+                            confirmButtonText: 'Confirmar',
+                            confirmButtonColor: '#736DD8',
+                            showLoaderOnConfirm: true,
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                axios.patch(url, {  missed: !missed }).then((response) => {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: !missed ? 'Falta adicionada ao aluno':'A falta foi removida'
+                                    })
+                                    if(!missed && element.hasClass('btn-success')) {
+                                        element.click()
+                                    }
+                                })
+                            }
+                        })
+                    } else {
+                        Swal.fire({
+                            title: `Você quer digitar algum feedback?`,
+                            html: `Você selecionou o aluno(a) <br/><strong>${applicationStudent.student_name}<strong>`,
+                            input: 'text',
+                            inputAttributes: {
+                                autocapitalize: 'off'
+                            },
+                            showCancelButton: true,
+                            confirmButtonText: 'Confirmar',
+                            confirmButtonColor: '#736DD8',
+                            showLoaderOnConfirm: true,
+                            preConfirm: (value) => {
+                                return axios.patch(url + '?clean_answers=true', {  feedback_after_clean: value }).then(response => {
+                                    return response.data
+                                }).catch(error => {
+                                    if (error.response) {
+                                        Swal.showValidationMessage(error.response.data)
+                                    }
+                                })
+                            },
+                            allowOutsideClick: () => !Swal.isLoading()
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                if (result.value) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Prova zerada com sucesso'
+                                    })
+                                    if(element.hasClass('btn-success')) {
+                                        element.click()
+                                    }
+                                    $(`[data-questioncount="${applicationStudent.omrID}"]`).html("0")
+                                }
+                            }
+                        })
+                    }
+                },
+                openReprocessModal() {
+                    $('#reprocess-modal').modal('show')
+                },
+                reprocessUpload() {
+                    this.reprocessData.loading = true
+
+                    let url = "{% url 'omr:retry_import_answer_sheets' pk=object.pk %}"
+                    url = url + `?ignore_qr_codes=${Number(this.reprocessData.ignore_qr_codes)}&gamma_option=${this.reprocessData.gamma_option}`
+                    fetch(url, {redirect: 'follow'})
+                    .then(response => {
+                        if (response.redirected) {
+                            window.location.href = response.url
+                        }
+                    })
+                },
+            },
+            watch: {
+                selectedImage: function(val) {
+                    this.imgLoading = true
+                }
+            },
+            mounted() {
+                $('[data-toggle="tooltip"]').tooltip()
+        
+                $('.application-formset').select2({
+                    placeholder: 'Buscar pelo nome da aplicação...',
+                    minimumInputLength: 3,
+                    allowClear: true,  
+                    closeOnSelect: false,
+                    escapeMarkup: function (text) {
+                        return text;
+                    },          
+                    ajax: {
+                        url: '{% url "applications:api_applications_list" %}',
+                        delay: 250,              
+                        data: function (params) {
+                            return {
+                                search: params.term
+                            }
+                        },
+                        processResults: function(results) {
+                            let new_results = $.map(results, function(element) {
+                                element.text = element.exam_name
+                                return element 
+                            })
+        
+                            return {
+                                results: new_results,
+                            }
+                        }
+                    },            
+                    templateResult: (data) => {
+                        if(data.text){
+                            result = `<span class="font-weight-bold">
+                            <span class="mr-1">${data.text}</span>`
+                        
+                            if (data.date){
+                                result += "<p class='m-0'>"                        
+                                result += `<span class="badge mr-1 badge-primary font-weight-bold">${data.date}</span>`
+                                result += "</p>"
+                            }
+                            result += "</span>"
+                            return result
+                        } else {
+                            return "Buscar pela aplicação..."
+                        }
+                    }
+                })
+        
+                $('.student-formset').select2({
+                    placeholder: 'Buscar pelo nome do aluno...',
+                    minimumInputLength: 3,
+                    allowClear: true,  
+                    closeOnSelect: false,
+                    escapeMarkup: function (text) {
+                        return text;
+                    },
+                    ajax: {
+                        url: '{% url "students:students_list_api" %}',
+                        delay: 250,
+                        data: function (params) {
+                        return {
+                            search: params.term
+                        }
+                        },
+                        processResults: function(results) {
+                            let new_results = $.map(results, function(element) {
+                                element.text = element.name
+                                return element 
+                            })
+                            return {
+                                results: new_results,
+                            }
+                        }
+                    },            
+                    templateResult: (data) => {
+                        if(data.text){
+                            result = `<span class="font-weight-bold">
+                            <span class="mr-1">${data.text}</span>`
+                        
+                            if (data.classes){
+                                result += "<p class='m-0'>"
+                                data.classes.forEach(element => {
+                                result += `<span class="badge mr-1 badge-primary font-weight-bold">${element.name} - ${element.coordination_name}</span>`
+                                });
+                                result += "</p>"
+                            }
+                            result += "</span>"
+                            return result
+                        }else{
+                            return "Buscar pelo nome do aluno..."
+                        }
+                    }
+                })
+
+                $('#copy-application').click(function() {
+                    const data = $('#id_form-0-application').select2("data")
+                    
+                    if (data.length === 0) return
+        
+                    $(".application-formset").each(function(){
+                        const newOption = new Option(data[0].text, data[0].id, false, false)
+                        $(this).append(newOption).trigger('change')                
+                    })
+                })
+
+
+                
+
+                $('#copy-category').click(function() {
+
+                    const selectSource = document.getElementById("id_form-0-omr_category");
+
+               
+                    const valueToCopy = selectSource.value; // Pega o valor do select específico
+                    const allSelects = document.querySelectorAll(".omr_category_input"); // Seleciona todos os selects na página
+
+                    allSelects.forEach((select) => {
+                        if (select !== selectSource && !select.value) { // Ignora o select específico de origem e apenas os que estão vazios
+                            select.value = valueToCopy; // Define o valor para todos os selects vazios
+                        }
+                    });
+                })
+        
+                {% if object.status == 5 %}
+                    let interval = setInterval(function() {
+                        axios.get('{% url "omr:omr_upload_status" pk=object.pk %}')
+                        .then(response => {
+                            if (response.data.status != 5) {
+                                clearInterval(interval)
+                                window.location.reload()
+                            }
+                        })
+                    }, 1000)
+                {% endif %}
+                $('#table-uploadstudents').DataTable({
+                    responsive: true,
+                    pageLength: 50,
+                    language: {
+                        url: "//cdn.datatables.net/plug-ins/1.10.22/i18n/Portuguese-Brasil.json"
+                    },
+                });
+            }
+        })
+
+    </script>
+{% endblock js-additional %}

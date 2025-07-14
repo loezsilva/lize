@@ -1,0 +1,177 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load math %}
+{% load exams_tags %}
+
+{% block title %}Elaboração de provas - Lize{% endblock title %}
+
+{% block css-additional %}
+  <style>
+    .loading {
+      animation: is-rotating 1s infinite;
+      border: 6px solid #e5e5e5;
+      border-radius: 50%;
+      border-top-color: #51d4db;
+      height: 50px;
+      width: 50px;
+      top: 47.5%;
+      left: 47.5%;
+      position: fixed;
+      z-index: 9;
+    }
+    @keyframes is-rotating {
+      to {
+        transform: rotate(1turn);
+      }
+    }
+  </style>
+{% endblock css-additional %}
+
+{% block content %}
+<div class="loading d-none"></div>
+<div class="ard cer dcv tw-mb-16">
+  <div class="ls" style="margin-top: 0.625rem; margin-bottom: 1rem; justify-content: space-between;">
+    <!-- Empty -->
+  </div>
+  {% if user.inspector.is_discipline_coordinator %}
+    <div class="row">
+      <div class="col-12 mg-t-10">
+        <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-30">
+          <div>
+            <h4>Elaboração de provas</h4>
+          </div>
+          {% if user.inspector.is_discipline_coordinator %}
+            <div class="d-none d-md-block">
+              <div class="btn-group" role="group" aria-label="Basic example">
+                <a href="{% url 'exams:exam-teacher-subject-list' %}" class="btn btn-outline-primary">Elaboradas por você</a>
+                <a href="{% url 'exams:exam-teacher-subject-to-review-list' %}" class="btn btn-primary">Para você revisar</a>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+  <hr style="margin: 32px 0; border-color: #E6E8EC;" />
+  <form method="get">
+    <div class="row row-xs mb-0">
+      <div class="col-6">
+        <h4 class="mg-b-0 tx-spacing--1" style="font-size: 18px; font-weight: 500; color: #001737;">
+          Exibindo {{object_list.count}} solicitações
+        </h4>
+      </div>
+      <div class="col-3">
+        <select class="custom-select" onchange="$('form').submit()" name="q_status">
+          <option value="">Todos os cadernos</option>
+          <option value="in_review" {% if q_status == 'in_review' %}selected{% endif %}>Revisando</option>
+          <option value="await_review" {% if q_status == 'await_review' %}selected{% endif %}>Aguardando revisão</option>
+        </select>
+      </div>
+      <div class="col-3">
+        <div class="search-form">
+          <input type="search" class="form-control" value="{{q_name|default:''}}" name="q_name" placeholder="Buscar por nome do caderno">
+          <button class="btn" type="submit" style="background-color: #fff;">
+            <i data-feather="search"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+  {% if object_list %}
+    <div class="row row-xs mb-0" style="margin-top: 32px;">
+      {% for object in object_list %}
+        <div class="col-sm-6 col-lg-3" style="margin-bottom: 32px; ">
+          <!-- border: 1px solid #009EDD;  -->
+          <div class="card card-body" style="padding: 16px; border-radius: 12px; box-shadow: unset;">
+            <div class="d-flex justify-content-between" style="margin-bottom: 16px;">
+              <div>
+                {% if object.count_reviewed_questions > 0 and object.count_reviewed_questions < object.count_total_questions  %}
+                  <span style="font-size: 12px; font-weight: 500; padding: 4px 8px; border-radius: 6px;" class="badge bg-success-soft text-success">Revisando</span>
+                {% else %}
+                  <span style="font-size: 12px; font-weight: 500; padding: 4px 8px; border-radius: 6px;" class="badge bg-primary-soft text-primary">Aguarda revisão</span>
+                {% endif %}  
+              </div>
+              <!-- <div>
+                <button type="button" style="border: unset; background-color: unset; padding: 0;">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 13C12.5523 13 13 12.5523 13 12C13 11.4477 12.5523 11 12 11C11.4477 11 11 11.4477 11 12C11 12.5523 11.4477 13 12 13Z" stroke="#D0D3D9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 6C12.5523 6 13 5.55228 13 5C13 4.44772 12.5523 4 12 4C11.4477 4 11 4.44772 11 5C11 5.55228 11.4477 6 12 6Z" stroke="#D0D3D9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 20C12.5523 20 13 19.5523 13 19C13 18.4477 12.5523 18 12 18C11.4477 18 11 18.4477 11 19C11 19.5523 11.4477 20 12 20Z" stroke="#D0D3D9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div> -->
+            </div>
+            <div>
+              <p style="margin-bottom: 16px; font-size: 18px; font-weight: 500; color: #001737;" class="mb-0">{{object.teacher_subject.subject.name}}</p>
+              <p style="margin-bottom: 0; font-size: 14px; color: #7987A1;" class="mb-3">{{object.teacher_subject.teacher.name}}</p>
+              <p style="margin-bottom: 0; font-size: 14px; color: #7987A1;">{{object.grade}}</p>
+              <p style="margin-bottom: 0; font-size: 12px; font-weight: 500; color: #009EDD;" class="text-truncate">{{object.exam.name}}</p>
+            </div>
+            <div class="d-flex flex-column" style="margin-top: 24px; margin-bottom: 24px; gap: 8px;">
+              <div class="d-flex" style="margin-right: 24px;">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 17.5L9.91664 17.3749C9.33777 16.5066 9.04834 16.0725 8.66594 15.7582C8.3274 15.4799 7.93732 15.2712 7.51802 15.1438C7.0444 15 6.52261 15 5.47904 15H4.33335C3.39993 15 2.93322 15 2.5767 14.8183C2.2631 14.6586 2.00813 14.4036 1.84834 14.09C1.66669 13.7335 1.66669 13.2668 1.66669 12.3333V5.16667C1.66669 4.23325 1.66669 3.76654 1.84834 3.41002C2.00813 3.09641 2.2631 2.84144 2.5767 2.68166C2.93322 2.5 3.39993 2.5 4.33335 2.5H4.66669C6.53353 2.5 7.46695 2.5 8.17999 2.86331C8.8072 3.18289 9.31713 3.69282 9.63671 4.32003C10 5.03307 10 5.96649 10 7.83333M10 17.5V7.83333M10 17.5L10.0834 17.3749C10.6623 16.5066 10.9517 16.0725 11.3341 15.7582C11.6726 15.4799 12.0627 15.2712 12.482 15.1438C12.9556 15 13.4774 15 14.521 15H15.6667C16.6001 15 17.0668 15 17.4233 14.8183C17.7369 14.6586 17.9919 14.4036 18.1517 14.09C18.3334 13.7335 18.3334 13.2668 18.3334 12.3333V5.16667C18.3334 4.23325 18.3334 3.76654 18.1517 3.41002C17.9919 3.09641 17.7369 2.84144 17.4233 2.68166C17.0668 2.5 16.6001 2.5 15.6667 2.5H15.3334C13.4665 2.5 12.5331 2.5 11.8201 2.86331C11.1928 3.18289 10.6829 3.69282 10.3633 4.32003C10 5.03307 10 5.96649 10 7.83333" stroke="#D0D3D9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                {% if object.exam.get_category_display == "Prova" %}
+                  <span style="margin-left: 8px; font-size: 14; color: #7987A1;">Caderno de Prova</span>
+                {% else %}
+                  <span style="margin-left: 8px; font-size: 14; color: #7987A1;">Caderno de atividade</span>
+                {% endif %}
+              </div>
+              {% with object|get_exam_teacher_subject_details:user as detail %}
+                <div class="d-flex">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g clip-path="url(#clip0_317_6934)">
+                    <path d="M5.83329 7.91664L1.66663 9.99997L9.70182 14.0176C9.81114 14.0722 9.8658 14.0996 9.92313 14.1103C9.97391 14.1198 10.026 14.1198 10.0768 14.1103C10.1341 14.0996 10.1888 14.0722 10.2981 14.0176L18.3333 9.99997L14.1666 7.91664M5.83329 12.0833L1.66663 14.1666L9.70182 18.1842C9.81114 18.2389 9.8658 18.2662 9.92313 18.277C9.97391 18.2865 10.026 18.2865 10.0768 18.277C10.1341 18.2662 10.1888 18.2389 10.2981 18.1842L18.3333 14.1666L14.1666 12.0833M1.66663 5.83331L9.70182 1.81571C9.81114 1.76105 9.86579 1.73372 9.92313 1.72297C9.97391 1.71344 10.026 1.71344 10.0768 1.72297C10.1341 1.73372 10.1888 1.76105 10.2981 1.81571L18.3333 5.83331L10.2981 9.8509C10.1888 9.90556 10.1341 9.93289 10.0768 9.94365C10.026 9.95317 9.97391 9.95317 9.92313 9.94365C9.86579 9.93289 9.81114 9.90556 9.70182 9.8509L1.66663 5.83331Z" stroke="#D0D3D9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </g>
+                    <defs>
+                    <clipPath id="clip0_317_6934">
+                    <rect width="20" height="20" fill="white"/>
+                    </clipPath>
+                    </defs>
+                  </svg>
+                  <span style="margin-left: 8px; font-size: 14; color: #7987A1;">{{detail.count_reviewed_questions}} de {{detail.count_total_questions}} questões revisadas</span>
+                </div>
+              {% endwith %}
+            </div>
+            <div>
+              <a href="{% url 'exams:exam_review' object.exam.pk %}?exam_teacher_subject={{object.id}}" type="button" class="btn btn-success btn-block"><i data-feather="eye"></i> Revisar questões</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+      <div class="col-12">
+        {% include 'includes/pagination.html' with objects=object_list %}
+      </div>
+    </div>
+  {% else %}
+    <div class="container d-flex justify-content-center ht-100p">
+      <div class="w-100 bg-transparent shadow-0 border-0">
+        <div class="card-body">
+          <div class="row d-flex justify-content-center">
+            <div class="col-12 col-lg-5">
+              <div class="d-flex flex-column justify-content-center align-items-center" style="min-height: calc(100vh - 280px);">
+                <h2 class="tx-center">Não há cadernos para serem revisados.</h2>
+                <p class="tx-color-03 mg-b-30 tx-center">
+                  Não encontramos nenhum caderno para ser revisado.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock content %}
+
+
+
+{% block js-additional %}
+  <script>
+    $('form').on('submit', () => {
+      $('.loading').removeClass('d-none')
+    })
+  </script>
+{% endblock js-additional %}

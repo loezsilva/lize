@@ -1,0 +1,182 @@
+{% extends 'dashboard/base_fixed.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+  {% if not object %}
+    Lize - Adicionar diagramação
+  {% else %}
+    Lize - Alteração de diagramação
+  {% endif %}
+{% endblock title %}
+{% block css-additional %}
+
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+{% endblock css-additional %}
+
+{% block breadcrumb-fixed %}
+<div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                <li class="breadcrumb-item"><a href="#">SOLICITAÇÕES DE DIAGRAMAÇÃO</a></li>
+                <li class="breadcrumb-item active" aria-current="page">CADASTRAR</li>
+            </ol>
+        </nav>
+        <h4>Cadastrar solicitação de diagramação</h4>
+        <h6 class="text-muted">Utilize esse recurso se deseja que a equipe da Lize diagrame a prova.</h6>
+    </div>
+    <div class="d-none d-md-block">
+        <button class="btn btn-sm pd-x-15 btn-white btn-uppercase" onclick="history.back();">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </button>
+    </div>
+</div>
+{% endblock breadcrumb-fixed %}
+
+
+{% block content-fixed %}
+
+<div class="row">
+    <div class="col-md-9">
+        <div class="card mg-b-10">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12">
+                        <h6>Insira abaixo os dados de diagramação</h6>
+                    </div>
+                </div>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            {{ form.application_date.label }}
+                            {% render_field form.application_date class="form-control" type="date" %}
+                            <small class="form-text text-muted">
+                                {{ form.application_date.help_text }}
+                            </small>
+                            {% if form.application_date.errors %}
+                            <label class="text-danger">
+                                {{ form.application_date.errors.0 }}</label>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            {{ form.exam_file.label }}
+                            {% render_field form.exam_file class="form-control" %}
+                            <small class="form-text text-muted">
+                                {{ form.exam_file.help_text }}
+                            </small>
+                            {% if form.exam_file.errors %}
+                            <label class="text-danger">
+                                {{ form.exam_file.errors.0 }}</label>
+                            {% endif %}
+                        </div>
+                        <div class="form-group col-md-6">
+                            {{ form.exam_file_discursive.label }}
+                            {% render_field form.exam_file_discursive class="form-control" %}
+                            <small class="form-text text-muted">
+                                {{ form.exam_file_discursive.help_text }}
+                            </small>
+                            {% if form.exam_file_discursive.errors %}
+                            <label class="text-danger">
+                                {{ form.exam_file_discursive.errors.0 }}</label>
+                            {% endif %}
+                        </div>
+                        <div class="form-group col-md-6">
+                            {{ form.template_file.label }}
+                            {% render_field form.template_file class="form-control" %}
+                            <small class="form-text text-muted">
+                                {{ form.template_file.help_text }}
+                            </small>
+                            {% if form.template_file.errors %}
+                            <label class="text-danger">
+                                {{ form.template_file.errors.0 }}</label>
+                            {% endif %}
+                        </div>
+                        <div class="form-group col-md-6">
+                            {{ form.grade.label }}
+                            {% render_field form.grade class="form-control" %}
+                            <small class="form-text text-muted">
+                                {{ form.grade.help_text }}
+                            </small>
+                            {% if form.grade.errors %}
+                            <label class="text-danger">
+                                {{ form.grade.errors.0 }}</label>
+                            {% endif %}
+                        </div>
+                        <div class="form-group col-md-6">
+                            {{ form.subjects.label }}
+                            {% render_field form.subjects class="form-control" multiple="multiple" %}
+                            <small class="form-text text-muted">
+                                {{ form.subjects.help_text }}
+                            </small>
+                            {% if form.subjects.errors %}
+                            <label class="text-danger">
+                                {{ form.subjects.errors.0 }}</label>
+                            {% endif %}
+                        </div>
+                        <div class="form-group col-md-6">
+                            {{ form.question_weight.label }}
+                            {% render_field form.question_weight class="form-control" rows="3" %}
+                            <small class="form-text text-muted">
+                                {{ form.question_weight.help_text }}
+                            </small>
+                            {% if form.question_weight.errors %}
+                            <label class="text-danger">
+                                {{ form.question_weight.errors.0 }}</label>
+                            {% endif %}
+                        </div>
+                        <div class="form-group col-md-6">
+                            {{ form.orientations.label }}
+                            {% render_field form.orientations class="form-control" rows="3" %}
+                            <small class="form-text text-muted">
+                                {{ form.orientations.help_text }}
+                            </small>
+                            {% if form.orientations.errors %}
+                            <label class="text-danger">
+                                {{ form.orientations.errors.0 }}</label>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="inspector_type" value="1">
+                    <div class="col-12 p-0" id="alertFine">
+                        <div class="alert alert-danger">
+                            <i data-feather="alert-circle" class="mg-r-10"></i> <b>Atenção:</b> Você está solicitando uma prova para menos de 48 horas, isso poderá gerar custos adicionais..
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary float-right">Enviar solicitação de diagramação</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+
+<script>
+    $('#alertFine').hide()
+    $('#{{form.application_date.auto_id}}').change(() => {
+        if(moment($('#{{form.application_date.auto_id}}').val()).isBefore(moment().add(2, 'days'))) {
+            $('#alertFine').show()
+        } else {
+            $('#alertFine').hide()
+        }
+    })
+    $('#' + "{{form.grade.auto_id}}").select2({
+        "placeholder": "Escolha a série que será aplicada essa prova",
+        "closeOnSelect": false,
+    })
+    $('#' + "{{form.subjects.auto_id}}").select2({
+        "placeholder": "Escolha as disciplinas dessa prova",
+        "closeOnSelect": false,
+    })
+    $('#' + "{{form.application_date.auto_id}}").val('{{form.application_date.value|safe}}')
+
+</script>
+{% endblock %}

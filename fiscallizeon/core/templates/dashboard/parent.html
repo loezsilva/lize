@@ -1,0 +1,170 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load proportion %}
+{% load exams_tags %}
+
+{% block title %}Painel dos responsáveis - Lize{% endblock title %}
+
+{% block content %}
+    <div class="bg-white">
+        <div class="container py-3 px-0">
+            {% if messages %}
+            {% include 'includes/messages.html' %}
+            {% endif %}
+            <div class="d-sm-flex align-items-center justify-content-between">
+                <h4 class="mg-b-0 mx-2 tx-spacing--1 tx-md-28 tx-20 text-truncate">
+                    <span id="greetings"></span>, {{user.name}}
+                </h4>
+            </div>
+        </div>
+        <hr class="my-0" style="border-color: #E6E8EC;" />
+    </div>
+    <div class="container pd-lg-x-10 pd-xl-x-0">
+        <div class="row row-xs mb-0 mt-4">
+            {% for student in childrens %}
+            <div class="col-sm-6 col-lg-6" style="margin-bottom: 32px;">
+                <div class="card card-body" style="padding: 16px; border-radius: 12px; box-shadow: unset;">
+                    <div class="d-flex justify-content-between" style="margin-bottom: 16px;">
+                        <div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p style="margin-bottom: 16px; font-size: 18px; font-weight: 500; color: #001737;" class="mb-0">
+                                {{student.name}}</p>
+                            <p style="margin-bottom: 0; font-size: 14px; color: #7987A1;">Matrícula:
+                                {{student.enrollment_number}}</p>
+                            {% if student.get_last_class %}
+                                <p style="margin-bottom: 0; font-size: 14px; color: #7987A1;">Turma: {{student.get_last_class}}</p>
+                            {% else %}
+                                &nbsp;
+                            {% endif %}
+                        </div>
+                        <div>
+                            <div class="col-6 col-sm media">
+                                <!-- <div
+                                    class="wd-40 wd-md-50 ht-40 ht-md-50 bg-primary tx-white mg-r-10 mg-md-r-10 d-flex align-items-center justify-content-center rounded op-4">
+                                    <i data-feather="bar-chart-2"></i>
+                                </div> -->
+                                <div class="media-body">
+                                    <h6
+                                        class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold mg-b-5 mg-md-b-8">
+                                        Aproveitamento</h6>
+                                    <h4 class="tx-24 tx-sm-24 tx-md-30 tx-normal tx-rubik mg-b-0">
+                                        {{student.get_correct_option_answers.count|default:0|proportion:student.get_option_answers_current_year.count|floatformat:2}}%
+                                    </h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6 col-sm media">
+                            <div
+                                class="wd-40 wd-md-50 ht-40 ht-md-50 bg-teal tx-white mg-r-10 mg-md-r-10 d-flex align-items-center justify-content-center rounded op-6">
+                                <i data-feather="bar-chart-2"></i>
+                            </div>
+                            <div class="media-body">
+                                <h6
+                                    class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold tx-nowrap mg-b-5 mg-md-b-8">
+                                    Provas realizadas</h6>
+                                <h4 class="tx-20 tx-sm-18 tx-md-24 tx-normal tx-rubik mg-b-0">
+                                    {{ student.get_finished_exams_current_year.count|default:0 }}
+                                </h4>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm media">
+                            <div
+                                class="wd-40 wd-md-50 ht-40 ht-md-50 bg-pink tx-white mg-r-10 mg-md-r-10 d-flex align-items-center justify-content-center rounded op-5">
+                                <i data-feather="bar-chart-2"></i>
+                            </div>
+                            <div class="media-body">
+                                <h6
+                                    class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold mg-b-5 mg-md-b-8">
+                                    Questões</h6>
+                                <h4 class="tx-20 tx-sm-18 tx-md-24 tx-normal tx-rubik mg-b-0">
+                                    {{ student.get_option_answers_current_year.count }}
+                                </h4>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm media">
+                            <div
+                                class="wd-40 wd-md-50 ht-40 ht-md-50 bg-orange tx-white mg-r-10 mg-md-r-10 d-flex align-items-center justify-content-center rounded op-5">
+                                <i data-feather="bar-chart-2"></i>
+                            </div>
+                            <div class="media-body">
+                                <h6
+                                    class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold mg-b-5 mg-md-b-8">
+                                    Acertos</h6>
+                                <h4 class="tx-20 tx-sm-18 tx-md-24 tx-normal tx-rubik mg-b-0">
+                                    {{ student.get_correct_option_answers.count|default:0 }}
+                                </h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                    </div>
+                    <div>
+                        {% if student.get_finished_exams_current_year.count %}
+                            <a href="{% url 'parents:children-applications-list' student.pk %}" class="btn btn-white btn-block"><i data-feather="eye"></i> Ver resultados</a>
+                        {% else %}
+                            <button type="button" class="btn btn-white btn-block" disabled><i data-feather="eye"></i> Ver resultados</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock content %}
+
+{% block js-additional %}
+
+<script>
+    // Obtém a data atual
+    var currentDate = new Date();
+
+    // Obtém a hora atual (0-23)
+    var currentHour = currentDate.getHours();
+
+    // Obtém a referência da span com o id "greetings"
+    var greetingsSpan = document.getElementById("greetings");
+
+    // Define a mensagem de saudação de acordo com a hora atual
+    var greetingMessage;
+    if (currentHour >= 6 && currentHour < 12) {
+        greetingMessage = "Bom dia";
+    } else if (currentHour >= 12 && currentHour < 18) {
+        greetingMessage = "Boa tarde";
+    } else {
+        greetingMessage = "Boa noite";
+    }
+
+    // Define o texto da span com a mensagem de saudação
+    greetingsSpan.textContent = greetingMessage;
+</script>
+
+<script>
+    moment.locale('pt-br')
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        components: {
+
+        },
+        el: '#app',
+        data: {
+
+        },
+        methods: {
+            moment(date) {
+                return moment(date)
+            }
+        },
+        mounted() {
+            $('[data-toggle="tooltip"]').tooltip()
+        },
+    })
+</script>
+
+{% endblock js-additional %}

@@ -1,0 +1,350 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Exportação de dados da prova - Lize{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<link href="{% static 'administration/assets/css/boostrap5.css' %}" rel="stylesheet">
+{% endblock css-additional %}
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+      <nav class="ls" aria-label="Breadcrumb">
+        <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+          <li>
+            <div>
+              <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                  <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+              </a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="javascript:;" onclick="history.back()" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Exportar</a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Acertos e erros</a>
+            </div>
+          </li>
+        </ol>
+      </nav>
+    </div>
+<div class="row">
+    <div class="col-md-12">
+
+        {% include 'dashboard/exports/includes/tabs.html' with active_tab='hits' %}
+
+        <div class="card card-body tab-content mb-3" id="tabContent">
+            <div class="tab-pane show active" id="export-answers" role="tabpanel" aria-labelledby="profile-tab">
+                <form action="" method="POST">
+                    {% csrf_token %}
+
+                    <div class="row">
+                      <div class="col-12">
+                        <p>Esse modelo de exportação irá gerar uma planilha com colunas de acertos e erros para as provas selecionadas.</p>
+                      </div>
+                    </div>
+
+                    <div class="form-row">
+                      <div class="form-group col-12">
+                          <div class="d-flex">
+                              <input type="radio" class="btn-check" name="filter-type" id="filter-type_exams" checked>
+                              <label class="btn btn-outline-primary btn-sm mt-1 mr-1" for="filter-type_exams"><i class="fas fa-list-alt"></i> Por Provas</label>
+                              
+                              <input type="radio" class="btn-check" name="filter-type" id="filter-type_period" onClick="$('#id_start_date').val(''), $('#id_end_date').val('')">
+                              <label class="btn btn-outline-primary btn-sm mt-1 ml-1" for="filter-type_period"><i class="far fa-calendar-alt"></i> Por Período</label>
+                          </div>
+                      </div>
+                    </div>
+
+                    <div class="row" id="exams-filter">
+                      <div class="col-12">
+                        <h6>{{ form.exams.label }}:</h6>
+                        <div class="custom-control custom-switch mb-2">
+                          <input type="checkbox" id="get_abstracts" {% if get_abstracts %}checked{% endif %} name="get_abstracts" class="custom-control-input" > 
+                          <label class="custom-control-label" for="get_abstracts">
+                              <h6 class="mb-0">Considerar gabaritos avulsos</h6>
+                          </label>
+                        </div>
+                        <select 
+                          multiple="multiple"
+                          class="form-control" 
+                          name="{{ form.exams.name }}" 
+                          id="{{ form.exams.id_for_label }}">
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="row mb-0 d-none" id="period-filter">
+                        <div class="col-6">
+                            <h6>{{ form.start_date.label }}:</h6>
+                            {% render_field form.start_date class="form-control" type="date" %}
+                            {% if form.start_date.errors %}
+                            <span class="text-danger">{{ form.start_date.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-6">
+                            <h6>{{ form.end_date.label }}:</h6>
+                            {% render_field form.end_date class="form-control" type="date" %}
+                        </div>
+                    </div>
+                    <div class="row mb-0">
+                        <div class="col-4">
+                            <h6 class="mt-3">{{ form.export_format.label }}:</h6>
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-outline-primary btn-lg active">
+                                <input type="radio" name="{{ form.export_format.name }}" id="formato_csv" value="csv" autocomplete="off" checked>
+                                    <i class="fas fa-file-csv"></i>
+                                    CSV
+                                </label>
+                                <label class="btn btn-outline-primary btn-lg">
+                                <input type="radio" name="{{ form.export_format.name }}" id="formato_default" value="xls" autocomplete="off">
+                                    <i class="fas fa-file-excel"></i>
+                                    XLSX
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                          <h6 class="mt-3">{{form.students_filter.label}}:</h6>
+                          <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                              <label class="btn btn-outline-primary btn-lg active">
+                              <input type="radio" name="{{ form.students_filter.name }}" id="todos" value="todos" autocomplete="off"
+                                  checked>
+                                  Todos
+                              </label>
+                              <label class="btn btn-outline-primary btn-lg">
+                              <input type="radio" name="{{ form.students_filter.name }}" id="presentes" value="presentes" autocomplete="off">
+                                  Presentes
+                              </label>
+                              <label class="btn btn-outline-primary btn-lg">
+                              <input type="radio" name="{{ form.students_filter.name }}" id="ausentes" value="ausentes" autocomplete="off">
+                                  Ausentes
+                              </label>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row mb-0">
+                        <div class="col-4">
+                          <div class="custom-control custom-switch mt-4">
+                              <input type="checkbox" id="separate_subjects" name="separate_subjects"
+                                  class="custom-control-input" value="1">
+                              <label class="custom-control-label" for="separate_subjects">
+                                  <h6 class="mb-0">{{form.separate_subjects.label}}</h6>
+                              </label>
+                              <small class="form-text text-muted mt-0">
+                                  {{form.separate_subjects.help_text}}
+                              </small>
+                          </div>
+                        </div>
+                        <div class="col-4">
+                          <div class="custom-control custom-switch mt-4">
+                              <input type="checkbox" id="extra_fields" name="extra_fields"
+                                  class="custom-control-input" value="1">
+                              <label class="custom-control-label" for="extra_fields">
+                                  <h6 class="mb-0">{{form.extra_fields.label}}</h6>
+                              </label>
+                              <small class="form-text text-muted mt-0">
+                                {{form.extra_fields.help_text}}
+                              </small>
+                          </div>
+                        </div>
+                        <div class="col-4">
+                          <div class="custom-control custom-switch mt-4">
+                              <input type="checkbox" id="add_teacher_name" name="add_teacher_name"
+                                  class="custom-control-input" value="1">
+                              <label class="custom-control-label" for="add_teacher_name">
+                                  <h6 class="mb-0">{{form.add_teacher_name.label}}</h6>
+                              </label>
+                              <small class="form-text text-muted mt-0">
+                                {{form.add_teacher_name.help_text}}
+                              </small>
+                          </div>
+                        </div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="mr-2 btn btn-success float-right not-disable">
+                        Exportar relatório
+                    </button>
+                </form>
+            </div>
+            
+        </div>
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+<div aria-hidden="true" class="modal  fade" id="exportResultsModal" role="dialog" tabindex="-1">
+  <div class="modal-dialog modal-md" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-truncate">Exportação de resultados de provas</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button> 
+      </div>
+      <div class="modal-body" style="max-height: fit-content; height: fit-content;">
+        <div id="exporting-info">
+          <h6>Exportação em andamento... <i class="fas fa-spinner fa-spin text-primary mt-2"></i></h6>
+          <p>Mantenha esta janela aberta enquanto geramos o link para download dos resultados.</p>
+          <div class="progress">
+            <div
+                class="progress-bar bg-primary progress-bar-striped progress-bar-animated" 
+                role="progressbar"
+                id="progressbar"
+                style="width: 2%">
+            </div>
+          </div>
+        </div>
+
+        <div id="exported-info" class="d-none">
+          <p>Você pode baixar o arquivo com os resultados das provas clicando no botão abaixo:</p>
+          <a href="#" target="_blank" id="download-results-url" class="btn btn-primary btn-block">
+            <i class="fas fa-download"></i>
+             Baixar resultados
+          </a>
+        </div>
+        <div id="exported-error" class="d-none p-3">
+          <p class="text-danger">Um erro aconteceu no processo de exportação. Tente novamente em alguns instantes.</p>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-center"></div>
+    </div>
+  </div>
+</div>
+{% endblock extra-modal %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+
+<script type="text/javascript">
+    $(document).ready(function(){
+        moment.locale('pt-br');
+
+        $('[name=filter-type]').on('change', function(){
+            $('#period-filter').toggleClass('d-none');
+            $('#exams-filter').toggleClass('d-none');
+        })
+
+        $('#{{ form.exams.id_for_label }}').select2({
+            placeholder: 'Selecione as provas as quais deseja exportar os resultados',
+            minimumInputLength: 3,
+            closeOnSelect: false,
+            escapeMarkup: function (text) {
+                return text;
+            },
+            ajax: {
+                url: '{% url "exams:exams_api_list" %}',
+                delay: 250,
+                data: function (params) {
+                    let get_abstracts = $('#get_abstracts').is(':checked')
+                    return {
+                        search: params.term,
+                        get_abstracts
+                    }
+                },
+                processResults: function(results) {
+                    let new_results = $.map(results, function(element) {
+                        element.text = element.name
+                        return element 
+                    })
+                    return {
+                        results: new_results,
+                    }
+                }
+            },
+            templateSelection: (data) => {
+                if(data.text) {
+                let text = `<span class="font-weight-bold"><span class="mr-1">${data.text}</span>`
+
+                if(data.status) {
+                    text += `<span class="badge badge-primary font-weight-bold">${data.questions_count} Questões</span>
+                    </span>`
+                }
+
+                return text
+                
+                } else {
+                    return "Buscar pelo nome do caderno de provas..."
+                }
+            },
+            templateResult: (data) => {
+                if (data.text){
+                    return `
+                        <div class="row mb-0">
+                        <div class="col-12 mb-0">
+                            <div class="font-weight-bold">
+                            ${data.text}
+                            <span class="badge badge-primary font-weight-bold">${data.questions_count} Questões</span>
+                            </div>
+                        </div>
+                    `
+                } else {
+                    return "Buscando caderno..."
+                }
+            }
+        });
+    })
+
+    {% if selected_exam %}
+        let option = new Option('{{selected_exam.name}}', '{{selected_exam.id}}', true, true);
+        $('#{{ form.exams.id_for_label }}').append(option).trigger('change');
+    {% endif %}
+
+    {% if export_id %}
+        $('#exportResultsModal').modal('show')
+
+        var x = setInterval(
+            function() {
+                axios.get("{% url 'exports:exams_export_results' export_id=export_id %}")
+                .then(function(response) {
+                    const data = response.data
+
+                    switch (data.status) {
+                        case 'PROGRESS':
+                            const {done, total} = data.details
+                            const progress = Math.round(done / total * 100)
+                            $('.progress-bar').css('width', `${progress}%`)
+                            break
+                        case 'SUCCESS':
+                            clearInterval(x)
+                            $('#download-results-url').attr('href', response.data.details)
+                            $('#exported-info').removeClass('d-none')
+                            $('#exporting-info').addClass('d-none')
+                            break
+                        case 'PENDING':
+                            clearInterval(x)
+                            $('#exported-error').removeClass('d-none')
+                            $('#exporting-info').addClass('d-none')
+                            break
+                    }
+                })
+                .catch(function(response) {
+                    $('#exported-error').removeClass('d-none')
+                    $('#exporting-info').addClass('d-none')
+                    clearInterval(interval)
+                })
+            },
+            {% if DEBUG %}1000{% else %}10000{% endif %}
+        )
+    {% endif %}
+</script>
+{% endblock js-additional %}

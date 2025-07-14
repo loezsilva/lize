@@ -1,0 +1,1445 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load cleaned_params %}
+{% load call_function_with_params %}
+{% load call_method %}
+
+{% block title %}Listagem - Lize{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'administration/lib/datatables.net-responsive-dt/css/responsive.dataTables.min.css' %}">
+<style>
+  .select2-selection__choice__remove {
+    display: none !important;
+  }
+</style>
+
+{% endblock %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">CADERNO</a></li>
+          <li class="breadcrumb-item active" aria-current="page">LISTAGEM</li>
+        </ol>
+      </nav> 
+      <h4>Seus cadernos
+        {% if category == 'homework' %}
+          de atividade
+        {% elif category == 'exam' %}
+          de prova
+        {% endif %}
+      </h4>
+    </div>
+    {% if user.get_user_function == "Coordenação" %}
+      <div class="d-sm-flex align-items-center">
+        <div class="dropdown mr-2">
+          <button class="btn btn-secondary btn-sm" type="button" data-toggle="modal" data-target="#searchProof">
+            <i class="fas fa-search"></i> Pesquisar Comprovantes
+          </button>
+        </div> 
+        <div class="dropdown mr-2">
+          <button class="btn btn-info btn-sm dropdown-toggle" type="button" id="dropdownMenuButtonReport"
+            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="fas fa-file-export"></i> Exportação de resultados
+          </button>
+          <div class="dropdown-menu" aria-labelledby="dropdownMenuButtonReport">
+            <a href="{% url 'exports:exams_export_erp' %}" class="dropdown-item nav-link">
+              <i class="fas fa-file-csv"></i> Resumido (para ERPs)</a>
+            <a href="{% url 'exports:exams_export_answers' %}"
+              class="dropdown-item nav-link"><i class="fas fa-list-ol"></i> Respostas detalhadas
+            </a>        
+          </div>
+        </div>    
+        <div class="d-none d-md-block">
+            <a href="{% url 'exams:exams_create' %}?category={{category}}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+              <i data-feather="plus" class="wd-10 mg-r-5"></i> Cadastrar caderno 
+              {% if category == 'homework' %}
+                de atividade
+              {% elif category == 'exam' %}
+                de prova
+              {% endif %}
+            </a>
+        </div>
+      </div>
+    {% elif user_type == 'teacher' and user.client_teachers_can_elaborate_exam %}
+      <div class="d-sm-flex align-items-center">        
+        <a href="{% url 'exams:exam_teacher_create' %}?v=2" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+            <i data-feather="plus" class="wd-10 mg-r-5"></i> Criar Lista de Exercício
+        </a>
+      </div>
+    {% endif %}
+  </div>
+  <div class="row mb-0">
+    <div class="col-12 mb-0">
+      <div class="alert alert-info">
+        Teste a nova funcionalidade de <strong>Diagramação de Cadernos</strong> acessando <strong><i
+            class='fas fa-print'></i> <i class="fas fa-angle-right mx-1"></i> <i
+            class="fas fa-file-alt"></i> Diagramar caderno </strong> e nos envie seu
+        feedback.
+      </div>
+    </div>
+  </div>
+
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+{% block top-menu %}
+<header>
+  <nav class="ls add afa agv arx" style="display: flex; overflow-x: auto; border-width: 0px; border-style: solid; border-color: rgb(229, 231, 235); border-bottom-width: 1px; border-color: #E2E5ED; padding-top: 1rem; padding-bottom: 1rem;">
+    <ul role="list" class="ls tn uj aad ard avv awb awk axk cer dcv" style="list-style: none; margin: 0px; min-width: 100%; flex: 0 0 auto; column-gap: 1.5rem; font-size: 0.875rem; line-height: 1.5rem; font-weight: 500;">
+      <li><a href="{% url 'exams:exams_list' %}?category=exam" class="axz font-display" style="{% if request.resolver_match.url_name == 'exams_list' and request.GET.category == 'exam' %}color: #FEA464;{% else %}color: #9CA3AF;{% endif %}">Caderno de prova</a></li>
+      <li><a href="{% url 'exams:exams_list' %}?category=homework" class="font-display" style="{% if request.resolver_match.url_name == 'exams_list' and request.GET.category == 'homework' %}color: #FEA464;{% else %}color: #9CA3AF;{% endif %}">Lista de Exercício</a></li>
+    </ul>
+  </nav>
+</header>
+{% endblock top-menu %}
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1rem; justify-content: space-between;">
+      {% include "dashboard/breadcrumb-year.html" with year=year|force_escape %}
+      <div>
+        {% if user_type == "coordination" %}
+          <div class="d-sm-flex align-items-center">
+            <div class="dropdown mr-2">
+              <button class="btn btn-secondary btn-sm" type="button" data-toggle="modal" data-target="#searchProof">
+                <i class="fas fa-search"></i> Pesquisar Comprovantes
+              </button>
+            </div> 
+            <div class="dropdown mr-2">
+              <button class="btn btn-info btn-sm dropdown-toggle" type="button" id="dropdownMenuButtonReport"
+                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-file-export"></i> Exportação de resultados
+              </button>
+              <div class="dropdown-menu" aria-labelledby="dropdownMenuButtonReport">
+                <a href="{% url 'exports:exams_export_erp' %}" class="dropdown-item nav-link">
+                  <i class="fas fa-file-csv"></i> Resumido (para ERPs)</a>
+                <a href="{% url 'exports:exams_export_answers' %}"
+                  class="dropdown-item nav-link"><i class="fas fa-list-ol"></i> Respostas detalhadas
+                </a>        
+              </div>
+            </div>    
+            <div class="d-none d-md-block">
+                <a href="{% url 'exams:exams_create' %}?category={{category}}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+                  <i data-feather="plus" class="wd-10 mg-r-5"></i> Solicite questões a professores
+                </a>
+            </div>
+          </div>
+        {% elif user_type == 'teacher' and user.client_teachers_can_elaborate_exam %}
+          <div class="d-sm-flex align-items-center">        
+            <a href="{% url 'exams:exam_teacher_create' %}?v=2" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+                <i data-feather="plus" class="wd-10 mg-r-5"></i> Criar Lista de Exercício
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+<div class="row m-0 mb-2 bg-white">
+  <div class="col-12 p-2">
+      <label for="customFilters" class="mb-1 tx-bold">Filtro Padrão 
+        <svg style="width: 15px; height: 15px;" class="cp tooltips" data-tippy-content="Você pode selecionar um filtro pre definido para facilitar suas consultas." xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+          <path d="M256 512c141.4 0 256-114.6 256-256S397.4 0 256 0S0 114.6 0 256S114.6 512 256 512zM169.8 165.3c7.9-22.3 29.1-37.3 52.8-37.3h58.3c34.9 0 63.1 28.3 63.1 63.1c0 22.6-12.1 43.5-31.7 54.8L280 264.4c-.2 13-10.9 23.6-24 23.6c-13.3 0-24-10.7-24-24V250.5c0-8.6 4.6-16.5 12.1-20.8l44.3-25.4c4.7-2.7 7.6-7.7 7.6-13.1c0-8.4-6.8-15.1-15.1-15.1H222.6c-3.4 0-6.4 2.1-7.5 5.3l-.4 1.2c-4.4 12.5-18.2 19-30.6 14.6s-19-18.2-14.6-30.6l.4-1.2zM288 352c0 17.7-14.3 32-32 32s-32-14.3-32-32s14.3-32 32-32s32 14.3 32 32z"/>
+        </svg>
+      </label>
+      <div class="d-flex justify-content-between">
+          <div class="d-flex" style="width: 40%;">
+            <template v-if="filters.list.length">
+              <button class="btn btn-outline-primary rounded-pill" data-toggle="modal" data-target="#defaultFilters">${ filters.selected ? filters.selected.name:'Selecionar um filtro padrão' }</button>
+            </template>
+            <template v-else>
+              <button class="btn btn-outline-primary rounded-pill off-canvas-menu" data-toggle-off-canvas="#right-off-canvas" @click="filters.createNewFilter = true">Criar um filtro padrão</button>
+            </template>
+            <button v-if="!filters.selected" data-toggle-off-canvas="#right-off-canvas" @click="filters.createNewFilter = true" class="btn btn-outline-primary btn-sm rounded-pill mx-2 off-canvas-menu"><i class="fas fa-plus"></i></button>
+          </div>
+          <div class="d-flex">
+            <button data-toggle-off-canvas="#right-off-canvas" @click="filters.createNewFilter = false" class="btn btn-sm btn-info btn-icon rounded-pill off-canvas-menu">
+              <i class="fas fa-search"></i> Filtrar listagem 
+              {% if count_filters > 0 %}
+                <span class="badge badge-danger">{{count_filters}} Aplicado(s)</span>
+              {% endif %}
+            </button>
+            <button v-if="filters.selected || {{count_filters|default:0|safe}}" class="btn btn-primary btn-sm rounded-pill mx-2 d-flex align-items-center" @click="refreshFilters()"><i class="fas fa-filter mr-1"></i> Limpar</button>
+          </div>
+      </div>
+      <template v-if="filters.labels().length">
+        <h6 class="my-0 mt-2">Filtros aplicados:</h6>
+        <div class="table-responsive">
+          <div class="d-flex">
+            <span v-for="filter in filters.labels()" style="cursor: default;" class="d-flex align-items-center m-1 tx-10 px-2 rounded-pill badge badge-primary text-uppercase" :data-tippy-content="filter.values.map((item) => `<span class='badge badge-primary mx-1'>${item}</span>`)" :class="{ 'tooltips': filter.showCount }">
+              ${filter.label}<template v-if="filter.showValues">: <span v-if="!filter.showCount"> ${ filter.values.join(', ') }</span><span class="badge badge-dark rounded-circle ml-1" v-else> ${ filter.values.length }</span></template>
+            </span>
+          </div>
+        </div>
+      </template>
+  </div>
+</div>
+
+<div class="row">
+
+    <div class="col-md-12">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+              <div>
+                <h6 class="mg-b-5">Cadernos
+                  {% if category == 'homework' %}
+                    de atividade
+                  {% else %}
+                    de prova
+                  {% endif %}
+                </h6> 
+                <p class="tx-13 tx-color-03 mg-b-5">Gerencie todos os seus cadernos listadas abaixo</p>
+              </div>
+            </div>
+            
+            <div class="table-responsive">
+              <table class="table table-dashboard mg-b-1">
+                <thead>
+                  <tr>
+                    <th class="aling-middle check-selection">
+                      <div class="form-group form-check">
+                        <input class="form-check-input selectbox" data-selectall="true" type="checkbox">
+                      </div>
+                    </th>
+                    <th>Nome</th>
+                    <th>Questões</th>
+                    <th>Situação</th>
+                    <th class="text-center">Aguardando correção</th>
+                    <th class="text-wrap"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                <div class="d-flex px-3">
+                  <span class="cp badge badge-dark m-1 tx-14" id="btn-selection-all" @click="activeCancelSelection(true)">
+                    <i class="fa fa-check-square"></i> Selecionar vários
+                  </span>
+                  <span class="cp badge badge-dark m-1 tx-14" id="btn-cancel-selection" @click="activeCancelSelection(false)">
+                    <i class="fas fa-reply-all"></i> Cancelar selecão
+                  </span>
+                  <template v-if="selectionList.length">
+                    <span class="cp badge badge-info m-1 tx-14" id="btn-change-status" @click="changeAllStatus()">
+                      <i class="fas fa-reply-all"></i> Alterar Situação
+                    </span>
+                    <span class="cp badge badge-danger m-1 tx-14" id="btn-remove" @click="removeAllSelected()">
+                      <i class="fas fa-trash"></i> Remover selecionados
+                    </span>
+                  </template>
+                </div>
+                  
+                  {% for exam in object_list %}
+                    {% with concat='total_unanswered,'|concat_string:user.pk %}
+                      {% with questions_count=exam.count_availables_questions  total_unanswered=exam|call_function_with_params:concat %}
+                        <tr id="tr-{{exam.pk}}">
+                          <td class="aling-middle check-selection">
+                            {% if not exam.count_applications_count %}
+                              <div class="form-group form-check" >
+                                <input class="form-check-input selectbox" @click="selectionList.includes('{{exam.pk}}') ? selectionList.splice(selectionList.indexOf('{{exam.pk}}'), 1):selectionList.push('{{exam.pk}}')" type="checkbox" id="{{exam.pk}}" value="{{exam.pk}}">
+                              </div>
+                            {% endif %}
+                          </td>
+                          <td class="tx-medium">
+                            {% if exam.created_by == user %}
+                              <span class="badge badge-warning">Criado por você</span>
+                              <br>
+                            {% endif %}
+                            {% if exam.get_category_display == 'Prova' %}
+                              <span class="badge badge-primary">Caderno de Prova</span>
+                            {% else %}
+                              <span class="badge badge-success">Caderno de Atividade</span>
+                            {% endif %}
+                            <br />
+                            {% if exam.materials.all %}
+                              {% with materials_count=exam.materials.all.count %}
+                                  <span class="badge badge-primary">
+                                  </b>{{materials_count}} Materia{{materials_count|pluralize:'is'}} de estudo</span>
+                                  <br />
+                              {% endwith %}
+                            {% endif %}
+                            <span class="badge badge-light">Utilizada em <b> {{exam.count_applications_count}}
+                            </b>aplicações</span>
+                            <br />
+                            {{ exam.name }}<br/>
+                          </td>
+                          <td style="white-space: nowrap;">
+                            <span>{{ questions_count }} Questões</span><br/>
+                            {% if exam.count_empty_feedbacks > 0 %}
+                              <span class="badge badge-danger mb-1">
+                                {{exam.count_empty_feedbacks}} Sem gabarito
+                              </span>
+                            {% endif %}
+                            {% for status, value in exam.get_status.items %}
+                              <div class="alert alert-outline rounded p-0 mx-0 mb-1 px-1 alert-{{value.color}} d-flex align-items-center" role="alert">
+                                {{value.number}} {{status}}
+                              </div>
+                            {% endfor %}
+                          </td>
+                          <td class="tx-teal">
+                            <p class="text-center text-white rounded px-2 mb-1" :class="getStatusClass('{{exam.get_status_display}}')">{{exam.get_status_display}}</p>
+                            {% if exam.is_printed %}
+                              <p class="text-center rounded px-2 text-success tx-bold">Impresso <i class="fas fa-check">
+                            {% endif %}
+                          </td>
+                          {% comment %} <td class="text-center">
+                            {% if exam.wrongs_count %}
+                              <span class="badge badge-warning">
+                                {{ exam.wrongs_count }} Erratas
+                              </span>
+                            {% else %}
+                            -
+                            {% endif %}
+                          </td> {% endcomment %}
+                          <td class="text-center">
+                              {% if total_unanswered %}
+                                  <span class="badge badge-warning">
+                                    {{ total_unanswered }} Respostas
+                                  </span>
+                                {% else %}
+                                -
+                                {% endif %}
+                          </td>
+                            <td class="text-wrap">
+                                <div class="d-flex justify-content-end">
+                                  <div class="dropdown mr-2">
+                                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButtonConfig"
+                                      data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                      <i class="fas fa-cog"></i> Opções
+                                    </button>
+                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButtonConfig">
+                                      {% if user_type == 'coordination' %}
+                                        <a href="{% url 'exams:exams_update' pk=exam.pk %}{{request|cleaned_params}}" class="dropdown-item nav-link"><i class="fas fa-edit"></i> 
+                                          {% if user_type == 'coordination' %}
+                                            Editar caderno
+                                          {% else %}
+                                            Revisar caderno
+                                            <p style="line-height: 15px;" class="text-muted m-0 p-0">
+                                              Revise cada questão enviada<br/> pelos professores.
+                                            </p>
+                                          {% endif %}
+                                        </a>
+                                      {% endif %}
+                                      {% if user_type == 'coordination' %}
+                                        <a href="{% url 'exams:exam_review' pk=exam.pk %}{{request|cleaned_params}}" class="dropdown-item nav-link"><i class="fas fa-check"></i> 
+                                          {% if user_type == 'coordination' %}
+                                            Revisar caderno
+                                          {% else %}
+                                            Revisar caderno
+                                            <p style="line-height: 15px;" class="text-muted m-0 p-0">
+                                              Revise cada questão enviada<br/> pelos professores.
+                                            </p>
+                                          {% endif %}
+                                        </a>
+                                      {% endif %}
+
+                                      {% if user_type == 'teacher' %}
+                                        {% call_method exam 'check_teacher_subjects' user.inspector as check_teacher_subjects %}
+                                        {% if check_teacher_subjects.count == 1 %}
+                                          <a href="{% url 'exams:exam_teacher_subject_edit_questions' check_teacher_subjects.pk %}" class="dropdown-item nav-link">
+                                            <i class="fas fa-plus"></i> Adicionar questões
+                                          </a>
+                                        {% elif check_teacher_subjects.count > 1 %}
+                                          <a href="{% url 'exams:exam-teacher-subject-list' %}?exam={{exam.pk}}" class="dropdown-item nav-link">
+                                            <i class="fas fa-plus"></i> Adicionar questões
+                                          </a>
+                                        {% endif %}
+                                      
+                                      {% endif %}
+
+                                      {% if user_type == 'teacher' and exam.created_by == user and user.client_teachers_can_elaborate_exam %}
+                                        <a href="{% url 'exams:exam_teacher_update' exam.pk %}{{request|cleaned_params}}" class="dropdown-item nav-link"><i class="fas fa-edit"></i> 
+                                          Editar
+                                          <p style="line-height: 15px;" class="text-muted m-0 p-0">
+                                            Revise cada questão adicionada <br>a este caderno<br/>
+                                          </p>
+                                        </a>
+                                      {% endif %}
+
+                                      {% if not user_type == 'student' and exam.count_applications_count %}
+                                        <a href="{% url 'exams:dash_exam_teacher_detail_questions' exam.pk %}" class="nav-link dropdown-item" title="Ver desempenho do caderno."><i class="fas fa-chart-line"></i> Ver Resultados
+                                          <p style="line-height: 15px;" class="text-muted m-0 p-0"></p>
+                                        </a>
+                                      {% else %}
+                                        <span @click="alertExamNoAnswers()" class="nav-link dropdown-item" title="Ver desempenho do caderno."><i class="fas fa-chart-line"></i> Ver Resultados
+                                          <p style="line-height: 15px;" class="text-muted m-0 p-0"></p>
+                                        </span>
+                                      {% endif %}
+                                        
+                                      
+                                      {% if not user_type == 'student' and exam.wrongs_count %}
+                                        <a href="{% url 'exams:wrongs_list' %}?exam={{exam.id}}" class="nav-link dropdown-item" title="Ver erratas deste caderno."><i class="fas fa-comment-slash"></i> Ver Erratas
+                                          <p style="line-height: 15px;" class="text-muted m-0 p-0"></p>
+                                        </a>
+                                      {% endif %}
+                                      
+                                      {% if user_type == 'coordination' or user_type == 'teacher' and exam.created_by == user and user.client_teachers_can_elaborate_exam %}
+                                        
+                                        <a href="javascript:void(0)"
+                                            @click="confirmCancelCopy('{% url "exams:exams_copy" exam.pk %}')"
+                                            class="dropdown-item nav-link"><i
+                                            class="far fa-copy"></i> Duplicar prova 
+                                        </a>
+                                        <a href="javascript:void(0)" class="nav-link dropdown-item"
+                                            onClick="confirmCancel('{% url "exams:exams_delete" exam.pk %}')"
+                                            data-toggle="tooltip" data-placement="top" title="Remover">
+                                            <i class="fas fa-trash"></i> Remover
+                                        </a>
+                                      {% endif %}
+
+                                      {% if questions_count > 0 %}
+                                        <a href="{% url 'exams:exams_preview' pk=exam.pk %}" target="_blank" class="nav-link dropdown-item" data-toggle="tooltip" data-placement="top" title="Visualizar"><i class="fas fa-eye"></i> Visualizar prova
+                                          <br/>
+                                          <p style="line-height: 15px;" class="text-muted m-0 p-0">Veja a prova exatamente<br /> como um aluno verá na<br />  aplicação online.</p>
+                                        </a>
+                                      {% else %}
+                                        
+                                        {% if user_type == 'teacher' %}
+                                          <a href="{% url 'core:redirect_dashboard' %}" class="nav-link dropdown-item" title="Adicionar questões a prova."><i class="fas fa-clock"></i> Aguardando Questões
+                                            <p style="line-height: 15px;" class="text-muted m-0 p-0">Clique aqui para escolher <br/> questões para este exame.</p>
+                                          </a>
+                                        {% endif %}
+                                          
+                                      {% endif %}
+                                    </div>
+                                  </div>
+                                  <div class="dropdown mr-2">
+                                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButtonReport"
+                                      data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                      <i class="fas fa-file-alt"></i>
+                                    </button>
+                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButtonReport">
+                                      {% if exam.count_applications_count %}
+                                        <a href="{% url 'exams:exams_detail_v2' pk=exam.pk %}" class="dropdown-item nav-link"><i class="fas fa-user"></i> Relatório por aluno</a>
+                                        <a href="{% url 'exams:exams_detail_v2' pk=exam.pk %}" class="dropdown-item nav-link"><i class="fas fa-eraser"></i> Correção de respostas</a>
+                                        <a href="{% url 'exams:exams_detail_enunciation_v2' pk=exam.pk %}" class="dropdown-item nav-link"><i class="fas fa-eraser"></i> Correção por enunciado <span class="badge badge-primary">NOVO</span></a>
+
+                                        <a href="{% url 'exams:exams_detail_enunciation' pk=exam.pk %}"
+                                          class="dropdown-item nav-link"><i class="fas fa-list-ol"></i> Relatório por enunciado
+                                        </a>
+                                        <a href="{% url 'exports:exam_export' pk=exam.pk %}" class="dropdown-item nav-link">
+                                          <i class="fas fa-file-export"></i> Exportar dados da prova
+                                        </a>
+                                      {% else %}
+                                        <span @click="alertExamNoAnswers()" class="dropdown-item nav-link"><i class="fas fa-user"></i> Relatório por aluno</span>
+                                        <span @click="alertExamNoAnswers()" class="dropdown-item nav-link"><i class="fas fa-eraser"></i> Correção de respostas</span>
+                                        <span @click="alertExamNoAnswers()" class="dropdown-item nav-link"><i class="fas fa-eraser"></i> Correção por enunciado <span class="badge badge-primary">NOVO</span></span>
+
+                                        <span @click="alertExamNoAnswers()"
+                                          class="dropdown-item nav-link"><i class="fas fa-list-ol"></i> Relatório por enunciado
+                                        </span>
+                                        <span @click="alertExamNoAnswers()" class="dropdown-item nav-link">
+                                          <i class="fas fa-file-export"></i> Exportar dados da prova
+                                        </span>
+                                      {% endif %}
+                                      {% if exam.has_file_answers and user_type == 'coordination' %}
+                                        <a href="#" data-exam-id="{{ exam.pk }}" data-exam-name="{{ exam }}" class="dropdown-item nav-link export-attachments">
+                                          <i class="fas fa-download"></i> Exportar respostas de anexo
+                                        </a>
+                                      {% endif %}
+                                    </div>
+                                  </div>
+                                  <div class="dropdown mr-2">
+                                    <button class="btn btn-secondary dropdown-toggle" type="button" {% if questions_count == 0 %} disabled="disabled" {% endif %} id="dropdownMenuButtonPrint"
+                                      data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                      <i class="fas fa-print"></i>
+                                    </button>
+                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButtonPrint">
+                                      <button class="dropdown-item nav-link" type="button" @click="changeIsPrinted('{{exam.urls.change_is_printed}}')">
+                                        {% if exam.is_printed %}
+                                          <i class="far fa-square"></i> Desmarcar como já impresso
+                                        {% else %}
+                                          <i class="fa fa-check-double"></i> Marcar como já impresso
+                                        {% endif %}       
+                                      </button>
+                                      {% if not exam.is_printed %}
+                                        {% comment %} 
+                                        <button class="dropdown-item nav-link" type="button" @click="showConfirmationRePrintExam()">
+                                          <i class="fas fa-file-alt"></i> Imprimir caderno novamente
+                                        </button> 
+                                        {% endcomment %}
+                                        <button class="dropdown-item nav-link" type="button" @click="selectedExam = { id: '{{exam.id}}', name: '{{exam.name}}' }, getExamPrintConfigs('{{exam.urls.print_configs}}').finally(() => openConfigurePrintModal(`{% url 'exams:exam_print' pk=exam.pk %}`))">
+                                          <i class="fas fa-file-alt"></i> Imprimir Caderno
+                                        </button>
+                                      {% endif %}
+                                      <a href="{% url 'exams:exam-print-v2' pk=exam.pk %}" class="dropdown-item nav-link">
+                                        <i class="fas fa-file-alt"></i> Diagramar caderno
+                                      </a>
+                                      <button class="dropdown-item nav-link" type="button" @click="selectedExam = { id: '{{exam.id}}', name: '{{exam.name}}' }, getExamPrintConfigs('{{exam.urls.print_configs}}').finally(() => openConfigurePrintModal(`{% url 'exams:exam_template_print' pk=exam.pk %}`, '#configureTemplatePrintModal', 'configure_template_print_form_id'))">
+                                        <i class="fas fa-grip-vertical"></i> Imprimir gabarito <br/>para divulgação
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                            </td>
+                        </tr>
+                      {% endwith  %}
+                    {% endwith %}
+                  {% empty %}
+                    <tr>
+                      <td colspan="4">Não há cadernos cadastrados</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div><!-- table-responsive -->
+        </div><!-- card -->
+        {% include 'includes/pagination.html' with objects=object_list %}
+    </div>    
+</div>
+</div>
+{% endblock content-fixed %}
+
+
+{% block off-canvas %}
+  <div id="right-off-canvas" class="off-canvas off-canvas-right wd-400 bg-white" style="max-height: 100%; overflow-y: auto; overflow-x: hidden;">
+    <form method="GET" id="filterForm">
+      <div class="off-content d-flex flex-column justify-content-between">
+        <div class="off-header">
+          <div class="row m-0">
+            <div class="col-12 p-3">
+              <h4 class="">Filtrar cadernos</h3>
+              <p class="mb-0">Adiciona abaixo os filtros que você deseja aplicar na listagem abaixo</p>
+            </div>
+          </div>
+        </div>
+        <hr class="my-0 py-0">
+        <div class="off-body" style="height: 75vh; padding-bottom: 80px; overflow-y: auto;">
+          <div class="row py-2 m-0">
+            <div class="col-12">
+              <div class="form-group mb-3">
+                <label for="exam_name_id" class="mb-1">Nome do caderno</label>
+                <input type="text" value="{{q_name}}" id="exam_name_id" name="q_name" class="form-control" placeholder="Digite o nome da prova aqui">
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="form-group mb-3">
+                <label for="exam_deadline_id" class="mb-1">Prazo para elaboração</label>
+                <input type="date" value="{{q_deadline}}" id="exam_deadline_id" name="q_deadline" class="form-control">
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="form-group mb-3">
+                <label for="status_id" class="mb-1">Situação do caderno</label>
+                <select name="q_status" id="status_id" class="form-control" multiple="multiple">
+                  <option value="0" {% if '0' in q_status %}selected="selected"{% endif %}>Elaborando</option>
+                  <option value="1" {% if '1' in q_status %}selected="selected"{% endif %}>Revisão de itens</option>
+                  <option value="4" {% if '4' in q_status %}selected="selected"{% endif %}>Revisão de texto</option>
+                  <option value="3" {% if '3' in q_status %}selected="selected"{% endif %}>Enviada para revisão</option>
+                  <option value="2" {% if '2' in q_status %}selected="selected"{% endif %}>Fechada</option>
+    
+                </select>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="form-group mb-3">
+                <label for="id_category" class="mb-1">Tipo da avaliação</label>
+                <select name="category" id="id_category" class="form-control">
+                    <option value=""></option>
+                    <option value="exam" {% if category == 'exam' %} selected="selected" {% endif %}>Caderno de prova</option>
+                    <option value="homework" {% if category == 'homework' %} selected="selected" {% endif %}>Lista de Exercício</option>
+                </select>
+              </div>
+            </div>
+    
+            <div class="col-12">
+              <div class="form-group mb-3">
+                <label for="subject_id" class="mb-1">Disciplinas do caderno</label>
+                <select name="q_subjects" id="subject_id" class="form-control" multiple="multiple">
+                  {% for subject in subjects %}
+                    <option value="{{subject.pk}}" {% if subject.pk|stringformat:'s' in q_subjects %}selected="selected" {% endif %}>
+                      {{subject.name}} > {{subject.knowledge_area__name}}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="form-group mb-3">
+                <label for="grade_id" class="mb-1">Séries</label>
+                <select name="q_grades" id="grade_id" class="form-control" multiple="multiple">
+                  {% for grade in grades %}
+                  <option value="{{grade.pk}}" {% if grade.pk|stringformat:'s' in q_grades %}selected="selected"
+                    {% endif %}>
+                    {{grade}}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="form-group mb-3">
+                <label for="teaching_stage_id" class="mb-1">Etapa de ensino</label>
+                <select name="q_teaching_stages" id="teaching_stage_id" class="form-control" multiple="multiple">
+                  {% for stage in teaching_stages %}
+                    <option value="{{stage.pk}}" {% if stage.pk|stringformat:'s' in q_teaching_stages %}selected="selected"{% endif %}>
+                      {{stage}}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="form-group mb-3">
+                <label for="education_system_id" class="mb-1">Sistema de ensino</label>
+                <select name="q_education_systems" id="education_system_id" class="form-control" multiple="multiple">
+                  {% for system in education_systems %}
+                    <option value="{{system.pk}}" {% if system.pk|stringformat:'s' in q_education_systems %}selected="selected"{% endif %}>
+                      {{system}}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            {% if user.client_teachers_can_elaborate_exam %}
+              <div class="col-12">
+                <div class="custom-control custom-switch ">
+                  <input {% if q_created_by %}checked="checked"{% endif %} type="checkbox" id="created_by_id" name="q_created_by" class="custom-control-input">
+                  <label class="custom-control-label" for="created_by_id">Elaborado por mim</label>
+                  <small class="form-text text-muted mt-0">Selecione caso queira ver apenas cadernos elaborados por você.</small>
+                </div>
+              </div>
+            {% endif %}
+            <div class="col-12">
+              <div class="custom-control custom-switch">
+                <input {% if q_has_questions %}checked="checked"{% endif %} type="checkbox" id="has_questions_id" name="q_has_questions" class="custom-control-input">
+                <label class="custom-control-label" for="has_questions_id">Caderno com questões</label>
+                <small class="form-text text-muted mt-0">Selecione caso queira ver apenas provas com questões já cadastradas.</small>
+              </div>
+            </div>
+            <div class="col-12 mt-2">
+              <div class="custom-control custom-switch ">
+                <input type="checkbox" id="is_unprecedented" name="q_is_unprecedented" class="custom-control-input"
+                  {% if q_is_unprecedented %}checked="checked"{% endif %}>
+                <label class="custom-control-label" for="is_unprecedented">Caderno inéditos</label>
+                <small class="form-text text-muted mt-0">Selecione caso queira ver apenas provas que ainda não foram utilizadas em nenhuma aplicação.</small>
+              </div>
+            </div>
+    
+            <div class="col-12 mt-2">
+              <div class="custom-control custom-switch ">
+                <input type="checkbox" id="has_wrongs_await" name="q_has_wrongs_await" class="custom-control-input"
+                  {% if q_has_wrongs_await %}checked="checked"{% endif %}>
+                <label class="custom-control-label" for="has_wrongs_await">Erratas aguardando revisão</label>
+                <small class="form-text text-muted mt-0">Selecione caso queira ver apenas provas que existem erratas aguardando revisão.</small>
+              </div>
+            </div>
+    
+            <div class="col-12 mt-2">
+              <div class="custom-control custom-switch ">
+                <input type="checkbox" id="id_unanswered" name="q_unanswered" class="custom-control-input"
+                  {% if q_unanswered %}checked="checked"{% endif %}>
+                <label class="custom-control-label" for="id_unanswered">Cadernos aguardando correção</label>
+                <small class="form-text text-muted mt-0">Selecione caso queira ver apenas cadernos que existem alunos aguardando resposta.</small>
+              </div>
+            </div>
+
+            <div class="col-12 mt-2">
+              <div class="custom-control custom-switch ">
+                <input type="checkbox" id="is_printed_id" name="q_is_printed" class="custom-control-input"
+                  {% if q_is_printed %}checked="checked"{% endif %}>
+                <label class="custom-control-label" for="is_printed_id">Cadernos que já foram impressos</label>
+                <small class="form-text text-muted mt-0">Selecione caso queira ver apenas Cadernos que já foram impressos.</small>
+              </div>
+            </div>
+
+            <div class="col-12 mt-2">
+              <div class="custom-control custom-switch ">
+                <input type="checkbox" id="is_late_id" name="q_is_late" class="custom-control-input" {% if q_is_late %}checked="checked"{% endif %}>
+                <label class="custom-control-label" for="is_late_id">Apenas cadernos atrasados</label>
+                <small class="form-text text-muted mt-0">Selecione caso queira ver apenas cadernos estão atrasados.</small>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <div class="off-footer" style="position: fixed; bottom: 0; width: 100%; padding: 0 20px;">
+          <div class="row">
+            <div class="col-12">
+              <button class="btn btn-primary btn-block" v-if="!filters.createNewFilter">
+                <i class="fas fa-search"></i>
+                Aplicar filtro
+              </button>
+              <template v-if="filters.selected">
+                <button type="button" @click="saveFilter(filters.selected)" class="btn btn-secondary btn-block"><i class="fas fa-save"></i> Atualizar filtro padrão</button>
+              </template>
+              <template v-else>
+                <button type="button" @click="saveFilter()" class="btn btn-secondary btn-block"><i class="fas fa-save"></i> Criar filtro padrão</button>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+      <input type="hidden" value="{{year|force_escape}}" name="year">
+    </form>
+  </div>
+{% endblock %}
+
+
+{% block extra-modal %}
+
+{% include 'includes/confirm_modal.html' %}
+
+{% include 'dashboard/exams/includes/exam/confirm_duplicate_exam.html' %}
+
+<div aria-hidden="true" class="modal  fade" id="configurePrintModal" role="dialog" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Configure a impressão de prova</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" style="overflow-y: scroll;">
+        <form id="configure_print_form_id">
+          {% include 'dashboard/exams/includes/exam/print/modal_print.html' %}
+          <div class="custom-control custom-switch mt-4">
+            <input type="checkbox" id="no_disclosed_id" name="print_correct_answers" v-model="examPrintConfig.printWithCorrectAnswers" class="custom-control-input" value="1">
+            <label class="custom-control-label" for="no_disclosed_id">
+            <h6 class="mb-0">Imprimir prova gabaritada<span class="badge badge-danger ml-1">Atenção</span></h6>
+            </label>
+            <small class="form-text text-muted mt-0">
+              Selecione essa opção se deseja imprimir a <br/>prova com o gabarito inserido.
+            </small>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <div class="form-buttons-w text-right" v-if="selectedExam">
+          <button type="button" class="btn btn-primary" :disabled="loading" @click="printExam(getUrl(urls.printExamWithPrintService, selectedExam.id))">
+            <i class="fas fa-spinner fa-spin" v-if="loading"></i>
+            <i class="fas fa-file-pdf" v-else></i>
+            <span>Imprimir caderno</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div aria-hidden="true" class="modal fade" id="defaultFilters" role="dialog" tabindex="-1">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-truncate" id="modal-exam-export-title">Lista com seus filtros</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <table class="table" id="datatableFilters">
+          <thead>
+            <tr>
+              <th class="bg-white">Detalhes do filtro padrão</th>
+              <th>Opções</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="filter in filters.list">
+              <td style="max-width: 560px;">
+                <strong class="mr-1">${filter.name}</strong>
+                <div class="table-responsive">
+                  <div class="d-flex">
+                    <span class="badge badge-primary rounded-pill m-1 d-flex align-items-center" v-for="filter in filters.parseParamsInLabels(filter.params)" v-html="filter" v-if="filter.length"></span>
+                  </div>
+                </div>
+              </td>
+              <td class="align-middle text-right" style="background-color: #f3f4f7;">
+                <span class="badge badge-success tx-12 cp tooltips align-self-middle" v-if="filters.selected != filter" data-tippy-content="Aplicar o filtro padrão" @click="window.location.href = `${filter.fullUrl}&selected_filter=${filter.id}`"><i class="fas fa-check"></i> Aplicar filtro</span>
+                <span class="badge badge-danger tx-12 cp tooltips ml-1 align-self-middle" data-tippy-content="Clique para deletar o filtro padrão." @click="removeDefaultFilter(filter)"><i class="fas fa-times"></i> Deletar filtro</span>
+              </td>
+            </tr>
+            <tr v-if="!filters.list.length">
+              <td colspan="2">Nenhum filtro padrão encontrado</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer justify-content-center"></div>
+    </div>
+  </div>
+</div>
+
+<div aria-hidden="true" class="modal  fade" id="exportAttachmentsModal" role="dialog" tabindex="-1">
+  <div class="modal-dialog modal-md" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-truncate" id="modal-exam-export-title"></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" style="max-height: fit-content; height: fit-content;">
+        <div id="exporting-info">
+          <h6>Exportação em andamento... <i class="fas fa-spinner fa-spin text-primary mt-2"></i></h6>
+          <p>Mantenha esta janela aberta enquanto geramos o link para download.</p>
+        </div>
+        <div id="exported-info" class="d-none">
+          <p>Você pode baixar o arquivo ZIP com as respostas de anexo clicando no botão abaixo:</p>
+          <a href="#" target="_blank" id="download-attachments-url" class="btn btn-primary btn-block">
+            <i class="fas fa-download"></i>
+              Baixar respostas
+          </a>
+        </div>
+        <div id="exported-error" class="d-none">
+          <p class="text-danger">Um erro aconteceu no processo de exportação. Tente novamente mais tarde.</p>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-center"></div>
+    </div>
+  </div>
+</div>
+
+<div aria-hidden="true" class="modal fade" id="configureTemplatePrintModal" role="dialog" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+          <h5 class="modal-title">Configure a impressão do gabarito</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+          </button>
+      </div>
+      <form id="configure_template_print_form_id" action="" method="get" target="_blank">
+          <div class="modal-body" style="max-height: fit-content; height: fit-content;">            
+            <h6>Tipo de colunas:</h6>
+            <div class="btn-group btn-group-toggle mb-3" data-toggle="buttons">
+                <label class="btn btn-outline-primary btn-lg active">
+                <input type="radio" name="separate_subjects" id="separate_subjects_default" value="0" autocomplete="off" checked>
+                    <i class="fas fa-file fa-lg"></i>
+                    Sequencial 
+                </label>
+                <label class="btn btn-outline-primary btn-lg">
+                <input type="radio" name="separate_subjects" id="separate_subjects_" value="1" autocomplete="off">
+                    <i class="fas fa-copy fa-lg"></i>
+                    Agrupado por disciplina
+                </label>
+            </div>
+            <div class="modal-footer">
+                <div class="form-buttons-w text-right">
+                <button class="btn btn-primary not-disable" type="submit">
+                    <i class="os-icon os-icon-check"></i>
+                    <span>Imprimir Gabarito</span>
+                </button>
+                </div>
+            </div>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div aria-hidden="true" class="modal fade" id="searchProof" role="dialog" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+          <h5 class="modal-title">Pesquisar comprovante de resposta</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+          </button>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-12">
+            <p class="mb-2">Digite o código do comprovante</p>
+            <input type="search" class="form-control" @keyup="searchProof" ref="searchProofInput">
+          </div>
+          <div class="col-12 my-4" v-if="proofs.length">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Aluno</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="proof in proofs">
+                  <td class="tx-bold text-uppercase">#${proof.code}</td>
+                  <td>${proof.student_name}</td>
+                  <td>
+                    <a :href="getUrl(urls.proofDetail, proof.id)" target="_blank" class="btn btn-primary btn-sm"><i class="fas fa-receipt"></i> Ver Comprovante</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock extra-modal %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.20/lodash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="{% static 'js/tippy/popper.min.js' %}"></script>
+<script src="{% static 'js/tippy/tippy.min.js' %}"></script>
+<script src="{% static 'administration/lib/datatables.net-responsive-dt/js/responsive.dataTables.min.js' %}"></script>
+<script src="{% static 'administration/lib/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+
+<script>
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    components: {
+      {% include 'includes/components/vue-filters.html' %}
+    },
+    el: '#app',
+    data: {
+      loading: false,
+      selectedExam: null,
+      filters: {
+        selected: null,
+        list: [],
+        createNewFilter: false,
+        parseParamsInLabels(params) {
+          let query = {}, labels = [];
+          let pairs = (params[0] === '?' ? params.substr(1) : params).split('&');
+          for (var i = 0; i < pairs.length; i++) {
+            var pair = pairs[i].split('=');
+            query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+          }
+          for(key in query) {
+            if(query[key]) {
+              const count = params.match(new RegExp(`\\b(${key})\\b`, 'g')).length;
+              let input = $(`[name="${key}"]`), inputId = input.attr('id'), label = `${$(`[for="${inputId}"]`).text()}`
+              if(input.prop('type') == 'select-multiple') {
+                label += `: <span class="badge badge-dark rounded-circle">${count}</span>`
+              } else {
+                if(input.prop('type') == 'select-one') {
+                  label += `: ${input.find(`option[value=${query[key]}]`).text()}`
+                }
+                if(input.prop('type') == 'text') {
+                  label += `: ${query[key]}`
+                }
+              }
+              labels.push(label)
+            }
+          }
+          return labels
+        },
+        labels() {
+          let labels = []
+          
+          $('#filterForm').find('select, input').each((index, input) => {
+            let values = [], showValues = true, showCount = false
+            if(input.id) {
+              if(input.type.includes('select')  ) {
+                if(input.type == 'select-multiple') {
+                  showCount = true
+                }
+                values = $(`#${input.id} option:selected`).toArray().map(item => item.text)
+              }
+              else if(input.type == 'checkbox' || input.type == 'radio') {
+                value = $(`#${input.id}:checked`).val()
+                if(value == 'on' || value === true) {
+                  showValues = false
+                  values.push(true)
+                }
+              } else {
+                values.push($(`#${input.id}`).val())
+              }
+              if(values.filter(value => value).length) {
+                labels.push({
+                  label: $(`[for=${input.id}]`).text(),
+                  showValues: showValues,
+                  showCount: showCount,
+                  values: values,
+                })
+              }
+            }
+          })
+          return labels
+        },
+      },
+      selectionList: [],
+      proofs: [],
+      urls: {
+        proofDetail: "{% url 'answers:proof_of_answers_coordination'  pk='00000000-0000-0000-0000-000000000000' %}",
+        printExamWithPrintService: "{% url 'exams:print-exam-with-print-service' pk='00000000-0000-0000-0000-000000000000' %}",
+      },
+      examPrintConfigObject: {
+        header: '',
+        backgroundImage: '',
+        customPages: [],
+        headerFormat: 1,
+        columnType: 0,
+        kind: 0,
+        textQuestionFormat: 1,
+        lineHeight: 0,
+        fontSize: 0,
+        fontFamily: 0,
+        printSubjectsName: false,
+        printWithCorrectAnswers: false,
+        hideAlternativesIndicator: false,
+        hideQuestionsReferencies: false,
+        hideKnowledgeAreasName: false,
+        printBlackAndWhiteImages: false,
+        hyphenate: false,
+        discursiveLineHeight: 1,
+      },
+      examPrintConfig: {},
+      printDefaults: [],
+      duplicateMode: "no-copy-questions",
+    },
+    methods: {
+      async printExam(printUrl) {
+        params = $("#configure_print_form_id").serialize()
+        let url = `${printUrl}?${params}`
+        await this.downloadFile(url)
+        this.loading = false
+      },
+      async downloadFile(url) {
+        this.loading = true
+        return await axios({
+          url: url,
+          method: 'GET',
+          responseType: 'blob'
+        }).then(response => {
+          const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = this.selectedExam.name +'.pdf';
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+        }).catch(error => {
+          console.error('Erro ao baixar o arquivo:', error)
+          this.alertTop('Erro ao baixar o arquivo', icon='error')
+        });
+      },
+      alertExamNoAnswers(){
+        Swal.fire({
+          title: 'Erro',
+          text: "Este caderno ainda não possui respostas associadas pois não foi usado em nenhuma aplicação",
+          icon: 'warning',
+          confirmButtonText: 'Voltar'
+        })
+      },
+      refreshFilters(){
+        window.location.href = {% url 'exams:exams_list' %}
+      },
+      getExamPrintConfigs(url) {
+        return axios.get(url).then((response) => this.examPrintConfig = response.data)
+      },
+      openConfigurePrintModal(url, selector = "#configurePrintModal", formID = "configure_print_form_id") {
+        if(formID) {
+          document.getElementById(formID).action = url
+        }
+        $(selector).modal("show")
+      },
+      confirmCancelCopy(url) {
+        document.getElementById('confirmCancelCopyFormId').action = url
+        $("#confirmCancelCopyModal").modal("show")
+      },
+      activeCancelSelection(param) {
+        if (param == true) {
+          $("#btn-remove").show();
+          $('.check-selection').show();
+          $("#btn-cancel-selection").show();
+          $("#btn-change-status").show();
+          $('.selectbox').show();
+          $("#btn-selection-all").hide();
+        } else {
+          $('.check-selection').hide();
+          $("#btn-remove").hide();
+          $("#btn-cancel-selection").hide();
+          $("#btn-change-status").hide();
+          $("#btn-selection-all").show();
+          $('.selectbox').hide().prop('checked', false)
+          this.selectionList = []
+        }
+      },
+      removeAllSelected(){
+        if (this.selectionList.length > 0){
+          Swal.fire({
+            title: 'Tem certeza?',
+            text: "Você não será capaz de reverter isso!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sim, exclua!'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              this.selectionList.forEach((item, index) => {
+                urls = "{% url 'exams:exams_api_delete_all' pk='00000000-0000-0000-0000-000000000000' %}"
+                axios.delete(urls.replace("00000000-0000-0000-0000-000000000000", item ))
+                .then(response => {
+                  $(`#tr-${item}`).remove()
+                  $(".selectbox").prop("checked", false)
+                  this.selectionList = [];
+                })
+              }) 
+            }
+          })   
+        } else {
+          Swal.fire(
+          'Atenção!',
+          'Não há cadernos selecionados.',
+          'warning'
+          )
+        }
+      },
+      changeAllStatus(){
+        if (this.selectionList.length > 0) {
+          Swal.fire({
+            title: 'Selecione uma situação',
+            input: 'select',
+            inputOptions: {
+              0: 'Elaborando',
+              1: 'Revisão de itens',
+              2: 'Fechada',
+              3: 'Enviada para revisão',
+            },
+            confirmButtonText: 'Alterar situação',
+            cancelButtonText: 'Cancelar',
+            showCancelButton: true,
+          }).then((result) => {
+            if(result.isConfirmed && result.value) {
+              Swal.fire({
+                icon: 'info',
+                title: 'Aguarde um instante',
+                text: 'Quando as alterações foram concluídas vamos atualizar sua página!',
+                timer: 10000,
+                timerProgressBar: true,
+              })
+              axios.patch("{% url 'exams:api-exam-change-status' %}", {
+                ids: this.selectionList,
+                status: result.value,
+              }).then((response) => {
+                this.activeCancelSelection()
+                window.location.reload()
+              })
+            }
+          })  
+        }
+      }, 
+      searchProof: _.debounce(function() {
+        self = this
+        let text = self.$refs.searchProofInput
+        if(text.value.length > 0) {
+          axios.get(`{% url 'answers:api-proof-answers-list' %}?code=${text.value}`).then((response) => self.proofs = response.data)
+        }
+      }, 800), 
+      getUrl(url, id) {
+        return url.replace("00000000-0000-0000-0000-000000000000", id)
+      },
+      selectPrintDefault() {
+        const id = $(this.$refs['inputPrintDefault']).children(":selected").attr("id")
+        const printDefault = this.printDefaults.find(_default => _default.id == id)
+        
+        if(printDefault) {
+          this.getConfig(printDefault).then((response) => {
+            this.examPrintConfig = response.data
+            this.selectedPrintDefault = response.data
+          })
+        } else { 
+          this.selectedPrintDefault = null
+          this.examPrintConfig = Object.assign({}, this.examPrintConfigObject)
+        }
+        this.printConfigControl = true
+
+      },
+      getConfig(printDefault) {
+        return axios.get(printDefault.urls.getConfig)
+      },
+      getParamsSerialized() {
+        return '?' + $(document.forms[0]).serialize()
+      },
+      saveFilter(filter) {
+        Swal.fire({
+          title: this.filters.createNewFilter ? 'Nome para o filtro':'Nome do filtro',
+          text: 'Digite um nome para facilitar a localização do filtro personalizado',
+          input: 'text',
+          inputValue: this.filters.selected ? this.filters.selected.name:'',
+          focusConfirm: false,
+          confirmButtonText: this.filters.createNewFilter ? "Criar filtro":"Atualizar filtro",
+        }).then((result) => {
+          if(result.isConfirmed && result.value) {
+            if(filter) {
+              window.history.pushState({}, '', `${this.getParamsSerialized()}&selected_filter=${filter.id}`)
+              axios.patch(filter.urls.apiDetail, { name: result.value, params: this.getParamsSerialized()}).then((response) => {
+                this.alertTop('O filtro foi atualizado, e será aplicado')
+                window.location.reload()
+              }).catch((e) => {
+                this.alertTop('Ocorreu um erro ao tentar atualizar o filtro, tente novamente, caso o erro persista entre em contato com o suporte', 'error')
+              })
+              return
+            }
+            const newFilter = {
+              user: '{{user.id}}',
+              name: result.value,
+              url: '{{request.resolver_match.app_name}}:{{request.resolver_match.url_name}}',
+              params: this.getParamsSerialized(),
+            }
+            axios.post("{% url 'api:clients:custom-filters-list' %}", newFilter).then((response) => {
+              window.history.pushState({}, '', `${this.getParamsSerialized()}&selected_filter=${response.data.id}`)
+              this.alertTop('O filtro personalizado foi criado com sucesso.')
+              window.location.reload()
+            }).catch((e) => {
+              this.alertTop('Ocorreu um erro ao tentar atualizar o filtro, tente novamente, caso o erro persista entre em contato com o suporte', 'error')
+            })
+          }
+        })
+      },
+      alertTop(text, icon='success') {
+        Swal.fire({
+          position: 'top-end',
+          text: text,
+          icon: icon,
+          showConfirmButton: false,
+          timer: 1500,
+          toast: true,
+          timerProgressBar: true,
+        })
+      },
+      getStatusClass(status) {
+        switch(status) {
+          case 'Revisão de itens':
+            return 'bg-warning'
+          case 'Aberta':
+            return 'bg-warning'
+          case 'Fechada':
+            return 'bg-success'
+          case 'Diagramação':
+            return 'bg-primary'
+        }
+        return 'bg-info'
+      },
+      removeDefaultFilter(filter) {
+        Swal.fire({
+          title: "Confirmação",
+          icon: "info",
+          text: "Você tem certeza que deseja remover este filtro? a operação não poderá ser disfeita.",
+          showCancelButton: true,
+          confirmButtonText: 'Sim, confirmo!',
+          cancelButtonText: 'Cancelar',
+        }).then((result) => {
+          if(result.isConfirmed) {
+            axios.delete(filter.urls.apiDetail).then((response) => {
+              this.filters.list.splice(this.filters.list.indexOf(filter), 1)
+              if(this.filters.selected == filter) {
+                this.filters.selected = null
+              }
+              this.alertTop('Filtro padrão removido com sucesso.')
+            }).catch((e) => {
+              this.alertTop('Ocorreu um erro ao tentar remover o filtro, tente novamente, caso o erro persista entre em contato com o suporte.')
+            })
+          }
+        })
+      },
+      changeIsPrinted(url) {
+        axios.patch(url).then((response) => {
+          this.alertTop('O caderno foi marcado como impresso.')
+          window.location.reload()
+        }).catch((e) => {
+          this.alertTop('Ocorreu um erro ao tentar alterar o caderno, tente novamente, caso o erro persista entre em contato com o suporte.')
+        })
+      },
+      showConfirmationRePrintExam() {
+        Swal.fire({
+          title: "Confirmação",
+          icon: "info",
+          text: `O caderno foi marcado como "Já impresso" você deseja imprimir novamente?`,
+          showCancelButton: true,
+          confirmButtonText: 'Sim!',
+          cancelButtonText: 'Cancelar',
+        }).then((result) => {
+          if(result.isConfirmed) {
+            $('#configurePrintModal').modal('show')
+          }
+        })
+      },
+    },
+    updated() {
+      tippy('.tooltips', {
+        placement: 'bottom',
+        allowHTML: true,
+        maxWidth: 'none',
+      })
+    },
+    mounted() {
+      self = this
+      
+      axios.get("{% url 'api:clients:print-configs-list' %}").then((response) => {
+        this.printDefaults = response.data
+        this.examPrintConfig = Object.assign({}, this.examPrintConfigObject)
+      })
+
+      this.activeCancelSelection()
+
+      $("[data-selectall=true]").change((e) => {
+        if ($(e.target).prop("checked")) {
+          $(".selectbox").prop("checked", true)
+          setTimeout(() => {
+            $('.selectbox:checked').each((index, element) => { 
+              let id = $(element).attr('id')
+              if(id) {
+                this.selectionList.push(id)
+              }
+            })
+          }, 200)
+        } else {
+          $('.selectbox').prop('checked', false)
+          this.selectionList = []
+        }
+      });
+
+      $('#status_id').select2({
+        placeholder: "Selecione uma opção",
+        closeOnSelect: false,
+      });
+    
+      $('#subject_id').select2({
+        placeholder: "Selecione uma opção",
+        closeOnSelect: false,
+        templateResult: function (data, container) {
+          let subject_name = data.text.split('>')[0]
+          let knowledge_area_name = data.text.split('>')[1]
+          return $(
+            `<strong class="select2-results__custom_option">${subject_name}</strong> <br> <span class="select2-results__custom_option">${knowledge_area_name}</span>`
+          );
+        },
+      }).on('select2:selecting', function(e) {
+        let cur = e.params.args.data.id;
+        let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+        $(e.target).val(old).trigger('change');
+        $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+        return false;
+      });
+    
+      $('#grade_id').select2({
+        placeholder: "Selecione uma opção",
+        closeOnSelect: false,
+      }).on('select2:selecting', function(e) {
+        let cur = e.params.args.data.id;
+        let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+        $(e.target).val(old).trigger('change');
+        $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+        return false;
+      });
+      
+      $('#teaching_stage_id').select2({
+        placeholder: "Selecione uma opção",
+        closeOnSelect: false,
+      }).on('select2:selecting', function(e) {
+        let cur = e.params.args.data.id;
+        let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+        $(e.target).val(old).trigger('change');
+        $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+        return false;
+      });
+
+      $('#education_system_id').select2({
+        placeholder: "Selecione uma opção",
+        closeOnSelect: false,
+      }).on('select2:selecting', function(e) {
+        let cur = e.params.args.data.id;
+        let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+        $(e.target).val(old).trigger('change');
+        $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+        return false;
+      });
+    
+      $('.table-responsive').on('show.bs.dropdown', function () {
+        $('.table-responsive').css( "overflow", "inherit" );
+      });
+      
+      $('.table-responsive').on('hide.bs.dropdown', function () {
+        $('.table-responsive').css( "overflow", "auto" );
+      })
+
+      $('.off-canvas-menu').on('click', function (e) {
+        e.preventDefault();
+        var target = $(this).attr('data-toggle-off-canvas');
+        $(target).addClass('show');
+      });
+  
+      $('.off-canvas .close').on('click', function (e) {
+        e.preventDefault();
+        $(this).closest('.off-canvas').removeClass('show');
+      })
+    
+      $(document).on('click touchstart', function (e) {
+        if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+          return
+        }
+        e.stopPropagation();
+        if (!$(e.target).closest('.off-canvas-menu').length) {
+          var offCanvas = $(e.target).closest('.off-canvas').length;
+          if (!offCanvas) {
+            $('.off-canvas.show').removeClass('show');
+          }
+        }
+      });
+      
+      $('.export-attachments').on('click', function(e) {
+        let examId = $(this).data('exam-id')
+        let examName = $(this).data('exam-name')
+  
+        {% with task_id='1234567890'|random %}
+        let exportAttachmentsUrl = "{% url 'exams:exam_export_attachments' pk='00000000-0000-0000-0000-000000000000' task_id=task_id %}"
+        let exportAttachmentsStatusUrl = "{% url 'exams:exam_export_attachments_status' pk='00000000-0000-0000-0000-000000000000' task_id=task_id %}"
+        {% endwith %}
+  
+        $('#exportAttachmentsModal').modal('show');
+        $('#modal-exam-export-title').html(examName)
+  
+        $('#exporting-info').removeClass('d-none')
+        $('#exported-info').addClass('d-none')
+        $('#exported-error').addClass('d-none')
+  
+        axios.get(exportAttachmentsUrl.replace('00000000-0000-0000-0000-000000000000', examId))
+        .then(function (response) {})
+  
+        let interval = setInterval(function(){
+          axios.get(exportAttachmentsStatusUrl.replace('00000000-0000-0000-0000-000000000000', examId))
+          .then(function (response) {
+            if (response.data.details) {
+              $('#download-attachments-url').attr('href', response.data.details)
+              $('#exported-info').removeClass('d-none')
+              $('#exporting-info').addClass('d-none')
+              clearInterval(interval)
+            }
+          })
+          .catch(function(response) {
+            $('#exported-error').removeClass('d-none')
+            $('#exporting-info').addClass('d-none')
+            clearInterval(interval)
+          })
+        }, 1000)
+      });
+
+      axios.get("{% url 'api:clients:custom-filters-list' %}?url={{request.resolver_match.app_name}}:{{request.resolver_match.url_name}}").then((response) => {
+        this.filters.list = response.data
+      }).finally(() => {
+        {% if selected_filter %}
+          this.filters.selected = this.filters.list.find(filter => filter.id == '{{selected_filter}}')
+        {% endif %}
+        if(this.filters.list.length) {
+          $('#datatableFilters').DataTable({
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.10.22/i18n/Portuguese-Brasil.json"
+            },
+          });
+        }
+      })
+      
+      tippy('.tooltips', {
+        placement: 'bottom',
+        allowHTML: true,
+        maxWidth: 'none',
+      })
+    }
+  })
+
+</script>
+{% endblock %}

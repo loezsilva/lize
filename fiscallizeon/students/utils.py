@@ -1,0 +1,1 @@
+MAX_STUDENTS_MESSAGE = 'O cliente atingiu o limite máximo de alunos, para maiores informações entre em contato com o suporte.'

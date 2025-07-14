@@ -1,0 +1,386 @@
+{% load static %}
+{% load compress %}
+
+<!DOCTYPE html>
+<html lang="pt-br" class="tw-scroll-smooth tw-antialiased [font-feature-settings:'ss01']">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Twitter -->
+    <meta name="twitter:site" content="@lizeoficial">
+    <meta name="twitter:creator" content="@lizeoficial">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Lize">
+    <meta name="twitter:description" content="Monitoramento e aplicações de provas online">
+    <meta name="twitter:image" content="https://lizeedu.com.br/img/social.png">
+
+    <!-- Facebook -->
+    <meta property="og:url" content="https://lizeedu.com.br">
+    <meta property="og:title" content="Lize">
+    <meta property="og:description" content="Monitoramento e aplicações de provas online">
+
+    <meta property="og:image" content="https://lizeedu.com.br/img/social.png">
+    <meta property="og:image:secure_url" content="https://lizeedu.com.br/img/social.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="600">
+
+    <!-- Meta -->
+    <meta name="description" content="Monitoramento e aplicações de provas online">
+    <meta name="author" content="Lize">
+
+    <!-- Favicon -->
+    <link href="{% static 'favicon/favicon.ico' %}" rel="shortcut icon" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon/apple-touch-icon.png' %}" />
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}" />
+    <link rel="mask-icon" href="{% static 'favicon/safari-pinned-tab.svg' %}" color="#5bbad5" />
+    <meta name="msapplication-TileColor" content="#da532c" />
+    <meta name="theme-color" content="#ffffff" />
+
+    <title>{% block title %}Lize - Aplicações de prova online{% endblock title %}</title>
+
+    <!-- vendor css -->
+    <link href="{% static 'administration/lib/@fortawesome/fontawesome-free/css/all.min.css' %}" rel="stylesheet">
+    <link href="{% static 'administration/lib/ionicons/css/ionicons.min.css' %}" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'tw/tw-reset.css' %}" />
+
+    <!-- main CSS -->
+    {% if IS_MENTORIZZE %}
+      <link rel="stylesheet" href="{% static 'administration/assets/css/app_mentorizze.css' %}">
+    {% else %}
+      <link rel="stylesheet" href="{% static 'administration/assets/css/app.css' %}">
+    {% endif %}
+    <link rel="stylesheet" href="{% static 'administration/assets/css/app-extra.css' %}">
+    <link rel="stylesheet" href="{% static 'dashboard/assets/css/lize.css' %}">
+
+    <link rel="stylesheet" href="{% static 'tw/tw-fix.css' %}" />
+
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.3.2/build/styles/default.min.css" rel="stylesheet">
+    
+    {% block css-additional %}{% endblock css-additional %}
+
+    {% comment %}
+    {% compress css %}
+      <link rel="stylesheet" href="{% static 'administration/assets/css/skin.light.css' %}">
+      <link rel="stylesheet" href="{% static 'administration/assets/css/skin.gradient1.css' %}">
+      <link rel="stylesheet" href="{% static 'administration/assets/css/app.fix.css' %}">
+    {% endcompress %}
+    {% endcomment %}
+
+    {% if not DEBUG %}
+      <!-- Google Tag Manager -->
+      <script>
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-KWRQHDS');
+      </script>
+      <!-- End Google Tag Manager -->
+
+      <!-- Clarity Microsoft -->
+      <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "cl4r2phsyu");
+      </script>
+      <!-- End Clarity Microsoft -->
+    {% endif %}
+
+    {% block js-header-additional %}{% endblock js-header-additional %}
+
+    {% if not DEBUG %}
+      <script src="{% static 'js/vue.min.js' %}"></script>
+    {% else %}
+      <script src="{% static 'js/vue.js' %}"></script>
+    {% endif %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/6.4.0/adapter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+    
+    {% compress js %}
+      <script src="{% static 'administration/lib/feather-icons/feather.min.js' %}"></script>
+      <script src="{% static 'administration/assets/js/janus/janus.js' %}"></script>
+      <script src="{% static 'administration/lib/jquery/jquery.min.js' %}"></script>
+    {% endcompress %}
+
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.3.2/build/highlight.min.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.8.4/Sortable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Vue.Draggable/2.20.0/vuedraggable.umd.min.js"></script>
+    <script src="{% static 'js/jquery.start-ratings.js' %}"></script>
+
+    {% if not disable_sleek and not DEBUG %}
+      {% if not debug and user and user_type == "teacher" or user_type == "coordination" and user.get_clients %}
+        <script type="text/javascript">
+          window.SLEEK_USER = { token: '{{user.generate_sleekplan_token}}' }
+        </script>
+
+        <script type="text/javascript">
+          window.$sleek = [];
+          window.SLEEK_PRODUCT_ID = 890227471;
+          (function () {
+            d = document;
+            s = d.createElement("script");
+            s.src = "https://client.sleekplan.com/sdk/e.js";
+            s.async = 1;
+            d.getElementsByTagName("head")[0].appendChild(s);
+          })();
+        </script>
+      {% endif  %}
+    {% endif %}
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@0,600;0,800;1,300&display=swap" rel="stylesheet">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+      .js-focus-visible :focus:not(.focus-visible) {
+        outline: none;
+      }
+
+      .font-display {
+        font-family: Lexend,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;
+      }
+
+      .abj > :not([hidden]) ~ :not([hidden]) {
+        margin-top: calc(0.25rem * calc(1 - 0));
+        margin-bottom: calc(0.25rem * 0);
+      }
+
+      .abe > :not([hidden]) ~ :not([hidden]) {
+        margin-right: calc(1rem * 0);
+        margin-left: calc(1rem * calc(1 - 0));
+      }
+
+      .navbar-item {
+        display: flex;
+        color: rgb(55, 65, 81);
+        font-family: Lexend,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;
+        text-decoration: inherit;
+        -moz-column-gap: 0.75rem;
+        column-gap: 0.75rem;
+        border-radius: 0.375rem;
+        padding: 0.5rem;
+        font-size: 0.875rem;
+        line-height: 1.5rem;
+        font-weight: 500;
+      }
+      .navbar-item-active {
+        background-color: rgb(249, 250, 251);
+        color: rgb(255, 143, 62);
+      }
+
+      .navbar-item:hover {
+        color: rgb(255, 143, 62);
+      }
+
+      .navbar-item:hover {
+        background-color: rgb(249, 250, 251);
+      }
+
+      .navbar-icon {
+        display: block;
+        vertical-align: middle;
+        height: 1.5rem;
+        width: 1.5rem;
+        flex-shrink: 0;
+        color: rgb(156, 163, 175);
+      }
+
+      .navbar-icon-active {
+        color: rgb(255, 143, 62);
+      }
+
+      .navbar-item:hover .navbar-icon {
+        color: rgb(255, 143, 62);
+      }
+
+      .dash-min-w {
+        min-width: unset;
+      }
+
+      @media (min-width: 1024px) {
+        .dash-min-w {
+          min-width: 524px;
+        }
+      }
+
+      /* Hide the .hidden-element initially */
+      .lz-hidden-element, .lz-hidden-element-flex {
+        display: none;
+      }
+
+      /* Show .hidden-element when hovering over .parent */
+      .lz-parent:hover .lz-hidden-element {
+        display: block;
+      }
+
+      .lz-parent:hover .lz-hidden-element-flex {
+        display: flex;
+      }
+
+      /* Hide the .invisible-element initially */
+      .lz-element-invisible {
+        visibility: hidden;
+      }
+
+      /* Show .hidden-element when hovering over .parent */
+      .lz-parent-visible:hover .lz-element-invisible {
+        visibility: visible;
+      }
+    </style>
+
+    <link rel="stylesheet" href="{% static 'tw/tw.css' %}" />
+
+    <style>
+      .btn svg {
+        display: inline-block;
+      }
+      .tw-show {
+        visibility: visible;
+      }
+      .tooltip {
+        font-family: Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;
+        font-weight: 500;
+      }
+    </style>
+  </head>
+  <body>
+    {% if not DEBUG %}
+      <!-- Google Tag Manager (noscript) -->
+      <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWRQHDS" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+      <!-- End Google Tag Manager (noscript) -->
+    {% endif %}
+
+    <div class="content pd-0" style="background: #fff !important;">
+      {% block header %}
+        {% include 'redesign/includes/header_exam_elaboration.html' with disabled=True %}
+      {% endblock header %}
+
+      <div id="app" class="content-body p-0" style="margin-top: 60px;">
+        <!-- <div class="container pd-x-0 mx-0" style="max-width: 100%;"> -->
+        {% block off-canvas %}{% endblock off-canvas %}
+        {% block content %}
+          {% block breadcrumb-fixed %}{% endblock breadcrumb-fixed %}
+
+          {% block main %}<main>{% endblock main %}
+            {% block top-menu %}{% endblock top-menu %}
+            {% if messages %}
+              <div class="ard cer dcv">
+                {% include 'includes/messages.html' with messages=messages only %}
+              </div>
+            {% endif %}
+            {% block content-fixed %}{% endblock content-fixed %}
+          {% block endmain %}</main>{% endblock endmain %}
+        {% endblock content %}
+        <!-- </div> --> <!-- container -->
+
+        {% block slide-over %}{% endblock slide-over %}
+        {% block extra-modal %}{% endblock extra-modal %}
+      </div>
+
+      {% for notification in notifications %}
+        <div class="modal pr-0" tabindex="-1" {% if notification.answer_is_required %} data-backdrop="static" data-keyboard="false" {% endif %} role="dialog" id="modal-{{ notification.pk }}">
+          <div class="modal-dialog modal-{{notification.modal_width}}" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-white">
+                  <h5 class="modal-title">
+                    {{ notification.title }}
+                  </h5>
+                  <span class="badge badge-success text-white ml-2 mt-1">{{ notification.get_category_display }}</span>
+                  {% if not notification.answer_is_required %}
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <i class="fas fa-times-circle"></i>
+                    </button>
+                  {% endif %}
+                </div>
+                <div class="modal-body" style="height: {{notification.modal_height}}">
+                  {% include 'includes/modal_notifications_content.html' %}
+                </div>
+                {% if not notification.show_rating and not notification.show_form %}
+                  {% if not notification.category == 2 %}
+                  <div class="modal-footer bg-white">
+                    <button class="btn btn-primary" data-dismiss="modal">Entendi</button>
+                  </div>
+                  {% endif %}
+                {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+      {% for tutorial in tutoriais %}
+        <div class="modal pr-0" tabindex="-1" role="dialog" data-notification id="modal-tutorial-{{ tutorial.id }}">
+          <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-white">
+                  <h5 class="modal-title">
+                    {{ tutorial.title }}
+                  </h5>
+                  <span class="badge badge-success text-white ml-2 mt-1">Ajuda</span>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <i class="fas fa-times-circle"></i>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  {% include 'includes/modal_tutorial_content.html' %}
+                </div>
+                <div class="modal-footer bg-white">
+                  <button class="btn btn-primary" data-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+
+    </div>
+
+    <script>
+      if ("paintWorklet" in CSS) {
+        CSS.paintWorklet.addModule(
+          "https://www.unpkg.com/css-houdini-squircle/squircle.min.js"
+        );
+      }
+    </script>
+    {% compress js %}
+      <script src="{% static 'administration/lib/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+      <script src="{% static 'administration/lib/perfect-scrollbar/perfect-scrollbar.min.js' %}"></script>
+      <script src="{% static 'administration/assets/js/app.js' %}"></script>
+      <script src="{% static 'administration/assets/js/app.settings.js' %}"></script>
+    {% endcompress %}
+
+    {% block js-additional %}{% endblock js-additional %}
+
+    <script>
+      function confirmCancel(url) {
+        document.getElementById('id_confirm_cancel_form').action = url
+        $("#confirmCancelModal").modal("show")
+      }
+    </script>
+
+    <script>
+      $("form").not('.not-disable').submit(function (e) {
+        $(this).find(":submit").not(".not-disable").prop("disabled", true);
+      });
+    </script>
+
+    {% if not disable_support_chat and not DEBUG %}
+      {% include 'includes/chatwoot.html' with user_type="anonimo" %}
+    {% endif %}
+
+    <script src="https://unpkg.com/focus-visible"></script>
+
+  </body>
+</html>

@@ -1,0 +1,220 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Configurações das questões - Lize{% endblock title %}
+
+{% block css-additional %}
+
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+    <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                    <li class="breadcrumb-item"><a href="#">CONFIGURAÇÕES</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        CADASTRAR
+                    </li>
+                </ol>
+            </nav>
+            <h4>
+                Configurações das questões
+            </h4>
+        </div>
+        <div class="d-none d-md-block">
+            <button class="btn btn-sm pd-x-15 btn-white btn-uppercase" onclick="history.back();">
+                <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+            </button>
+        </div>
+    </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+{% block top-menu %}
+{% include "includes/configurations_header.html" %}
+{% endblock top-menu %}
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+      <div class="ls" style="margin-top: 0.5rem; margin-bottom: 1rem; justify-content: space-between;">
+        <!-- Empty -->
+      </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card mg-b-10">
+                <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+                    <div>
+                        <h6 class="mg-b-5">
+                            Configurações
+                        </h6>
+                        <p class="tx-13 tx-color-03 mg-b-5">Gerencie as configurações abaixo</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.block_edit_question_aproveds class="custom-control-input" %}
+                                    <label class="custom-control-label" for="{{form.block_edit_question_aproveds.auto_id}}">
+                                        {{form.block_edit_question_aproveds.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.block_edit_question_aproveds.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.can_edit_and_change_position class="custom-control-input" %}
+                                    <label class="custom-control-label" for="{{form.can_edit_and_change_position.auto_id}}">
+                                        {{form.can_edit_and_change_position.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.can_edit_and_change_position.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.can_add_support_content_discursive_questions class="custom-control-input" %}
+                                    <label class="custom-control-label" for="{{form.can_add_support_content_discursive_questions.auto_id}}">
+                                        {{form.can_add_support_content_discursive_questions.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.can_add_support_content_discursive_questions.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.can_change_subject_with_existing_questions class="custom-control-input" %}
+                                    <label class="custom-control-label" for="{{form.can_change_subject_with_existing_questions.auto_id}}">
+                                        {{form.can_change_subject_with_existing_questions.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.can_change_subject_with_existing_questions.help_text}}
+                        
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.can_change_grade_with_existing_questions class="custom-control-input" %}
+                                    <label class="custom-control-label" for="{{form.can_change_grade_with_existing_questions.auto_id}}">
+                                        {{form.can_change_grade_with_existing_questions.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.can_change_grade_with_existing_questions.help_text}}
+                        
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% if user.client_can_disable_multiple_correct_options %}
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.can_not_add_multiple_correct_options_question class="custom-control-input" %}
+                                    <label class="custom-control-label" for="{{form.can_not_add_multiple_correct_options_question.auto_id}}">
+                                        {{form.can_not_add_multiple_correct_options_question.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.can_not_add_multiple_correct_options_question.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.can_add_revision_after_closing_exam class="custom-control-input" %}
+                                    <label class="custom-control-label" for="{{form.can_add_revision_after_closing_exam.auto_id}}">
+                                        {{form.can_add_revision_after_closing_exam.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.can_add_revision_after_closing_exam.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.teachers_coordinations_can_edit_questions class="custom-control-input" %}
+                                    <label class="custom-control-label" for="{{form.teachers_coordinations_can_edit_questions.auto_id}}">
+                                        {{form.teachers_coordinations_can_edit_questions.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.teachers_coordinations_can_edit_questions.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% comment %} <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.can_swap_questions_groups class="custom-control-input" %}
+                                    <label class="custom-control-label" for="{{form.can_swap_questions_groups.auto_id}}">
+                                        {{form.can_swap_questions_groups.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.can_swap_questions_groups.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div> {% endcomment %}
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <button class="btn btn-warning">Salvar configurações</button>
+                            </div>
+                        </div>
+                        <input type="hidden" name="client" value="{{user.get_clients_cache.0}}">
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+
+{% endblock extra-modal %}
+
+{% block js-additional %}
+
+<script type="text/javascript" src="{% static 'tinymce/tinymce.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.20/lodash.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    var app = new Vue({
+        el: '#app',
+        delimiters: ['${', '}'],
+        data: {
+            
+        },
+        methods: {
+
+        },
+        mounted: function () {
+            
+        }
+    });
+</script>
+{% endblock js-additional %}

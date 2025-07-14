@@ -1,0 +1,652 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+
+
+{% block title %}Mapão de notas - Lize{% endblock title %}
+
+{% block css-additional %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css">
+
+  <link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+  
+  <style>
+    @media print {
+        @page {
+          size: A4;
+          margin: 0;
+        }
+        .pagebreak {
+            clear: both;
+            page-break-inside: always;
+        }
+        .hidden-print{
+          display:none !important;
+        }
+        body, .content-body{
+          background: white !important;
+          margin: 0;
+        }
+        table {
+          transform: scaleX(0.58);
+          transform-origin: top left;
+          width: 100%;
+        }
+        table td, table th {
+          overflow: break-word;
+          word-wrap: break-word;
+        }
+        table, table *{
+          width:100%;
+          table-layout: fixed;
+          overflow-wrap: break-word;
+        }
+        table, table *{
+          width:100%;
+          table-layout: fixed;
+          overflow-wrap: break-word;
+        }
+
+      .limit-size{
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        max-width:75px;
+        width: 75px;
+      }
+
+      .limit-size-mat{
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        max-width:90px;
+        width: 90px;
+      }
+      .limit-size-student {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        max-width: 250px;
+        width: 250px;
+      }
+    }
+    
+    .skeleton-loader {
+      width: 100%;
+      height: 15px;
+      display: block;
+      background: linear-gradient(	  
+          to right,
+          rgba(255, 255, 255, 0),
+          rgba(255, 255, 255, 0.5) 50%,
+          rgba(255, 255, 255, 0) 80%
+        ),
+        lightgray;
+      background-repeat: repeat-y;
+      background-size: 50px 500px;
+      background-position: 0 0;
+      animation: shine 1s infinite;	  
+    }
+    @keyframes shine {	
+      to {
+        background-position: 100% 0, /* move highlight to right */ 0 0;
+      }
+    }
+    .table-scroll {
+      position:relative;
+      margin:auto;
+      overflow:hidden;
+    }
+    .table-wrap {
+      overflow:auto;
+    }
+    .table-scroll table {
+      width:100%;
+      margin:auto;
+      border-collapse:separate;
+      border-spacing:0;
+    }
+    .table-scroll th, .table-scroll td {
+      white-space:nowrap;
+      vertical-align:top;
+    }
+    .table-scroll thead, .table-scroll tfoot {
+      background:#f9f9f9;
+    }
+    .fixed-table {
+      position:absolute;
+      top:0;
+      left:0;
+      pointer-events:none;
+    }
+    .fixed-table th, .fixed-table td {
+      visibility:hidden
+    }
+    .fixed-table td, .fixed-table th {
+      border-color:transparent
+    }
+    .fixed-table tbody th {
+      visibility:visible;
+    }
+    .fixed-table .fixed-side {
+      border:1px solid #D8DCE6;
+      background: #F3F4F7;
+      visibility:visible;
+    }
+    .fixed-table .fixed-side-two {
+      border: 1px solid #D8DCE6;
+      visibility:visible;
+      background:#FFFFFF; 
+
+    }    
+
+    .fixed-table thead, .fixed-table tfoot {
+      background:transparent;
+    }
+  </style>
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10 performance-content">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">COORDENAÇÃO</a></li>
+          <li class="breadcrumb-item active" aria-current="page">MAPA DE NOTAS</li>
+        </ol>
+      </nav> 
+    </div>
+    <button class="btn btn-white" onclick="history.back()">Voltar</button>
+  </div>
+  <div class="row mb-0">
+    <div class="col-12 d-flex justify-content-between">
+      <h4>Mapão de notas</h4>
+      <div class="text-right justify-content-end"></div>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+
+<!-- 
+  SKELETON
+  <div class="placeholder-paragraph" v-else>
+    <div class="line"></div>
+  </div> 
+-->
+<div class="tw-flex tw-justify-center">
+  <div class="ard cer dcv tw-pb-8 tw-flex-1" style="max-width: calc(100vw - 240px);">
+    <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1rem; justify-content: space-between;">
+      <div style="tw-flex-1">
+        <div class="tw-flex tw-items-center min-w-[15rem]">
+
+          <div class="avatar ">
+            <span class="avatar-initial rounded-circle  tw-bg-blue-600"><i class="fas fa-users"></i></span>
+          </div>
+          <div class="tw-ml-2">
+            <h6 class="tw-font-semibold tw-mb-0 tw-truncate tooltips tw-cp" style="max-width: 20rem;" data-tippy-content="{{classe.name}}">
+              {{classe.name}}
+            </h6>
+            <p class="tw-text-gray-500 tw-mb-0 tw-truncate tooltips tw-cp" style="max-width: 20rem;" data-tippy-content="{{classe.coordination}}">
+              {{classe.coordination}}
+            </p>
+          </div>
+          <div>
+            <button  class="tw-ml-4 hidden-print  tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold hover:tw-text-white tw-shadow-sm hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600"data-toggle="modal" data-target="#modalSelectClasse">
+              Trocar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex jusfity-content-between">
+        <button class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold hover:tw-text-white tw-shadow-sm hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600" onclick="history.back()">Voltar</button>
+        <button class="ml-2 tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600 hover:tw-text-white" @click="printPDF('print-this')"><i class="fa fa-print"></i> Gerar PDF</button>
+      </div>
+    </div>
+    <div id="print-this">
+    <div class="row  tw-mb-2">
+        <div class="col-12">
+              <div class="card-body tw-py-15 tw-bg-white sm:tw-rounded-lg tw-py-5 tw-border tw-border-[#E5E7EA] tw-mb-4">
+                <form method="get">
+                  <div class="row mb-0">
+                    <div class="col-12">
+                      <div class="tw-flex tw-jusfity-between">
+                          <template >
+                            <select  v-if="educationSystems.length > 0" class="selectpicker mx-1" v-model="selectedEducationSystems" data-live-search="true" id="id_education_system" multiple name="q_education_system">
+                              <option  :value="educationSystem.id" v-for="educationSystem in educationSystems" :key="educationSystem.id" >
+                                ${educationSystem.name}   
+                              </option>
+                            </select>
+                          </template>
+                          <template v-if="teachingStages.length > 0" >
+                            <select class="selectpicker mx-1" v-model="selectedTeachingStages" data-live-search="true" data-actions-box="true" multiple id="id_teaching_stage" name="q_teaching_stage">
+                              <option :value="teachingStage.id" v-for="teachingStage in teachingStages" :key="teachingStage.id" >
+                                ${teachingStage.name}   
+                              </option>
+                            </select>
+                          </template>
+                          
+                          <input type="text" class="form-control mx-1"  placeholder="Digite o nome da prova" id="id_exam" name="q_exam" v-model="exam">
+                          <button class="ml-2 tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600 hover:tw-text-white" style=" max-width: 100px;"><i class="fas fa-filter" title="Aplicar filtro"></i>Filtrar</button>
+                        
+                        </div>
+                      {% comment %} </div> {% endcomment %}
+                    </div>
+                  </div>
+                  <input type="hidden" name="q_classe" value="{{q_classe}}">
+                  <input type="hidden" name="q_unity" value="{{q_unity}}">
+                  <input type="hidden" name="q_grade" value="{{q_grade}}">
+                </form>
+              </div>
+            </div><!-- card -->
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            {% comment %} <div class="tw-bg-white sm:tw-rounded-lg tw-pt-5 tw-border tw-border-[#E5E7EA]"> {% endcomment %}
+              <div class="card-body tw-py-4  tw-bg-white sm:tw-rounded-lg tw-pt-5 tw-border tw-border-[#E5E7EA]" >            
+
+                  <template>
+                    <div id="table-scroll" class="table-scroll">
+                      <div class="table-wrap">
+                        <table
+                          class="table table-striped table-bordered tw-mb-0 main-table">
+                          <thead>
+                            <tr>
+                              <th class="fixed-side limit-size-mat" style="background: #f9f9f9">Matrícula</th>
+                              <th class="fixed-side limit-size-student"  style="background: #f9f9f9 ;border-right: 4px solid  #D8DCE6;">Aluno</th>
+                              <th style=" width: 120px; max-width: 120px;  min-width: 120px; " v-for="exam in exams" class="tw-truncate tw-uppercase  tw-text-center tooltips cp limit-size" :data-tippy-content="exam.name">${exam.name.slice(0, 6)}</th>
+                            </tr>
+                            <tbody>
+                              <tr v-for="(student, index) in students">
+                                <td   
+                                  :class="{
+                                    'fixed-side': index % 2 === 0,
+                                    'fixed-side-two': index % 2 !== 0,
+                                    'limit-size-mat': true
+                                  }" 
+                                >${student.enrollmentNumber}</td>
+                                <td    :class="{
+                                  'fixed-side': index % 2 === 0,
+                                  'fixed-side-two': index % 2 !== 0,
+                                  'text-uppercase': true,
+                                  'text-truncate': true
+                                }" style="border-right: 4px solid  #D8DCE6;">${student.name}</td>
+                                <td v-for="exam in exams" @mouseover="mouseIn.student = student.id, mouseIn.exam = exam.id" class="cp limit-size tw-uppercase tw-text-center" >
+                                  <template v-if="exam.studentsGradeLoaded">
+                                    <template v-if="getInfoApplicationStudent(student.id, exam.id)" class= "cp limit-size ">
+                                      <a :href="exam.correctionUrl + '#' + getInfoApplicationStudent(student.id, exam.id).application_student" target="_blank" rel="noopener noreferrer" class="tw-flex tw-justify-between tw-items-center">
+                                        <div class="icon-student">
+                                          <strong>
+                                            <div  class="text-dark" >
+                                              ${getInfoApplicationStudent(student.id, exam.id).grade.toFixed(2)}
+                                            </div>
+                                          </strong>
+                                        </div>
+                                        <div class="tw-flex">
+                                          <!-- Icone aluno ok -->
+                                          <div v-if="getInfoApplicationStudent(student.id, exam.id)?.is_ok && !getInfoApplicationStudent(student.id, exam.id)?.missed" 
+                                          class="tooltips" data-tippy-content="Aluno Ok">
+                                            <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                              <path d="M7.99998 10.3333H4.99998C4.0696 10.3333 3.60442 10.3333 3.22589 10.4482C2.37362 10.7067 1.70667 11.3736 1.44814 12.2259C1.33331 12.6044 1.33331 13.0696 1.33331 14M10.6666 12L12 13.3333L14.6666 10.6667M9.66665 5C9.66665 6.65685 8.3235 8 6.66665 8C5.00979 8 3.66665 6.65685 3.66665 5C3.66665 3.34315 5.00979 2 6.66665 2C8.3235 2 9.66665 3.34315 9.66665 5Z" stroke="#41C588" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                          </div>
+                                          
+                                          <!-- Icone aluno ausente -->
+                                          <div v-else-if="getInfoApplicationStudent(student.id, exam.id)?.missed" 
+                                            class="tooltips" data-tippy-content="Aluno Ausente">
+                                            <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                              <path d="M11 10.6667L14.3334 14M14.3334 10.6667L11 14M8.00004 10.3333H5.00004C4.06967 10.3333 3.60448 10.3333 3.22595 10.4482C2.37368 10.7067 1.70673 11.3736 1.4482 12.2259C1.33337 12.6044 1.33337 13.0696 1.33337 14M9.66671 5C9.66671 6.65685 8.32356 8 6.66671 8C5.00985 8 3.66671 6.65685 3.66671 5C3.66671 3.34315 5.00985 2 6.66671 2C8.32356 2 9.66671 3.34315 9.66671 5Z" stroke="#D92D20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                          </div>
+                                          <div class="tw-flex" v-else>
+                                          <!-- Icone pendencia correção discursiva -->
+                                            <div v-if="getInfoApplicationStudent(student.id, exam.id) && (getInfoApplicationStudent(student.id, exam.id).count_pendence_discursive > 0 &&  getInfoApplicationStudent(student.id, exam.id).has_upload_discursive)" 
+                                              class="tooltips" data-tippy-content="Pendencia correção discursiva">
+                                              <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M2 8H14M2 4H14M2 12H10" stroke="#F3B364" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                              </svg>
+                                            </div>
+                                            
+                                            <!-- Icone pendencia correção objetiva -->
+                                            <div v-if="getInfoApplicationStudent(student.id, exam.id) && (getInfoApplicationStudent(student.id, exam.id).count_pendence_choice > 0 && getInfoApplicationStudent(student.id, exam.id).has_upload_choice)"
+                                              class="tooltips" data-tippy-content="Pendencia correção objetiva">
+                                              <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M5.00004 8.00016L7.00004 10.0002L11 6.00016M14.6667 8.00016C14.6667 11.6821 11.6819 14.6668 8.00004 14.6668C4.31814 14.6668 1.33337 11.6821 1.33337 8.00016C1.33337 4.31826 4.31814 1.3335 8.00004 1.3335C11.6819 1.3335 14.6667 4.31826 14.6667 8.00016Z" stroke="#F3B364" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                              </svg>
+                                            </div>
+                                            
+                                            <!-- Icone pendencia upload objetiva -->
+                                            <div v-if="getInfoApplicationStudent(student.id, exam.id) && (getInfoApplicationStudent(student.id, exam.id).has_questions_choices > 0 && !getInfoApplicationStudent(student.id, exam.id).has_upload_choice)" 
+                                              class="tooltips" data-tippy-content="Pendencia upload objetiva">
+                                              <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M9.33329 1.51318V4.26688C9.33329 4.64025 9.33329 4.82693 9.40595 4.96954C9.46987 5.09498 9.57186 5.19697 9.6973 5.26088C9.83991 5.33354 10.0266 5.33354 10.4 5.33354H13.1537M5.99996 10.6668L7.33329 12.0002L10.3333 9.00016M9.33329 1.3335H5.86663C4.74652 1.3335 4.18647 1.3335 3.75864 1.55148C3.38232 1.74323 3.07636 2.04919 2.88461 2.42552C2.66663 2.85334 2.66663 3.41339 2.66663 4.5335V11.4668C2.66663 12.5869 2.66663 13.147 2.88461 13.5748C3.07636 13.9511 3.38232 14.2571 3.75864 14.4488C4.18647 14.6668 4.74652 14.6668 5.86663 14.6668H10.1333C11.2534 14.6668 11.8134 14.6668 12.2413 14.4488C12.6176 14.2571 12.9236 13.9511 13.1153 13.5748C13.3333 13.147 13.3333 12.5869 13.3333 11.4668V5.3335L9.33329 1.3335Z" stroke="#F3B364" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                              </svg>
+                                            </div>
+                                            
+                                            <!-- Icone pendencia upload discursiva -->
+                                            <div v-if="getInfoApplicationStudent(student.id, exam.id) && (getInfoApplicationStudent(student.id, exam.id).has_questions_discursives > 0 && !getInfoApplicationStudent(student.id, exam.id).has_upload_discursive)"
+                                              class="tooltips" data-tippy-content="Pendencia upload discursiva">
+                                              <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M9.33329 1.51318V4.26688C9.33329 4.64025 9.33329 4.82693 9.40595 4.96954C9.46987 5.09498 9.57186 5.19697 9.6973 5.26088C9.83991 5.33354 10.0266 5.33354 10.4 5.33354H13.1537M9.33329 11.3335H5.33329M10.6666 8.66683H5.33329M13.3333 6.65898V11.4668C13.3333 12.5869 13.3333 13.147 13.1153 13.5748C12.9236 13.9511 12.6176 14.2571 12.2413 14.4488C11.8134 14.6668 11.2534 14.6668 10.1333 14.6668H5.86663C4.74652 14.6668 4.18647 14.6668 3.75864 14.4488C3.38232 14.2571 3.07636 13.9511 2.88461 13.5748C2.66663 13.147 2.66663 12.5869 2.66663 11.4668V4.5335C2.66663 3.41339 2.66663 2.85334 2.88461 2.42552C3.07636 2.04919 3.38232 1.74323 3.75864 1.55148C4.18647 1.3335 4.74652 1.3335 5.86663 1.3335H8.00781C8.49699 1.3335 8.74158 1.3335 8.97176 1.38876C9.17583 1.43775 9.37092 1.51856 9.54986 1.62822C9.7517 1.7519 9.92465 1.92485 10.2706 2.27075L12.396 4.39624C12.7419 4.74214 12.9149 4.91509 13.0386 5.11693C13.1482 5.29587 13.229 5.49096 13.278 5.69503C13.3333 5.92521 13.3333 6.1698 13.3333 6.65898Z" stroke="#F3B364" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                              </svg>
+                                            </div>
+                                          </div>
+                                        </div> 
+                                    </a>
+                                  </template>
+                                  <template v-else>-</template>
+                                  </template>
+                                  <template v-else>
+                                    <div>
+                                      <span class="skeleton-loader"></span>
+                                    </div>
+                                  </template>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td v-if="!students.length" colspan="2">Nenhum aluno encontrado.</td>
+                              </tr>
+                            </tbody>
+                          </thead>
+                        </table>
+                      </div>
+                    </div>
+                  </template>
+                <!-- </div> -->
+              </div>
+            </div><!-- card -->
+    </div>
+    </div>
+
+    <div class="modal fade" id="modalSelectClasse" {% if not classe %}data-backdrop="static" data-keyboard="false"{% endif %} tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content tw-rounded-xl">
+          <div class="modal-header">
+            <h5 class="modal-title" id="staticBackdropLabel">Selecione uma turma</h5>
+            {% if classe %}
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            {% endif %}
+          </div>
+          <form method="GET">
+            <div class="modal-body h-100">
+              <div class="row">
+                <div class="col-12">
+                  <label for="id_unity">Selecione a unidade</label>
+                  <select type="text" required id="id_unity" class="form-control" data-container="body" v-model="unity" data-live-search="true" name="q_unity">
+                    <option :value="unity.id" v-for="unity in unities">${unity.name}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-12">
+                  <label for="id_grade">Selecione a série</label>
+                  <select type="text" required id="id_grade" class="form-control" data-container="body" v-model="grade" data-live-search="true" name="q_grade">
+                    <option :value="grade.id" v-for="grade in grades">${grade.full_name}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-12">
+                  <label for="id_classe">Selecione a turma</label>
+                  <select type="text" id="id_classe" title="Selecione uma turma" data-container="body" class="form-control" v-model="classe" data-live-search="true" name="q_classe" required>
+                    <option :value="classe.id" v-for="classe in shownClasses">${classe.name}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="form-buttons-w text-right m-2 tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 tw-py-2 tw-font-semibold tw-shadow-sm hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600" data-dismiss="modal" aria-label="Close" v-if="'{{classe.id}}'">Fechar</button>
+              <button class="form-buttons-w text-right m-2 tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 tw-py-2 tw-font-semibold tw-shadow-sm hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600" onclick="history.back()" v-if="!classe">Voltar</button>
+              <button class="not-disable tw-flex tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2  tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 hover:tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600" :disabled="!unity || !grade || !classe">Confirmar</button>
+            </div>
+            <input type="hidden" name="q_exam" :value="exam">
+            <input type="hidden" name="q_education_system" :value="educationSystem.id" v-for="educationSystem in educationSystems">
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content-fixed %}
+
+
+{% block js-additional %}
+
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
+
+<script src="{% static 'js/tippy/popper.min.js' %}"></script>
+<script src="{% static 'js/tippy/tippy.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/print_this.js' %}"></script>
+
+<script>
+    
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+          unity: '',
+          grade: '',
+          classe: '',
+          educationSystems: [
+            {% for education_system in education_systems %}
+              {
+                id: '{{education_system.id}}',
+                name: '{{education_system.name}}',
+              },
+            {% endfor %}
+          ],
+          teachingStages: [
+          {% for teaching_stage in teaching_stages %}
+            {
+              id: '{{teaching_stage.id}}',
+              name: '{{teaching_stage.name}}',
+            },
+          {% endfor %}
+        ],
+          selectedEducationSystems:  {{q_education_system|default:'[]'|safe}},
+          selectedTeachingStages: {{q_teaching_stage|default:'[]'|safe}},
+          unities: {{unities|safe}},
+          grades: {{grades|safe}},
+          classes: {{classes|safe}},
+          shownClasses: [],
+          mouseIn: {
+            student: '',
+            exam: '',
+          },
+          students: [
+            {% for student in students %}
+              {
+                id: '{{student.id}}',
+                name: '{{student.name}}',
+                enrollmentNumber: '{{student.enrollment_number}}',
+                missedStudentsCount: {{student.missed_students_count}},
+                emptyQuestionsCount: {{student.empty_questions_count}}
+              },
+            {% endfor %}
+          ],
+  
+          exams: [
+            {% for exam in exams %}
+              {
+                id: '{{exam.id}}',
+                name: '{{exam.name}}',
+                correctionUrl: "{% url 'exams:exams_detail_v2' pk=exam.pk %}",
+                studentsGrade: [],
+                studentsGradeUrl: "{% url 'analytics:students-grade' exam.id %}",
+                studentsGradeLoaded: false,
+                missedStudentsCount: {{exam.missed_students_count}},
+                emptyQuestionsCount: {{exam.empty_questions_count}}
+
+
+              },
+            {% endfor %}
+          ],
+          exam: '{{q_exam|default:""}}',
+        },
+        methods: {
+          printPDF(elem) {
+            $("#" + elem).printThis({
+              header: `
+                <div style="display: flex; text-align: center; justify-content: center; padding-top: 7px;";><h3>Mapão de notas</h3></div>
+                <div style="display: flex; text-align: center; justify-content: center; gap: 40px; padding-top: 4px;">
+                  <h3>${'{{classe.name}}'}</h3>
+                  <h3>${'{{classe.coordination}}'}</h3>
+                </div>
+              `,
+            });
+          },
+          getInfoApplicationStudent(studentID, examID) {
+            let exam = this.exams.find(exam => exam.id == examID)
+            return exam ? exam.studentsGrade.find((student) => student.id == studentID) : null
+          },
+          async getStudentsGrade() {
+            const promises = [];
+
+            for (let i = 0; i < this.exams.length; i += 2) {
+              const currenteExam = [];
+
+              currenteExam.push(
+                axios.get(`${this.exams[i].studentsGradeUrl}?classe_id={{classe.id}}`)
+                  .then((response) => {
+                    this.exams[i].studentsGrade = response.data;
+                    this.exams[i].studentsGradeLoaded = true;
+                  })
+              );
+
+              if (i + 1 < this.exams.length) {
+                currenteExam.push(
+                  axios.get(`${this.exams[i + 1].studentsGradeUrl}?classe_id={{classe.id}}`)
+                    .then((response) => {
+                      this.exams[i + 1].studentsGrade = response.data;
+                      this.exams[i + 1].studentsGradeLoaded = true;
+                    })
+                );
+              }
+              await Promise.all(currenteExam);
+            }
+          },
+          getClasses() {
+            if(this.unity && this.grade) {
+              return this.classes.filter(classe => classe.unity == this.unity && classe.grade == this.grade)
+            } else if(this.unity) {
+              return this.classes.filter(classe => classe.unity == this.unity)
+            } else if(this.grade) {
+              return this.classes.filter(classe => classe.grade == this.grade)
+            }
+          },
+          reCreateSelection(selector) {
+            $(selector).selectpicker("destroy")
+            $(selector).selectpicker({
+              style: 'btn-white',
+            })
+          },
+        },
+        watch: {
+          unity: function(val) {
+            this.shownClasses = this.getClasses()
+            setTimeout(() => {
+              this.reCreateSelection("#id_classe")
+            }, 250)
+          },
+          grade: function(val) {
+            this.shownClasses = this.getClasses()
+            setTimeout(() => {
+              this.reCreateSelection("#id_classe")
+            }, 250)
+          }
+        },
+        updated() {
+          tippy('.tooltips', {
+            placement: 'bottom',
+            allowHTML: true,
+            theme: 'custom',
+          })
+
+          
+        },
+        mounted() {
+ 
+          $('[data-toggle="tooltip"]').tooltip()
+
+          if(!'{{classe.id|default:""}}') {
+            $("#modalSelectClasse").modal('show')
+          } else {
+            this.getStudentsGrade()
+          }
+
+          if('{{q_unity|default:""}}') {
+            this.unity = '{{q_unity}}'
+          }
+          
+          if('{{q_grade|default:""}}') {
+            this.grade = '{{q_grade}}'
+          }
+          if('{{q_classe|default:""}}') {
+            this.classe = '{{q_classe}}'
+          }
+          setTimeout(() => {
+            $("#id_grade").selectpicker({
+              style: 'btn-white',
+              placeholder: 'Selecione a série',
+              noneSelectedText: 'Nenhuma seleção',
+              noneResultsText: 'Nenhum resultado encontrado',
+            })
+            $("#id_unity").selectpicker({
+              style: 'btn-white',
+              placeholder: 'Selecione a unidade',
+              noneSelectedText: 'Nenhuma seleção',
+              noneResultsText: 'Nenhum resultado encontrado',
+            })
+          }, 300)
+
+          {% if education_systems %}
+            $("#id_education_system").selectpicker({
+              style: 'btn-white',
+              placeholder: "Selecione o sistema de ensino",
+              noneSelectedText: 'Nenhuma seleção',
+              noneResultsText: 'Nenhum resultado encontrado',
+            })
+          {% endif %}
+
+          {% if teaching_stages %}
+            $("#id_teaching_stage").selectpicker({
+              style: 'btn-white',
+              placeholder: "Selecione a etapa do ensino",
+              noneSelectedText: 'Nenhuma seleção',
+              noneResultsText: 'Nenhum resultado encontrado',
+              selectAllText: 'Todos',
+              deselectAllText: 'Nenhum'
+            })
+          {% endif %}
+
+          tippy('.tooltips', {
+            placement: 'bottom',
+            allowHTML: true,
+            theme: 'custom',
+          })
+
+          const table = document.querySelector('.main-table')
+          if(table) {
+            let clone = table.cloneNode(true)
+            clone.className += " fixed-table";
+  
+            let body = document.getElementById('table-scroll');
+  
+            body.appendChild(clone);
+          } 
+
+        },
+    })
+</script>
+
+{% endblock %}

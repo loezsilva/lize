@@ -1,0 +1,1418 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+  {% if not object %}
+    Adicionar professor - Lize
+  {% else %}
+    Alteração de professor - Lize
+  {% endif %}
+{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<script src="{% static 'js/treeselectjs-new-version.umd.js' %}"></script>
+<link rel="stylesheet" href="{% static 'css/treeselectjs.css' %}" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css">
+
+<style>
+    #app {
+        font-family: Inter !important;
+    }
+    .text {
+        color: #374151;
+        font-weight: 500;
+    }
+    .custom-form-control {
+        gap: 8px; 
+        padding-top: 10px; 
+        padding-right: 14px; 
+        padding-bottom: 10px;
+        padding-left: 14px;
+        border-radius: 8px;
+        border-width: 1px;
+        border: 1px solid #D2D6DB;
+        min-height: 44px;
+    }                      
+    .hover-secondary:hover {
+        background-color: #F8FAFC;
+    }
+    .custom-checkbox .custom-control-label::before {
+        width: 20px;
+        height: 20px;
+        border-color: #E5E7EA;
+    }
+    .custom-checkbox .custom-control-input:checked ~ .custom-control-label::before {
+        background-color: #FF8F3D !important;
+        border-color: #FF8F3D !important;
+    }
+    .custom-checkbox .custom-control-input:checked ~ .custom-control-label::after {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23fff' d='M6.564.75l-3.59 3.612-1.538-1.55L0 4.26 2.974 7.25 8 2.193z'/%3e%3c/svg%3e"); 
+        padding: 10px;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        opacity: 0; /* Torna o ícone transparente */
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+    input[type="date"] {
+        background: url('data:image/svg+xml;charset=UTF-8,<svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.3779 10.5156H3.37793M16.3779 2.51562V6.51562M8.37793 2.51562V6.51562M8.17793 22.5156H16.5779C18.2581 22.5156 19.0982 22.5156 19.7399 22.1886C20.3044 21.901 20.7633 21.4421 21.0509 20.8776C21.3779 20.2359 21.3779 19.3958 21.3779 17.7156V9.31563C21.3779 7.63547 21.3779 6.79539 21.0509 6.15365C20.7633 5.58917 20.3044 5.13023 19.7399 4.84261C19.0982 4.51562 18.2581 4.51562 16.5779 4.51562H8.17793C6.49777 4.51562 5.65769 4.51562 5.01596 4.84261C4.45147 5.13023 3.99253 5.58917 3.70491 6.15365C3.37793 6.79539 3.37793 7.63547 3.37793 9.31562V17.7156C3.37793 19.3958 3.37793 20.2359 3.70491 20.8776C3.99253 21.4421 4.45147 21.901 5.01596 22.1886C5.65769 22.5156 6.49777 22.5156 8.17793 22.5156Z" stroke="gray" style="opacity: .5;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>') no-repeat right 10px center;
+    }
+    input[type="time"]::-webkit-calendar-picker-indicator {
+        opacity: 0; /* Torna o ícone transparente */
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+    input[type="time"] {
+        background: url('data:image/svg+xml;charset=UTF-8,<svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.3779 0.390625C8.3754 0.390625 6.41783 0.984446 4.75279 2.097C3.08774 3.20954 1.78999 4.79085 1.02365 6.64095C0.257317 8.49106 0.0568079 10.5269 0.447483 12.4909C0.838159 14.455 1.80247 16.2591 3.21848 17.6751C4.63448 19.0911 6.43859 20.0554 8.40264 20.4461C10.3667 20.8368 12.4025 20.6362 14.2526 19.8699C16.1027 19.1036 17.684 17.8058 18.7966 16.1408C19.9091 14.4757 20.5029 12.5182 20.5029 10.5156C20.5 7.83122 19.4323 5.25762 17.5341 3.35946C15.6359 1.4613 13.0623 0.393603 10.3779 0.390625ZM10.3779 18.3906C8.82041 18.3906 7.29786 17.9288 6.00282 17.0634C4.70778 16.1981 3.69842 14.9682 3.10238 13.5293C2.50634 12.0903 2.35039 10.5069 2.65425 8.97929C2.95811 7.45169 3.70813 6.0485 4.80947 4.94716C5.91081 3.84582 7.314 3.0958 8.8416 2.79194C10.3692 2.48808 11.9526 2.64403 13.3916 3.24007C14.8305 3.83611 16.0604 4.84547 16.9258 6.14051C17.7911 7.43555 18.2529 8.9581 18.2529 10.5156C18.2507 12.6035 17.4203 14.6053 15.9439 16.0816C14.4676 17.558 12.4658 18.3884 10.3779 18.3906ZM16.7529 10.5156C16.7529 10.814 16.6344 11.1001 16.4234 11.3111C16.2125 11.5221 15.9263 11.6406 15.6279 11.6406H10.3779C10.0796 11.6406 9.79342 11.5221 9.58244 11.3111C9.37146 11.1001 9.25293 10.814 9.25293 10.5156V5.26562C9.25293 4.96726 9.37146 4.68111 9.58244 4.47013C9.79342 4.25915 10.0796 4.14062 10.3779 4.14062C10.6763 4.14062 10.9625 4.25915 11.1734 4.47013C11.3844 4.68111 11.5029 4.96726 11.5029 5.26562V9.39062H15.6279C15.9263 9.39062 16.2125 9.50915 16.4234 9.72013C16.6344 9.93111 16.7529 10.2173 16.7529 10.5156Z" style="opacity: .5;" fill="gray"/></svg>') no-repeat right 10px center;
+    }
+</style>
+{% endblock css-additional %}
+
+{% block content-fixed %}
+<div class="tw-flex tw-justify-center">
+    <div class="ard cer dcv tw-flex-1" style="max-width: calc(100vw);">
+        <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1.5rem; justify-content: space-between;">
+            <div class="row">
+            <div class="col-12">
+                <a href="{% url 'exams:exams_list' %}?category=homework">
+                    <p class="d-flex text">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 12H4M4 12L10 18M4 12L10 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="mx-3">
+                            Listas de exercícios
+                        </span>
+                    </p>
+                </a>
+                <h1 class="tw-text-xl tw-font-semibold tw-leading-7 tw-text-[#374151] sm:tw-truncate sm:tw-text-2xl sm:tw-tracking-tight tw-mb-0">
+                    Nova lista de exercício
+                </h1>
+            </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="accordion" id="accordionOne">
+                    <div class="card cp" @click="controls.expanded = 'exams'" style="border-radius: 16px; gap: 8px; border: none;" :style="controls.expanded == 'exams' ? 'background-color: #FFFFFF;' : 'background-color: transparent !important; border: 1px solid #E5E7EA !important;'">
+                        <div class="card-header d-flex justify-content-between align-items-center" id="headingOne">
+                            <div class="d-flex justify-content-between align-items-center" >  
+                                <template v-if="examIsCompleted">
+                                    <svg width="28" height="28" viewBox="0 0 33 33" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect x="0.37793" y="0.515625" width="32" height="32" rx="16" fill="#41C588"/>
+                                        <path d="M23.0446 11.5156L13.8779 20.6823L9.71124 16.5156" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </template>
+                                <template v-else>
+                                    <span class="text rounded-circle d-flex align-items-center justify-content-center" style="font-size: 14px; height: 32px; width: 32px;" :style="controls.expanded == 'exams' ? 'background-color: #F9FAFA !important;' : 'background-color: #FFFFFF;'">
+                                        1
+                                    </span>
+                                </template>
+                                <div class="text">
+                                    <span class="mx-3 fw-600">Caderno</span>
+                                    <template v-if="examIsCompleted">
+                                        <span class="mx-3 fw-400">${exam.name}</span> 
+                                    </template>
+                                </div>
+                            </div>
+                            <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                <template v-if="controls.expanded == 'exams'">
+                                    <svg width="17" height="3" viewBox="0 0 17 3" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M1.37793 1.51562H15.3779" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg> 
+                                </template>
+                                <template v-else>
+                                    <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M8.37793 1.51562V15.5156M1.37793 8.51562H15.3779" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>                                
+                                </template>
+                            </button>
+                        </div>
+                        <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordionOne">
+                            <form method="POST" id="form-professor-create-update" onsubmit="return false" @submit="saveForm()">
+                                <div class="card-body">
+                                    <div class="row mb-0">
+                                        <div class="col">
+                                            <div class="form-group">
+                                                <label for="idName" class="text fw-500 mb-2" style="font-size: 14px;">Nome</label>
+                                                <input type="name" id="idName" placeholder="Nome do caderno" v-model="exam.name" class="form-control custom-form-control" required>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="form-group">
+                                                <label for="idGrade" class="text fw-500 mb-2" style="font-size: 14px;">Série</label>
+                                                <select id="idGrade" data-container="body" v-model="exam.grade" class="form-control custom-form-control" required>
+                                                    <option :value="grade.id" v-for="grade in grades">${grade.name}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="form-group">
+                                                <label for="idSubject" class="text fw-500 mb-2" style="font-size: 14px;">Disciplina</label>
+                                                <select id="idSubject" data-live-search="true" data-container="body" v-model="exam.subject" class="form-control custom-form-control" required>
+                                                    <option :value="subject.id" v-for="subject in subjects">${subject.name}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-0">
+                                        <div class="col-12">
+                                            <button type="submit" :disabled="controls.loading" class="not-disable btn btn-block lize-btn-warning">
+                                                {% if object %}
+                                                    <template v-if="controls.loading">
+                                                        Atualizando sua lista de exercícios <i class="fas fa-spin fa-spinner"></i>
+                                                    </template>
+                                                    <template v-else>
+                                                        Salvar e continuar
+                                                    </template>
+                                                {% else %}
+                                                    <template v-if="controls.loading">
+                                                        Criando sua lista de exercícios <i class="fas fa-spin fa-spinner"></i>
+                                                    </template>
+                                                    <template v-else>
+                                                        Salvar e continuar
+                                                    </template>
+                                                {% endif %}
+                                            </button> 
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>          
+                    
+                    <div class="card cp my-3" @click="examIsCompleted ? controls.expanded = 'questions' : ''" style="border-radius: 16px; gap: 8px; border: none;" :style="controls.expanded == 'questions' ? 'background-color: #FFFFFF;' : 'background-color: transparent !important; border: 1px solid #E5E7EA !important;'"> 
+                        <div class="card-header d-flex justify-content-between align-items-center" id="headingOne">
+                            <div class="d-flex justify-content-between align-items-center" >     
+                                <template v-if="questionsIsCompleted">
+                                    <svg width="28" height="28" viewBox="0 0 33 33" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect x="0.37793" y="0.515625" width="32" height="32" rx="16" fill="#41C588"/>
+                                        <path d="M23.0446 11.5156L13.8779 20.6823L9.71124 16.5156" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </template>
+                                <template v-else>
+                                    <span class="text rounded-circle d-flex align-items-center justify-content-center" style="font-size: 14px; height: 32px; width: 32px;" :style="controls.expanded == 'questions' ? 'background-color: #F9FAFA !important;' : 'background-color: #FFFFFF;'">
+                                        2
+                                    </span>
+                                </template>
+                                <div>
+                                    <span class="text mx-3 fw-600">Questões</span>
+                                </div>
+                                <div class="text" v-if="questionsIsCompleted">
+                                    <span class="mx-3 fw-400">
+                                        ${exam.examTeacherSubject.examQuestionsCount} 
+                                        <template v-if="exam.examTeacherSubject.examQuestionsCount > 1">
+                                            Questões
+                                        </template>
+                                        <template v-else>
+                                            Questão
+                                        </template>
+                                    </span> 
+                                </div>
+                            </div>
+                            <template>
+                                <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">  
+                                    <template v-if="controls.expanded == 'questions'">
+                                        <svg width="17" height="3" viewBox="0 0 17 3" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M1.37793 1.51562H15.3779" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg> 
+                                    </template>
+                                    <template v-else>
+                                        <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M8.37793 1.51562V15.5156M1.37793 8.51562H15.3779" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>                                
+                                    </template>
+                                </button>
+                            </template>
+                        </div>
+                        {% if object %}
+                        <div id="collapseTwo" v-show="examIsCompleted" class="collapse" aria-labelledby="headingOne" data-parent="#accordionOne">
+                            <template v-if="!exam.examTeacherSubject.examQuestionsCount">
+                                <div class="card-body px-5">
+                                    <div class="row mb-0">
+                                        <div class="col-12 col-lg-6">
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <h1 style="font-size: 30px; line-height: 38px;" class="tw-font-semibold tw-leading-7 tw-text-[#374151]">
+                                                        Hora de elaborar uma nova
+                                                        <br> 
+                                                        lista de exercícios.
+                                                    </h1>
+                                                </div>
+                                                <div class="col-12 my-3">
+                                                    <p class="text fw-400" style="font-size: 16px; line-height: 24px; color: #64748B !important;">
+                                                        Você pode criar suas listas de várias maneiras
+                                                        <br> 
+                                                        diferentes, liberdade é nosso nome:
+                                                    </p>
+                                                </div>
+                                                <div class="col-12">
+                                                    <div class="row">
+                                                        <div class="col-12 d-flex">
+                                                            <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M17.0446 9.26546V6.18213C17.0446 4.782 17.0446 4.08193 16.7721 3.54715C16.5324 3.07675 16.15 2.6943 15.6796 2.45461C15.1448 2.18213 14.4447 2.18213 13.0446 2.18213H7.71127C6.31114 2.18213 5.61108 2.18213 5.0763 2.45461C4.60589 2.6943 4.22344 3.07675 3.98376 3.54715C3.71127 4.08193 3.71127 4.782 3.71127 6.18213V14.8488C3.71127 16.2489 3.71127 16.949 3.98376 17.4838C4.22344 17.9542 4.60589 18.3366 5.0763 18.5763C5.61108 18.8488 6.31114 18.8488 7.71127 18.8488H10.3779M15.3779 18.0155V13.0155M12.8779 15.5155H17.8779" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                            </svg>                                                                
+                                                            <p class="text fw-400 px-2" style="font-size: 16px; line-height: 24px; color: #64748B !important;">
+                                                                Criando manualmente
+                                                            </p>
+                                                        </div>
+                                                        <div class="col-12 d-flex">
+                                                            <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M11.2113 6.34896L10.2816 4.48972C10.0141 3.95463 9.88031 3.68707 9.68073 3.49159C9.50424 3.31873 9.29152 3.18727 9.05798 3.10672C8.79389 3.01562 8.49476 3.01562 7.8965 3.01562H4.71125C3.77783 3.01562 3.31112 3.01562 2.9546 3.19728C2.641 3.35707 2.38603 3.61204 2.22624 3.92564C2.04459 4.28216 2.04459 4.74887 2.04459 5.68229V6.34896M2.04459 6.34896H14.7113C16.1114 6.34896 16.8114 6.34896 17.3462 6.62144C17.8166 6.86113 18.1991 7.24358 18.4388 7.71398C18.7113 8.24876 18.7113 8.94883 18.7113 10.349V14.0156C18.7113 15.4158 18.7113 16.1158 18.4388 16.6506C18.1991 17.121 17.8166 17.5035 17.3462 17.7431C16.8114 18.0156 16.1114 18.0156 14.7113 18.0156H6.04459C4.64446 18.0156 3.94439 18.0156 3.40961 17.7431C2.9392 17.5035 2.55675 17.121 2.31707 16.6506C2.04459 16.1158 2.04459 15.4158 2.04459 14.0156V6.34896Z" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                            </svg>                                                             
+                                                            <p class="text fw-400 px-2" style="font-size: 16px; line-height: 24px; color: #64748B !important;">
+                                                                Usando um Banco de questões
+                                                            </p>
+                                                        </div>
+                                                        <div class="col-12 d-flex">
+                                                            <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M7.04459 13.849L10.3779 10.5156M10.3779 10.5156L13.7113 13.849M10.3779 10.5156V18.0156M17.0446 14.468C18.0625 13.6273 18.7113 12.3556 18.7113 10.9323C18.7113 8.40099 16.6592 6.34896 14.1279 6.34896C13.9458 6.34896 13.7755 6.25395 13.683 6.09707C12.5963 4.25299 10.5899 3.01562 8.29459 3.01562C4.84281 3.01562 2.04459 5.81385 2.04459 9.26562C2.04459 10.9874 2.74079 12.5465 3.86704 13.6769" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                            </svg>                                                        
+                                                            <p class="text fw-400 px-2" style="font-size: 16px; line-height: 24px; color: #64748B !important;">
+                                                                Importando de um arquivo (DOC, DOCX, PDF)
+                                                            </p>
+                                                        </div>
+                                                        <div class="col-12 d-flex">
+                                                            <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M4.12792 18.8488V14.6821M4.12792 6.3488V2.18213M2.04459 4.26546H6.21125M2.04459 16.7655H6.21125M11.2113 3.01546L9.7661 6.77285C9.53109 7.38387 9.41359 7.68938 9.23086 7.94637C9.06891 8.17413 8.86992 8.37312 8.64216 8.53507C8.38517 8.7178 8.07966 8.8353 7.46864 9.07031L3.71125 10.5155L7.46864 11.9606C8.07966 12.1956 8.38518 12.3131 8.64216 12.4959C8.86992 12.6578 9.06891 12.8568 9.23086 13.0846C9.41359 13.3415 9.53109 13.6471 9.7661 14.2581L11.2113 18.0155L12.6564 14.2581C12.8914 13.6471 13.0089 13.3415 13.1916 13.0846C13.3536 12.8568 13.5526 12.6578 13.7803 12.4959C14.0373 12.3131 14.3428 12.1956 14.9539 11.9606L18.7113 10.5155L14.9539 9.07031C14.3428 8.8353 14.0373 8.7178 13.7803 8.53507C13.5526 8.37312 13.3536 8.17413 13.1916 7.94637C13.0089 7.68939 12.8914 7.38387 12.6564 6.77285L11.2113 3.01546Z" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                            </svg>                                                      
+                                                            <p class="text fw-400 px-2" style="font-size: 16px; line-height: 24px; color: #64748B !important;">
+                                                                Utilizando Inteligência Artificial
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12">
+                                                    <a :href="exam.examTeacherSubject.urls.addQuestions" class="btn lize-btn-warning" style="line-height: 28px;">Ok, vamos começar!</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-lg-6 d-flex align-items-center">
+                                            <svg width="408" height="339" viewBox="0 0 408 339" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M268.339 240.269L262.904 188.153L183.793 207.788L190.035 266.952L268.339 240.269Z" fill="white"/>
+                                                <path d="M405.57 338.127C405.388 338.127 405.206 338.075 405.024 337.971L354.858 305.827C338.084 314.747 318.267 320.286 295.98 322.289C295.174 322.341 294.394 322.315 293.64 322.263L293.25 322.237C277.49 321.951 262.406 319.246 248.467 314.175C204.075 298.025 177.574 260.888 177.574 214.779C177.574 212.854 177.626 210.904 177.73 209.005C177.756 208.459 178.224 208.043 178.771 208.069C179.317 208.095 179.733 208.563 179.707 209.109C179.603 210.982 179.551 212.906 179.551 214.779C179.551 260.004 205.557 296.465 249.143 312.302C262.874 317.296 277.724 319.974 293.302 320.234L293.718 320.26C294.42 320.286 295.096 320.338 295.798 320.286C318.059 318.31 337.798 312.744 354.442 303.772C354.832 303.564 355.3 303.642 355.586 303.928C355.612 303.954 355.638 303.98 355.664 304.006L404.582 335.37C405.05 323.173 407.469 249.263 400.889 205.755L400.603 203.804C399.823 198.941 398.913 194.546 397.95 190.827C397.612 189.527 397.274 188.122 396.884 186.588C393.373 172.336 388.042 150.855 371.398 134.159C371.346 134.133 371.32 134.081 371.268 134.055C367.263 130.024 362.738 126.435 357.771 123.445C354.988 121.754 351.815 120.168 348.409 118.763C342.557 116.345 335.666 114.316 327.344 112.522L325.679 112.184C325.653 112.184 325.627 112.184 325.601 112.184C316.135 110.285 306.123 109.323 295.85 109.323C285.552 109.323 275.357 110.545 265.527 112.938C265.007 113.068 264.461 112.73 264.331 112.21C264.201 111.69 264.539 111.144 265.059 111.014C275.045 108.569 285.422 107.347 295.85 107.347C306.253 107.347 316.395 108.335 325.991 110.259L327.76 110.623C336.212 112.444 343.207 114.524 349.163 116.969C352.674 118.425 355.924 120.038 358.811 121.78C363.856 124.849 368.485 128.49 372.568 132.599C372.62 132.625 372.646 132.651 372.698 132.703C389.81 149.789 395.454 172.57 398.808 186.172C399.173 187.68 399.537 189.084 399.875 190.385C400.863 194.182 401.773 198.629 402.579 203.57L402.865 205.546C410.017 253.034 406.532 336.436 406.506 337.268C406.48 337.632 406.298 337.945 405.986 338.101C405.882 338.075 405.726 338.127 405.57 338.127Z" fill="#101928"/>
+                                                <path d="M298.79 268.82C298.738 268.846 298.686 268.872 298.608 268.898L290.858 273.163C290.676 273.267 290.546 273.423 290.442 273.605C291.404 273.787 292.392 273.892 293.354 274.074L299.57 270.641C299.596 270.641 299.596 270.615 299.622 270.615C299.336 269.991 299.05 269.418 298.79 268.82Z" fill="#101928"/>
+                                                <path d="M321.544 258.393C321.206 258.393 320.868 258.211 320.686 257.873C320.426 257.405 320.608 256.781 321.076 256.521L329.216 252.048L285.682 242.868C285.266 242.79 284.953 242.452 284.901 242.035L275.227 170.388L231.537 181.961C231.017 182.091 230.471 181.779 230.315 181.259C230.185 180.739 230.497 180.192 231.017 180.036L275.799 168.152C276.059 168.074 276.371 168.126 276.606 168.282C276.84 168.438 276.996 168.698 277.048 168.984L286.774 241.047L332.233 250.644C332.649 250.722 332.935 251.06 333.013 251.476C333.091 251.892 332.883 252.282 332.519 252.49L322.064 258.263C321.856 258.341 321.7 258.393 321.544 258.393Z" fill="#101928"/>
+                                                <path d="M195.885 274.046C195.469 274.046 195.078 273.786 194.948 273.37C194.766 272.849 195.052 272.277 195.573 272.121L285.554 240.94C286.074 240.758 286.646 241.044 286.802 241.564C286.984 242.084 286.698 242.656 286.178 242.812L196.197 273.994C196.093 274.046 195.989 274.046 195.885 274.046Z" fill="#101928"/>
+                                                <path d="M195.648 260.398C195.466 260.398 195.284 260.346 195.128 260.242C194.868 260.086 194.712 259.8 194.686 259.514L188.965 205.369C188.912 204.823 189.303 204.328 189.849 204.276C190.369 204.224 190.889 204.615 190.941 205.161L196.532 258.058L272.938 232.025L267.711 181.807L214.945 194.914C214.424 195.044 213.878 194.732 213.748 194.186C213.618 193.666 213.93 193.12 214.477 192.99L268.361 179.623C268.647 179.544 268.933 179.596 269.167 179.779C269.401 179.935 269.558 180.195 269.584 180.481L275.019 232.597C275.071 233.065 274.785 233.482 274.343 233.638L196.038 260.32C195.856 260.372 195.752 260.398 195.648 260.398Z" fill="#101928"/>
+                                                <path d="M204.775 215.902C204.333 215.902 203.917 215.589 203.813 215.121C203.683 214.575 204.021 214.055 204.567 213.951L231.041 208.074C231.587 207.97 232.108 208.282 232.212 208.828C232.342 209.374 232.003 209.894 231.457 209.998L204.983 215.875C204.931 215.901 204.853 215.902 204.775 215.902Z" fill="#101928"/>
+                                                <path d="M207.379 233.299C206.937 233.299 206.521 233.013 206.417 232.545C206.287 232.024 206.599 231.478 207.145 231.348L226.078 226.563C226.598 226.433 227.144 226.745 227.274 227.291C227.404 227.811 227.092 228.357 226.546 228.488L207.613 233.273C207.561 233.299 207.483 233.299 207.379 233.299Z" fill="#101928"/>
+                                                <path d="M285.502 277.275C285.242 276.781 284.644 276.625 284.15 276.859L264.775 287.261C264.645 287.339 264.541 287.417 264.463 287.521C264.983 287.989 265.529 288.406 266.075 288.796L285.06 278.601C285.58 278.341 285.762 277.743 285.502 277.275Z" fill="#101928"/>
+                                                <path d="M195.648 260.398C195.466 260.398 195.284 260.346 195.128 260.242C194.868 260.086 194.712 259.8 194.686 259.514L188.965 205.369C188.912 204.823 189.303 204.328 189.849 204.276C190.369 204.224 190.889 204.615 190.941 205.161L196.532 258.058L272.938 232.025L267.711 181.807L214.945 194.914C214.424 195.044 213.878 194.732 213.748 194.186C213.618 193.666 213.93 193.12 214.477 192.99L268.361 179.623C268.647 179.544 268.933 179.596 269.167 179.779C269.401 179.935 269.558 180.195 269.584 180.481L275.019 232.597C275.071 233.065 274.785 233.482 274.343 233.638L196.038 260.32C195.856 260.372 195.752 260.398 195.648 260.398Z" fill="#101928"/>
+                                                <path d="M284.828 293.242C268.808 293.242 259.342 286.142 256.091 283.151C252.788 280.135 251.462 277.17 250.37 274.777C249.615 273.139 248.965 271.709 247.873 270.616C246.677 269.446 245.845 269.29 245.558 269.472C245.142 269.758 244.752 271.423 246.183 274.725C248.653 280.421 247.795 282.553 247.587 282.943C247.431 283.229 247.171 283.411 246.885 283.463C246.573 283.515 246.261 283.411 246.053 283.203C242.672 280.005 232.789 271.891 227.64 272.593C226.6 272.723 225.82 273.243 225.274 274.153C224.988 274.621 224.389 274.777 223.921 274.491C223.453 274.205 223.297 273.607 223.583 273.139C224.442 271.709 225.716 270.876 227.38 270.642C233.102 269.862 242.256 277.222 245.897 280.395C245.767 279.355 245.376 277.794 244.414 275.532C242.828 271.839 242.854 268.978 244.492 267.86C245.09 267.444 246.755 266.741 249.303 269.212C250.682 270.564 251.436 272.203 252.216 273.971C253.282 276.312 254.479 278.938 257.469 281.695C262.072 285.934 279.601 298.677 311.614 285.362C336.892 274.829 340.611 250.774 343.914 229.526C346.358 213.767 348.465 200.165 358.659 194.288C359.127 194.028 359.751 194.184 360.011 194.652C360.271 195.12 360.115 195.744 359.647 196.004C350.259 201.388 348.231 214.573 345.864 229.813C342.509 251.554 338.686 276.234 312.368 287.182C301.628 291.629 292.474 293.242 284.828 293.242Z" fill="#101928"/>
+                                                <path d="M242.411 286.141C242.229 286.141 242.047 286.089 241.891 285.985C238.796 284.034 236.508 282.266 234.505 280.731C230.136 277.376 227.51 275.348 221.216 275.01C219.032 274.88 216.899 276.232 216.717 277.116C216.613 277.584 217.627 277.975 217.939 278.079C218.459 278.261 218.719 278.833 218.563 279.327C218.381 279.847 217.835 280.107 217.315 279.951C214.663 279.041 214.663 277.402 214.793 276.726C215.183 274.672 218.355 272.851 221.346 273.007C228.264 273.345 231.384 275.79 235.727 279.145C237.704 280.679 239.94 282.396 242.957 284.294C243.425 284.58 243.555 285.204 243.269 285.672C243.061 285.985 242.749 286.141 242.411 286.141Z" fill="#101928"/>
+                                                <path d="M239.08 288.041C225.739 278.913 219.003 275.506 214.426 279.589C213.126 280.733 213.048 281.825 213.23 282.554C213.62 284.244 215.779 285.414 217.469 286.09C218.483 286.194 219.471 286.324 220.486 286.481C220.59 286.376 220.668 286.22 220.72 286.064C220.85 285.544 220.538 284.998 220.018 284.842C218.145 284.348 215.414 283.1 215.154 282.085C215.076 281.799 215.284 281.461 215.727 281.071C219.315 277.898 225.765 281.305 237.962 289.679C238.144 289.783 238.326 289.861 238.508 289.861C238.82 289.861 239.132 289.705 239.314 289.419C239.626 288.977 239.522 288.353 239.08 288.041Z" fill="#101928"/>
+                                                <path d="M234.896 307.441C234.714 307.441 234.506 307.389 234.324 307.259C231.047 304.996 229.175 302.266 227.51 299.873C225.794 297.376 224.311 295.218 221.607 293.996C215.964 291.395 213.805 289.783 213.649 288.04C213.597 287.416 213.779 286.532 214.949 285.7C218.2 283.437 221.269 283.983 232.139 291.525C232.581 291.837 232.711 292.461 232.399 292.903C232.087 293.345 231.463 293.449 231.021 293.163C219.916 285.44 218.122 285.908 216.094 287.312C215.807 287.52 215.625 287.728 215.625 287.858C215.677 288.43 216.9 289.653 222.439 292.201C225.638 293.658 227.328 296.154 229.149 298.781C230.787 301.147 232.451 303.592 235.442 305.672C235.884 305.985 236.014 306.609 235.702 307.051C235.52 307.285 235.208 307.441 234.896 307.441Z" fill="#101928"/>
+                                                <path d="M249.662 285.151C249.506 285.151 249.324 285.099 249.168 285.021L246.203 283.357C245.735 283.097 245.553 282.498 245.813 282.004C246.073 281.536 246.671 281.354 247.166 281.614L250.13 283.279C250.598 283.539 250.78 284.137 250.52 284.631C250.338 284.969 250.026 285.151 249.662 285.151Z" fill="#101928"/>
+                                                <path d="M382.947 250.148C382.453 250.122 381.933 250.512 381.907 251.058C380.632 266.532 368.045 292.356 357.565 305.88C357.383 306.114 357.305 306.4 357.383 306.686C357.435 306.972 357.643 307.206 357.903 307.362L373.533 315.58C373.689 315.658 373.845 315.684 374.001 315.684C374.339 315.684 374.651 315.528 374.833 315.216C381.881 303.825 383.831 253.321 383.909 251.188C383.909 250.616 383.493 250.174 382.947 250.148Z" fill="#101928"/>
+                                                <path d="M254.944 316.283C254.528 316.283 254.112 315.997 253.982 315.581C252.656 311.134 254.32 301.954 258.793 295.92C261.966 291.655 266.127 289.393 270.86 289.367C271.406 289.367 271.848 289.809 271.848 290.355C271.848 290.901 271.406 291.343 270.86 291.343C266.725 291.369 263.188 293.294 260.379 297.091C256.036 302.942 254.814 311.472 255.88 315.009C256.036 315.529 255.724 316.075 255.204 316.231C255.152 316.257 255.048 316.283 254.944 316.283Z" fill="#101928"/>
+                                                <path d="M330.156 261.904C323.992 261.904 318.947 258.939 314.994 256.599C314.214 256.131 313.46 255.715 312.758 255.298C304.93 250.955 294.267 248.797 289.95 253.296C289.56 253.686 288.936 253.712 288.546 253.322C288.156 252.932 288.13 252.308 288.52 251.918C293.565 246.638 305.008 248.745 313.694 253.556C314.422 253.972 315.176 254.414 315.982 254.882C321.184 257.951 327.685 261.774 336.033 258.887C336.553 258.705 337.125 258.991 337.281 259.512C337.463 260.032 337.177 260.604 336.657 260.76C334.395 261.566 332.21 261.904 330.156 261.904Z" fill="#101928"/>
+                                                <path d="M311.924 287.26C311.82 287.26 311.69 287.234 311.586 287.208C307.607 285.726 303.264 284.712 299.103 283.723C290.781 281.747 283.578 280.056 281.237 275.401C279.937 272.827 279.911 271.032 281.107 270.07C283.057 268.562 287.114 270.538 289.247 272.385C291.041 273.919 295.904 272.098 298.245 270.98C297.699 268.9 295.878 262.996 292.212 260.838C290.755 259.98 289.221 259.824 287.478 260.37C279.963 262.684 277.518 263.022 276.114 261.982C275.178 261.306 275.074 260.188 275.074 259.433C275.074 258.419 275.88 257.327 277.466 256.261C281.627 253.426 290.599 250.799 296.685 253.218C297.205 253.426 297.439 253.998 297.231 254.492C297.023 255.012 296.451 255.246 295.956 255.038C290.703 252.958 282.433 255.35 278.714 257.795C277.388 258.679 277.076 259.277 277.076 259.407C277.076 259.771 277.128 260.24 277.31 260.37C278.298 261.098 283.916 259.381 286.932 258.471C289.195 257.769 291.327 258.003 293.252 259.147C298.453 262.216 300.299 270.954 300.377 271.344C300.455 271.786 300.273 272.202 299.883 272.411C299.025 272.853 291.353 276.78 287.999 273.919C285.788 272.046 282.979 271.214 282.381 271.682C282.225 271.812 282.043 272.541 283.057 274.569C284.982 278.418 292.082 280.082 299.597 281.851C303.836 282.839 308.231 283.879 312.314 285.388C312.834 285.57 313.094 286.142 312.912 286.662C312.704 287.026 312.314 287.26 311.924 287.26Z" fill="#101928"/>
+                                                <path d="M302.407 253.607C302.173 253.607 301.965 253.529 301.783 253.373C300.066 251.943 295.983 251.578 295.021 251.604C294.865 251.63 294.709 251.63 294.553 251.604C294.163 251.5 293.851 251.162 293.799 250.746C293.747 250.356 293.955 249.94 294.319 249.758C294.943 249.42 300.613 249.836 303.031 251.839C303.447 252.177 303.499 252.801 303.161 253.243C302.979 253.503 302.693 253.607 302.407 253.607Z" fill="#101928"/>
+                                                <path d="M320.248 282.605C319.806 282.605 319.416 282.319 319.286 281.877C317.465 274.881 319.104 264.946 329.766 260.031C330.26 259.797 330.859 260.031 331.093 260.525C331.327 261.02 331.093 261.618 330.598 261.852C321.028 266.273 319.546 275.141 321.184 281.408C321.314 281.929 321.002 282.475 320.482 282.605C320.43 282.605 320.326 282.605 320.248 282.605Z" fill="#101928"/>
+                                                <path d="M347.89 161.494C347.682 162.976 347.032 164.953 345.263 165.083C343.989 165.187 344.015 167.163 345.289 167.059C347.994 166.851 349.45 164.485 349.814 161.988C349.996 160.74 348.072 160.22 347.89 161.494Z" fill="#101928"/>
+                                                <path d="M329.194 164.43C327.92 164.43 326.775 164.17 325.917 163.624C324.929 163 324.331 162.064 324.175 160.893C323.681 157.434 329.064 154.964 329.688 154.678C330.182 154.444 330.78 154.678 330.988 155.172C331.196 155.666 330.988 156.264 330.494 156.472C328.986 157.148 325.917 159.021 326.151 160.581C326.229 161.179 326.515 161.595 326.983 161.908C328.024 162.558 329.974 162.584 331.951 161.96C332.471 161.777 333.017 162.09 333.199 162.61C333.355 163.13 333.069 163.676 332.549 163.858C331.378 164.248 330.234 164.43 329.194 164.43Z" fill="#101928"/>
+                                                <path d="M333.224 143.677L333.823 145.55C334.603 147.969 330.806 149.191 330.052 146.746L329.453 144.874C328.699 142.429 332.47 141.233 333.224 143.677Z" fill="#101928"/>
+                                                <path d="M326.124 133.715C327.346 133.689 328.568 133.872 329.764 133.741C331.013 133.611 331.455 135.536 330.207 135.666C328.828 135.796 327.45 135.64 326.046 135.692C324.771 135.718 324.849 133.741 326.124 133.715Z" fill="#101928"/>
+                                                <path d="M364.115 187.265C359.954 188.696 355.065 189.736 350.956 188.826C343.492 187.187 339.019 180.582 333.168 162.663C332.986 162.143 332.44 161.857 331.919 162.039C331.399 162.221 331.113 162.768 331.295 163.288C336.601 179.542 341.23 188.722 350.54 190.776C354.961 191.739 360.032 190.75 364.349 189.32C364.271 188.618 364.193 187.942 364.115 187.265Z" fill="#101928"/>
+                                                <path d="M330.046 156.606C329.63 156.606 329.24 156.346 329.11 155.904C327.706 151.405 326.483 147.217 325.053 142.38C324.221 139.546 323.337 136.529 322.322 133.122C319.566 123.89 321.074 116.582 326.926 110.809C327.316 110.419 327.94 110.419 328.33 110.809C328.72 111.199 328.72 111.823 328.33 112.213C323.051 117.44 321.724 124.098 324.247 132.55C325.261 135.957 326.145 139 326.978 141.834C328.382 146.671 329.604 150.832 331.009 155.305C331.165 155.826 330.878 156.372 330.358 156.554C330.254 156.58 330.15 156.606 330.046 156.606Z" fill="#101928"/>
+                                                <path d="M372.052 133.326C370.908 133.716 369.79 134.184 368.723 134.704C352.417 132.884 336.71 127.059 323.941 116.474C324.825 114.784 326.021 113.093 327.634 111.507C335.097 113.119 342.301 115.096 348.855 117.8C352.183 119.179 355.382 120.739 358.373 122.56C363.6 125.732 368.125 129.347 372.052 133.326Z" fill="#101928"/>
+                                                <path d="M372.543 178.473C372.127 178.473 371.737 178.213 371.607 177.797L363.285 152.389C363.207 152.129 363.233 151.843 363.363 151.609C363.493 151.374 363.701 151.192 363.961 151.114C367.264 150.204 369.579 148.67 370.671 146.667C371.659 144.847 371.373 143.209 371.113 142.402C370.697 141.076 369.839 140.088 368.59 139.464C365.99 138.215 361.725 138.631 356.237 140.66C355.717 140.842 355.145 140.582 354.963 140.088C354.781 139.568 355.041 138.995 355.535 138.813C361.621 136.525 366.302 136.161 369.448 137.669C371.633 138.735 372.595 140.504 372.985 141.778C373.583 143.703 373.375 145.783 372.387 147.604C371.503 149.216 369.605 151.348 365.444 152.701L373.453 177.147C373.635 177.667 373.349 178.213 372.829 178.395C372.751 178.473 372.647 178.473 372.543 178.473Z" fill="#101928"/>
+                                                <path d="M401.957 205.598C392.907 212.828 380.632 216.338 369.345 213.192C363.728 211.631 358.241 208.198 355.77 202.763C352.831 196.34 354.99 189.188 357.695 183.102C359.645 178.681 362.038 174.416 363.208 169.683C364.222 165.652 362.142 155.718 364.274 152.103C365.418 150.204 374.235 148.618 371.348 141.856C368.071 134.159 355.952 140.842 355.952 140.842C341.883 135.277 334.809 125.342 323.965 116.474C330.674 115.694 339.698 116.448 348.879 117.801C352.207 119.179 355.406 120.739 358.397 122.56C388.824 140.998 394.857 174.52 399.018 190.54C400.033 194.415 400.917 198.836 401.697 203.621C401.749 204.271 401.853 204.922 401.957 205.598Z" fill="#101928"/>
+                                                <path d="M341.128 115.072C337.435 112.966 331.896 112.342 327.787 111.171C327.657 111.145 327.553 111.145 327.449 111.145C327.319 111.041 327.163 110.963 326.955 110.937C322.456 110.417 314.576 110.781 314.732 117.205C314.862 122.744 322.742 124.2 326.903 124.695C331.48 125.241 341.128 124.356 342.87 118.713C343.365 116.997 342.61 115.93 341.128 115.072Z" fill="#101928"/>
+                                                <path d="M157.653 196.469L154.923 197.405L151.88 199.199L148.551 200.578L153.206 204.297L162.803 200.578L157.653 196.469Z" fill="white"/>
+                                                <path d="M203.58 188.933L195.752 192.157L190.837 193.9L180.825 198.113L187.768 201.078L207.403 191.429L203.58 188.933Z" fill="white"/>
+                                                <path d="M132.556 215.899C104.314 215.899 77.3713 208.747 54.642 195.25L17.7393 215.795C17.4012 215.977 17.0111 215.951 16.699 215.743C16.387 215.535 16.2309 215.171 16.283 214.807L22.4464 167.865C8.01301 150.233 0.393215 129.662 0.393215 108.415C0.393215 87.6098 6.60868 67.871 18.3374 51.305C21.3281 46.988 24.787 42.8529 28.6099 39.004L33.343 34.4009C57.5807 12.4776 91.8828 0.904785 132.556 0.904785C144.493 0.904785 156.352 2.2051 167.795 4.77972C177.573 6.99026 186.961 10.085 195.699 13.986C222.486 25.8448 243.55 44.9855 254.993 67.923C258.92 75.7769 261.703 84.0209 263.237 92.395C264.199 97.6742 264.693 103.058 264.693 108.441C264.693 154.55 235.072 191.713 185.479 207.863C169.901 212.934 153.075 215.639 135.443 215.925C134.507 215.899 133.519 215.899 132.556 215.899ZM54.668 193.117C54.85 193.117 55.0321 193.169 55.1881 193.247C77.7354 206.771 104.496 213.922 132.582 213.922C133.545 213.844 134.481 213.922 135.443 213.896C152.867 213.61 169.511 210.958 184.907 205.938C233.668 190.075 262.769 153.614 262.769 108.389C262.769 103.136 262.301 97.8563 261.339 92.707C259.83 84.515 257.126 76.4531 253.277 68.7812C242.016 46.2598 221.315 27.4312 194.945 15.7804C186.337 11.9315 177.079 8.86271 167.431 6.70419C156.118 4.18158 144.389 2.88127 132.608 2.88127C92.4289 2.88127 58.5689 14.298 34.7213 35.8833L34.5132 36.0653L29.9882 40.4084C26.2693 44.1533 22.8885 48.2102 19.9498 52.4493C8.45511 68.6772 2.36967 88.0259 2.36967 108.415C2.36967 129.35 9.93746 149.583 24.2408 166.929C24.4229 167.137 24.5009 167.423 24.4489 167.683L18.4935 213.09L54.1739 193.221C54.3299 193.143 54.486 193.117 54.668 193.117Z" fill="#101928"/>
+                                                <path d="M157.755 177.512C157.235 177.512 156.819 177.122 156.767 176.602L144.856 30.5765C144.83 30.2904 144.934 30.0304 145.116 29.8223C145.298 29.6143 145.558 29.5103 145.844 29.5103L222.016 29.5103C222.563 29.5103 223.005 29.9524 223.005 30.4985C223.005 31.0446 222.563 31.4867 222.016 31.4867L146.911 31.4867L158.665 175.458L240.793 170.152C241.313 170.126 241.807 170.542 241.833 171.089C241.859 171.635 241.443 172.103 240.897 172.129L157.807 177.486C157.807 177.512 157.781 177.512 157.755 177.512Z" fill="#101928"/>
+                                                <path d="M241.755 170.751C241.599 170.361 241.183 170.127 240.793 170.153L219.91 171.505C219.598 171.531 219.338 171.687 219.156 171.947C218.974 172.207 218.948 172.519 219.026 172.805L223.421 186.511C223.525 186.823 223.785 187.083 224.097 187.161C224.175 187.187 224.279 187.187 224.357 187.187C224.591 187.187 224.851 187.109 225.033 186.927L241.495 171.869C241.833 171.583 241.937 171.141 241.755 170.751Z" fill="#101928"/>
+                                                <path d="M165.582 176.991C165.088 176.991 164.646 176.601 164.594 176.107L149.744 30.6014C149.692 30.0552 150.082 29.5611 150.628 29.5091C151.2 29.4831 151.668 29.8472 151.72 30.3933L166.57 175.899C166.622 176.445 166.232 176.939 165.686 176.991C165.66 176.991 165.608 176.991 165.582 176.991Z" fill="#101928"/>
+                                                <path d="M67.1798 55.2557C68.2981 44.7492 68.5061 36.5312 73.4993 32.5262C82.9655 24.9324 111.65 29.2754 115.759 34.0086C114.485 25.3745 108.634 17.4165 89.8572 16.7924C67.6479 16.0382 59.9241 25.0624 59.43 39.86C58.9359 54.6576 58.9359 54.6576 58.9359 54.6576L59.1179 54.9696C62.3687 54.7096 63.9031 55.1517 67.1798 55.2557Z" fill="#101928"/>
+                                                <path d="M95.6799 134.94C95.4458 134.94 95.2118 134.862 95.0037 134.68L65.5648 108.05C62.5741 105.345 60.8577 101.496 60.8317 97.4911L60.6236 69.0922C56.5407 68.9102 54.2521 67.4538 53.0559 66.2315C51.7035 64.8272 50.9754 63.0067 51.0534 61.1083C51.1054 59.834 51.4955 57.9875 53.2379 56.4792C55.6825 54.2946 60.0255 53.4624 66.0849 53.9826C66.6311 54.0346 67.0211 54.5027 66.9951 55.0488C66.9431 55.5949 66.475 55.985 65.9289 55.959C60.4936 55.4909 56.5667 56.1931 54.5642 57.9615C53.602 58.8197 53.1079 59.886 53.0559 61.1863C53.0299 61.9665 53.1859 63.5009 54.5122 64.8532C55.9945 66.3616 58.4391 67.1417 61.6379 67.1417C62.184 67.1417 62.6261 67.5838 62.6261 68.13L62.8342 97.4911C62.8602 100.95 64.3425 104.279 66.9171 106.593L94.7957 131.793L95.5759 108.622C95.6019 108.076 96.122 107.608 96.5901 107.66C97.1362 107.686 97.5523 108.128 97.5523 108.674L96.6941 133.978C96.6941 134.368 96.4341 134.706 96.096 134.862C95.94 134.914 95.8099 134.94 95.6799 134.94Z" fill="#101928"/>
+                                                <path d="M99.0102 68.601C98.8802 68.601 98.7501 68.601 98.6201 68.601C98.074 68.575 97.6579 68.1329 97.6579 67.5868C97.6839 67.0407 98.204 66.5985 98.6721 66.6245C100.389 66.6766 101.819 66.2865 102.469 65.5323C102.833 65.1162 102.989 64.6221 102.885 63.9719C102.703 62.5416 99.4523 61.6313 97.996 61.4233C97.5018 61.3453 97.1378 60.9032 97.1378 60.409L97.4238 51.931C97.4498 51.3849 97.97 50.9688 98.4381 50.9688C98.9842 50.9948 99.4003 51.4369 99.4003 51.983L99.1402 59.6028C100.883 59.9669 104.497 61.0592 104.836 63.7118C104.992 64.9341 104.68 66.0264 103.925 66.8586C102.937 67.9769 101.195 68.601 99.0102 68.601Z" fill="#101928"/>
+                                                <path d="M105.25 54.2176L105.198 56.0641C105.12 58.4566 108.813 58.5867 108.891 56.1941L108.943 54.3476C109.047 51.9811 105.328 51.851 105.25 54.2176Z" fill="#101928"/>
+                                                <path d="M82.9649 53.4866L82.9129 55.3331C82.8349 57.7256 86.5277 57.8557 86.6057 55.4631L86.6578 53.6166C86.7618 51.2241 83.0429 51.094 82.9649 53.4866Z" fill="#101928"/>
+                                                <path d="M83.9764 44.5705C82.468 44.8306 81.0117 45.1947 79.6073 45.7408C78.4891 46.1829 79.3993 47.7953 80.4916 47.3792C81.7398 46.8851 83.0922 46.625 84.4185 46.365C85.5627 46.1569 85.1466 44.3365 83.9764 44.5705Z" fill="#101928"/>
+                                                <path d="M109.724 45.1171C108.814 44.441 107.773 43.9469 106.889 43.2187C105.979 42.4645 104.627 43.7128 105.537 44.493C106.525 45.3252 107.669 45.9233 108.736 46.7035C109.698 47.3797 110.686 45.7933 109.724 45.1171Z" fill="#101928"/>
+                                                <path d="M86.7856 76.5028C85.4073 76.2427 83.5868 75.5406 83.5348 73.9022C83.5088 72.7059 81.6624 72.6539 81.6884 73.8501C81.7664 76.3728 83.9249 77.8551 86.2395 78.2972C87.3837 78.4793 87.9559 76.7369 86.7856 76.5028Z" fill="#101928"/>
+                                                <path d="M96.5384 109.664C96.4604 109.664 96.3824 109.664 96.3044 109.638C95.8363 109.508 84.5756 106.674 82.4171 100.302C82.3131 99.9902 82.3651 99.6261 82.5731 99.366C82.7812 99.1059 83.1193 98.9759 83.4573 99.0019C83.5874 99.0019 97.4226 100.328 105.224 96.1672C114.327 91.304 114.561 74.9201 114.925 47.7955C114.977 44.9088 115.003 41.9181 115.055 38.8233C115.289 25.274 107.045 18.4084 89.8028 17.8362C69.9862 17.1861 60.9361 23.9997 60.3899 39.9416L59.8958 54.7392C59.8698 55.2853 59.4017 55.7794 58.8816 55.7014C58.3354 55.6754 57.9193 55.2333 57.9193 54.6872L58.4135 39.8896C58.9856 22.8034 68.9719 15.1316 89.8549 15.8598C108.137 16.4839 117.265 24.2078 117.005 38.8493C116.953 41.9701 116.901 44.9608 116.875 47.8215C116.485 75.7003 116.251 92.5263 106.109 97.9357C103.638 99.236 100.699 100.068 97.7607 100.536V100.562L97.4746 108.728C97.4746 109.014 97.3186 109.3 97.0846 109.482C96.9545 109.586 96.7465 109.664 96.5384 109.664ZM85.0177 101.082C87.3323 104.515 93.1056 106.596 95.6022 107.376L95.8363 100.77C91.4152 101.29 87.2802 101.186 85.0177 101.082Z" fill="#101928"/>
+                                                <path d="M83.3518 99.96C85.3542 105.915 96.5369 108.672 96.5369 108.672L96.823 100.48L83.3518 99.96Z" fill="#101928"/>
+                                                <path d="M153.782 200.377C152.3 200.377 151.052 198.972 149.491 197.23C146.605 193.979 142.626 189.532 135.162 191.898C134.642 192.081 134.096 191.768 133.914 191.248C133.758 190.728 134.044 190.182 134.564 190C143.25 187.243 147.905 192.445 150.974 195.903C152.066 197.126 153.34 198.53 153.912 198.374C154.719 198.14 154.823 197.698 154.823 197.282C154.875 194.369 148.191 186.749 135.266 182.562C134.538 182.328 133.81 182.068 133.03 181.834C120.339 177.595 102.94 171.77 63.4632 197.958C62.9951 198.27 62.3969 198.14 62.0849 197.672C61.7728 197.204 61.9028 196.606 62.3709 196.294C102.68 169.585 120.573 175.567 133.654 179.936C134.408 180.196 135.136 180.43 135.864 180.664C148.477 184.747 156.851 192.549 156.773 197.282C156.747 198.738 155.889 199.804 154.433 200.246C154.225 200.351 154.016 200.377 153.782 200.377Z" fill="#101928"/>
+                                                <path d="M144.13 212.181C143.844 212.181 143.557 212.05 143.349 211.816C143.011 211.4 143.063 210.776 143.505 210.412C145.066 209.164 145.768 207.473 145.612 205.393C145.248 200.868 140.723 195.406 134.377 191.818C133.909 191.558 133.727 190.933 134.013 190.465C134.273 189.997 134.897 189.815 135.366 190.101C142.361 194.08 147.172 200.01 147.588 205.263C147.796 207.994 146.834 210.308 144.754 211.972C144.572 212.129 144.364 212.181 144.13 212.181Z" fill="#101928"/>
+                                                <path d="M138.566 214.183C138.046 214.183 137.604 213.767 137.578 213.247C137.552 212.701 137.968 212.233 138.514 212.207C140.048 212.103 141.973 211.738 142.389 210.568C143.663 207.005 133.833 197.721 129.62 193.768C129.23 193.404 129.204 192.754 129.568 192.364C129.932 191.974 130.582 191.948 130.972 192.312C138.566 199.463 145.822 206.823 144.235 211.218C143.611 212.961 141.713 213.949 138.618 214.157C138.592 214.183 138.592 214.183 138.566 214.183Z" fill="#101928"/>
+                                                <path d="M136.848 215.247C134.742 215.247 131.725 213.166 127.928 209.135C119.58 200.189 101.766 211.918 101.584 212.048C101.116 212.36 100.518 212.23 100.206 211.762C99.8937 211.32 100.024 210.696 100.492 210.384C101.272 209.864 119.892 197.615 129.385 207.783C134.378 213.114 136.744 213.479 137.186 213.192C137.421 213.036 137.551 212.074 136.822 210.488C134.768 206.093 128.058 200.579 124.834 197.927C124.417 197.589 124.339 196.965 124.704 196.522C125.042 196.106 125.666 196.028 126.108 196.392C129.463 199.149 136.406 204.87 138.643 209.656C139.735 211.996 139.605 213.973 138.331 214.831C137.863 215.091 137.395 215.247 136.848 215.247Z" fill="#101928"/>
+                                                <path d="M54.6716 195.091C54.3075 195.091 53.9434 194.883 53.7614 194.518C47.1038 180.293 50.9267 164.351 51.0827 163.675C51.2128 163.155 51.7589 162.817 52.279 162.947C52.7991 163.077 53.1372 163.623 53.0072 164.143C52.9812 164.299 49.2103 180.111 55.5558 193.686C55.7898 194.18 55.5818 194.779 55.0877 195.013C54.9576 195.065 54.8016 195.091 54.6716 195.091Z" fill="#101928"/>
+                                                <path d="M76.049 138.089C76.023 138.089 75.997 138.089 75.971 138.089C75.6849 138.063 75.3988 137.907 75.2428 137.673L51.1351 103.839C50.8491 103.449 50.9011 102.929 51.2131 102.591L61.0955 92.1882C61.4856 91.7981 62.1097 91.7721 62.4998 92.1622C62.8899 92.5523 62.9159 93.1765 62.5258 93.5666L53.2156 103.345L76.179 135.541L85.0731 126.282C85.4632 125.892 86.0874 125.866 86.4775 126.256C86.8675 126.647 86.8935 127.271 86.5035 127.661L76.8032 137.777C76.5691 137.985 76.309 138.089 76.049 138.089Z" fill="#101928"/>
+                                                <path d="M145.85 177.515C145.408 177.515 145.018 177.229 144.888 176.761C129.934 118.403 114.721 108.208 101.146 100.9L105.645 127.453C105.697 127.791 105.567 128.155 105.307 128.389C105.047 128.623 104.656 128.675 104.344 128.571L95.6843 125.45C95.1642 125.268 94.9042 124.696 95.0862 124.176C95.2682 123.656 95.8404 123.396 96.3605 123.578L103.408 126.1L98.8571 99.2359C98.8051 98.8718 98.9611 98.4817 99.2472 98.2737C99.5592 98.0396 99.9493 98.0136 100.287 98.1956C113.967 105.477 130.975 114.528 146.812 176.267C146.942 176.787 146.63 177.333 146.11 177.463C146.006 177.489 145.928 177.515 145.85 177.515Z" fill="#101928"/>
+                                                <path d="M12.0996 151.587C11.9696 151.587 11.8395 151.561 11.7095 151.509C11.2154 151.301 10.9553 150.729 11.1634 150.209C22.528 122.772 44.8153 106.7 51.3948 102.435C51.863 102.149 52.4611 102.279 52.7732 102.721C53.0592 103.189 52.9552 103.788 52.4871 104.1C46.0376 108.287 24.1404 124.072 13.0358 150.989C12.8538 151.353 12.4897 151.587 12.0996 151.587Z" fill="#101928"/>
+                                                <path d="M101.715 179.671C101.221 179.671 100.805 179.307 100.727 178.813L94.6931 134.108C94.6151 133.562 95.0052 133.068 95.5513 132.99C96.0975 132.912 96.5916 133.302 96.6696 133.848L102.703 178.553C102.781 179.099 102.391 179.593 101.845 179.671C101.819 179.645 101.767 179.671 101.715 179.671Z" fill="#101928"/>
+                                                <path d="M135.598 182.64C135.234 182.64 134.87 182.432 134.714 182.094C134.48 181.6 134.662 181.001 135.156 180.767C150.187 173.33 157.209 172.862 157.495 172.862C158.041 172.836 158.509 173.252 158.535 173.798C158.561 174.344 158.145 174.812 157.599 174.838C157.521 174.838 150.603 175.306 136.04 182.536C135.884 182.588 135.728 182.64 135.598 182.64Z" fill="#101928"/>
+                                                <path d="M193.358 197.8C192.057 197.8 190.627 196.76 189.145 194.705C183.007 186.253 174.815 181.728 170.498 184.381C169.796 184.797 169.77 185.161 169.744 185.291C169.614 186.435 171.591 188.412 173.151 189.972C175.18 191.975 176.922 193.717 176.506 195.408C176.376 195.98 175.908 197.02 174.295 197.332C170.68 198.06 162.228 194.393 156.715 186.8C156.403 186.357 156.481 185.733 156.923 185.421C157.365 185.109 157.989 185.187 158.302 185.629C163.217 192.391 170.915 195.98 173.879 195.382C174.477 195.252 174.529 195.017 174.555 194.939C174.711 194.315 172.839 192.469 171.721 191.351C169.64 189.27 167.482 187.138 167.742 185.031C167.846 184.095 168.418 183.289 169.432 182.665C174.711 179.414 183.866 184.069 190.705 193.509C192.083 195.408 193.02 195.85 193.384 195.798C193.566 195.772 193.696 195.512 193.748 195.356C194.268 194.003 193.774 190.466 190.991 187.164C187.844 183.445 183.345 179.804 183.319 179.778C182.903 179.44 182.825 178.816 183.163 178.373C183.501 177.957 184.126 177.879 184.568 178.217C184.75 178.373 189.249 182.014 192.526 185.889C195.698 189.634 196.479 193.847 195.62 196.058C195.23 197.046 194.554 197.644 193.644 197.748C193.566 197.774 193.462 197.8 193.358 197.8Z" fill="#101928"/>
+                                                <path d="M194.993 191.946C194.759 191.946 194.525 191.868 194.317 191.686C193.901 191.322 193.875 190.697 194.265 190.281C194.343 190.203 195.982 188.331 195.618 185.6C195.254 182.948 193.173 180.399 189.402 177.98C188.934 177.694 188.804 177.07 189.09 176.602C189.376 176.134 190 176.004 190.468 176.29C194.759 179.047 197.152 182.089 197.594 185.34C198.062 189.007 195.826 191.478 195.748 191.582C195.54 191.842 195.28 191.946 194.993 191.946Z" fill="#101928"/>
+                                                <path d="M196.66 186.097C196.452 186.097 196.244 186.019 196.062 185.889C195.62 185.551 195.542 184.927 195.88 184.511C196.062 184.277 200.249 178.738 195.256 174.837C194.813 174.499 194.761 173.874 195.1 173.458C195.438 173.016 196.062 172.964 196.478 173.302C201.705 177.411 199.391 183.237 197.44 185.759C197.258 185.967 196.972 186.097 196.66 186.097Z" fill="#101928"/>
+                                                <path d="M152.034 191.996C151.644 191.996 151.254 191.762 151.098 191.346C150.916 190.826 151.15 190.254 151.67 190.072L158.848 187.341C159.368 187.133 159.94 187.393 160.122 187.913C160.304 188.433 160.07 189.005 159.55 189.187L152.372 191.918C152.268 191.97 152.164 191.996 152.034 191.996Z" fill="#101928"/>
+                                                <path d="M140.746 196.132C140.33 196.132 139.966 195.872 139.81 195.482C139.628 194.962 139.888 194.389 140.408 194.207L146.338 192.101C146.858 191.919 147.43 192.179 147.612 192.699C147.794 193.219 147.534 193.791 147.014 193.973L141.084 196.08C140.98 196.132 140.876 196.132 140.746 196.132Z" fill="#101928"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                            <template v-else>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="row">
+                                                <div class="col-4">
+                                                    <div class="h-100 d-flex align-items-center justify-content-between" style="gap: 4px; border-radius: 8px; padding: 32px; border: 1px solid #E2E8F0;">
+                                                        <div>
+                                                            <div class="d-flex">
+                                                                <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                    <path d="M18.1905 10.3352C18.1905 10.5839 18.0917 10.8223 17.9159 10.9981C17.7401 11.1739 17.5016 11.2727 17.253 11.2727H10.378C10.1293 11.2727 9.89086 11.1739 9.71504 10.9981C9.53923 10.8223 9.44046 10.5839 9.44046 10.3352C9.44046 10.0866 9.53923 9.84812 9.71504 9.67231C9.89086 9.49649 10.1293 9.39772 10.378 9.39772H17.253C17.5016 9.39772 17.7401 9.49649 17.9159 9.67231C18.0917 9.84812 18.1905 10.0866 18.1905 10.3352ZM10.378 6.27272H17.253C17.5016 6.27272 17.7401 6.17395 17.9159 5.99813C18.0917 5.82232 18.1905 5.58386 18.1905 5.33522C18.1905 5.08658 18.0917 4.84812 17.9159 4.67231C17.7401 4.49649 17.5016 4.39772 17.253 4.39772H10.378C10.1293 4.39772 9.89086 4.49649 9.71504 4.67231C9.53923 4.84812 9.44046 5.08658 9.44046 5.33522C9.44046 5.58386 9.53923 5.82232 9.71504 5.99813C9.89086 6.17395 10.1293 6.27272 10.378 6.27272ZM17.253 14.3977H10.378C10.1293 14.3977 9.89086 14.4965 9.71504 14.6723C9.53923 14.8481 9.44046 15.0866 9.44046 15.3352C9.44046 15.5839 9.53923 15.8223 9.71504 15.9981C9.89086 16.1739 10.1293 16.2727 10.378 16.2727H17.253C17.5016 16.2727 17.7401 16.1739 17.9159 15.9981C18.0917 15.8223 18.1905 15.5839 18.1905 15.3352C18.1905 15.0866 18.0917 14.8481 17.9159 14.6723C17.7401 14.4965 17.5016 14.3977 17.253 14.3977ZM6.58968 3.42194L4.75296 5.25709L4.16624 4.66959C3.99012 4.49347 3.75125 4.39453 3.50218 4.39453C3.2531 4.39453 3.01423 4.49347 2.83811 4.66959C2.66199 4.84571 2.56305 5.08459 2.56305 5.33366C2.56305 5.58273 2.66199 5.8216 2.83811 5.99772L4.08811 7.24772C4.17521 7.33512 4.2787 7.40447 4.39266 7.45178C4.50661 7.4991 4.62879 7.52346 4.75218 7.52346C4.87556 7.52346 4.99774 7.4991 5.11169 7.45178C5.22565 7.40447 5.32914 7.33512 5.41624 7.24772L7.91624 4.74772C8.09236 4.5716 8.1913 4.33273 8.1913 4.08366C8.1913 3.83459 8.09236 3.59572 7.91624 3.41959C7.74012 3.24347 7.50125 3.14453 7.25218 3.14453C7.0031 3.14453 6.76423 3.24347 6.58811 3.41959L6.58968 3.42194ZM6.58968 8.42194L4.75296 10.2571L4.16624 9.66959C3.99012 9.49347 3.75125 9.39453 3.50218 9.39453C3.2531 9.39453 3.01423 9.49347 2.83811 9.66959C2.66199 9.84571 2.56305 10.0846 2.56305 10.3337C2.56305 10.5827 2.66199 10.8216 2.83811 10.9977L4.08811 12.2477C4.17521 12.3351 4.2787 12.4045 4.39266 12.4518C4.50661 12.4991 4.62879 12.5235 4.75218 12.5235C4.87556 12.5235 4.99774 12.4991 5.11169 12.4518C5.22565 12.4045 5.32914 12.3351 5.41624 12.2477L7.91624 9.74772C8.09236 9.5716 8.1913 9.33273 8.1913 9.08366C8.1913 8.83459 8.09236 8.59571 7.91624 8.41959C7.74012 8.24347 7.50125 8.14453 7.25218 8.14453C7.0031 8.14453 6.76423 8.24347 6.58811 8.41959L6.58968 8.42194ZM6.58968 13.4219L4.75296 15.2571L4.16624 14.6696C4.07903 14.5824 3.9755 14.5132 3.86156 14.466C3.74762 14.4188 3.6255 14.3945 3.50218 14.3945C3.37885 14.3945 3.25673 14.4188 3.14279 14.466C3.02885 14.5132 2.92532 14.5824 2.83811 14.6696C2.75091 14.7568 2.68173 14.8603 2.63454 14.9743C2.58734 15.0882 2.56305 15.2103 2.56305 15.3337C2.56305 15.457 2.58734 15.5791 2.63454 15.693C2.68173 15.807 2.75091 15.9105 2.83811 15.9977L4.08811 17.2477C4.17521 17.3351 4.2787 17.4045 4.39266 17.4518C4.50661 17.4991 4.62879 17.5235 4.75218 17.5235C4.87556 17.5235 4.99774 17.4991 5.11169 17.4518C5.22565 17.4045 5.32914 17.3351 5.41624 17.2477L7.91624 14.7477C8.09236 14.5716 8.1913 14.3327 8.1913 14.0837C8.1913 13.8346 8.09236 13.5957 7.91624 13.4196C7.74012 13.2435 7.50125 13.1445 7.25218 13.1445C7.0031 13.1445 6.76423 13.2435 6.58811 13.4196L6.58968 13.4219Z" fill="#CBD5E1"/>
+                                                                </svg>
+                                                                <h1 class="mx-2 mb-0" style="font-size: 20px;">
+                                                                    ${exam.examTeacherSubject.examQuestionsCount}
+                                                                </h1>
+                                                            </div>
+                                                            <p class="mb-0" style="color: #64748B; font-weight: 400; font-size: 14px;">
+                                                                Questões totais
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M14.7912 10.9987L8.54121 17.2487C8.36509 17.4248 8.12622 17.5238 7.87714 17.5238C7.62807 17.5238 7.3892 17.4248 7.21308 17.2487C7.03696 17.0726 6.93802 16.8337 6.93802 16.5846C6.93802 16.3356 7.03696 16.0967 7.21308 15.9206L12.7998 10.3354L7.21465 4.7487C7.12744 4.66149 7.05826 4.55796 7.01107 4.44402C6.96387 4.33008 6.93958 4.20796 6.93958 4.08463C6.93958 3.96131 6.96387 3.83919 7.01107 3.72525C7.05826 3.61131 7.12744 3.50778 7.21465 3.42057C7.30185 3.33337 7.40538 3.26419 7.51932 3.21699C7.63326 3.1698 7.75538 3.14551 7.87871 3.14551C8.00204 3.14551 8.12416 3.1698 8.2381 3.21699C8.35204 3.26419 8.45556 3.33337 8.54277 3.42057L14.7928 9.67057C14.8801 9.75777 14.9493 9.86135 14.9965 9.97536C15.0437 10.0894 15.0679 10.2116 15.0677 10.335C15.0676 10.4583 15.0431 10.5805 14.9956 10.6944C14.9482 10.8083 14.8787 10.9117 14.7912 10.9987Z" fill="#FD853A"/>
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="h-100 d-flex align-items-center justify-content-between" style="gap: 4px; border-radius: 8px; padding: 32px; border: 1px solid #E2E8F0;">
+                                                        <div>
+                                                            <div class="d-flex">
+                                                                <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                    <path d="M14.1662 7.79717C14.2536 7.88426 14.323 7.98776 14.3703 8.10171C14.4176 8.21567 14.442 8.33784 14.442 8.46123C14.442 8.58462 14.4176 8.70679 14.3703 8.82075C14.323 8.9347 14.2536 9.0382 14.1662 9.12529L9.79121 13.5003C9.70412 13.5877 9.60062 13.657 9.48667 13.7044C9.37271 13.7517 9.25054 13.776 9.12715 13.776C9.00376 13.776 8.88159 13.7517 8.76763 13.7044C8.65368 13.657 8.55019 13.5877 8.46309 13.5003L6.58809 11.6253C6.50088 11.5381 6.43171 11.4346 6.38451 11.3206C6.33732 11.2067 6.31303 11.0846 6.31303 10.9612C6.31303 10.8379 6.33732 10.7158 6.38451 10.6018C6.43171 10.4879 6.50088 10.3844 6.58809 10.2972C6.6753 10.21 6.77882 10.1408 6.89276 10.0936C7.0067 10.0464 7.12882 10.0221 7.25215 10.0221C7.37548 10.0221 7.4976 10.0464 7.61154 10.0936C7.72548 10.1408 7.82901 10.21 7.91621 10.2972L9.12793 11.5073L12.8397 7.79482C12.9269 7.70781 13.0304 7.63885 13.1443 7.59187C13.2582 7.54489 13.3802 7.52082 13.5034 7.52104C13.6266 7.52126 13.7486 7.54576 13.8623 7.59314C13.976 7.64052 14.0793 7.70985 14.1662 7.79717ZM18.8154 10.3354C18.8154 12.0042 18.3206 13.6355 17.3935 15.0231C16.4663 16.4106 15.1486 17.4921 13.6068 18.1307C12.0651 18.7693 10.3686 18.9364 8.73186 18.6108C7.09514 18.2853 5.59173 17.4817 4.41172 16.3017C3.23171 15.1217 2.42812 13.6182 2.10256 11.9815C1.77699 10.3448 1.94409 8.64831 2.5827 7.10656C3.22131 5.56481 4.30277 4.24705 5.69031 3.31992C7.07785 2.3928 8.70915 1.89795 10.3779 1.89795C12.6149 1.90043 14.7596 2.79018 16.3414 4.37198C17.9232 5.95378 18.813 8.09845 18.8154 10.3354ZM16.9404 10.3354C16.9404 9.03751 16.5555 7.76872 15.8345 6.68952C15.1134 5.61032 14.0884 4.76919 12.8893 4.27249C11.6902 3.77579 10.3707 3.64583 9.09765 3.89905C7.82465 4.15226 6.65533 4.77728 5.73755 5.69506C4.81976 6.61284 4.19475 7.78217 3.94153 9.05517C3.68831 10.3282 3.81827 11.6477 4.31497 12.8468C4.81167 14.0459 5.65281 15.0709 6.732 15.792C7.8112 16.5131 9.07999 16.8979 10.3779 16.8979C12.1178 16.8961 13.786 16.2041 15.0163 14.9738C16.2466 13.7435 16.9386 12.0754 16.9404 10.3354Z" fill="#CBD5E1"/>
+                                                                </svg>
+                                                                <h1 class="mx-2 mb-0" style="font-size: 20px;">
+                                                                    ${exam.examTeacherSubject.objectivesQuantity}
+                                                                </h1>
+                                                            </div>
+                                                            <p class="mb-0" style="color: #64748B; font-weight: 400; font-size: 14px;">
+                                                                Objetivas
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M14.7912 10.9987L8.54121 17.2487C8.36509 17.4248 8.12622 17.5238 7.87714 17.5238C7.62807 17.5238 7.3892 17.4248 7.21308 17.2487C7.03696 17.0726 6.93802 16.8337 6.93802 16.5846C6.93802 16.3356 7.03696 16.0967 7.21308 15.9206L12.7998 10.3354L7.21465 4.7487C7.12744 4.66149 7.05826 4.55796 7.01107 4.44402C6.96387 4.33008 6.93958 4.20796 6.93958 4.08463C6.93958 3.96131 6.96387 3.83919 7.01107 3.72525C7.05826 3.61131 7.12744 3.50778 7.21465 3.42057C7.30185 3.33337 7.40538 3.26419 7.51932 3.21699C7.63326 3.1698 7.75538 3.14551 7.87871 3.14551C8.00204 3.14551 8.12416 3.1698 8.2381 3.21699C8.35204 3.26419 8.45556 3.33337 8.54277 3.42057L14.7928 9.67057C14.8801 9.75777 14.9493 9.86135 14.9965 9.97536C15.0437 10.0894 15.0679 10.2116 15.0677 10.335C15.0676 10.4583 15.0431 10.5805 14.9956 10.6944C14.9482 10.8083 14.8787 10.9117 14.7912 10.9987Z" fill="#FD853A"/>
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="h-100 d-flex align-items-center justify-content-between" style="gap: 4px; border-radius: 8px; padding: 32px; border: 1px solid #E2E8F0;">
+                                                        <div>
+                                                            <div class="d-flex">
+                                                                <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                    <path d="M17.2529 3.14795H3.50293C3.08853 3.14795 2.6911 3.31257 2.39808 3.60559C2.10505 3.89862 1.94043 4.29605 1.94043 4.71045V15.9604C1.94043 16.3749 2.10505 16.7723 2.39808 17.0653C2.6911 17.3583 3.08853 17.5229 3.50293 17.5229H17.2529C17.6673 17.5229 18.0648 17.3583 18.3578 17.0653C18.6508 16.7723 18.8154 16.3749 18.8154 15.9604V4.71045C18.8154 4.29605 18.6508 3.89862 18.3578 3.60559C18.0648 3.31257 17.6673 3.14795 17.2529 3.14795ZM16.9404 15.6479H3.81543V5.02295H16.9404V15.6479ZM5.69043 7.52295C5.69043 7.27431 5.7892 7.03585 5.96502 6.86004C6.14083 6.68422 6.37929 6.58545 6.62793 6.58545H14.1279C14.3766 6.58545 14.615 6.68422 14.7908 6.86004C14.9667 7.03585 15.0654 7.27431 15.0654 7.52295C15.0654 7.77159 14.9667 8.01005 14.7908 8.18586C14.615 8.36168 14.3766 8.46045 14.1279 8.46045H6.62793C6.37929 8.46045 6.14083 8.36168 5.96502 8.18586C5.7892 8.01005 5.69043 7.77159 5.69043 7.52295ZM5.69043 10.3354C5.69043 10.0868 5.7892 9.84835 5.96502 9.67254C6.14083 9.49672 6.37929 9.39795 6.62793 9.39795H14.1279C14.3766 9.39795 14.615 9.49672 14.7908 9.67254C14.9667 9.84835 15.0654 10.0868 15.0654 10.3354C15.0654 10.5841 14.9667 10.8225 14.7908 10.9984C14.615 11.1742 14.3766 11.2729 14.1279 11.2729H6.62793C6.37929 11.2729 6.14083 11.1742 5.96502 10.9984C5.7892 10.8225 5.69043 10.5841 5.69043 10.3354ZM5.69043 13.1479C5.69043 12.8993 5.7892 12.6609 5.96502 12.485C6.14083 12.3092 6.37929 12.2104 6.62793 12.2104H14.1279C14.3766 12.2104 14.615 12.3092 14.7908 12.485C14.9667 12.6609 15.0654 12.8993 15.0654 13.1479C15.0654 13.3966 14.9667 13.635 14.7908 13.8109C14.615 13.9867 14.3766 14.0854 14.1279 14.0854H6.62793C6.37929 14.0854 6.14083 13.9867 5.96502 13.8109C5.7892 13.635 5.69043 13.3966 5.69043 13.1479Z" fill="#CBD5E1"/>
+                                                                </svg>
+                                                                <h1 class="mx-2 mb-0" style="font-size: 20px;">
+                                                                    ${exam.examTeacherSubject.discursivesQuantity}
+                                                                </h1>
+                                                            </div>
+                                                            <p class="mb-0" style="color: #64748B; font-weight: 400; font-size: 14px;">
+                                                                Discussivas
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M14.7912 10.9987L8.54121 17.2487C8.36509 17.4248 8.12622 17.5238 7.87714 17.5238C7.62807 17.5238 7.3892 17.4248 7.21308 17.2487C7.03696 17.0726 6.93802 16.8337 6.93802 16.5846C6.93802 16.3356 7.03696 16.0967 7.21308 15.9206L12.7998 10.3354L7.21465 4.7487C7.12744 4.66149 7.05826 4.55796 7.01107 4.44402C6.96387 4.33008 6.93958 4.20796 6.93958 4.08463C6.93958 3.96131 6.96387 3.83919 7.01107 3.72525C7.05826 3.61131 7.12744 3.50778 7.21465 3.42057C7.30185 3.33337 7.40538 3.26419 7.51932 3.21699C7.63326 3.1698 7.75538 3.14551 7.87871 3.14551C8.00204 3.14551 8.12416 3.1698 8.2381 3.21699C8.35204 3.26419 8.45556 3.33337 8.54277 3.42057L14.7928 9.67057C14.8801 9.75777 14.9493 9.86135 14.9965 9.97536C15.0437 10.0894 15.0679 10.2116 15.0677 10.335C15.0676 10.4583 15.0431 10.5805 14.9956 10.6944C14.9482 10.8083 14.8787 10.9117 14.7912 10.9987Z" fill="#FD853A"/>
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-4">
+                                                    <div class="h-100" style="gap: 4px; border-radius: 8px; padding: 24px; background: #F8FAFC;">
+                                                        <div class="row mb-0">
+                                                            <div class="col-12">
+                                                                <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                    <path d="M18.1905 10.3352C18.1905 10.5839 18.0917 10.8223 17.9159 10.9981C17.7401 11.1739 17.5016 11.2727 17.253 11.2727H10.378C10.1293 11.2727 9.89086 11.1739 9.71504 10.9981C9.53923 10.8223 9.44046 10.5839 9.44046 10.3352C9.44046 10.0866 9.53923 9.84812 9.71504 9.67231C9.89086 9.49649 10.1293 9.39772 10.378 9.39772H17.253C17.5016 9.39772 17.7401 9.49649 17.9159 9.67231C18.0917 9.84812 18.1905 10.0866 18.1905 10.3352ZM10.378 6.27272H17.253C17.5016 6.27272 17.7401 6.17395 17.9159 5.99813C18.0917 5.82232 18.1905 5.58386 18.1905 5.33522C18.1905 5.08658 18.0917 4.84812 17.9159 4.67231C17.7401 4.49649 17.5016 4.39772 17.253 4.39772H10.378C10.1293 4.39772 9.89086 4.49649 9.71504 4.67231C9.53923 4.84812 9.44046 5.08658 9.44046 5.33522C9.44046 5.58386 9.53923 5.82232 9.71504 5.99813C9.89086 6.17395 10.1293 6.27272 10.378 6.27272ZM17.253 14.3977H10.378C10.1293 14.3977 9.89086 14.4965 9.71504 14.6723C9.53923 14.8481 9.44046 15.0866 9.44046 15.3352C9.44046 15.5839 9.53923 15.8223 9.71504 15.9981C9.89086 16.1739 10.1293 16.2727 10.378 16.2727H17.253C17.5016 16.2727 17.7401 16.1739 17.9159 15.9981C18.0917 15.8223 18.1905 15.5839 18.1905 15.3352C18.1905 15.0866 18.0917 14.8481 17.9159 14.6723C17.7401 14.4965 17.5016 14.3977 17.253 14.3977ZM6.58968 3.42194L4.75296 5.25709L4.16624 4.66959C3.99012 4.49347 3.75125 4.39453 3.50218 4.39453C3.2531 4.39453 3.01423 4.49347 2.83811 4.66959C2.66199 4.84571 2.56305 5.08459 2.56305 5.33366C2.56305 5.58273 2.66199 5.8216 2.83811 5.99772L4.08811 7.24772C4.17521 7.33512 4.2787 7.40447 4.39266 7.45178C4.50661 7.4991 4.62879 7.52346 4.75218 7.52346C4.87556 7.52346 4.99774 7.4991 5.11169 7.45178C5.22565 7.40447 5.32914 7.33512 5.41624 7.24772L7.91624 4.74772C8.09236 4.5716 8.1913 4.33273 8.1913 4.08366C8.1913 3.83459 8.09236 3.59572 7.91624 3.41959C7.74012 3.24347 7.50125 3.14453 7.25218 3.14453C7.0031 3.14453 6.76423 3.24347 6.58811 3.41959L6.58968 3.42194ZM6.58968 8.42194L4.75296 10.2571L4.16624 9.66959C3.99012 9.49347 3.75125 9.39453 3.50218 9.39453C3.2531 9.39453 3.01423 9.49347 2.83811 9.66959C2.66199 9.84571 2.56305 10.0846 2.56305 10.3337C2.56305 10.5827 2.66199 10.8216 2.83811 10.9977L4.08811 12.2477C4.17521 12.3351 4.2787 12.4045 4.39266 12.4518C4.50661 12.4991 4.62879 12.5235 4.75218 12.5235C4.87556 12.5235 4.99774 12.4991 5.11169 12.4518C5.22565 12.4045 5.32914 12.3351 5.41624 12.2477L7.91624 9.74772C8.09236 9.5716 8.1913 9.33273 8.1913 9.08366C8.1913 8.83459 8.09236 8.59571 7.91624 8.41959C7.74012 8.24347 7.50125 8.14453 7.25218 8.14453C7.0031 8.14453 6.76423 8.24347 6.58811 8.41959L6.58968 8.42194ZM6.58968 13.4219L4.75296 15.2571L4.16624 14.6696C4.07903 14.5824 3.9755 14.5132 3.86156 14.466C3.74762 14.4188 3.6255 14.3945 3.50218 14.3945C3.37885 14.3945 3.25673 14.4188 3.14279 14.466C3.02885 14.5132 2.92532 14.5824 2.83811 14.6696C2.75091 14.7568 2.68173 14.8603 2.63454 14.9743C2.58734 15.0882 2.56305 15.2103 2.56305 15.3337C2.56305 15.457 2.58734 15.5791 2.63454 15.693C2.68173 15.807 2.75091 15.9105 2.83811 15.9977L4.08811 17.2477C4.17521 17.3351 4.2787 17.4045 4.39266 17.4518C4.50661 17.4991 4.62879 17.5235 4.75218 17.5235C4.87556 17.5235 4.99774 17.4991 5.11169 17.4518C5.22565 17.4045 5.32914 17.3351 5.41624 17.2477L7.91624 14.7477C8.09236 14.5716 8.1913 14.3327 8.1913 14.0837C8.1913 13.8346 8.09236 13.5957 7.91624 13.4196C7.74012 13.2435 7.50125 13.1445 7.25218 13.1445C7.0031 13.1445 6.76423 13.2435 6.58811 13.4196L6.58968 13.4219Z" fill="#CBD5E1"/>
+                                                                </svg>
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <p class="text my-2" style="font-weight: 600;">Competências</p> 
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <p class="text mb-0" style="font-weight: 400;" v-if="competences.length">
+                                                                    Proporciona melhoria em <strong>${competences.slice(0, 3).map(c => c.split(' ').slice(0, 3).join(' ')).join(', ')}</strong>.
+                                                                </p> 
+                                                                <p class="text mb-0" style="font-weight: 400;" v-else>
+                                                                    Nenhuma questão dessa lista está qualificada com competência.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="h-100" style="gap: 4px; border-radius: 8px; padding: 24px; background: #F8FAFC;">
+                                                        <div class="row mb-0">
+                                                            <div class="col-12">
+                                                                <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                    <path d="M18.1905 10.3352C18.1905 10.5839 18.0917 10.8223 17.9159 10.9981C17.7401 11.1739 17.5016 11.2727 17.253 11.2727H10.378C10.1293 11.2727 9.89086 11.1739 9.71504 10.9981C9.53923 10.8223 9.44046 10.5839 9.44046 10.3352C9.44046 10.0866 9.53923 9.84812 9.71504 9.67231C9.89086 9.49649 10.1293 9.39772 10.378 9.39772H17.253C17.5016 9.39772 17.7401 9.49649 17.9159 9.67231C18.0917 9.84812 18.1905 10.0866 18.1905 10.3352ZM10.378 6.27272H17.253C17.5016 6.27272 17.7401 6.17395 17.9159 5.99813C18.0917 5.82232 18.1905 5.58386 18.1905 5.33522C18.1905 5.08658 18.0917 4.84812 17.9159 4.67231C17.7401 4.49649 17.5016 4.39772 17.253 4.39772H10.378C10.1293 4.39772 9.89086 4.49649 9.71504 4.67231C9.53923 4.84812 9.44046 5.08658 9.44046 5.33522C9.44046 5.58386 9.53923 5.82232 9.71504 5.99813C9.89086 6.17395 10.1293 6.27272 10.378 6.27272ZM17.253 14.3977H10.378C10.1293 14.3977 9.89086 14.4965 9.71504 14.6723C9.53923 14.8481 9.44046 15.0866 9.44046 15.3352C9.44046 15.5839 9.53923 15.8223 9.71504 15.9981C9.89086 16.1739 10.1293 16.2727 10.378 16.2727H17.253C17.5016 16.2727 17.7401 16.1739 17.9159 15.9981C18.0917 15.8223 18.1905 15.5839 18.1905 15.3352C18.1905 15.0866 18.0917 14.8481 17.9159 14.6723C17.7401 14.4965 17.5016 14.3977 17.253 14.3977ZM6.58968 3.42194L4.75296 5.25709L4.16624 4.66959C3.99012 4.49347 3.75125 4.39453 3.50218 4.39453C3.2531 4.39453 3.01423 4.49347 2.83811 4.66959C2.66199 4.84571 2.56305 5.08459 2.56305 5.33366C2.56305 5.58273 2.66199 5.8216 2.83811 5.99772L4.08811 7.24772C4.17521 7.33512 4.2787 7.40447 4.39266 7.45178C4.50661 7.4991 4.62879 7.52346 4.75218 7.52346C4.87556 7.52346 4.99774 7.4991 5.11169 7.45178C5.22565 7.40447 5.32914 7.33512 5.41624 7.24772L7.91624 4.74772C8.09236 4.5716 8.1913 4.33273 8.1913 4.08366C8.1913 3.83459 8.09236 3.59572 7.91624 3.41959C7.74012 3.24347 7.50125 3.14453 7.25218 3.14453C7.0031 3.14453 6.76423 3.24347 6.58811 3.41959L6.58968 3.42194ZM6.58968 8.42194L4.75296 10.2571L4.16624 9.66959C3.99012 9.49347 3.75125 9.39453 3.50218 9.39453C3.2531 9.39453 3.01423 9.49347 2.83811 9.66959C2.66199 9.84571 2.56305 10.0846 2.56305 10.3337C2.56305 10.5827 2.66199 10.8216 2.83811 10.9977L4.08811 12.2477C4.17521 12.3351 4.2787 12.4045 4.39266 12.4518C4.50661 12.4991 4.62879 12.5235 4.75218 12.5235C4.87556 12.5235 4.99774 12.4991 5.11169 12.4518C5.22565 12.4045 5.32914 12.3351 5.41624 12.2477L7.91624 9.74772C8.09236 9.5716 8.1913 9.33273 8.1913 9.08366C8.1913 8.83459 8.09236 8.59571 7.91624 8.41959C7.74012 8.24347 7.50125 8.14453 7.25218 8.14453C7.0031 8.14453 6.76423 8.24347 6.58811 8.41959L6.58968 8.42194ZM6.58968 13.4219L4.75296 15.2571L4.16624 14.6696C4.07903 14.5824 3.9755 14.5132 3.86156 14.466C3.74762 14.4188 3.6255 14.3945 3.50218 14.3945C3.37885 14.3945 3.25673 14.4188 3.14279 14.466C3.02885 14.5132 2.92532 14.5824 2.83811 14.6696C2.75091 14.7568 2.68173 14.8603 2.63454 14.9743C2.58734 15.0882 2.56305 15.2103 2.56305 15.3337C2.56305 15.457 2.58734 15.5791 2.63454 15.693C2.68173 15.807 2.75091 15.9105 2.83811 15.9977L4.08811 17.2477C4.17521 17.3351 4.2787 17.4045 4.39266 17.4518C4.50661 17.4991 4.62879 17.5235 4.75218 17.5235C4.87556 17.5235 4.99774 17.4991 5.11169 17.4518C5.22565 17.4045 5.32914 17.3351 5.41624 17.2477L7.91624 14.7477C8.09236 14.5716 8.1913 14.3327 8.1913 14.0837C8.1913 13.8346 8.09236 13.5957 7.91624 13.4196C7.74012 13.2435 7.50125 13.1445 7.25218 13.1445C7.0031 13.1445 6.76423 13.2435 6.58811 13.4196L6.58968 13.4219Z" fill="#CBD5E1"/>
+                                                                </svg>
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <p class="text my-2" style="font-weight: 600;">Habilidades</p>  
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <p class="text mb-0" style="font-weight: 400;" v-if="abilities.length">
+                                                                    Proporciona melhoria em <strong>${abilities.slice(0, 3).map(a => a.split(' ').slice(0, 3).join(' ')).join(', ')}</strong>.
+                                                                </p> 
+                                                                <p class="text mb-0" style="font-weight: 400;" v-else>
+                                                                    Nenhuma questão dessa lista está qualificada com habilidade.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="h-100" style="gap: 4px; border-radius: 8px; padding: 24px; background: #F8FAFC;">
+                                                        <div class="row mb-0">
+                                                            <div class="col-12">
+                                                                <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                    <path d="M18.1905 10.3352C18.1905 10.5839 18.0917 10.8223 17.9159 10.9981C17.7401 11.1739 17.5016 11.2727 17.253 11.2727H10.378C10.1293 11.2727 9.89086 11.1739 9.71504 10.9981C9.53923 10.8223 9.44046 10.5839 9.44046 10.3352C9.44046 10.0866 9.53923 9.84812 9.71504 9.67231C9.89086 9.49649 10.1293 9.39772 10.378 9.39772H17.253C17.5016 9.39772 17.7401 9.49649 17.9159 9.67231C18.0917 9.84812 18.1905 10.0866 18.1905 10.3352ZM10.378 6.27272H17.253C17.5016 6.27272 17.7401 6.17395 17.9159 5.99813C18.0917 5.82232 18.1905 5.58386 18.1905 5.33522C18.1905 5.08658 18.0917 4.84812 17.9159 4.67231C17.7401 4.49649 17.5016 4.39772 17.253 4.39772H10.378C10.1293 4.39772 9.89086 4.49649 9.71504 4.67231C9.53923 4.84812 9.44046 5.08658 9.44046 5.33522C9.44046 5.58386 9.53923 5.82232 9.71504 5.99813C9.89086 6.17395 10.1293 6.27272 10.378 6.27272ZM17.253 14.3977H10.378C10.1293 14.3977 9.89086 14.4965 9.71504 14.6723C9.53923 14.8481 9.44046 15.0866 9.44046 15.3352C9.44046 15.5839 9.53923 15.8223 9.71504 15.9981C9.89086 16.1739 10.1293 16.2727 10.378 16.2727H17.253C17.5016 16.2727 17.7401 16.1739 17.9159 15.9981C18.0917 15.8223 18.1905 15.5839 18.1905 15.3352C18.1905 15.0866 18.0917 14.8481 17.9159 14.6723C17.7401 14.4965 17.5016 14.3977 17.253 14.3977ZM6.58968 3.42194L4.75296 5.25709L4.16624 4.66959C3.99012 4.49347 3.75125 4.39453 3.50218 4.39453C3.2531 4.39453 3.01423 4.49347 2.83811 4.66959C2.66199 4.84571 2.56305 5.08459 2.56305 5.33366C2.56305 5.58273 2.66199 5.8216 2.83811 5.99772L4.08811 7.24772C4.17521 7.33512 4.2787 7.40447 4.39266 7.45178C4.50661 7.4991 4.62879 7.52346 4.75218 7.52346C4.87556 7.52346 4.99774 7.4991 5.11169 7.45178C5.22565 7.40447 5.32914 7.33512 5.41624 7.24772L7.91624 4.74772C8.09236 4.5716 8.1913 4.33273 8.1913 4.08366C8.1913 3.83459 8.09236 3.59572 7.91624 3.41959C7.74012 3.24347 7.50125 3.14453 7.25218 3.14453C7.0031 3.14453 6.76423 3.24347 6.58811 3.41959L6.58968 3.42194ZM6.58968 8.42194L4.75296 10.2571L4.16624 9.66959C3.99012 9.49347 3.75125 9.39453 3.50218 9.39453C3.2531 9.39453 3.01423 9.49347 2.83811 9.66959C2.66199 9.84571 2.56305 10.0846 2.56305 10.3337C2.56305 10.5827 2.66199 10.8216 2.83811 10.9977L4.08811 12.2477C4.17521 12.3351 4.2787 12.4045 4.39266 12.4518C4.50661 12.4991 4.62879 12.5235 4.75218 12.5235C4.87556 12.5235 4.99774 12.4991 5.11169 12.4518C5.22565 12.4045 5.32914 12.3351 5.41624 12.2477L7.91624 9.74772C8.09236 9.5716 8.1913 9.33273 8.1913 9.08366C8.1913 8.83459 8.09236 8.59571 7.91624 8.41959C7.74012 8.24347 7.50125 8.14453 7.25218 8.14453C7.0031 8.14453 6.76423 8.24347 6.58811 8.41959L6.58968 8.42194ZM6.58968 13.4219L4.75296 15.2571L4.16624 14.6696C4.07903 14.5824 3.9755 14.5132 3.86156 14.466C3.74762 14.4188 3.6255 14.3945 3.50218 14.3945C3.37885 14.3945 3.25673 14.4188 3.14279 14.466C3.02885 14.5132 2.92532 14.5824 2.83811 14.6696C2.75091 14.7568 2.68173 14.8603 2.63454 14.9743C2.58734 15.0882 2.56305 15.2103 2.56305 15.3337C2.56305 15.457 2.58734 15.5791 2.63454 15.693C2.68173 15.807 2.75091 15.9105 2.83811 15.9977L4.08811 17.2477C4.17521 17.3351 4.2787 17.4045 4.39266 17.4518C4.50661 17.4991 4.62879 17.5235 4.75218 17.5235C4.87556 17.5235 4.99774 17.4991 5.11169 17.4518C5.22565 17.4045 5.32914 17.3351 5.41624 17.2477L7.91624 14.7477C8.09236 14.5716 8.1913 14.3327 8.1913 14.0837C8.1913 13.8346 8.09236 13.5957 7.91624 13.4196C7.74012 13.2435 7.50125 13.1445 7.25218 13.1445C7.0031 13.1445 6.76423 13.2435 6.58811 13.4196L6.58968 13.4219Z" fill="#CBD5E1"/>
+                                                                </svg>
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <p class="text my-2" style="font-weight: 600;">Assuntos</p> 
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <p class="text mb-0" style="font-weight: 400;" v-if="topics.length">
+                                                                    A lista proporciona os assuntos <strong>${topics.slice(0, 3).map(t => t.split(' ').slice(0, 3).join(' ')).join(', ')}</strong>.
+                                                                </p> 
+                                                                <p class="text mb-0" style="font-weight: 400;" v-else>
+                                                                    Nenhuma questão dessa lista está qualificada com assunto.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row" v-if="!isPublished"> 
+                                        <div class="col-12">
+                                            <a :href="exam.examTeacherSubject.urls.addQuestions"  class="btn btn-white btn-block d-flex align-items-center justify-content-center" style="border-radius: 8px; min-height: 50px; font-size: 14px; font-weight: 600;">
+                                                <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M21.9545 6.94866L17.7648 2.75991C17.4132 2.4084 16.9364 2.21094 16.4392 2.21094C15.942 2.21094 15.4652 2.4084 15.1136 2.75991L3.55231 14.3202C3.37761 14.4939 3.23909 14.7004 3.14479 14.928C3.05048 15.1555 3.00227 15.3995 3.00294 15.6458V19.8355C3.00294 20.3328 3.20048 20.8097 3.55211 21.1614C3.90374 21.513 4.38066 21.7105 4.87794 21.7105H20.6279C20.9263 21.7105 21.2125 21.592 21.4234 21.381C21.6344 21.1701 21.7529 20.8839 21.7529 20.5855C21.7529 20.2872 21.6344 20.001 21.4234 19.79C21.2125 19.5791 20.9263 19.4605 20.6279 19.4605H12.0967L21.9545 9.60085C22.1287 9.42673 22.2669 9.22 22.3611 8.99246C22.4554 8.76493 22.5039 8.52105 22.5039 8.27476C22.5039 8.02846 22.4554 7.78458 22.3611 7.55705C22.2669 7.32951 22.1287 7.12278 21.9545 6.94866ZM8.90919 19.4605H5.25294V15.8043L13.1279 7.92929L16.7842 11.5855L8.90919 19.4605ZM18.3779 9.99179L14.7217 6.33554L16.4411 4.61616L20.0973 8.27241L18.3779 9.99179Z" fill="#CBD5E1"/>
+                                                </svg>
+                                                <span class="mx-2" style="line-height: 0px;">
+                                                    Editar questões da lista
+                                                </span>                                                
+                                            </a>
+                                        </div>
+                                        <div class="col-12 mt-2">
+                                            <button type="button" :disabled="controls.loading" class="not-disable btn btn-block lize-btn-warning" @click="controls.expanded = 'application'">Salvar e continuar</button> 
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="card cp" @click="questionsIsCompleted ? controls.expanded = 'application' : ''" style="border-radius: 16px; gap: 8px; border: none;" :style="controls.expanded == 'application' ? 'background-color: #FFFFFF;' : 'background-color: transparent !important; border: 1px solid #E5E7EA !important;'"> 
+                        <div class="card-header d-flex justify-content-between align-items-center" id="headingOne">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <template v-if="applicationIsCompleted">
+                                    <svg width="28" height="28" viewBox="0 0 33 33" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect x="0.37793" y="0.515625" width="32" height="32" rx="16" fill="#41C588"/>
+                                        <path d="M23.0446 11.5156L13.8779 20.6823L9.71124 16.5156" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </template>
+                                <template v-else>
+                                    <span class="text rounded-circle d-flex align-items-center justify-content-center" style="font-size: 14px; height: 32px; width: 32px;" :style="controls.expanded == 'application' ? 'background-color: #F9FAFA !important;' : 'background-color: #FFFFFF;'">
+                                        3
+                                    </span>
+                                </template>
+                                <div class="text">
+                                    <span class="mx-3 fw-600">Aplicação</span>
+                                </div>
+                                <div class="text" v-if="applicationIsCompleted">
+                                    <span class="mx-3 fw-400">
+                                        ${moment(application.date).format('L')} as ${application.start} até ${moment(application.dateEnd).format('L')} as ${application.end}
+                                    </span>
+                                </div>
+                            </div>
+                            <template>
+                                <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
+                                    <template v-if="controls.expanded == 'application'">
+                                        <svg width="17" height="3" viewBox="0 0 17 3" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M1.37793 1.51562H15.3779" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </template>
+                                    <template v-else>
+                                        <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M8.37793 1.51562V15.5156M1.37793 8.51562H15.3779" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </template>
+                                </button>
+                            </template>
+                        </div>
+                        {% if object %}
+                        <div id="collapseThree" v-show="questionsIsCompleted" class="collapse" aria-labelledby="headingOne" data-parent="#accordionOne">
+                            <form method="POST" onsubmit="return false" @submit="saveApplication()">
+                                <div class="card-body">
+                                    <div class="row mb-0">
+                                        <div class="col">
+                                            <div class="form-group">
+                                                <label for="idApplicationDate" class="text fw-500 mb-2" style="font-size: 14px;">Data da aplicação</label>
+                                                <input type="date" id="idApplicationDate" v-model="application.date" class="form-control custom-form-control" required>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="form-group">
+                                                <label for="idApplicationStart" class="text fw-500 mb-2" style="font-size: 14px;">Horário inicial</label>
+                                                <input type="time" id="idApplicationStart" v-model="application.start" class="form-control custom-form-control" required>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="form-group">
+                                                <label for="idApplicationDateEnd" class="text fw-500 mb-2" style="font-size: 14px;">Data final</label>
+                                                <input type="date" id="idApplicationDateEnd" v-model="application.dateEnd" :style="application.dateEnd < application.date ? 'border: 1px solid red;':''" :min="application.date" class="form-control custom-form-control" required>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="form-group">
+                                                <label for="idApplicationEnd" class="text fw-500 mb-2" style="font-size: 14px;">Horário final</label>                                                    
+                                                <input type="time" id="idApplicationEnd" v-model="application.end" :style="application.dateEnd == application.date && application.end < application.start ? 'border: 1px solid red;':''" class="form-control custom-form-control" required> 
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 px-0">
+                                        <p class="text" style="font-weight: 600;">Quem irá fazer a lista de exercício?</p>
+                                    </div>
+                                    <div class="col-12 px-0">
+                                        <div class="" style="border: 1px solid #D0D5DD; min-height: 72px; border-radius: 8px; padding: 12px;"> 
+                                            <div class="d-flex justify-content-between aling-items-center" @click="controls.editingSchoolClasses = !controls.editingSchoolClasses">
+                                                <div class="d-flex align-items-center">
+                                                    <svg width="49" height="49" viewBox="0 0 49 49" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <circle cx="24.3779" cy="24.5156" r="24" fill="#F9FAFB"/>
+                                                        <path d="M28.3779 15.9834C29.8596 16.7197 30.8779 18.2488 30.8779 20.0156C30.8779 21.7825 29.8596 23.3115 28.3779 24.0479M30.3779 29.282C31.8894 29.966 33.2505 31.0806 34.3779 32.5156M14.3779 32.5156C16.3244 30.0382 18.9671 28.5156 21.8779 28.5156C24.7887 28.5156 27.4314 30.0382 29.3779 32.5156M26.3779 20.0156C26.3779 22.5009 24.3632 24.5156 21.8779 24.5156C19.3926 24.5156 17.3779 22.5009 17.3779 20.0156C17.3779 17.5303 19.3926 15.5156 21.8779 15.5156C24.3632 15.5156 26.3779 17.5303 26.3779 20.0156Z" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    </svg>
+                                                    <span class="mx-2 text" style="font-weight: 500; font-size: 16px;">Turmas</span>
+                                                    <template v-if="selectedSchoolClasses.length">
+                                                        <span class="mx-2 text" style="font-weight: 400; font-size: 14px;">${selectedSchoolClasses.map(schoolClass => schoolClass.name).join(', ')}</span>
+                                                        <template v-if="selectedSchoolClasses.length > 2">
+                                                            <span class="mx-3 text" style="padding: 4px; border-radius: 4px; font-weight: 400; font-size: 12px; background-color: #FFFAF5; color: #EC4A0A;">+ ${selectedSchoolClasses.length - 2}</span>
+                                                        </template>
+                                                    </template>
+                                                </div>
+                                                <div class="d-flex align-items-center">
+                                                    <button class="btn btn-white" style="border-radius: 8px; min-height: 40px; font-size: 14px; font-weight: 600;" type="button">
+                                                        <template v-if="application.schoolClasses.length">
+                                                            <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M21.9545 6.94866L17.7648 2.75991C17.4132 2.4084 16.9364 2.21094 16.4392 2.21094C15.942 2.21094 15.4652 2.4084 15.1136 2.75991L3.55231 14.3202C3.37761 14.4939 3.23909 14.7004 3.14479 14.928C3.05048 15.1555 3.00227 15.3995 3.00294 15.6458V19.8355C3.00294 20.3328 3.20048 20.8097 3.55211 21.1614C3.90374 21.513 4.38066 21.7105 4.87794 21.7105H20.6279C20.9263 21.7105 21.2125 21.592 21.4234 21.381C21.6344 21.1701 21.7529 20.8839 21.7529 20.5855C21.7529 20.2872 21.6344 20.001 21.4234 19.79C21.2125 19.5791 20.9263 19.4605 20.6279 19.4605H12.0967L21.9545 9.60085C22.1287 9.42673 22.2669 9.22 22.3611 8.99246C22.4554 8.76493 22.5039 8.52105 22.5039 8.27476C22.5039 8.02846 22.4554 7.78458 22.3611 7.55705C22.2669 7.32951 22.1287 7.12278 21.9545 6.94866ZM8.90919 19.4605H5.25294V15.8043L13.1279 7.92929L16.7842 11.5855L8.90919 19.4605ZM18.3779 9.99179L14.7217 6.33554L16.4411 4.61616L20.0973 8.27241L18.3779 9.99179Z" fill="#CBD5E1"/>
+                                                            </svg>
+                                                            <span class="mx-2">
+                                                                Editar
+                                                            </span>                                        
+                                                        </template>
+                                                        <template v-else>
+                                                            <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M12.3779 5.51562V19.5156M5.37793 12.5156H19.3779" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                            </svg>
+                                                            Selecionar turmas
+                                                        </template>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div v-show="controls.editingSchoolClasses">
+                                                <div class="col-12 px-0">
+                                                    <hr class="my-3">
+                                                </div>
+                                                <div class="col-12">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <button @click="massSelection('schoolClasses', 'selectAll')" class="btn btn-white" style="padding: 8px 16px; border-radius: 8px; max-height: 34px; font-size: 12px; font-weight: 500;" type="button">
+                                                                Marcar todas
+                                                            </button>
+                                                            <button @click="massSelection('schoolClasses', 'unselectAll')" class="btn btn-white" style="padding: 8px 16px; border-radius: 8px; max-height: 34px; font-size: 12px; font-weight: 500;" type="button">
+                                                                Desmarcar todas
+                                                            </button>
+                                                        </div>
+                                                        <div class="d-flex">
+                                                            <button class="btn btn-white mx-2" data-toggle="dropdown" style="padding: 8px 16px; border-radius: 8px; max-height: 34px; font-size: 12px; font-weight: 600;" type="button">
+                                                                Filtrar
+                                                                <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                    <path d="M16.3154 10.625C16.3154 10.8736 16.2167 11.1121 16.0408 11.2879C15.865 11.4637 15.6266 11.5625 15.3779 11.5625H5.37793C5.12929 11.5625 4.89083 11.4637 4.71502 11.2879C4.5392 11.1121 4.44043 10.8736 4.44043 10.625C4.44043 10.3764 4.5392 10.1379 4.71502 9.96209C4.89083 9.78627 5.12929 9.6875 5.37793 9.6875H15.3779C15.6266 9.6875 15.865 9.78627 16.0408 9.96209C16.2167 10.1379 16.3154 10.3764 16.3154 10.625ZM18.5029 5.9375H2.25293C2.00429 5.9375 1.76583 6.03627 1.59002 6.21209C1.4142 6.3879 1.31543 6.62636 1.31543 6.875C1.31543 7.12364 1.4142 7.3621 1.59002 7.53791C1.76583 7.71373 2.00429 7.8125 2.25293 7.8125H18.5029C18.7516 7.8125 18.99 7.71373 19.1658 7.53791C19.3417 7.3621 19.4404 7.12364 19.4404 6.875C19.4404 6.62636 19.3417 6.3879 19.1658 6.21209C18.99 6.03627 18.7516 5.9375 18.5029 5.9375ZM12.2529 13.4375H8.50293C8.25429 13.4375 8.01583 13.5363 7.84002 13.7121C7.6642 13.8879 7.56543 14.1264 7.56543 14.375C7.56543 14.6236 7.6642 14.8621 7.84002 15.0379C8.01583 15.2137 8.25429 15.3125 8.50293 15.3125H12.2529C12.5016 15.3125 12.74 15.2137 12.9158 15.0379C13.0917 14.8621 13.1904 14.6236 13.1904 14.375C13.1904 14.1264 13.0917 13.8879 12.9158 13.7121C12.74 13.5363 12.5016 13.4375 12.2529 13.4375Z" fill="#FD853A"/>
+                                                                </svg>
+                                                            </button>
+                                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuLink" style="border-radius: 8px; padding: 8px 16px;">
+                                                                <a class="dropdown-item d-flex px-0" href="#" @click="ordering('schoolClasses', 'name', 'asc')">
+                                                                    <svg width="21" height="21" class="mr-2" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                        <path d="M16.9997 12.0383L11.3747 17.6633C11.2876 17.7507 11.1841 17.82 11.0701 17.8673C10.9562 17.9147 10.834 17.939 10.7106 17.939C10.5872 17.939 10.465 17.9147 10.3511 17.8673C10.2371 17.82 10.1336 17.7507 10.0465 17.6633L4.42155 12.0383C4.24543 11.8622 4.14648 11.6233 4.14648 11.3742C4.14648 11.1251 4.24543 10.8863 4.42155 10.7102C4.59767 10.534 4.83654 10.4351 5.08561 10.4351C5.33468 10.4351 5.57355 10.534 5.74967 10.7102L9.77389 14.7344V3.25C9.77389 3.00136 9.87266 2.7629 10.0485 2.58709C10.2243 2.41127 10.4628 2.3125 10.7114 2.3125C10.96 2.3125 11.1985 2.41127 11.3743 2.58709C11.5501 2.7629 11.6489 3.00136 11.6489 3.25V14.7344L15.6731 10.7094C15.8492 10.5333 16.0881 10.4343 16.3372 10.4343C16.5862 10.4343 16.8251 10.5333 17.0012 10.7094C17.1774 10.8855 17.2763 11.1244 17.2763 11.3734C17.2763 11.6225 17.1774 11.8614 17.0012 12.0375L16.9997 12.0383Z" fill="#FD853A"/>
+                                                                    </svg>
+                                                                    A a Z                                                                    
+                                                                </a>
+                                                                <a class="dropdown-item d-flex px-0" href="#" @click="ordering('schoolClasses', 'name', 'desc')">
+                                                                    <svg width="21" height="21" class="mr-2" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                        <path d="M16.9997 9.53843C16.9126 9.62583 16.8091 9.69518 16.6951 9.7425C16.5812 9.78982 16.459 9.81417 16.3356 9.81417C16.2122 9.81417 16.09 9.78982 15.9761 9.7425C15.8621 9.69518 15.7586 9.62583 15.6715 9.53843L11.6489 5.51578V17.0002C11.6489 17.2488 11.5501 17.4872 11.3743 17.6631C11.1985 17.8389 10.96 17.9377 10.7114 17.9377C10.4628 17.9377 10.2243 17.8389 10.0485 17.6631C9.87266 17.4872 9.77389 17.2488 9.77389 17.0002V5.51578L5.74967 9.53843C5.57355 9.71456 5.33468 9.8135 5.08561 9.8135C4.83654 9.8135 4.59767 9.71456 4.42155 9.53843C4.24543 9.36231 4.14648 9.12344 4.14648 8.87437C4.14648 8.6253 4.24543 8.38643 4.42155 8.21031L10.0465 2.58531C10.1336 2.49791 10.2371 2.42856 10.3511 2.38125C10.465 2.33393 10.5872 2.30957 10.7106 2.30957C10.834 2.30957 10.9562 2.33393 11.0701 2.38125C11.1841 2.42856 11.2876 2.49791 11.3747 2.58531L16.9997 8.21031C17.0871 8.29741 17.1564 8.4009 17.2037 8.51485C17.2511 8.62881 17.2754 8.75098 17.2754 8.87437C17.2754 8.99776 17.2511 9.11994 17.2037 9.23389C17.1564 9.34784 17.0871 9.45134 16.9997 9.53843Z" fill="#FD853A"/>
+                                                                    </svg>
+                                                                    Z a A                                                                    
+                                                                </a>
+                                                                <!-- <a class="dropdown-item d-flex px-0" href="#">
+                                                                    <svg width="21" height="21" class="mr-2" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                        <path d="M19.7739 4.5V9.5C19.7739 9.74864 19.6751 9.9871 19.4993 10.1629C19.3235 10.3387 19.085 10.4375 18.8364 10.4375C18.5877 10.4375 18.3493 10.3387 18.1735 10.1629C17.9977 9.9871 17.8989 9.74864 17.8989 9.5V6.76563L11.9997 12.6656C11.9126 12.753 11.8091 12.8224 11.6951 12.8697C11.5812 12.917 11.459 12.9414 11.3356 12.9414C11.2122 12.9414 11.09 12.917 10.9761 12.8697C10.8621 12.8224 10.7586 12.753 10.6715 12.6656L8.21139 10.2031L3.24967 15.1633C3.07355 15.3394 2.83468 15.4383 2.58561 15.4383C2.33654 15.4383 2.09767 15.3394 1.92155 15.1633C1.74543 14.9872 1.64648 14.7483 1.64648 14.4992C1.64648 14.2501 1.74543 14.0113 1.92155 13.8352L7.54655 8.21016C7.63364 8.12276 7.73714 8.05341 7.85109 8.00609C7.96505 7.95877 8.08722 7.93442 8.21061 7.93442C8.334 7.93442 8.45617 7.95877 8.57013 8.00609C8.68408 8.05341 8.78758 8.12276 8.87467 8.21016L11.3364 10.6719L16.5708 5.4375H13.8364C13.5878 5.4375 13.3493 5.33873 13.1735 5.16291C12.9977 4.9871 12.8989 4.74864 12.8989 4.5C12.8989 4.25136 12.9977 4.0129 13.1735 3.83709C13.3493 3.66127 13.5878 3.5625 13.8364 3.5625H18.8364C19.085 3.5625 19.3235 3.66127 19.4993 3.83709C19.6751 4.0129 19.7739 4.25136 19.7739 4.5Z" fill="#FD853A"/>
+                                                                    </svg>
+                                                                    Maiores notas
+                                                                </a>
+                                                                <a class="dropdown-item d-flex px-0" href="#">
+                                                                    <svg width="21" height="21" class="mr-2" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                        <path d="M19.7739 10.1251V15.1251C19.7739 15.3737 19.6751 15.6122 19.4993 15.788C19.3235 15.9638 19.085 16.0626 18.8364 16.0626H13.8364C13.5878 16.0626 13.3493 15.9638 13.1735 15.788C12.9977 15.6122 12.8989 15.3737 12.8989 15.1251C12.8989 14.8764 12.9977 14.638 13.1735 14.4622C13.3493 14.2863 13.5878 14.1876 13.8364 14.1876H16.5708L11.3364 8.95319L8.87467 11.4157C8.78758 11.5031 8.68408 11.5724 8.57013 11.6198C8.45617 11.6671 8.334 11.6914 8.21061 11.6914C8.08722 11.6914 7.96505 11.6671 7.85109 11.6198C7.73714 11.5724 7.63364 11.5031 7.54655 11.4157L1.92155 5.79069C1.74543 5.61457 1.64648 5.3757 1.64648 5.12663C1.64648 5.0033 1.67078 4.88118 1.71797 4.76724C1.76517 4.6533 1.83434 4.54977 1.92155 4.46256C2.00875 4.37536 2.11228 4.30618 2.22622 4.25899C2.34016 4.21179 2.46228 4.1875 2.58561 4.1875C2.83468 4.1875 3.07355 4.28644 3.24967 4.46256L8.21139 9.42194L10.6731 6.95944C10.7602 6.87204 10.8637 6.80269 10.9777 6.75537C11.0916 6.70806 11.2138 6.6837 11.3372 6.6837C11.4606 6.6837 11.5827 6.70806 11.6967 6.75537C11.8106 6.80269 11.9141 6.87204 12.0012 6.95944L17.8989 12.8594V10.1251C17.8989 9.87642 17.9977 9.63797 18.1735 9.46215C18.3493 9.28634 18.5877 9.18756 18.8364 9.18756C19.085 9.18756 19.3235 9.28634 19.4993 9.46215C19.6751 9.63797 19.7739 9.87642 19.7739 10.1251Z" fill="#FD853A"/>
+                                                                    </svg>
+                                                                    Menores notas                                                            
+                                                                </a> -->
+                                                            </div>
+                                                            <div>
+                                                                <div class="input-group">
+                                                                    <div class="input-group-prepend">
+                                                                        <div style="border-radius: 8px; background-color: transparent !important; border-top-right-radius: 0; border-bottom-right-radius: 0;" class="input-group-text" id="btnGroupAddon"> 
+                                                                        <svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                            <path d="M14.3779 14L11.4779 11.1M13.0446 7.33333C13.0446 10.2789 10.6568 12.6667 7.71126 12.6667C4.76574 12.6667 2.37793 10.2789 2.37793 7.33333C2.37793 4.38781 4.76574 2 7.71126 2C10.6568 2 13.0446 4.38781 13.0446 7.33333Z" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                                        </svg>
+                                                                        </div>
+                                                                    </div>
+                                                                    <input type="text" v-model="controls.search.schoolClassTerm" style="border-radius: 8px; border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 0; max-height: 34px; font-size: 12px; font-weight: 400;" placeholder="Pesquisar turma" class="form-control">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12 my-3">
+                                                    <template v-if="controls.loadingSchoolClasses">
+                                                        <p class="text-muted d-flex align-items-center mb-2">
+                                                            Aguarde enquanto carregamos as turmas ... 
+                                                        </p>
+                                                    </template>
+                                                    <template v-else>
+                                                        <template v-if="schoolClasses.length">
+                                                            <div class="row m-0">
+                                                                <div class="col-4 hover-secondary cp p-2" v-for="schoolClass in schoolClasses.filter(s => controls.search.schoolClassTerm.length ? s.name.toLowerCase().includes(controls.search.schoolClassTerm.toLowerCase()) || s.unity_name.toLowerCase().includes(controls.search.schoolClassTerm.toLowerCase()) : true)">
+                                                                    <div class="custom-control custom-checkbox">
+                                                                        <input type="checkbox" @change="application.schoolClasses.find(s => s == schoolClass.id) ? unselect('schoolClasses', schoolClass.id) : select('schoolClasses', schoolClass.id)" class="custom-control-input cp" :id="schoolClass.id">
+                                                                        <label :id="'label-' + schoolClass.id" :for="schoolClass.id" class="custom-control-label text-muted cp d-flex text">  
+                                                                            <svg width="21" height="20" class="mx-2" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                                <path d="M13.7116 2.8898C14.9464 3.50343 15.7949 4.77762 15.7949 6.25C15.7949 7.72238 14.9464 8.99657 13.7116 9.6102M15.3783 13.972C16.6378 14.5419 17.772 15.4708 18.7116 16.6667M2.04492 16.6667C3.667 14.6021 5.86924 13.3333 8.29492 13.3333C10.7206 13.3333 12.9228 14.6021 14.5449 16.6667M12.0449 6.25C12.0449 8.32107 10.366 10 8.29492 10C6.22385 10 4.54492 8.32107 4.54492 6.25C4.54492 4.17893 6.22385 2.5 8.29492 2.5C10.366 2.5 12.0449 4.17893 12.0449 6.25Z" stroke="#E5E7EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                                            </svg>
+                                                                            <span style="color: #384250; font-size: 14px;" :style="application.schoolClasses.find(id => id == schoolClass.id) ? 'font-weight: 600;':'font-weight: 400;'">${ schoolClass.name } - ${schoolClass.unity_name}</span>
+                                                                        </label>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </template>
+                                                        <template v-else>
+                                                            <p class="text-muted d-flex align-items-center mb-2">   
+                                                                Nenhuma turma encontrada para esta série
+                                                            </p>
+                                                        </template>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 my-2 px-0">
+                                        <div class="" style="border: 1px solid #D0D5DD; min-height: 72px; border-radius: 8px; padding: 12px;"> 
+                                            <div class="d-flex justify-content-between aling-items-center">
+                                                <div class="d-flex align-items-center">
+                                                    <svg width="49" height="49" viewBox="0 0 49 49" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <circle cx="24.3779" cy="24.5156" r="24" fill="#F9FAFB"/>
+                                                        <g clip-path="url(#clip0_4268_9653)">
+                                                        <path d="M24.675 27.1912C25.7784 26.3237 26.584 25.1338 26.9795 23.7871C27.3751 22.4404 27.341 21.0039 26.882 19.6775C26.4231 18.3511 25.562 17.2007 24.4187 16.3865C23.2754 15.5723 21.9067 15.1348 20.5031 15.1348C19.0996 15.1348 17.7309 15.5723 16.5876 16.3865C15.4443 17.2007 14.5832 18.3511 14.1242 19.6775C13.6653 21.0039 13.6312 22.4404 14.0268 23.7871C14.4223 25.1338 15.2279 26.3237 16.3313 27.1912C14.5568 27.9147 12.9887 29.0658 11.7666 30.5418C11.5746 30.7703 11.4813 31.0657 11.5072 31.363C11.533 31.6603 11.6759 31.9352 11.9044 32.1271C12.1329 32.3191 12.4283 32.4124 12.7256 32.3865C13.0229 32.3607 13.2978 32.2178 13.4897 31.9893C14.7731 30.4612 17.0344 28.6405 20.5031 28.6405C23.9719 28.6405 26.2331 30.4612 27.5166 31.9893C27.7085 32.2178 27.9834 32.3607 28.2807 32.3865C28.578 32.4124 28.8734 32.3191 29.1019 32.1271C29.3304 31.9352 29.4733 31.6603 29.4991 31.363C29.525 31.0657 29.4317 30.7703 29.2397 30.5418C28.0179 29.0654 26.4497 27.9144 24.675 27.1912ZM16.0031 21.8905C16.0031 21.0005 16.2671 20.1305 16.7615 19.3905C17.256 18.6505 17.9588 18.0737 18.7811 17.7331C19.6033 17.3925 20.5081 17.3034 21.3811 17.477C22.254 17.6506 23.0558 18.0792 23.6851 18.7086C24.3145 19.3379 24.743 20.1397 24.9167 21.0126C25.0903 21.8856 25.0012 22.7904 24.6606 23.6126C24.32 24.4349 23.7432 25.1377 23.0032 25.6322C22.2632 26.1266 21.3932 26.3905 20.5031 26.3905C19.3101 26.3893 18.1662 25.9148 17.3225 25.0712C16.4789 24.2275 16.0044 23.0836 16.0031 21.8905ZM34.0491 25.3115L31.0491 28.3115C30.9446 28.4164 30.8204 28.4996 30.6836 28.5564C30.5469 28.6131 30.4003 28.6424 30.2522 28.6424C30.1041 28.6424 29.9575 28.6131 29.8208 28.5564C29.684 28.4996 29.5599 28.4164 29.4553 28.3115L27.9553 26.8115C27.744 26.6001 27.6253 26.3135 27.6253 26.0146C27.6253 25.7157 27.744 25.4291 27.9553 25.2177C28.1667 25.0064 28.4533 24.8877 28.7522 24.8877C29.0511 24.8877 29.3377 25.0064 29.5491 25.2177L30.2531 25.9218L32.4572 23.7168C32.5619 23.6122 32.6861 23.5291 32.8228 23.4725C32.9595 23.4159 33.1061 23.3867 33.2541 23.3867C33.4021 23.3867 33.5486 23.4159 33.6853 23.4725C33.8221 23.5291 33.9463 23.6122 34.051 23.7168C34.1556 23.8214 34.2386 23.9457 34.2952 24.0824C34.3519 24.2191 34.381 24.3657 34.381 24.5137C34.381 24.6617 34.3519 24.8082 34.2952 24.9449C34.2386 25.0817 34.1556 25.2059 34.051 25.3105L34.0491 25.3115Z" fill="#FD853A"/>
+                                                        </g>
+                                                        <defs>
+                                                        <clipPath id="clip0_4268_9653">
+                                                        <rect width="24" height="24" fill="white" transform="translate(10.3779 12.5156)"/>
+                                                        </clipPath>
+                                                        </defs>
+                                                    </svg>
+                                                    <span class="mx-2 text" style="font-weight: 500; font-size: 16px;">Alunos</span>
+                                                    <template v-if="selectedStudents.length">
+                                                        <span class="mx-2 text" style="font-weight: 400; font-size: 14px;">${selectedStudents.slice(0, 2).map(student => student.name).join(', ')}</span>
+                                                        <template v-if="selectedStudents.length > 2">
+                                                            <span class="mx-3 text" style="padding: 4px; border-radius: 4px; font-weight: 400; font-size: 12px; background-color: #FFFAF5; color: #EC4A0A;">+ ${selectedStudents.length - 2}</span>
+                                                        </template>
+                                                    </template>
+                                                </div>
+                                                <div class="d-flex align-items-center">
+                                                    <button class="btn btn-white" style="border-radius: 8px; min-height: 40px; font-size: 14px; font-weight: 600;" type="button" @click="controls.editingStudents = !controls.editingStudents">
+                                                        <template v-if="selectedStudents.length">
+                                                            <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M21.9545 6.94866L17.7648 2.75991C17.4132 2.4084 16.9364 2.21094 16.4392 2.21094C15.942 2.21094 15.4652 2.4084 15.1136 2.75991L3.55231 14.3202C3.37761 14.4939 3.23909 14.7004 3.14479 14.928C3.05048 15.1555 3.00227 15.3995 3.00294 15.6458V19.8355C3.00294 20.3328 3.20048 20.8097 3.55211 21.1614C3.90374 21.513 4.38066 21.7105 4.87794 21.7105H20.6279C20.9263 21.7105 21.2125 21.592 21.4234 21.381C21.6344 21.1701 21.7529 20.8839 21.7529 20.5855C21.7529 20.2872 21.6344 20.001 21.4234 19.79C21.2125 19.5791 20.9263 19.4605 20.6279 19.4605H12.0967L21.9545 9.60085C22.1287 9.42673 22.2669 9.22 22.3611 8.99246C22.4554 8.76493 22.5039 8.52105 22.5039 8.27476C22.5039 8.02846 22.4554 7.78458 22.3611 7.55705C22.2669 7.32951 22.1287 7.12278 21.9545 6.94866ZM8.90919 19.4605H5.25294V15.8043L13.1279 7.92929L16.7842 11.5855L8.90919 19.4605ZM18.3779 9.99179L14.7217 6.33554L16.4411 4.61616L20.0973 8.27241L18.3779 9.99179Z" fill="#CBD5E1"/>
+                                                            </svg>
+                                                            <span class="mx-2">
+                                                                Editar
+                                                            </span>                                        
+                                                        </template>
+                                                        <template v-else>
+                                                            <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M12.3779 5.51562V19.5156M5.37793 12.5156H19.3779" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                            </svg>
+                                                            Selecionar alunos
+                                                        </template>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div v-show="controls.editingStudents">
+                                                <div class="col-12 px-0">
+                                                    <hr class="my-3">
+                                                </div>
+                                                <div class="col-12">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <button @click="massSelection('students', 'selectAll')" class="btn btn-white" style="padding: 8px 16px; border-radius: 8px; max-height: 34px; font-size: 12px; font-weight: 500;" type="button">
+                                                                Marcar todos
+                                                            </button>
+                                                            <button @click="massSelection('students', 'unselectAll')" class="btn btn-white" style="padding: 8px 16px; border-radius: 8px; max-height: 34px; font-size: 12px; font-weight: 500;" type="button">
+                                                                Desmarcar todos
+                                                            </button>
+                                                        </div>
+                                                        <div class="d-flex">
+                                                            <button class="btn btn-white mx-2" data-toggle="dropdown" style="padding: 8px 16px; border-radius: 8px; max-height: 34px; font-size: 12px; font-weight: 600;" type="button">
+                                                                Filtrar
+                                                                <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                    <path d="M16.3154 10.625C16.3154 10.8736 16.2167 11.1121 16.0408 11.2879C15.865 11.4637 15.6266 11.5625 15.3779 11.5625H5.37793C5.12929 11.5625 4.89083 11.4637 4.71502 11.2879C4.5392 11.1121 4.44043 10.8736 4.44043 10.625C4.44043 10.3764 4.5392 10.1379 4.71502 9.96209C4.89083 9.78627 5.12929 9.6875 5.37793 9.6875H15.3779C15.6266 9.6875 15.865 9.78627 16.0408 9.96209C16.2167 10.1379 16.3154 10.3764 16.3154 10.625ZM18.5029 5.9375H2.25293C2.00429 5.9375 1.76583 6.03627 1.59002 6.21209C1.4142 6.3879 1.31543 6.62636 1.31543 6.875C1.31543 7.12364 1.4142 7.3621 1.59002 7.53791C1.76583 7.71373 2.00429 7.8125 2.25293 7.8125H18.5029C18.7516 7.8125 18.99 7.71373 19.1658 7.53791C19.3417 7.3621 19.4404 7.12364 19.4404 6.875C19.4404 6.62636 19.3417 6.3879 19.1658 6.21209C18.99 6.03627 18.7516 5.9375 18.5029 5.9375ZM12.2529 13.4375H8.50293C8.25429 13.4375 8.01583 13.5363 7.84002 13.7121C7.6642 13.8879 7.56543 14.1264 7.56543 14.375C7.56543 14.6236 7.6642 14.8621 7.84002 15.0379C8.01583 15.2137 8.25429 15.3125 8.50293 15.3125H12.2529C12.5016 15.3125 12.74 15.2137 12.9158 15.0379C13.0917 14.8621 13.1904 14.6236 13.1904 14.375C13.1904 14.1264 13.0917 13.8879 12.9158 13.7121C12.74 13.5363 12.5016 13.4375 12.2529 13.4375Z" fill="#FD853A"/>
+                                                                </svg>
+                                                            </button>
+                                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuLink" style="border-radius: 8px; padding: 8px 16px;">
+                                                                <a class="dropdown-item d-flex px-0" href="#" @click="ordering('students', 'name', 'asc')">
+                                                                    <svg width="21" height="21" class="mr-2" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                        <path d="M16.9997 12.0383L11.3747 17.6633C11.2876 17.7507 11.1841 17.82 11.0701 17.8673C10.9562 17.9147 10.834 17.939 10.7106 17.939C10.5872 17.939 10.465 17.9147 10.3511 17.8673C10.2371 17.82 10.1336 17.7507 10.0465 17.6633L4.42155 12.0383C4.24543 11.8622 4.14648 11.6233 4.14648 11.3742C4.14648 11.1251 4.24543 10.8863 4.42155 10.7102C4.59767 10.534 4.83654 10.4351 5.08561 10.4351C5.33468 10.4351 5.57355 10.534 5.74967 10.7102L9.77389 14.7344V3.25C9.77389 3.00136 9.87266 2.7629 10.0485 2.58709C10.2243 2.41127 10.4628 2.3125 10.7114 2.3125C10.96 2.3125 11.1985 2.41127 11.3743 2.58709C11.5501 2.7629 11.6489 3.00136 11.6489 3.25V14.7344L15.6731 10.7094C15.8492 10.5333 16.0881 10.4343 16.3372 10.4343C16.5862 10.4343 16.8251 10.5333 17.0012 10.7094C17.1774 10.8855 17.2763 11.1244 17.2763 11.3734C17.2763 11.6225 17.1774 11.8614 17.0012 12.0375L16.9997 12.0383Z" fill="#FD853A"/>
+                                                                    </svg>
+                                                                    A a Z                                                                    
+                                                                </a>
+                                                                <a class="dropdown-item d-flex px-0" href="#" @click="ordering('students', 'name', 'desc')">
+                                                                    <svg width="21" height="21" class="mr-2" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                        <path d="M16.9997 9.53843C16.9126 9.62583 16.8091 9.69518 16.6951 9.7425C16.5812 9.78982 16.459 9.81417 16.3356 9.81417C16.2122 9.81417 16.09 9.78982 15.9761 9.7425C15.8621 9.69518 15.7586 9.62583 15.6715 9.53843L11.6489 5.51578V17.0002C11.6489 17.2488 11.5501 17.4872 11.3743 17.6631C11.1985 17.8389 10.96 17.9377 10.7114 17.9377C10.4628 17.9377 10.2243 17.8389 10.0485 17.6631C9.87266 17.4872 9.77389 17.2488 9.77389 17.0002V5.51578L5.74967 9.53843C5.57355 9.71456 5.33468 9.8135 5.08561 9.8135C4.83654 9.8135 4.59767 9.71456 4.42155 9.53843C4.24543 9.36231 4.14648 9.12344 4.14648 8.87437C4.14648 8.6253 4.24543 8.38643 4.42155 8.21031L10.0465 2.58531C10.1336 2.49791 10.2371 2.42856 10.3511 2.38125C10.465 2.33393 10.5872 2.30957 10.7106 2.30957C10.834 2.30957 10.9562 2.33393 11.0701 2.38125C11.1841 2.42856 11.2876 2.49791 11.3747 2.58531L16.9997 8.21031C17.0871 8.29741 17.1564 8.4009 17.2037 8.51485C17.2511 8.62881 17.2754 8.75098 17.2754 8.87437C17.2754 8.99776 17.2511 9.11994 17.2037 9.23389C17.1564 9.34784 17.0871 9.45134 16.9997 9.53843Z" fill="#FD853A"/>
+                                                                    </svg>
+                                                                    Z a A                                                                    
+                                                                </a>
+                                                                <!-- <a class="dropdown-item d-flex px-0" href="#">
+                                                                    <svg width="21" height="21" class="mr-2" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                        <path d="M19.7739 4.5V9.5C19.7739 9.74864 19.6751 9.9871 19.4993 10.1629C19.3235 10.3387 19.085 10.4375 18.8364 10.4375C18.5877 10.4375 18.3493 10.3387 18.1735 10.1629C17.9977 9.9871 17.8989 9.74864 17.8989 9.5V6.76563L11.9997 12.6656C11.9126 12.753 11.8091 12.8224 11.6951 12.8697C11.5812 12.917 11.459 12.9414 11.3356 12.9414C11.2122 12.9414 11.09 12.917 10.9761 12.8697C10.8621 12.8224 10.7586 12.753 10.6715 12.6656L8.21139 10.2031L3.24967 15.1633C3.07355 15.3394 2.83468 15.4383 2.58561 15.4383C2.33654 15.4383 2.09767 15.3394 1.92155 15.1633C1.74543 14.9872 1.64648 14.7483 1.64648 14.4992C1.64648 14.2501 1.74543 14.0113 1.92155 13.8352L7.54655 8.21016C7.63364 8.12276 7.73714 8.05341 7.85109 8.00609C7.96505 7.95877 8.08722 7.93442 8.21061 7.93442C8.334 7.93442 8.45617 7.95877 8.57013 8.00609C8.68408 8.05341 8.78758 8.12276 8.87467 8.21016L11.3364 10.6719L16.5708 5.4375H13.8364C13.5878 5.4375 13.3493 5.33873 13.1735 5.16291C12.9977 4.9871 12.8989 4.74864 12.8989 4.5C12.8989 4.25136 12.9977 4.0129 13.1735 3.83709C13.3493 3.66127 13.5878 3.5625 13.8364 3.5625H18.8364C19.085 3.5625 19.3235 3.66127 19.4993 3.83709C19.6751 4.0129 19.7739 4.25136 19.7739 4.5Z" fill="#FD853A"/>
+                                                                    </svg>
+                                                                    Maiores notas
+                                                                </a>
+                                                                <a class="dropdown-item d-flex px-0" href="#">
+                                                                    <svg width="21" height="21" class="mr-2" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                        <path d="M19.7739 10.1251V15.1251C19.7739 15.3737 19.6751 15.6122 19.4993 15.788C19.3235 15.9638 19.085 16.0626 18.8364 16.0626H13.8364C13.5878 16.0626 13.3493 15.9638 13.1735 15.788C12.9977 15.6122 12.8989 15.3737 12.8989 15.1251C12.8989 14.8764 12.9977 14.638 13.1735 14.4622C13.3493 14.2863 13.5878 14.1876 13.8364 14.1876H16.5708L11.3364 8.95319L8.87467 11.4157C8.78758 11.5031 8.68408 11.5724 8.57013 11.6198C8.45617 11.6671 8.334 11.6914 8.21061 11.6914C8.08722 11.6914 7.96505 11.6671 7.85109 11.6198C7.73714 11.5724 7.63364 11.5031 7.54655 11.4157L1.92155 5.79069C1.74543 5.61457 1.64648 5.3757 1.64648 5.12663C1.64648 5.0033 1.67078 4.88118 1.71797 4.76724C1.76517 4.6533 1.83434 4.54977 1.92155 4.46256C2.00875 4.37536 2.11228 4.30618 2.22622 4.25899C2.34016 4.21179 2.46228 4.1875 2.58561 4.1875C2.83468 4.1875 3.07355 4.28644 3.24967 4.46256L8.21139 9.42194L10.6731 6.95944C10.7602 6.87204 10.8637 6.80269 10.9777 6.75537C11.0916 6.70806 11.2138 6.6837 11.3372 6.6837C11.4606 6.6837 11.5827 6.70806 11.6967 6.75537C11.8106 6.80269 11.9141 6.87204 12.0012 6.95944L17.8989 12.8594V10.1251C17.8989 9.87642 17.9977 9.63797 18.1735 9.46215C18.3493 9.28634 18.5877 9.18756 18.8364 9.18756C19.085 9.18756 19.3235 9.28634 19.4993 9.46215C19.6751 9.63797 19.7739 9.87642 19.7739 10.1251Z" fill="#FD853A"/>
+                                                                    </svg>
+                                                                    Menores notas                                                            
+                                                                </a> -->
+                                                            </div>
+                                                            <div>
+                                                                <div class="input-group">
+                                                                    <div class="input-group-prepend">
+                                                                        <div style="border-radius: 8px; background-color: transparent !important; border-top-right-radius: 0; border-bottom-right-radius: 0;" class="input-group-text" id="btnGroupAddon"> 
+                                                                        <svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                            <path d="M14.3779 14L11.4779 11.1M13.0446 7.33333C13.0446 10.2789 10.6568 12.6667 7.71126 12.6667C4.76574 12.6667 2.37793 10.2789 2.37793 7.33333C2.37793 4.38781 4.76574 2 7.71126 2C10.6568 2 13.0446 4.38781 13.0446 7.33333Z" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                                        </svg>
+                                                                        </div>
+                                                                    </div>
+                                                                    <input type="text" v-model="controls.search.studentsTerm" style="border-radius: 8px; border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 0; max-height: 34px; font-size: 12px; font-weight: 400;" placeholder="Pesquisar aluno" class="form-control">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12 my-3">
+                                                    <template v-if="controls.loadingStudents">
+                                                        <p class="text-muted d-flex align-items-center mb-2">
+                                                            Aguarde enquanto carregamos os alunos... <i class="fas fa-spinner fa-spin"></i>
+                                                        </p>
+                                                    </template>
+                                                    <template v-if="foundedStudents.filter(s => s.selected).length && !controls.search.studentsTerm.length">
+                                                        <div class="row">
+                                                            <div class="col-12">
+                                                                <p class="text mb-0" style="color: #6C727F;">Alunos avulsos</p>
+                                                            </div>
+                                                            <div class="col-4 hover-secondary cp p-2" v-for="student in foundedStudents.filter(s => s.selected)">
+                                                                <div class="custom-control custom-checkbox">
+                                                                    <input type="checkbox" class="custom-control-input cp" :id="student.id" @change="!selectedStudents.find(s => s.id == student.id) ? select('students', student.id) : unselect('students', student.id)">
+                                                                    <label :id="'label-' + student.id" :for="student.id" class="custom-control-label text-muted cp d-flex text">
+                                                                        <div class="mx-2" style="width: 25px; height: 25px; border-radius: 50%; background-color: #FF8F3D; display: flex; align-items: center; justify-content: center;">
+                                                                            <span style="color: white; font-size: 10px;">${ student.name.charAt(0).toUpperCase() }</span>
+                                                                            <template v-if="student.name.split(' ').length > 1">
+                                                                                <span style="color: white; font-size: 10px;">${ student.name.split(' ')[1].charAt(0).toUpperCase() }</span>
+                                                                            </template>
+                                                                        </div>
+                                                                        <span class="flex-nowrap" style="color: #384250; font-size: 14px;" :style="student.selected ? 'font-weight: 600;':'font-weight: 400;'">${ student.name }</span>
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                    <template v-if="filtredStudents.length && controls.search.studentsTerm.length >= 2">
+                                                        <div class="row">
+                                                            <div class="col-12">
+                                                                <p class="text mb-0" style="color: #6C727F;">Alunos encontrados</p>
+                                                            </div>
+                                                        </div>
+                                                        <template>
+                                                            <div class="row m-0">
+                                                                <div class="col-4 hover-secondary cp p-2" v-for="student in filtredStudents">
+                                                                    <div class="custom-control custom-checkbox">
+                                                                        <input type="checkbox" class="custom-control-input cp" :id="student.id" @change="!selectedStudents.find(s => s.id == student.id) ? select('students', student.id) : unselect('students', student.id)">
+                                                                        <label :id="'label-' + student.id" :for="student.id" class="custom-control-label text-muted cp d-flex text">
+                                                                            <div class="mx-2" style="width: 25px; height: 25px; border-radius: 50%; background-color: #FF8F3D; display: flex; align-items: center; justify-content: center;">
+                                                                                <span style="color: white; font-size: 10px;">${ student.name.charAt(0).toUpperCase() }</span>
+                                                                                <template v-if="student.name.split(' ').length > 1">
+                                                                                    <span style="color: white; font-size: 10px;">${ student.name.split(' ')[1].charAt(0).toUpperCase() }</span>
+                                                                                </template>
+                                                                            </div>
+                                                                            <span class="flex-nowrap" style="color: #384250; font-size: 14px;" :style="student.selected ? 'font-weight: 600;':'font-weight: 400;'">${ student.name }</span>
+                                                                        </label>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </template>
+                                                    </template>
+                                                    <template v-for="schoolClass in filteredSchoolClassesStudents.length ? filteredSchoolClassesStudents : selectedSchoolClasses">
+                                                        <div class="row">
+                                                            <div class="col-12">
+                                                                <p class="text mb-0" style="color: #6C727F;">${schoolClass.name} - ${schoolClass.unity_name}</p>
+                                                            </div>
+                                                        </div>
+                                                        <template v-if="schoolClass.students.length">
+                                                            <div class="row m-0">
+                                                                <div class="col-4 hover-secondary cp p-2" v-for="student in schoolClass.students">
+                                                                    <div class="custom-control custom-checkbox">
+                                                                        <input type="checkbox" class="custom-control-input cp" :id="student.id" @change="!selectedStudents.find(s => s.id == student.id) ? select('students', student.id) : unselect('students', student.id)">
+                                                                        <label :id="'label-' + student.id" :for="student.id" class="custom-control-label text-muted cp d-flex text">
+                                                                            <div class="mx-2" style="width: 25px; height: 25px; border-radius: 50%; background-color: #FF8F3D; display: flex; align-items: center; justify-content: center;">
+                                                                                <span style="color: white; font-size: 10px;">${ student.name.charAt(0).toUpperCase() }</span>
+                                                                                <template v-if="student.name.split(' ').length > 1">
+                                                                                    <span style="color: white; font-size: 10px;">${ student.name.split(' ')[1].charAt(0).toUpperCase() }</span>
+                                                                                </template>
+                                                                            </div>
+                                                                            <span class="flex-nowrap" style="color: #384250; font-size: 14px;" :style="schoolClass.students.find(id => id == student.id) ? 'font-weight: 600;':'font-weight: 400;'">${ student.name }</span>
+                                                                        </label>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </template>
+                                                        <template v-else>
+                                                            <p class="text-muted d-flex align-items-center mb-2">   
+                                                                Nenhum aluno nesta turma
+                                                            </p>
+                                                        </template>
+                                                        <hr>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mt-4 mb-0">
+                                        <div class="col-12">
+                                            <a href="{% url 'exams:exams_list' %}?category=homework" class="btn btn-white btn-block d-flex align-items-center justify-content-center" style="border-radius: 8px; min-height: 50px; font-size: 14px; font-weight: 600;">
+                                                <svg width="25" height="25" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M9 18.5H15M6.6 2H17.4C17.9601 2 18.2401 2 18.454 2.10899C18.6422 2.20487 18.7951 2.35785 18.891 2.54601C19 2.75992 19 3.03995 19 3.6V5.67452C19 6.1637 19 6.40829 18.9447 6.63846C18.8957 6.84254 18.8149 7.03763 18.7053 7.21657C18.5816 7.4184 18.4086 7.59135 18.0627 7.93726L15.1314 10.8686C14.7354 11.2646 14.5373 11.4627 14.4632 11.691C14.3979 11.8918 14.3979 12.1082 14.4632 12.309C14.5373 12.5373 14.7354 12.7354 15.1314 13.1314L18.0627 16.0627C18.4086 16.4086 18.5816 16.5816 18.7053 16.7834C18.8149 16.9624 18.8957 17.1575 18.9447 17.3615C19 17.5917 19 17.8363 19 18.3255V20.4C19 20.9601 19 21.2401 18.891 21.454C18.7951 21.6422 18.6422 21.7951 18.454 21.891C18.2401 22 17.9601 22 17.4 22H6.6C6.03995 22 5.75992 22 5.54601 21.891C5.35785 21.7951 5.20487 21.6422 5.10899 21.454C5 21.2401 5 20.9601 5 20.4V18.3255C5 17.8363 5 17.5917 5.05526 17.3615C5.10425 17.1575 5.18506 16.9624 5.29472 16.7834C5.4184 16.5816 5.59135 16.4086 5.93726 16.0627L8.86863 13.1314C9.26465 12.7354 9.46265 12.5373 9.53684 12.309C9.6021 12.1082 9.6021 11.8918 9.53684 11.691C9.46266 11.4627 9.26464 11.2646 8.86863 10.8686L5.93726 7.93726C5.59136 7.59136 5.4184 7.4184 5.29472 7.21657C5.18506 7.03763 5.10425 6.84254 5.05526 6.63846C5 6.40829 5 6.1637 5 5.67452V3.6C5 3.03995 5 2.75992 5.10899 2.54601C5.20487 2.35785 5.35785 2.20487 5.54601 2.10899C5.75992 2 6.03995 2 6.6 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                                <span class="mx-2" style="line-height: 0px;">
+                                                    Configurar aplicação mais tarde
+                                                </span>                                                
+                                            </a>
+                                        </div>
+                                        <div class="col-12 mt-2">
+                                            <button type="sumit" :disabled="controls.loading || controls.savingApplication" class="not-disable btn btn-block lize-btn-warning">${controls.loading || controls.savingApplication ? "Salvando..." : {% if object.get_last_application %}"Confirmar alterações"{% else %}"Salvar e publicar"{% endif %}}</button>   
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.20/lodash.min.js"></script>
+
+<script type="text/javascript">
+  moment.locale('pt-br');
+  var app_question = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    components: {
+
+    },
+    data: {
+        exam: {
+            name: '{{object.name|default:""}}',
+            grade: '{{exam_teacher_subject.grade.id|default:""}}',
+            subject: '',
+            examTeacherSubject: {
+                id: '{{exam_teacher_subject.id|default:""}}',
+                examQuestionsCount: {{exam_questions_count|default:0}},
+                objectivesQuantity: {{objectives_quantity|default:0}},
+                discursivesQuantity: {{discursives_quantity|default:0}},
+                grade: '{{exam_teacher_subject.grade.id|default:""}}',
+                subject: '{{exam_teacher_subject.teacher_subject.subject.id|default:""}}',
+                urls: {
+                    addQuestions: '{{exam_teacher_subject.urls.add_questions|default:""}}',
+                }
+            },
+        },
+        application: {
+            date: '{{object.get_last_application.date|default:""|safe}}',
+            dateEnd: '{{object.get_last_application.date_end|default:""|safe}}',
+            start: '{{object.get_last_application.start|default:""|safe}}',
+            end: '{{object.get_last_application.end|default:""|safe}}',
+            students: [],
+            schoolClasses: [],
+        },
+        controls: {
+            loading: false,
+            savingApplication: false,
+            expanded: 'exams',
+            editingSchoolClasses: {% if object.get_last_application %}true{% else %}false{% endif %},
+            editingStudents: false,
+            loadingSchoolClasses: false,
+            loadingStudents: false,
+            schoolClassesLoaded: false,
+            studentsLoaded: false,
+            hasApplication: {% if object.count_applications_count %}true{% else %}false{% endif %}, 
+            search: {
+                schoolClassTerm: '',
+                studentsTerm: '',
+            },
+        },
+        grades: [
+            {% for grade in grades %}
+                {
+                    id: '{{ grade.id }}',
+                    name: '{{ grade.name }}',
+                    subjects: [
+                        {% for subject in grade.subjects %}
+                            {
+                                id: '{{ subject.id }}',
+                                name: '{{ subject.name }}',
+                                knowledgeArea: '{{ subject.knowledge_area }}',
+                            },
+                        {% endfor %}
+                    ]
+                },
+            {% endfor %}
+        ],
+        topics: [{% for topic in object.topics %}'{{topic.name}}',{% endfor %}],
+        abilities: [{% for ability in object.abilities %}'{{ability.text}}',{% endfor %}],
+        competences: [{% for competence in object.competences %}'{{competence.text}}',{% endfor %}],
+        schoolClasses: [],
+        selectedStudents: [],
+        filteredSchoolClassesStudents: [], 
+        foundedStudents: [],
+    },
+    watch: {
+        'exam.grade': function(val) {
+            this.controls.editingSchoolClasses = false
+            this.controls.editingStudents = false
+            this.controls.schoolClassesLoaded = false
+            this.application.schoolClasses = []
+            this.application.students = []
+        },
+        'controls.editingSchoolClasses': function(val) {
+            if (val) {
+                this.getSchoolClasses()
+            }
+        },
+        'controls.editingStudents': function(val) {
+            if (val) {
+
+            }
+        },
+        'controls.expanded': function(val) {
+            if (val == 'application') {
+                this.changeCollapse('#collapseThree')
+                this.getStudents()
+            } else if (val == 'questions') {
+                this.changeCollapse('#collapseTwo')
+            } else if (val == 'exams') {
+                this.changeCollapse('#collapseOne')
+            }
+        },
+        'selectedSchoolClasses.length': function(val) {
+            this.getSelectedStudents()
+        },
+        'controls.search.studentsTerm': function(val) {
+            this.filteredSchoolClassesStudents = []
+            if(val.length) {
+                this.filteredSchoolClassesStudents = JSON.parse(JSON.stringify(this.selectedSchoolClasses))
+                this.filteredSchoolClassesStudents.forEach((schoolClasse) => {
+                    schoolClasse.students = schoolClasse.students.filter((student) => student.name.toLowerCase().includes(val.toLowerCase()))
+                })
+                this.filteredSchoolClassesStudents = this.filteredSchoolClassesStudents.filter(schoolClasse => schoolClasse.students.length)
+            }
+        },
+    },
+    updated() {
+        // this.reCreateSelection("#idSubject")
+    },
+    computed: {
+        examIsCompleted: function() {
+            return this.exam.name && this.exam.grade && this.exam.subject
+        },
+        questionsIsCompleted: function() {
+            return this.exam.examTeacherSubject.examQuestionsCount > 0
+        },
+        applicationIsCompleted: function() {
+            return this.application.date && this.application.start && this.application.end && this.application.dateEnd && (this.application.students.length || this.application.schoolClasses.length)
+        },
+        selectedSchoolClasses: function() {
+            let schoolClasses = this.schoolClasses.filter(schoolClass => this.application.schoolClasses.includes(schoolClass.id))
+            return schoolClasses
+        },
+        isPublished: function() {
+            return this.controls.hasApplication
+        },
+        subjects: function() {
+            let grade = this.grades.find(grade => grade.id == this.exam.grade)
+            if (grade) {
+                return grade.subjects
+            }
+            return []
+        },
+        filtredStudents: function() {
+            if (this.controls.search.studentsTerm.length >= 2) {
+                return this.foundedStudents.filter(student => this.getStudentsNotInClasses().map(s => s.id).includes(student.id)).filter(student => student.name.toLowerCase().includes(this.controls.search.studentsTerm.toLowerCase()))
+            }
+            return []
+        }
+    },
+    methods: {
+        moment(date) {
+            return moment(date)
+        }, 
+        getSelectedStudents() {
+            this.selectedStudents = []
+            this.selectedSchoolClasses.forEach(schoolClasse => {
+                schoolClasse.students.filter(s => s.selected).forEach(student => {
+                    this.selectedStudents.push(student)
+                })
+            })
+            this.foundedStudents.filter(s => s.selected).forEach(student => {
+                if(!this.selectedStudents.find(s => s.id == student.id)) {
+                    this.selectedStudents.push(student)
+                }
+            })
+        },
+        ordering(type, field, order) {
+            if(type == 'schoolClasses') {
+                this.schoolClasses.sort((a, b) => order == 'asc' ? a.name.localeCompare(b.name): b.name.localeCompare(a.name))
+            } else if(type == 'students') {
+                this.selectedStudents.sort((a, b) => order == 'asc' ? a.name.localeCompare(b.name): b.name.localeCompare(a.name))
+                this.schoolClasses.forEach(schoolClass => {
+                    schoolClass.students.sort((a, b) => order == 'asc' ? a.name.localeCompare(b.name): b.name.localeCompare(a.name))
+                })
+            }
+        },
+        select(type, id, checkAllStudents = true) {
+            if(!this.controls.loading && !this.controls.savingApplication) {
+                if(type == 'schoolClasses') {
+                    $("#" + id).prop('checked', true)
+                    $("#" + id).trigger('change')
+                    !this.application.schoolClasses.find(s => s.id == id) ? this.application.schoolClasses.push(id) : null
+                    if (checkAllStudents) {
+                        setTimeout(() => {
+                            this.schoolClasses.find(s => s.id == id).students.forEach(student => {
+                                this.select('students', student.id)
+                            })
+                        }, 300)
+                    }
+                }
+                else {
+                    this.schoolClasses.forEach(schoolClass => {
+                        schoolClass.students.forEach(student => {
+                            if (student.id == id) {
+                                student.selected = true
+                                $("#" + id).prop('checked', true)
+                                $("#" + id).trigger('change')
+                            }
+                        })
+                    })
+                    this.getStudentsNotInClasses().forEach(student => {
+                        if (student.id == id) {
+                            student.selected = true
+                            $("#" + id).prop('checked', true)
+                            $("#" + id).trigger('change')
+                        }
+                    })
+                }
+                this.getSelectedStudents()
+            }
+        },
+        unselect(type, id) {
+            if(!this.controls.loading && !this.controls.savingApplication) {
+                if(type == 'schoolClasses') {
+                    $("#" + id).prop('checked', false)
+                    $("#" + id).trigger('change')
+                    this.application.schoolClasses.splice(this.application.schoolClasses.indexOf(id), 1)
+                    this.schoolClasses.find(s => s.id == id).students.forEach(student => {
+                        student.selected = false
+                    });
+                } else {
+                    $("#" + id).prop('checked', false)
+                    $("#" + id).trigger('change')
+                    this.schoolClasses.forEach(schoolClass => {
+                        let student = schoolClass.students.find(s => s.id == id)
+                        if (student) {
+                            student.selected = false
+                            this.$forceUpdate()
+                        }
+                    })
+                    this.getStudentsNotInClasses().forEach(student => {
+                        if (student.id == id) {
+                            student.selected = false
+                            $("#" + id).prop('checked', false)
+                            $("#" + id).trigger('change')
+                        }
+                    })
+                }
+                this.getSelectedStudents()
+            }
+        },
+        massSelection(type, option) {
+            if(type == 'schoolClasses') {
+                if(option == 'selectAll') {
+                    this.schoolClasses.forEach(schoolClass => this.select('schoolClasses', schoolClass.id))
+                } else {
+                    this.schoolClasses.forEach(schoolClass => this.unselect('schoolClasses', schoolClass.id))
+                }
+            }
+            else if(type == 'students') {
+                if(option == 'selectAll') {
+                    this.selectedSchoolClasses.forEach(schoolClass => {
+                        schoolClass.students.forEach(student => this.select('students', student.id))
+                    })
+                } else {
+                    this.selectedSchoolClasses.forEach(schoolClass => {
+                        schoolClass.students.forEach(student => this.unselect('students', student.id))  
+                    })
+                }
+            }
+        },
+        getSchoolClassesRequest() {
+            return axios.get(`{% url 'classes:classes_list_api' %}?grade=${this.exam.grade}&subject=${this.exam.subject}`)
+        },
+        getSchoolClasses() {
+            if(!this.controls.schoolClassesLoaded) {
+                this.controls.loadingSchoolClasses = true
+                this.getSchoolClassesRequest().then((response) => {
+                    this.schoolClasses = response.data.filter(s => s.students_count > 0)
+                    this.schoolClasses.forEach(schoolClass => {
+                        schoolClass.students.map((s) => ({ ...s, selected: false }))
+                    })
+                    this.controls.schoolClassesLoaded = true
+                }).finally(() => {
+                    this.controls.loadingSchoolClasses = false
+                })
+            }
+        },
+        getStudents() {
+            if (!this.controls.studentsLoaded) {
+                this.controls.loadingStudents = true
+                this.controls.studentsLoaded = true
+                axios.get(`{% url 'students:students_list_api' %}?without_classes=true`).then((response) => {
+                    this.foundedStudents = response.data.filter(s => !this.selectedSchoolClasses.find(sc => sc.students.find(student => student.id == s.id))).map(s => ({ ...s, selected: false }))
+                }).catch((e) => {
+                    this.controls.studentsLoaded = false
+                }).finally(() => {
+                    this.controls.loadingStudents = false
+                })
+            }
+        },
+        applicationIsValid() {
+            if(this.application.dateEnd == this.application.date && this.application.end < this.application.start) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Dados inválido',
+                    text: 'A hora inicial não pode ser menor que a hora final para lista de exercício que terminam no mesmo dia.'
+                })
+                return false
+            } else if(this.application.dateEnd < this.application.date) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Dados inválido',
+                    text: 'A data inicial deve ser maior que a data final'
+                })
+            }
+            return true
+        },
+        saveApplication() {
+            if(this.applicationIsValid()) {
+
+                this.application.schoolClasses = this.application.schoolClasses.filter(schoolClass => schoolClass && schoolClass.length)
+                this.application.students = this.selectedStudents.map(student => student.id)
+                
+                if(this.applicationIsCompleted) {
+                    this.controls.savingApplication = true
+                    this.application['exam'] = '{{object.id}}'
+                    this.application['category'] = 4
+                    this.application['school_classes'] = this.application.schoolClasses
+                    this.application['date_end'] = this.application.dateEnd
+                    this.application['release_result_at_end'] = true
+                    
+                    let url = "{% url 'api:applications-list' %}"
+                    let method = "POST"
+                    {% if object.get_last_application %}
+                        url = "{% url 'api:applications-detail' pk=object.get_last_application.id %}"
+                        method = 'PATCH'
+                    {% endif %}
+
+                    let timerInterval;
+                    Swal.fire({
+                        title: "Salvando a aplicação, aguarde...",
+                        html: "Essa operação pode demorar alguns segundos, por favor, não feche esta janela.",
+                        timer: 10000,
+                        timerProgressBar: true,
+                    }).then((result) => {
+                        
+                    })
+                    axios({
+                        method: method, 
+                        url: url, 
+                        data: this.application
+                    }).then((response) => { 
+                        this.controls.hasApplication = true
+                        Swal.fire({
+                            title: "Sucesso!",
+                            text: "Tudo certo, a lista de exercício salva com sucesso.",
+                            icon: "success"
+                        }).then(() => {
+                            window.location.href = `{% url 'exams:exams_list' %}?category=homework`
+                        })
+                    }).catch(() => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: 'Ocorreu um erro ao salvar a lista de exercício, tente novamente.',
+                        })
+                        this.controls.savingApplication = false
+                    }).finally(() => {
+                        
+                    })
+                } else {
+                    Swal.fire({
+                        title: "Atenção!",
+                        text: "Você deve selecionar um aluno ou uma turma para continuar com a publicação.",
+                        icon: "warning"
+                    });
+                }
+            }
+        },
+        saveForm() {
+            if(!this.controls.loading) {
+                this.controls.loading = true
+                {% if object %}
+                    axios.patch("{% url 'api2:inspectors-update-homework' pk=object.id %}", this.exam).then((response) => {
+                        this.controls.expanded = 'questions'
+                        $('#collapseTwo').collapse('show')
+                    }).finally(() => {
+                        this.controls.loading = false
+                    })
+                {% else %}
+                    axios.post("{% url 'api2:inspectors-create-homework' %}", this.exam).then((response) => {
+                        window.location.href = `${window.location.pathname}${response.data.id}/?v=2`
+                    }).catch((error) => {
+                        alert('Ocorreu um erro ao criar o caderno!', 'error')
+                    }).finally(() => {
+                        this.controls.loading = false
+                    })
+                {% endif %}
+            } else {
+                alert('Por favor aguarde...')
+            }
+        },
+        changeCollapse(target) {
+            $(target).collapse('show')
+        },
+        reCreateSelection(selector) {
+            $(selector).selectpicker("destroy")
+            $(selector).selectpicker({
+                style: 'btn-white',
+                placeholder: 'Selecione uma opção',
+                noneSelectedText: 'Nenhuma seleção',
+                noneResultsText: 'Nenhum resultado encontrado',
+                styleBase: 'custom-form-control',
+            })
+        },
+        populateSelectedsClassesAndStudentsOnInit() {
+            this.controls.expanded = 'application'
+            let studentsIds = [{% for student in object.get_last_application.students.all %}'{{student.id}}',{% endfor %}]
+
+            if(studentsIds.length) {
+                this.controls.editingStudents = true
+            }
+
+            let schoolClassesIds = [{% for school_classe in object.get_last_application.school_classes.all %}'{{school_classe.id}}',{% endfor %}]
+            
+            this.getSchoolClassesRequest().then((response) => {
+                this.schoolClasses = response.data.filter(s => s.students_count > 0)
+                this.schoolClasses.forEach(schoolClass => {
+                    schoolClass.students = schoolClass.students.map((s) => ({ ...s, selected: false }))
+                })
+                setTimeout(() => {
+                    schoolClassesIds.forEach(schoolClass => {
+                        this.select('schoolClasses', schoolClass, false) 
+                    })
+                }, 300)
+                setTimeout(() => {
+                    studentsIds.forEach(student => {
+                        this.select('students', student)
+                    })
+                }, 500)
+            })
+        },
+        getStudentsNotInClasses() {
+            return this.foundedStudents.filter(s => !this.selectedSchoolClasses.find(sc => sc.students.find(student => student.id == s.id)))
+        }
+    },
+    mounted() {
+        // this.reCreateSelection("#idGrade")
+        // this.reCreateSelection("#idSubject")
+        
+        {% if object %}
+            this.exam.grade = this.exam.examTeacherSubject.grade
+            // $('#idGrade').selectpicker('val', this.exam.grade)
+            setTimeout(() => {
+                this.exam.subject = this.exam.examTeacherSubject.subject
+                // $('#idSubject').selectpicker('val', this.exam.subject)
+                if(!this.isPublished) {
+                    if(this.questionsIsCompleted) {
+                        this.controls.expanded = 'application'
+                    } else if(this.examIsCompleted) {
+                        this.controls.expanded = 'questions'
+                    }
+                }
+            }, 500)
+            {% if object.get_last_application %}
+                this.populateSelectedsClassesAndStudentsOnInit()
+            {% endif %}
+        {% endif %}
+    },
+  })
+
+
+</script>
+{% endblock %}

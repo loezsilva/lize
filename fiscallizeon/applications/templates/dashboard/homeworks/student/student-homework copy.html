@@ -1,0 +1,1444 @@
+{% extends 'dashboard/base_without_header.html' %}
+{% load static %}
+{% load cache %}
+{% load compress %}
+{% load remove_line_break %}
+{% load get_answer_file_link %}
+
+{% block title %}Ambiente de prova - Lize{% endblock title %}
+
+
+{% block css-additional %}
+{% cache 600 application_style object.application.pk %}
+{% compress css %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.10.2/viewer.css" integrity="sha512-HGWrJz+Lr07phD0DNoLsSVwn3przno/eSLf1cGOrLzr6c7NUZROZJPhQdSPmLHNbsO0HP2UfUnpKTMiVxonEHw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<style>
+    body {
+        font-family: "IBM Plex Sans", sans-serif !important;
+    }
+
+    *::-webkit-media-controls-panel {
+        display: none !important;
+        -webkit-appearance: none;
+    }
+
+    /* Old shadow dom for play button */
+
+    *::-webkit-media-controls-play-button {
+        display: none !important;
+        -webkit-appearance: none;
+    }
+
+    /* New shadow dom for play button */
+
+    /* This one works! */
+
+    *::-webkit-media-controls-start-playback-button {
+        display: none !important;
+        -webkit-appearance: none;
+    }
+
+    /* #local-stream {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        min-width: 100%;
+        min-height: 100%;
+        max-width: 100%;
+    } */
+    .content {
+        bottom: 0;
+        color: #f1f1f1;
+        width: 100%;
+        padding: 20px;
+    }
+
+    .btn-circle {
+        width: 60px;
+        height: 60px;
+        padding: 6px 0px;
+        border-radius: 30px;
+        text-align: center;
+        font-size: 12px;
+        line-height: 1.42857;
+        margin: 2px;
+    }
+
+    .modal-body {
+        max-height: 70vh;
+        height: 70vh;
+        overflow: auto;
+    }
+
+    @media (max-width: 767px) {
+
+        .modal-dialog {
+            width: 100%;
+            height: 100%;
+            max-height: 100%;
+            margin: 0;
+            padding: 0;
+            max-width: inherit !important;
+        }
+
+        .modal-content {
+            height: auto;
+            min-height: 100%;
+            max-height: 100%;
+            overflow: auto;
+            border-radius: 0;
+            background: white;
+            border: 0;
+        }
+
+        .modal-body {
+            padding: 5px;
+            padding-top: 65px;
+            padding-bottom: 100px;
+
+            max-height: inherit;
+            height: inherit;
+            overflow: auto;
+        }
+
+        .modal-header {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 0;
+            z-index: 1030;
+        }
+
+        .modal-footer {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1030;
+        }
+
+    }
+
+
+    .notification {
+        position: relative;
+    }
+
+    .notification .badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        border-radius: 100%;
+        background: red;
+        color: white;
+        font-weight: bold;
+    }
+
+    .opacity {
+        background-color: rgba(256, 256, 256, 0.5)
+    }
+
+    .list-orientations ul {
+        padding-left: 15px;
+    }
+
+    .list-orientations li {
+        margin: 0;
+        margin-top: 4px;
+        line-height: 15px;
+    }
+
+    span.question-number {
+        width: 25px;
+        height: 25px;
+        line-height: 25px;
+        border-radius: 50%;
+        color: #fff;
+        display: inline-block;
+        text-align: center;
+        margin: 5px;
+        background: #000;
+    }
+
+    div.question {
+        padding-bottom: 15px;
+    }
+
+    div.alternatives p {
+        margin: 0 !important;
+    }
+
+    .question-marker{
+        border: 2px solid #ccc;
+        background-color: white;
+    }
+
+    .question-marker.answered{
+        border: 2px solid #0064fd;
+        background-color: #0064fd;
+    }
+
+    .question-marker.answer_error{
+        border: 2px solid hsl(337, 100%, 50%);
+        background-color: hsl(337, 100%, 50%);
+    }
+
+
+    div.question.font-1x * {
+        font-size: 13px !important;
+    }
+
+    div.question.font-2x *:not(.katex *) {
+        font-size: 16px !important;
+    }
+
+
+    div.question.font-3x * {
+        font-size: 19px !important;
+    }
+
+    div.question.font-4x * {
+        font-size: 23px !important;
+    }
+
+
+    label.question-alternative:not(.alternative-scratched) * {
+        color: #000 !important;
+        text-decoration: auto;
+    }
+
+    .bg-black {
+        background-color: #000 !important;
+    }
+    
+    .bg-black * {
+        color: white !important;
+    }
+
+    .bg-black textarea {
+        color: black !important;
+    }
+
+    .bg-black .table tr:nth-child(even) * {
+        color: white !important;
+    }
+
+
+    label.alternative-scratched,
+    label.alternative-scratched * {
+        color: #dc3545 !important;
+        text-decoration: line-through !important;
+    }
+
+    .bg-black .table-striped tbody tr:nth-of-type(2n+1),
+    .bg-black .table-striped tbody tr:nth-of-type(2n+1) * {
+        color: black !important;
+    }
+
+    .question * {
+        white-space: unset !important;
+    }
+
+    .katex * {
+        white-space: nowrap !important;
+    }
+
+
+    @media only screen and (max-width: 850px) {
+        .df-settings-body {
+            width: 290px;
+        }
+
+        .df-settings.show {
+            right: 244px;
+        }
+
+        .question img {
+            max-width: 250px !important;
+            /* min-width: 100% !important; */
+        }
+    }
+
+    .modal {
+        z-index: 9999 !important;
+    }
+
+    .alternatives label,
+    .alternatives label *,
+    .alternatives label::after,
+    .alternatives label::before {
+        cursor: pointer;
+    }
+
+    .upload-btn-wrapper {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+        cursor: pointer !important;
+
+    }
+
+    .upload-btn-wrapper .btn {
+        cursor: pointer !important;
+        padding: 10px 19px;
+        font-size: 15px;
+    }
+
+    .upload-btn-wrapper input[type=file] {
+        font-size: 100px;
+        z-index: -1px;
+        position: absolute;
+        left: 0;
+        top: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    input[type=file],
+    input[type=file]::-webkit-file-upload-button {
+        cursor: pointer;
+    }
+
+    mjx-container.MathJax {
+        font-size: 150% !important;
+    }
+
+    img {
+        max-width: 100%;
+    }
+
+    .questions-images img {
+        cursor: zoom-in;
+    }
+
+</style>
+
+<style>
+    #loading {
+        width: 100%;
+        background-color: #FF8F3E;
+        z-index: 999;
+        width: 100%;
+        display: none;
+        height: 100%;
+        top: 0;
+        left: 0;
+        position: fixed;
+        display: flex;
+        align-items: center;
+        vertical-align: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+
+    .loading-enter,
+    .loading-leave-to {
+        visibility: hidden;
+        height: 0;
+        margin: 0;
+        padding: 0;
+        opacity: 0;
+    }
+
+    .loading-enter-active,
+    .loading-leave-active {
+        transition: all 0.3s;
+    }
+
+
+    .grow-wrap {
+        /* easy way to plop the elements on top of each other and have them both sized based on the tallest one's height */
+        display: grid;
+    }
+
+    .grow-wrap::after {
+        /* Note the weird space! Needed to preventy jumpy behavior */
+        content: attr(data-replicated-value) " ";
+
+        /* This is how textarea text behaves */
+        white-space: pre-wrap;
+
+        /* Hidden from view, clicks, and screen readers */
+        visibility: hidden;
+    }
+
+    .grow-wrap>textarea {
+        /* You could leave this, but after a user resizes, then it ruins the auto sizing */
+        resize: none;
+
+        /* Firefox shows scrollbar on growth, you can hide like this. */
+        overflow: hidden;
+    }
+
+    .grow-wrap>textarea,
+    .grow-wrap::after {
+        /* Identical styling required!! */
+        border: 1px solid black;
+        padding: 0.5rem;
+        font: inherit;
+
+        /* Place on top of each other */
+        grid-area: 1 / 1 / 2 / 2;
+    }
+
+    .zoom-off {
+        max-zoom: 1 !important;
+    }
+
+    [data-qrcode] {
+        width: 128px;
+        height: 128px;
+    }
+
+    [data-qrcode]:hover {
+        cursor: pointer;
+    }
+    {% if object.application.max_time_finish %}
+        #timeLeftProgressBar {
+            height: 22px;
+            background-color: #cbd5e1;
+            border-radius: 0.375rem;
+        }
+
+        #timeLeftProgressBar div {
+            display: flex;
+            height: 100%;
+            text-align: right;
+            padding: 0 10px;
+            line-height: 22px;
+            width: 0;
+            background-color: #0ea5e9;
+            box-sizing: border-box;
+            border-radius: 0.375rem;
+        }
+    {% endif %}
+</style>
+{% endcompress %}
+
+{% endcache %}
+{% endblock %}
+
+{% block content %}
+{% cache 600 application_content object.application.pk %}
+<transition name="loading">
+    <div id="loading" v-show="false">
+        <i class="fas fa-spinner fa-spin text-white mb-3" style="font-size:35px"></i>
+        {% include 'redesign/includes/logo.html' with width="120" height="72" fill="white" %}
+    </div>
+</transition>
+
+<div class="container-fluid d-flex flex-column">
+    <div class="row mb-0 pt-4 pb-3">
+        <div class="col pd-md-l-110 pd-md-r-110 pd-l-10 pd-r-10">
+            {% if object.application.exam.coordinations.all.0.unity.client.logo %}
+            <img class="mb-3" style="max-height: 10rem;"
+                src="{{ object.application.exam.coordinations.all.0.unity.client.logo.url }}" alt="">
+            {% endif %}
+            <h1 class="text-bold title mb-0 ">
+                {{object.application.exam.name}} {{iterator.count}}
+            </h1>
+        </div>
+    </div>
+    <div class="row pt-4 pd-md-l-110 pd-md-r-110 pd-l-10 pd-r-10" :class="contrast==true ? 'bg-black' : 'bg-white'" v-show="!needChooseLanguage">
+        <div class="col-12 col-lg-9">
+            {% if object.application.exam.get_base_text_location_display == 'Textos base no início do caderno' %}
+                {% include "dashboard/exams/includes/base_texts/exam_top_bottom.html" %}
+            {% endif %}
+            <div class="exam-content text-justify">
+                <template v-for="knowledgeArea in knowledgeAreas">
+                    {% if not object.application.hide_knowledge_areas_name %}
+                        <h5 class="mb-0">
+                            ${knowledgeArea.name}
+                        </h5>
+                    {% endif %}
+                    <template v-for="subject in knowledgeArea.subjects.filter(subject => subject.foreignLanguageIndex === null || subject.foreignLanguageIndex === selectedLanguage)">
+                        {% if object.get_base_text_location_display == 'Textos base por disciplina' or object.application.exam.get_base_text_location_display == 'Textos base por disciplina' %}        
+                            {% include "dashboard/exams/includes/base_texts/subjects_top.html" %}
+                        {% endif %}
+                        {% if not object.application.hide_subjects_name %}
+                            <h6 class="text-muted mt-0 mb-3">${subject.name}</h6>
+                        {% endif %}
+                        <div :class="fontSize" class="question" :id="'question-'+question.id" v-for="(question, index) in subject.questions">
+                            <div class="row justify-content-md-center">
+                                <div class="col-12">
+                                    {% if object.get_base_text_location_display == 'Textos base por questão' or object.application.exam.get_base_text_location_display == 'Textos base por questão' %}
+                                        {% include "dashboard/exams/includes/base_texts/per_questions.html" %}
+                                    {% endif %}
+                                </div>
+                                <div class="col-1">
+                                    <span :class="{'question-number mt-1': question.number_print}">
+                                        ${ question.number_print }
+                                    </span>
+                                </div>
+                                <div class="col-11">
+                                    {% include "dashboard/exams/includes/base_texts/text_relation.html" %}
+                                    <question-enunciation class="questions-images" ref="refEnuntiation" :question="question" :state="state"></question-enunciation>
+                                </div>
+                            </div>
+                            <template v-if="!question.print_only_enunciation">
+                                <div class="alternatives questions-images" v-if="question.category == 'Objetiva'">
+                                    <table class="table table-striped">
+                                        <tbody>
+                                            <tr v-for="(alternative, index) in question.alternatives">
+                                                <td style="width: 1%;">
+                                                    <div class="custom-control custom-radio">
+                                                        <input type="radio"
+                                                            v-on:change="saveAnswers(question, alternative.id, index, new Date())"
+                                                            :id="'alternative-'+alternative.id"
+                                                            :name="'alternatives-'+question.id"
+                                                            class="custom-control-input"
+                                                            :checked="alternative.id === question.answerId"
+                                                            :disabled="question.saving || alternative.scratched">
+
+                                                        <label
+                                                            class="custom-control-label question-alternative font-weight-bold"
+                                                            v-bind:class="{'alternative-scratched' : alternative.scratched }"
+                                                            :for="'alternative-'+alternative.id">
+                                                            ${generateAlternativeOrder(index)})
+                                                        </label>
+
+                                            </div>
+                                        </td>
+                                        <td class="pl-0">
+
+                                            <label class="question-alternative"
+                                                :for="'alternative-'+alternative.id"
+                                                v-bind:class="{'alternative-scratched' : alternative.scratched }"
+                                                v-html="generateAlternativeText(alternative, index)">
+                                            </label>
+
+                                        </td>
+                                        <td style="width: 1%;">
+                                            <i v-if="alternative.id != question.answerId"
+                                                @click="alternative.scratched = !alternative.scratched"
+                                                class="fas fa-cut" style="cursor: pointer;"></i>
+                                        </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <label v-if="question.error && !question.saving" class="text-danger">Problema ao tentar salvar sua resposta. Salvando novamente...</label>
+                                </div>
+                                <div class="alternatives questions-images" v-if="question.category == 'Somatório'">
+                                    <table class="table table-striped">
+                                        <tbody>                                           
+                                            <tr v-for="(alternative, index) in question.alternatives" :key="alternative.id">
+                                                <td style="width: 1%;">
+                                                    <div class="custom-control custom-checkbox">
+                                                        <input type="checkbox"
+                                                            v-on:change="saveAnswersSum(question, alternative.id,  generateAlternativeSum(index),new Date().getTime())"
+                                                            :id="'alternative-'+alternative.id"
+                                                            :name="'alternatives-'+question.id"
+                                                            class="custom-control-input"
+                                                            :checked="question.sumQuestionOptionsChecked.includes(alternative.id)"
+                                                            :disabled="question.saving || alternative.scratched">
+                                                        <label
+                                                            class="custom-control-label question-alternative font-weight-bold"
+                                                            v-bind:class="{'alternative-scratched' : alternative.scratched }"
+                                                            :for="'alternative-'+alternative.id">
+                                                            ${generateAlternativeSum(index)})
+                                                        </label>
+
+                                                    </div>
+                                                </td>
+                                            <td class="pl-0">
+
+                                                <label class="question-alternative"
+                                                    :for="'alternative-'+alternative.id"
+                                                    v-bind:class="{'alternative-scratched' : alternative.scratched }"
+                                                    v-html="generateAlternativeText(alternative, index)">
+                                                </label>
+                                                </td>
+                                                <td style="width: 1%;">
+                                                    <i v-if="!shouldHideIcon(question, alternative, index)"
+                                                        @click="alternative.scratched = !alternative.scratched"
+                                                        class="fas fa-cut" style="cursor: pointer;"></i>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <label v-if="question.error && !question.saving" class="text-danger">Problema ao tentar salvar sua resposta. Salvando novamente...</label>
+                                </div>
+                                <div v-if="question.category == 'Discursiva'">
+                                    <div class="form-group mb-0">
+                                        <label :for="'answer_text_area_'+question.id" class="font-weight-bold">Digite sua resposta abaixo</label>
+                                        <div class="grow-wrap">
+                                            <textarea placeholder="Digite aqui sua resposta"
+                                                v-model="question.answerContent"
+                                                class="form-control question-answer pt-2 question-input-textarea"
+                                                v-on:input="saveAnswersText(question)"
+                                                :id="'answer_text_area_'+question.id">
+                                            </textarea>
+                                        </div>
+                                        
+                                    </div>
+                                </div>
+                                {% if not object.application.exam.group_attachments %}
+                                    <div v-if="question.category == 'Arquivo anexado'">
+                                        <div class="form-group">
+                                            <label v-if="question.answerId && !question.saving"
+                                                class="font-weight-bold text-left">
+                                                Sua resposta atual:
+                                                <a :href="question.answerContent" target="_blank" class="font-weight-bold">
+                                                    ${question.answerContent.replace(/^.*[\\\/]/,
+                                                    '').replace('?'+question.answerContent.split("?").pop(), "")}
+                                                </a>
+                                                <span class="badge badge-info" v-if="question.send_on_qrcode">Enviada via QR Code <i class="fas fa-qrcode"></i> </span>
+                                            </label>
+                                            <br />
+
+                                            <label class="text-muted">Você pode selecionar um arquivo no seu computador
+                                                ou ler o QR Code através da câmera do seu celular.</label><br />
+                                            <div class="d-none d-lg-block d-xl-block">
+
+                                                <div class="d-flex bg-white">
+                                                    <div class="flex-1 align-self-center text-center">
+                                                        <div class="upload-btn-wrapper">
+                                                            <button :disabled="question.saving" type="button"
+                                                                class="btn btn-large btn-primary">
+                                                                <template v-if="question.saving" class="text-info">
+                                                                    <i class="fas fa-spinner fa-spin"></i>
+                                                                    Enviando seu arquivo...
+                                                                </template>
+                                                                <template v-else>
+                                                                    <i class="fas fa-file-upload mr-1"></i>
+                                                                    Enviar arquivo de resposta pelo computador
+                                                                </template>
+                                                            </button>
+                                                            <input
+                                                                v-on:click.capture="preOpeningFilePicker('file'+question.id)"
+                                                                :disabled="question.saving" style="cursor: pointer;"
+                                                                :ref="'file'+question.id" :id="'file'+question.id"
+                                                                @change="saveAnswersFile(question)" type="file" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="divider-text divider-vertical">Ou</div>
+                                                    <div class="flex-1 text-center">
+                                                        <label class="text-muted my-2 tx-8-f"
+                                                            style="font-size: 0.8rem !important;">
+                                                            Aponte a câmera do seu celular para ler
+                                                            <br>
+                                                            o QR Code e enviar sua resposta
+                                                        </label>
+
+                                                        <div data-qrcode="true" class="m-auto" :question-id="question.id" :question-number="question.number" @click="showModalQRCodeQuestion(question)" data-toggle="modal" data-target="#questionQRCode"></div>
+
+                                                        <div class="d-none text-danger" :data-error="'error'+question.id"
+                                                            style="font-size: 0.8rem !important;">A resposta ainda não
+                                                            foi enviada</div>
+
+                                                        <button class="btn btn-outline-primary btn-xs my-2"
+                                                            @click="getFileAnswer(question)">
+                                                            <div class="spinner-border text-info spinner-border-sm d-none"
+                                                                :data-spinner="'spinner'+question.id" role="status">
+                                                                <span class="sr-only">Loading...</span>
+                                                            </div>
+                                                            Validar Resposta Enviada
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="d-block d-lg-none d-xl-none d-xxl-none">
+                                                <div class="upload-btn-wrapper">
+                                                    <label :for="'file'+question.id" :disabled="question.saving"
+                                                        class="btn btn-large btn-primary">
+                                                        <template v-if="question.saving" class="text-info">
+                                                            <i class="fas fa-spinner fa-spin"></i>
+                                                            Enviando seu arquivo...
+                                                        </template>
+                                                        <template v-else>
+                                                            <i class="fas fa-file-upload mr-1"></i>
+                                                            Enviar arquivo de resposta pelo computador
+                                                        </template>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label v-if="question.answerId && !question.saving && !question.fileMessage && !question.error" class="text-info m-0 ml-2">Resposta enviada!</label>
+                                            </div>
+                                            <label v-if="question.error && !question.saving" class="text-danger m-0 ml-2">Problema ao enviar seu arquivo, por favor tente novamente!</label>
+                                        </div>
+                                        <label for="" class="text-muted mt-1"><b>Tamanho máximo:</b> 10MB</label>
+                                        <br />
+                                        <label v-if="question.fileMessage && !question.saving" class="text-danger" v-html="question.fileMessage"></label>
+                                    </div>
+                                {% endif %}
+                            </template>
+                            <template v-if="subject.questions.some(question => !question.print_only_enunciation)">
+                                {% if object.application.exam.group_attachments %}
+                                    <template v-if="getLastQuestionOfExamTeacherSubject(question) == question && subject.questions.some(question => question.category == 'Arquivo anexado')">
+                                        <div class="card my-5">
+                                            <div class="card-body">
+                                                <h4>${knowledgeArea.name}</h4>
+                                                <h6 class="tx-uppercase tx-sans tx-medium tx-spacing-1 tx-color-03 mg-b-15"> 
+                                                    <template>
+                                                        Respostas das questões de ${getQuestionsExamTeacherSubject(question.examTeacherSubjectID)[0].number} até ${question.number} 
+                                                    </template>
+                                                </h6>
+                                                <p class="text-muted">Você pode enviar quantos arquivos quiser, adicione nesse bloco apenas de ${getQuestionsExamTeacherSubject(question.examTeacherSubjectID)[0].number} até ${question.number} </p>
+                                                <div class="row">
+                                                    <template v-for="(attachment, attachmentIndex) in getAttachmentsByExamTeacherSubject(question.examTeacherSubjectID)">
+                                                            <div class="col-12 mt-2">
+                                                                <div class="d-flex align-items-center justify-content-between">
+                                                                    <div>
+                                                                        <a :href="attachment.file" target="_blank">Clique aqui para ver o arquivo ${attachmentIndex + 1} <span class="badge badge-info" v-if="attachment.send_on_qrcode">Via QR Code <i class="fas fa-qrcode"></i> </span></a>
+                                                                    </div>
+                                                                    <div>
+                                                                        <button class="btn btn-sm" @click="removeAttachment(attachment)">
+                                                                            <i class="fas fa-trash-alt text-danger"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            <hr class="my-0">
+                                                        </div>
+                                                    </template>
+                                                    <div class="col py-2">
+                                                        <span class="text-success" v-if="selectedExamTeacherSubject.response && selectedExamTeacherSubject.success && !selectedExamTeacherSubject.error">Suas respostas foram atualizadas</span>
+                                                        <span class="text-danger" v-if="selectedExamTeacherSubject.response && selectedExamTeacherSubject.error">Erro ao tentar atualizar suas respostas, tente novamente em alguns instantes</span>
+                                                    </div>
+                                                    <div class="mt-5 col-12">
+                                                        <div class="bd-l bd-2 d-flex align-items-center justify-content-between" :class="newAttachment.error && !newAttachment.saving ? ' bd-danger ':'' + newAttachment.id && !newAttachment.saving && !newAttachment.error ? ' bd-success':''">
+                                                            <div class="ml-2 upload-btn-wrapper">
+                                                                <button :disabled="newAttachment.saving" type="button" class="btn btn-primary">
+                                                                    <template v-if="newAttachment.saving" class="text-info">
+                                                                        <i class="fas fa-spinner fa-spin"></i>
+                                                                        Enviando seu arquivo...
+                                                                    </template>
+                                                                    <template v-else>
+                                                                        <i class="fas fa-file-upload"></i>
+                                                                        <template v-if="getAttachmentsByExamTeacherSubject(question.examTeacherSubjectID).length">
+                                                                            Enviar outro arquivo de resposta
+                                                                        </template>
+                                                                        <template v-else>
+                                                                            Enviar arquivo de resposta
+                                                                        </template>
+                                                                    </template>
+                                                                </button>
+                                                                <input v-on:click.capture="preOpeningFilePicker('file'+selectedExamTeacherSubject.id)" :disabled="newAttachment.saving" style="cursor: pointer;" :id="'file'+selectedExamTeacherSubject.id" @change="sendNewAttachment(question.examTeacherSubjectID, $event.target)" type="file">
+                                                                <br>
+                                                                <label v-if="!newAttachment.saving && newAttachment.id && !newAttachment.error" class="text-info m-0 ml-2">Resposta enviada!</label>
+                                                                <label v-if="newAttachment.error" class="text-danger m-0 ml-2">Problema ao enviar seu arquivo, por favor tente novamente!</label>
+                                                            </div>
+                                                            <div class="divider-text divider-vertical">Ou</div>
+                                                            <div class="text-center">
+                                                                <button class="btn btn-outline-primary btn-xs my-2" type="button" @click="selectExamTeacherSubject(question), showModalQRCodeQuestion(question, true)"  data-toggle="modal" data-target="#questionQRCode">
+                                                                    <i class="fas fa-qrcode"></i> Ler QR Code
+                                                                </button>
+                                                                <br>
+                                                                <a href="javascript:void(0)" @click="selectExamTeacherSubject(question, true)">Validar Resposta </a>
+                                                                <br>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <label for="" class="text-muted"><b>Tamanho máximo:</b> 10MB <b>por arquivo</b></label>
+                                            </div>
+                                        </div>
+                                    </template>
+                                {% endif %}
+                            </template>
+                        </div>
+                    </template>
+                </template>
+            </div>
+            {% if object.application.exam.get_base_text_location_display == 'Textos base no final do caderno' %}
+                {% include "dashboard/exams/includes/base_texts/exam_top_bottom.html" %}
+            {% endif %}
+        </div>
+        <div class="col-lg-3 d-none d-sm-none d-lg-block">
+            <div class="card mg-b-10 " style="position: sticky; top: 25px;">
+                <div class="card-body" id="sidemenu-content" style="overflow-x: auto; max-height: calc(100vh - 50px)">
+                    {% if object.application.max_time_finish %}
+                        <h5 class="mb-1" style="color: #000 !important;">Tempo para finalizar:</h5>
+                        <div class="mb-3">
+                        <div id="timeLeftProgressBar">
+                            <div id="timeLeftBar"></div>
+                        </div>
+                        </div>
+                    {% endif %}
+                    <h5 class="mb-1" :style="'color: #000 !important;'">Acessibilidade</h5>
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="btn-toolbar">
+                                <div class="btn-group mr-2 flex-wrap my-1">
+                                    <button @click="fontSize='font-1x'" type="button" class="btn font-weight-bold"
+                                        :class="fontSize=='font-1x' ? 'btn-primary' : 'btn-secondary'">
+                                        <p class="h6 m-0 text-white">A</p>
+                                    </button>
+                                    <button @click="fontSize='font-2x'" type="button"
+                                        class="btn btn-primary font-weight-bold"
+                                        :class="fontSize=='font-2x' ? 'btn-primary' : 'btn-secondary'">
+                                        <p class="h5 m-0 text-white">A</p>
+                                    </button>
+                                    <button @click="fontSize='font-3x'" type="button" class="btn font-weight-bold"
+                                        :class="fontSize=='font-3x' ? 'btn-primary' : 'btn-secondary'">
+                                        <p class="h4 m-0 text-white">A</p>
+                                    </button>
+                                    <button @click="fontSize='font-4x'" type="button" class="btn font-weight-bold"
+                                        :class="fontSize=='font-4x' ? 'btn-primary' : 'btn-secondary'">
+                                        <p class="h3 m-0 text-white">A</p>
+                                    </button>
+                                </div>
+                                <div class="btn-group my-1">
+                                    <button @click="contrast=!contrast" type="button" class="btn font-weight-bold" :class="contrast ? 'btn-primary' : 'btn-secondary'">
+                                        <p class="h4 text-white m-0">
+                                            <i class="fas fa-adjust"></i>
+                                        </p>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <h5 class="mb-1" :style="'color: #000 !important;'">Progresso:</h5>
+                    <div class="progress mb-3">
+                        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0"
+                            :style="{width: calculateProgress()+'%'}" :aria-valuenow="calculateProgress()"
+                            aria-valuemax="100">
+                            ${calculateProgress()}%
+                        </div>
+                    </div>
+                    {% if not IS_MENTORIZZE %}
+                        <a target="_blank" :href="urls.createProofAnswer" class="btn btn-primary btn-block font-weight-bold btn-lg mb-3">
+                            <i class="fas fa-receipt"></i>
+                            Gerar comprovante
+                        </a>
+                    {% endif %}
+                    <template v-for="knowledgeArea in knowledgeAreas">
+                        <template v-for="subject in knowledgeArea.subjects.filter(subject => subject.foreignLanguageIndex === null || subject.foreignLanguageIndex === selectedLanguage)">
+                            <div class="mb-1">
+                                <span>
+                                    <h6 class="text-uppercase mb-1" :style="'color: #000 !important;'">${subject.name}</h6>
+                                </span>
+                                <h6 class="d-flex flex-fill flex-wrap ">
+                                    <template v-for="question in subject.questions">
+                                        <div class="d-flex mb-1">
+                                            <a class="d-flex" :href="'#question-'+question.id">
+                                                <span style="line-height: 18px; margin-right: 1px;" :style="contrast ? 'color: #000 !important;' : ''">
+                                                    ${question.number_print ? question.number_print : '&nbsp;-&nbsp;'}
+                                                </span>
+                                                <div v-if="question.category == 'Somatório'" class="mr-2 question-marker" :class="{'selected' : question.number == 1, 'answered': (question.category == 'Somatório' && question.selectedIndexes.length > 0), 'answer_error' : question.error}" style="width: 15px; height: 15px; border-radius: 15px;"></div>
+                                                <div v-else class="mr-2 question-marker" :class="{'selected' : question.number == 1, 'answered': question.answerId || checkHasAttachment(question), 'answer_error' : question.error}" style="width: 15px; height: 15px; border-radius: 15px;"></div>
+                                            </a>
+                                        </div>
+                                    </template>
+                                </h6>
+                            </div>
+                        </template>
+                    </template>  
+                    <a href="{% url 'core:dashboard_student' %}"
+                        class="btn btn-primary btn-block font-weight-bold btn-lg">
+                        <i class="fas fa-home"></i>
+                        Voltar ao painel
+                    </a>
+                    <button @click="finishApplication()" v-if="state == 'started'" class="btn btn-danger btn-block font-weight-bold btn-lg mb-3">
+                        <i class="fas fa-times-circle"></i> 
+                        Encerrar prova
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 text-center">
+            <button @click="finishApplication()" v-if="state == 'started'" class="btn btn-danger font-weight-bold btn-lg mb-5">
+                <i class="fas fa-times-circle"></i> 
+                Encerrar prova
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="df-settings d-block d-md-block d-xl-none" style="z-index: 998;">
+    <a id="dfSettingsShow"  href="#" class="df-settings-link" style="font-size: 25px;">
+        <i class="fas fa-bars"></i>
+        <span class="badge badge-danger"></span>
+    </a>
+    <div class="df-settings-body p-1" style="overflow-x: hidden;"></div>
+</div>
+
+<img id="imagePreview" src="" class="d-none" alt="Imagem">
+
+{% endcache %}
+
+{% endblock content %}
+
+{% block extra-modal %}
+{% cache 600 application_extra_modal object.application.pk %}
+
+{% include "dashboard/exams/includes/base_texts/modals/detail.html" %}
+
+<div class="modal pr-0" tabindex="-1" role="dialog" id="chatOrientations">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-white">
+                <h5 class="modal-title">Orientações da aplicação</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                {{object.application.orientations|safe}}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="questionQRCode" tabindex="-1" role="dialog" aria-labelledby="questionQRCode"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Verifique a questão selecionada</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="height: auto;">
+                <div class="row" v-if="selectedQuestion && !selectedExamTeacherSubject.id">
+                    <div class="col-12">
+                        <span class="bg-primary text-white rounded p-2">
+                            <template v-if="selectedQuestion.number_print">
+                                Você está respondendo a questão: 
+                                <span class="question-number">${selectedQuestion.number_print}</span>
+                            </template>
+                            <template v-else>
+                                Você está respondendo a uma questão sem numeração.
+                            </template>
+                        </span>
+                    </div>
+                </div>
+                <div class="row" v-if="selectedExamTeacherSubject && selectedExamTeacherSubject.id">
+                    <div class="col-12">
+                        <span class="bg-primary text-white rounded p-2">Você está respondendo a um grupo de questões</span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 py-3 d-flex flex-column text-center">
+                        <label class="text-muted my-2">
+                            Aponte a câmera do seu celular para ler
+                            <br>
+                            o QR Code e enviar sua resposta
+                        </label>
+                        <div id="modalQRContent" class="align-self-center"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="errorReportModal" tabindex="-1" role="dialog" aria-labelledby="errorReportModal"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Reportar erro na questão ${selectedQuestion?
+                    selectedQuestion.number : ''}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="height: auto;">
+                <div class="form-group">
+                    <label for="message-text" class="col-form-label">Relate abaixo qual o problema referente à esta
+                        questão:</label>
+                    <textarea v-model="errorDescription" rows="10" class="form-control" id="message-text"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" @click="sendReportError()">Enviar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<button class="d-none" data-toggle="modal" data-backdrop="static" data-keyboard="false" data-target="#chooseLanguage" id="openChooseLanguage"></button>
+<div class="modal fade show" id="chooseLanguage" tabindex="-1" role="dialog" aria-hidden="true" v-if="needChooseLanguage">
+    <div class="modal-dialog modal-dialog-centered mx-wd-sm-650" role="document">
+        <div class="modal-content bd-0 bg-transparent">
+            <div class="modal-body pd-0">
+                <button type="button" class="close" class="d-none" id="chooseLanguageClose" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <div class="row no-gutters">
+                    <div class="col-3 col-sm-5 col-md-6 col-lg-5 rounded-left" style="background-color: #FF8F3D !important;">
+                        <div class="wd-100p ht-100p">
+                        </div>
+                    </div><!-- col -->
+                    <div class="col-9 col-sm-7 col-md-6 col-lg-7 bg-white rounded-right">
+                        <div class="ht-100p d-flex flex-column justify-content-center pd-20 pd-sm-30 pd-md-40">
+                            <span class="tx-color-04">
+                                <i data-feather="bar-chart-2" class="wd-40 ht-40 stroke-wd-3 mg-b-20"></i>
+                            </span>
+                            <h3 class="tx-16 tx-sm-20 tx-md-24 mg-b-15 mg-md-b-20">Selecione uma lingua</h3>
+                            <p class="tx-14 tx-md-16 tx-color-02">
+                                Escolha a língua estrangeira desejada com <strong>cuidado</strong>, pois após a confirmação, <strong>a sua opção não poderá ser modificada</strong>.
+                            </p>
+                            <p class="tx-12 tx-md-13 tx-color-03 mg-b-25">
+                                
+                            </p>
+                            <button type="button" :class="selectedLanguage === 0 ? 'btn-primary':'btn-outline-primary'" class="btn btn-block btn-uppercase" @click="selectedLanguage = 0">Inglês</button>
+                            <button type="button" :class="selectedLanguage === 1 ? 'btn-primary':'btn-outline-primary'" class="btn btn-block btn-uppercase" @click="selectedLanguage = 1">Espanhol</button>
+                            <hr>
+                            <button type="button" :disabled="selectedLanguage == null" class="btn btn-block btn-uppercase text-white rounded shadow" style="background-color: #FF8F3D !important" @click="chooseLanguage()">Confirmar</button>
+                        </div>
+                    </div><!-- col -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    
+
+{% endcache %}
+{% endblock extra-modal %}
+
+{% block js-additional %}
+{% cache 600 application_js_additional object.application.pk %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.3.5/split.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="{% static 'timeline/js/timeline.js' %}"></script>
+
+<script src="https://unpkg.com/in-view@0.6.1/dist/in-view.min.js"></script>
+
+<script src="{% static 'administration/assets/js/bioep.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.20/lodash.min.js"></script>
+
+<script type="text/javascript" src="{% static 'tinymce/tinymce.min.js' %}"></script>
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+
+<script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<script src="{% static 'js/autoresize.js' %}"></script>
+
+<script src="{% static 'js/qrcode.js' %}"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.10.2/viewer.min.js" integrity="sha512-lzNiA4Ry7CjL8ewMGFZ5XD4wIVaUhvV3Ct9BeFmWmyq6MFc42AdOCUiuUtQgkrVVELHA1kT7xfSLoihwssusQw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script type="application/javascript">
+
+    Vue.directive('init', {
+        bind: function (el, binding, vnode) {
+            vnode.context[binding.expression]();
+        }
+    });
+
+    var questionEnunciation = Vue.component('question-enunciation', {
+        props: ['question', 'state'],
+        data: function () {
+            return {
+                timer: false
+            }
+        },
+        template: `
+      <div class="enunciation" :timing="question.timing" ref="enunciationEl"
+        v-html="question.enunciation"></div>
+    `,
+        methods: {
+            isInViewport() {
+
+                const {
+                    top,
+                    right,
+                    bottom,
+                    left,
+                    width,
+                    height
+                } = this.$refs.enunciationEl.getBoundingClientRect();
+
+                return bottom > 250 &&
+                    window.innerWidth - left > 0 &&
+                    window.innerHeight - top > 250 &&
+                    right > 0;
+            }
+        },
+        mounted() {
+            self = this
+
+            document.addEventListener('scroll', () => {
+                if (this.isInViewport()) {
+                    if (!this.timer)
+                        this.timer = setInterval(() => {
+                            if (this.state == "started")
+                                this.question.timing += 1
+                        }, 1000);
+                } else {
+                    clearInterval(this.question)
+                    this.timer = false;
+                }
+            })
+        },
+    })
+
+    {% endcache %}
+
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        components: {
+            'question-enunciation': questionEnunciation,
+            // 'editor': editor
+        },
+        data: {
+            urls: {
+                createProofAnswer: "{% url 'answers:proof_of_answers_create' object.pk %}",
+            },
+            file: '',
+            baseURL: '{{BASE_URL}}',
+            baseTexts: [],
+            questions: [],
+            attachments: [
+                {% if object.application.exam.group_attachments %}
+                    {% for attachment in object.attachments.all %}
+                        {
+                            id: '{{attachment.pk}}',
+                            file: '{{attachment.id|get_answer_attachment_file_link|escapejs|remove_line_break|default:""}}',
+                            exam_teacher_subject: '{{attachment.exam_teacher_subject.id}}',
+                            send_on_qrcode: {{attachment.send_on_qrcode|lower}},
+                        },
+                    {% endfor %}
+                {% endif %}
+            ],
+            selectedExamTeacherSubject: {
+                id: '',
+                attachments: [],
+                success: false,
+                error: false,
+            },
+            newAttachment: {
+                id: '',
+                saving: false,
+                error: false,
+            },
+            selectedBaseText: '',
+            {% include 'dashboard/monitoring/student/includes/student-new-data.js' with object=object %},
+            {% include 'dashboard/monitoring/student/includes/student-data-exam.js' with object=object iterator=iterator %}
+        },
+        methods: {
+            
+            chooseLanguage() {
+                url = `{% url 'applications:api-applicationstudent-choose-language' object.id %}`
+                axios.patch(url, { foreign_language: this.selectedLanguage }).then((response) => {
+                    this.needChooseLanguage = false
+                    $("#chooseLanguageClose").click()
+                    this.handlerNumberPrint()
+                })
+            },
+            calculateProgress(){
+                self = this
+                emptyQuestions = self.getEmptyQuestions().length
+                totalQuestions = self.getAllQuestions().length
+
+                return ((totalQuestions - emptyQuestions) / totalQuestions * 100).toFixed(2)
+            },
+            gerateQRCode(question) {
+                self = this
+                $.each($('div[data-qrcode=true]'), function (index, el) {
+                    new QRCode(el, {
+                        text: `${self.baseURL}/anexar/${$(el).attr('question-id')}/{{object.pk}}/${$(el).attr('question-number')}`,
+                        width: 128,
+                        height: 128,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                })
+            },
+            showModalQRCodeQuestion(question, attachment = false) {
+                this.selectedQuestion = question
+                element = document.getElementById('modalQRContent')
+                $(element).html('')
+                let text = `${self.baseURL}/anexar/${question.id}/{{object.pk}}/${question.number}`
+                if(attachment) {
+                    text = `${self.baseURL}/anexar/${question.examTeacherSubjectID}/{{object.pk}}/`
+                }
+                new QRCode(element, {
+                    text: text,
+                    width: 360,
+                    height: 360,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            },
+            getFileAnswer(question) {
+                $(`div[data-spinner=spinner${question.id}]`).removeClass('d-none')
+                axios.get(
+                    `{% url 'answers:file_answer_search' %}?question=${question.id}&student_application={{object.pk}}`
+                    ).then((response) => {
+                    if (response.data && response.data.length > 0) {
+
+                        question['answerId'] = response.data[0].id
+                        question['answerContent'] = response.data[0].arquivo
+                        question['send_on_qrcode'] = response.data[0].send_on_qrcode
+
+                        $(`div[data-spinner=spinner${question.id}]`).addClass('d-none')
+                        $(`div[data-error=error${question.id}]`).addClass('d-none')
+                    } else {
+                        $(`div[data-error=error${question.id}]`).removeClass('d-none')
+                        $(`div[data-spinner=spinner${question.id}]`).addClass('d-none')
+                        setTimeout(() => {
+                            $(`div[data-error=error${question.id}]`).addClass('d-none')
+                        }, 6000)
+                    }})
+
+            },
+            getQuestions() {
+                if (this.knowledgeAreas.length) {
+                    this.knowledgeAreas.forEach((area) => area.subjects.forEach((subject) => subject.questions.forEach((question) => this.questions.push(question))))
+                }
+            },
+            sendNewAttachment(examTeacherSubjectID, file) {
+                this.newAttachment.saving = true
+                let formData = new FormData();
+                formData.append('exam_teacher_subject', examTeacherSubjectID);
+                formData.append('file', file.files[0]);
+                formData.append('application_student', '{{object.id}}');
+                axios.post("{% url 'answers:api-attachments-list' %}", formData, { headers: { 'Content-Type': 'multipart/form-data' }}).then((response) => {
+                    this.attachments.push(response.data)
+                    this.newAttachment.saving = false
+                    this.newAttachment.id = response.data.id
+                }).catch(() => {
+                    this.newAttachment.saving = false
+                    this.newAttachment.error = true
+                })
+                setTimeout(() => {
+                    this.resetAttachment()
+                }, 4000)
+            },
+            getAttachmentsTeacher() {
+                axios.get(`{% url 'answers:api-attachments-list' %}?application_student={{object.id}}`).then((response) => {
+                    this.attachments = response.data
+                    this.selectedExamTeacherSubject.success = true
+                    this.$forceUpdate()
+                }).catch(() => {
+                    this.selectedExamTeacherSubject.error = true
+                })
+                this.selectedExamTeacherSubject['response'] = true
+                setTimeout(() => {
+                    this.selectedExamTeacherSubject.success = false
+                    this.selectedExamTeacherSubject.error = false
+                    this.selectedExamTeacherSubject.response = null
+                    this.$forceUpdate()
+                }, 4000)
+            },
+            checkHasAttachment(question) {
+                exists = this.attachments.find((attachment) => attachment.exam_teacher_subject == question.examTeacherSubjectID)
+                if(question.category == 'Arquivo anexado' && exists) {
+                    return true
+                }
+                return false
+            },
+            removeAttachment(attachment) {
+                url = "{% url 'answers:api-attachments-detail' pk='00000000-0000-0000-0000-000000000000' %}"
+                axios.delete(url.replace("00000000-0000-0000-0000-000000000000", attachment.id)).then((response) => {
+                    this.attachments.splice(this.attachments.indexOf(attachment), 1)
+                })
+            },
+            getQuestionsExamTeacherSubject(examTeacherSubjectID) {
+                return this.questions.filter((_question) => _question.examTeacherSubjectID == examTeacherSubjectID)
+            },
+            getLastQuestionOfExamTeacherSubject(question) {
+                let questionsExamTeacher = this.getQuestionsExamTeacherSubject(question.examTeacherSubjectID)
+                return questionsExamTeacher[questionsExamTeacher.length - 1]
+            },
+            getAttachmentsByExamTeacherSubject(examTeacherID) {
+                return this.attachments.filter(attachment => attachment.exam_teacher_subject == examTeacherID)
+            },
+            selectExamTeacherSubject(question, validade=false) {
+                this.selectedExamTeacherSubject['id'] = question.examTeacherSubjectID
+                this.selectedExamTeacherSubject['attachments'] = this.getAttachmentsByExamTeacherSubject(question.examTeacherSubjectID)
+                if(validade) {
+                    this.getAttachmentsTeacher()
+                }
+            },
+            resetAttachment() {
+                this.newAttachment.id = '',
+                this.newAttachment.saving = false
+                this.newAttachment.error = false
+            },
+            handlerNumberPrint() {
+                this.knowledgeAreas.forEach(knowledgeArea => {
+                    knowledgeArea.subjects.filter(subject => subject.foreignLanguageIndex === null || subject.foreignLanguageIndex === this.selectedLanguage).forEach(subject => {
+                        subject.questions.forEach(question => {
+                            {% comment %} if(subject.foreignLanguageIndex === null) {
+                                question.number_print -= 5
+                            } {% endcomment %}
+                        })
+                    })
+                })
+            },    
+            clearCacheOnLoad() {
+                const url = new URL(window.location.href);
+                if (url.searchParams.has('cache_clear')) {
+                    window.addEventListener('load', () => {
+                    localStorage.clear(); 
+                    url.searchParams.delete('cache_clear'); 
+                    window.history.replaceState(null, '', url.toString()); 
+
+                    this.questions.forEach(question => {
+                        question.answerId =   ""
+                        });
+                    });
+                }
+            },
+            {% comment %} generateProofOfAnswers() {
+                let answers_data = this.questions.map(question => ({
+                    question_id: question.id,
+                    answer_id: question.answerId,
+                    category: question.category,
+                    is_group_files: {{object.application.exam.group_attachments|lower}},
+                    number_print: question.number_print,
+                    send_on_qrcode: question.send_on_qrcode,
+                    alternative_letter: question.answerId ? this.generateAlternativeOrder(question.alternatives.findIndex(alternative => alternative.id == question.answerId)): '',
+                    text: "",
+                }))
+                axios.post("{% url 'answers:api-proof-create' %}", { application_student: '{{object.pk}}', answers_json: answers_data }).then((response) => {
+                    console.log(response.data)
+                })
+            }, {% endcomment %}
+            {% include 'dashboard/monitoring/student/includes/student-new-function-general.js' with object=object %},
+            {% include 'dashboard/monitoring/student/includes/student-new-function-action.js' with object=object %},
+            {% include 'dashboard/monitoring/student/includes/student-function-exam.js' with object=object %}
+            {% include 'dashboard/monitoring/student/includes/student-new-function-error-report.js' with object=object %}  
+            {% include 'dashboard/exams/includes/base_texts/methods/base_texts-functions.js' %},
+        },
+        mounted: function () {
+            var self = this;
+            this.gerateQRCode()
+            this.getQuestions()
+
+            this.getBaseTextsExam('{{object.application.exam.pk}}').finally(() => {
+                this.gerateBaseTextNumbers()
+                $('[data-baseNumber]').each(function(index, el) {
+                    $(el).html(index + 1)
+                })
+            })
+            
+            {% if object.application_state == 'finished' %}
+                window.location.href = "/painel/aluno"
+                return 
+            {% endif %}
+            
+            if(this.needChooseLanguage) {
+                $('#openChooseLanguage').trigger('click')
+            }
+            if(this.selectedLanguage) {
+                this.handlerNumberPrint()
+            }
+            console.log(this.questions)
+
+            self.updateSelectedIndexes()
+            self.checkPendingRequest()
+            self.checkPendingAnswers()
+            self.clearCacheOnLoad();
+
+            $(document).ready(function () {
+
+                $('[data-toggle="tooltip"]').tooltip()
+
+                {% comment %} 
+                if (!self.isMob()){
+                    const customZooming = new Zooming()
+                    const scaleBase = 0
+                    customZooming.config({ scaleBase })
+                    customZooming.listen('.questions-images img')
+                }
+                {% endcomment %}
+                
+                if (!self.isMob()){
+                $(".questions-images img").not('#imagePreview').on('click', (e) => {
+                    $('#imagePreview').prop('src', e.target.src)
+                    let viewer = new Viewer(document.getElementById('imagePreview'), {
+                    inline: false,
+                    viewed() {
+                        viewer.zoomTo(1.5);
+                    },
+                    toolbar: {
+                        zoomIn: 2,
+                        zoomOut: 4,
+                        oneToOne: 4,
+                        reset: 4,
+                        prev: 0,
+                        play: {
+                            show: 1,
+                            size: 'large',
+                        },
+                        next: 0,
+                        rotateLeft: 4,
+                        rotateRight: 4,
+                        flipHorizontal: 0,
+                        flipVertical: 0,
+                    },
+                    });
+                    $('#imagePreview').click()
+                })
+                }
+
+            })
+
+            textareas = document.querySelectorAll(".question textarea");
+
+            textareas.forEach((text) => {
+                text.addEventListener('input', autoResize, false);
+                text.style.height = 'auto';
+                text.style.height = text.scrollHeight + 'px';
+            });
+
+            function autoResize() {
+                this.style.height = 'auto';
+                this.style.height = this.scrollHeight + 'px';
+            }
+            $('.df-settings').on('click', function () {
+                $('.df-settings-body').children().remove()
+                $('#sidemenu-content').clone().appendTo('.df-settings-body')
+            })
+
+            {% if object.application.max_time_finish %}
+                function handleProgress(timeLeft, timeTotal, element) {
+                    const progressBarWidth = timeLeft * element.width() / timeTotal
+                    const leftSideValue = Math.floor(timeLeft / 60)
+                    const leftSideContent = leftSideValue < 10 ? `0${leftSideValue}` : leftSideValue
+                    const rightSideValue = timeLeft % 60
+                    const rightSideContent = rightSideValue < 10 ? `0${rightSideValue}` : rightSideValue
+                    element.find('#timeLeftBar').animate({ width: progressBarWidth }, 0).html(`${leftSideContent}:${rightSideContent}`)
+                    if (timeLeft > 0) {
+                        setTimeout(function() {
+                            handleProgress(timeLeft - 1, timeTotal, element)
+                        }, 1000)
+                    } else {
+                        Swal.fire({
+                            title: 'Tempo encerrado!',
+                            imageUrl: "{% static 'stopwatch.png' %}",
+                            imageWidth: 150,
+                            text: 'Sua lista de exercício foi finalizada automaticamente, todas as suas respostas foram enviadas com sucesso!',
+                            showConfirmButton: true,
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                        }).then((result) => {
+                            window.location.href = "{% url 'core:redirect_dashboard' %}"
+                        })
+                    }
+                }
+
+                handleProgress(
+                    Number('{{ object.time_left_to_finish }}'.replaceAll('.', '')),
+                    Number('{{ object.application.max_time_finish.seconds }}'.replaceAll('.', '')),
+                    $('#timeLeftProgressBar')
+                )
+            {% endif %}
+        }
+    })
+</script>
+
+
+{% endblock js-additional %}

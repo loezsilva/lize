@@ -1,0 +1,3541 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+{% load remove_line_break %}
+{% load questions_tags %}
+{% load num_to_char %}
+{% load exams_tags %}
+
+{% block title %}
+  {% if not object %}
+    Adicionar questão - Lize
+  {% else %}
+    Alteração de questão - Lize
+  {% endif %}
+{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<link href="{% static 'administration/assets/css/boostrap5.css' %}" rel="stylesheet">
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/choices.js@11.1.0/public/assets/styles/choices.min.css"
+/>
+<style>
+  .modal-html img{
+    max-width:100%;
+    height: auto;
+  }
+  .modal-body{
+      max-height: 75vh !important;
+  }
+  .modal-body-create-topic {
+      /* max-height: 55vh ; */
+      /* overflow: auto; */
+      margin: 15px;
+  }
+  .modal-body-history {
+    max-height: 55vh ;
+    overflow: auto;
+    margin: 15px;
+  }
+  label{
+    margin-bottom: 0 !important;
+  }
+  .wrs_tickContainer{
+    display: none !important;
+  }
+  #base_button{
+    margin-top: -36px;
+  }
+  #margin_button{
+    margin-right: 15px;
+  }
+  .df-settings {
+    position: fixed;
+    top: 0;
+    right: 0px;
+    /* left: 700px; */
+    bottom: 0;
+    z-index: 1200;
+    transition: all 0.2s;
+  }
+  .df-settings.show {
+    right: 95px;
+  }
+  .df-settings-body {
+    position: absolute;
+    height: auto;
+    top:29%;
+    left: 0;
+    width: 142px;
+    background-color: #fff;
+    border-left: 1px solid #c0ccda;
+    box-shadow: 0 0 15px rgb(28 39 60 / 10%);
+    padding: 18px 10px;
+    overflow-y: auto;
+  }
+  .df-settings-link {
+    top: 291px;
+  }
+  .modal-content .close {
+    margin-left: -21%;
+  }
+  .btnMenu {
+    position: absolute;
+    top: 20px;
+    right: 5px;
+    z-index: 9999;
+    cursor: pointer;
+    float: right;
+  }
+  .bg-success-custom {
+    background-color: rgb(141, 219, 173)
+  }
+  .grayscale {
+    filter: gray; 
+    -webkit-filter: grayscale(1); 
+    filter: grayscale(1); 
+  }
+
+  .vue-select2 {
+    width: 300px;
+  }
+
+  .transition {
+    transition: transform 0.2s ease;
+  }
+
+  details[open] > summary .rotate-icon {
+    transform: rotate(90deg);
+  }
+
+  .custom-choices__inner {
+    min-height: unset;
+    padding: 0.391rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  .custom-choices__list--single {
+    padding: 0
+  }
+</style>
+
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+<div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+  <div>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+        <li class="breadcrumb-item"><a href="#">QUESTÕES</a></li>
+        <li class="breadcrumb-item active" aria-current="page">CADASTRAR</li>
+      </ol>
+    </nav> 
+
+    {% if request.resolver_match.url_name == 'questions_update' %}
+    <h4 class="mb-0">Atualizar questão</h4>
+    {% else %}
+    <h4 class="mb-0">Cadastrar questão</h4>
+    {% endif %}
+
+
+    <small class="text-muted">Informe os dados abaixo dessa questão</small>
+  </div>
+  <div class="d-none d-md-block">
+      {% if is_popup %}
+        <button class="btn btn-sm pd-x-15 btn-white btn-uppercase" onclick="window.close();">
+          <i class="fas fa-times" class="wd-10 mg-r-5"></i> Fechar
+        </button>
+      {% else %}
+        <button class="btn btn-sm pd-x-15 btn-white btn-uppercase" onclick="history.back();">
+          <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </button>
+      {% endif %}
+  </div>
+</div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+      <nav class="ls" aria-label="Breadcrumb">
+        <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+          <li>
+            <div>
+              <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                  <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+              </a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="{% url 'questions:questions_list' %}" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Questões</a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">{% if not object %}Cadastrar{% else %}Editar{% endif %}</a>
+            </div>
+          </li>
+        </ol>
+      </nav>
+      <div class="d-none d-md-block">
+        {% if is_popup %}
+          <button class="btn btn-sm pd-x-15 btn-white btn-uppercase" onclick="window.close();">
+            <i class="fas fa-times" class="wd-10 mg-r-5"></i> Fechar
+          </button>
+        {% else %}
+          <button class="btn btn-sm pd-x-15 btn-white btn-uppercase" onclick="history.back();">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+          </button>
+        {% endif %}
+      </div>
+    </div>
+    <template>
+      <div class="row">
+          <div class="col-md-12">
+            {% with form.instance|check_can_be_updated_with_reason:user as can_be_updated %}
+              <div class="card mg-b-10">
+                <div class="card-body">
+                  <form method="post" onsubmit="return false" @submit="handleSubmitFormQuestion" id="questionForm" >
+                    <select class="d-none" name="coordinations" multiple>
+                      {% for coordination in form.coordinations.field.queryset.all %}
+                        <option value="{{coordination.id}}" selected>{{coordination}}</option>
+                      {% endfor %}
+                    </select>
+                    {% csrf_token %}
+                    {{ question_option_formset.management_form }}
+                    {% if is_popup %}
+                      <input type="hidden" name="is_popup" value="1">
+                    {% endif %}
+                    {% if exam_teacher %}
+                      <input type="hidden" name="exam_teacher" value="{{exam_teacher}}">
+                    {% endif %}
+
+
+                    <ul class="nav nav-tabs" id="myTab" role="tablist">
+                      <li class="nav-item">
+                        <a class="nav-link active" data-toggle="tab" href="#question-data" role="tab">
+                          Dados da questão <span class="badge badge-light ml-1 font-weight-bold">F1</span>
+                        </a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#question-subject" role="tab">
+                          Pedagógico e Assuntos <span class="badge badge-light ml-1 font-weight-bold">F2</span>
+                          <span class="badge badge-primary ml-1">${currentTopics.length} selecionados</span>
+                        </a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link mr-1" data-toggle="tab" href="#question-bncc" role="tab">
+                          BNCC e Matriz ENEM <span class="badge badge-light ml-1 font-weight-bold">F3</span>
+                          <span class="badge badge-primary ml-1">
+                            ${currentCompetences.length}
+                            comp.
+                          </span>
+                          <span class="badge badge-primary ml-1">
+                            ${currentAbilities.length} hab.
+                          </span>
+                        </a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#question-print" role="tab">Conf. Impressão 
+                          <span class="badge badge-light ml-1 font-weight-bold">F4</span>
+                        </a>
+                      </li>
+
+                      {% if object.history.all %}
+                        <li class="nav-item">
+                          <a class="nav-link" data-toggle="tab" href="#question-history" role="tab">Histórico 
+                            <span class="badge badge-light ml-1 font-weight-bold">F5</span>
+                          </a>
+                        </li>
+                      {% endif %}
+                        <li class="nav-item" v-if="historicalQuestion.length > 0">
+                          <a class="nav-link" data-toggle="tab" href="#history-ult-tab" role="tab">Utilizações 
+                            <span class="badge badge-light ml-1 font-weight-bold">F6</span>
+                          </a>
+                        </li>
+                    </ul>
+                    <div class="tab-content bd bd-gray-300 bd-t-0 pd-20" id="myTabContent">
+                      
+                      <div class="tab-pane fade show active" id="question-data" role="tabpanel" aria-labelledby="home-tab">
+                        <div class="row m-0">
+                          <div class="col-12 col-md-6 mb-3">
+                              {% if question_editing and object.category == 1 %}
+                                <div class="custom-control custom-switch ">
+                                  <input type="checkbox" id="canceled_question" class="custom-control-input">
+                                  <label for="canceled_question" class="custom-control-label">
+                                    Questão anulada
+                                  </label>
+                                  <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                    Todas as alternativas serão consideradas corretas e esta questão será anulada em todas
+                                    as provas as quais a utilizem.
+                                  </small>
+                                </div>
+                              {% endif %}
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-12 col-md-4">
+                            <div class="form-group">
+                              <label for="{{ form.category.auto_id }}">{{ form.category.label }}</label>
+                              {% if can_be_updated.can_be_updated %}
+                                {% render_field form.category class="form-control" %}
+                              {% else %}
+                                {% render_field form.category class="form-control" disabled="disabled"  %}
+                                <input type="hidden" name="{{ form.category.name }}" value="{{form.instance.category}}">
+                              {% endif %}
+
+                              <small class="form-text text-muted">
+                                {{ form.category.help_text }}
+                              </small>
+                              {% if form.category.errors %}
+                                <label class="text-danger">
+                                  {{ form.category.errors.0 }}
+                                </label>
+                              {% endif %}
+                            </div>
+                          </div>
+                          <template v-if="selectedBaseTexts.length > 0">
+                            <div class="col-12 col-md-4 d-flex align-items-center">
+                              <a href="#" class="text-link" data-toggle="modal" data-target="#modalBaseTexts">Você selecionou ${selectedBaseTexts.length} Texto(s) base</a>
+                            </div>
+                          </template>
+                          <template v-else>
+                            <div class="col-12 col-md-4 d-flex align-items-end">  
+                              <div class="form-group">
+                                <button class="btn btn-primary" type="button" data-toggle="modal" data-target="#modalBaseTexts"><i class="fas fa-plus"></i> Adicionar texto base</button>
+                              </div>
+                            </div>
+                          </template>
+                        </div>
+                        {% if form.errors or form.non_field_errors %}
+                          <div class="row mb-0">
+                            <div class="col-12">
+                              <div class="alert alert-danger dismissable">
+                                Por favor, revise o formulário e corrija os campos destacados abaixo para continuar.
+                              </div>
+                            </div>
+                          </div>
+                        {% endif %}
+                          
+                        {% if erros %}
+                            <div class="row mb-0">
+                            <div class="col-12">
+                                <div class="alert alert-danger dismissable">
+                                    {{ erros }}
+                                </div>
+                            </div>
+                          </div>
+                        {% endif %}
+
+                        <div class="row">
+                          {% if not correction_textual_answer and not correction_file_answer %}
+                              <div class="col-4 col-md-4">
+                                <div id="selectIsEssay" class="custom-control custom-switch ">
+                                  {% render_field form.is_essay  @change="verifyCheckbox($event)" class="custom-control-input" %}
+                                  <label class="custom-control-label" for="{{form.is_essay.auto_id}}">
+                                    {{ form.is_essay.label }}</label>
+                                  <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                    {{ form.is_essay.help_text }}
+                                  </small>
+                                </div>
+                            </div>
+                            <div class="col-4 col-md-4">
+                              <div id="selectCompetence" class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="checkBoxCorrection" @change="verifyCheckbox($event)">
+                                <label class="custom-control-label" for="checkBoxCorrection">
+                                  <h6 class="mb-0">Correção com competências<span class="badge badge-info ml-1">Atenção</span></h6>
+                                </label>
+                                <small class="form-text text-muted mt-0">
+                                  Esse tipo de correção normalmente é utilizado para avaliar redações.
+                                </small>
+                              </div>
+                            </div>
+                            <div class="col-12 mt-3" v-if="isEssay">
+                              <div class="form-group">
+                                <label for="">{{ form.theme.label }}</label>
+                                <small class="form-text text-muted">
+                                  {{ form.theme.help_text }}
+                                </small>
+                                {% render_field form.theme class="form-control" %}
+                                {% if form.theme.errors %}
+                                <label class="text-danger">
+                                  {{ form.theme.errors.0 }}</label>
+                                {% endif %}
+                              </div>
+                            </div>
+                          {% endif %}
+                          <div v-if="selectTextCorrection"  class="col-4 col-md-4">
+                            <div class="form-group">
+                              <label for="{{ form.text_correction.auto_id }}">{{ form.text_correction.label }}</label>
+                                {% if not correction_textual_answer and not correction_file_answer %}
+                                  {% render_field form.text_correction class="form-control" %}
+                                {% else %}
+                                  {% render_field form.text_correction class="form-control" disabled="disabled"  %}
+                                  <input type="hidden" name="{{ form.text_correction.name }}" value="{{form.instance.text_correction.id}}">
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                  {{ form.text_correction.help_text }}
+                                </small>
+                                {% if form.text_correction.errors %}
+                                  <label class="text-danger">
+                                    {{ form.text_correction.errors.0 }}
+                                  </label>
+                                {% endif %}
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          {% for error in form.errors.has_correct_alternative %}
+                            <h6 class="text-danger">{{error}}</h6>
+                          {% endfor %}
+                          <div class="alert" :class="{ 'alert-success': formatter.status == 'success', 'alert-danger': formatter.status == 'error'}" v-if="formatter.status != 'iddle'">
+                            <p v-if="formatter.status == 'success'" class="mb-0">A formatação foi concluída com sucesso.</p>
+                            <p v-if="formatter.status == 'error'" class="mb-0">
+                              Ocorreu um erro ao tentar formatar a questão, tente novamente. 
+                              <br> 
+                              <div id="errorCode"></div>
+                            </p>
+                          </div>
+                          
+                          <label class="font-weight-bold" for="">{{ form.enunciation.label }}</label>  
+                          
+                          <div v-if="{{can_be_updated.can_be_updated|lower}}">
+                            <p class="text-muted mb-0">
+                              <span class="font-weight-bold">Importante:</span>
+                              <span>
+                                Não adicione o número da questão no enunciado;
+                                <br />
+                                Para melhor experiência do aluno limpe a formatação do texto clicando no ícone.
+                                <svg width="24" height="24">
+                                  <path d="M13.2 6a1 1 0 010 .2l-2.6 10a1 1 0 01-1 .8h-.2a.8.8 0 01-.8-1l2.6-10H8a1 1 0 110-2h9a1 1 0 010 2h-3.8zM5 18h7a1 1 0 010 2H5a1 1 0 010-2zm13 1.5L16.5 18 15 19.5a.7.7 0 01-1-1l1.5-1.5-1.5-1.5a.7.7 0 011-1l1.5 1.5 1.5-1.5a.7.7 0 011 1L17.5 17l1.5 1.5a.7.7 0 01-1 1z" fill-rule="evenodd">
+                                  </path>
+                                </svg> abaixo
+                              </span>
+                            </p>
+                            <small class="form-text text-muted">
+                              {{ form.enunciation.help_text }}
+                            </small>
+                          </div>
+                          <div v-else>
+                            <div class="alert alert-warning d-flex align-items-center" role="alert">
+                              <i data-feather="alert-circle" class="mg-r-10"></i> 
+                              {{can_be_updated.reason}}
+                            </div>
+                          </div>
+
+                          {% render_field form.enunciation %}
+
+                          {% for error in form.enunciation.errors %}
+                            <label class="text-danger">
+                              {{ error }}
+                            </label>
+                          {% endfor %}
+
+                        </div>
+                        
+                        <div class="row">
+                          <div class="col-12">
+                            <p class="text-muted">
+                              <span>
+                                <span class="font-weight-bold">Importante:</span> 
+                                Não adicione a letra da alternativa;
+                                <br />
+                                Selecione o conteúdo da alternativa e limpe a formatação clicando em 
+                                <svg width="24" height="24">
+                                  <path
+                                    d="M13.2 6a1 1 0 010 .2l-2.6 10a1 1 0 01-1 .8h-.2a.8.8 0 01-.8-1l2.6-10H8a1 1 0 110-2h9a1 1 0 010 2h-3.8zM5 18h7a1 1 0 010 2H5a1 1 0 010-2zm13 1.5L16.5 18 15 19.5a.7.7 0 01-1-1l1.5-1.5-1.5-1.5a.7.7 0 011-1l1.5 1.5 1.5-1.5a.7.7 0 011 1L17.5 17l1.5 1.5a.7.7 0 01-1 1z"
+                                    fill-rule="evenodd"></path>
+                                </svg> nos formulários abaixo!
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <div id="cloze-question-section">
+                          <div class="form-group">
+                            <label class="font-weight-bold" for="">{{ form.cloze_content.label }}</label>  
+                            
+                            <div v-if="{{can_be_updated.can_be_updated|lower}}">
+                              <small class="form-text text-muted">
+                                {{ form.cloze_content.help_text }}
+                              </small>
+                            </div>
+                            <div v-else>
+                              <div class="alert alert-warning d-flex align-items-center" role="alert">
+                                <i data-feather="alert-circle" class="mg-r-10"></i> 
+                                {{can_be_updated.reason}}
+                              </div>
+                            </div>
+
+                            {% render_field form.cloze_content class="form-control" %}
+
+                            {% for error in form.cloze_content.errors %}
+                              <label class="text-danger">
+                                {{ error }}
+                              </label>
+                            {% endfor %}
+                          </div>
+
+                          <div class="form-group">
+                            <label class="font-weight-bold" for="">{{ form.incorrect_cloze_alternatives.label }}</label>  
+                            
+                            <div v-if="{{can_be_updated.can_be_updated|lower}}">
+                              <small class="form-text text-muted">
+                                {{ form.incorrect_cloze_alternatives.help_text }}
+                              </small>
+                            </div>
+                            <div v-else>
+                              <div class="alert alert-warning d-flex align-items-center" role="alert">
+                                <i data-feather="alert-circle" class="mg-r-10"></i> 
+                                {{can_be_updated.reason}}
+                              </div>
+                            </div>
+
+                            {% render_field form.incorrect_cloze_alternatives class="form-control" %}
+
+                            {% for error in form.incorrect_cloze_alternatives.errors %}
+                              <label class="text-danger">
+                                {{ error }}
+                              </label>
+                            {% endfor %}
+                          </div>
+                        </div>
+
+                        <div id="row-alternatives" class="row">
+                          {% for question_option_form in question_option_formset %}
+                            {% if not object or can_be_updated.can_be_updated or object and question_option_form.instance.pk and question_option_form.instance.text %}
+                              {{question_option_form.id}}
+                              <div class="col-12 col-md-6">
+
+                                <b>Alternativa {{ forloop.counter|num_to_char }} </b>
+                                <div class="custom-control custom-switch ">
+                                  {% render_field question_option_form.is_correct  @change="verifyCheckbox($event)" class="custom-control-input check-is-correct" %}
+                                  <label class="custom-control-label" for="{{question_option_form.is_correct.auto_id}}">
+                                    {{ question_option_form.is_correct.label }}
+                                  </label>
+
+                                  <div class="d-none">
+                                    {% if question_option_form.instance.created_at and forloop.counter > 2 %}
+                                    {{ question_option_form.DELETE }}
+                                    {% endif %}
+                                  </div>
+
+                                  {% if forloop.counter > 2 and can_be_updated.can_be_updated %}
+                                    <a class="btn btn-xs p-0 pl-1 pr-1 m-0 btn-outline-danger float-right" href="#" @click.prevent.default="removeQuestionOption( {{forloop.counter0}} )">
+                                      <i class="fas fa-trash  text-danger"></i> Remover
+                                    </a>
+                                  {% endif %}
+
+                                  <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                    {{ question_option_form.is_correct.help_text }}
+                                  </small>
+                                </div>
+                                
+                                <div class="form-group">
+
+                                  {% render_field question_option_form.text class="form-control question-option" data-section="alternatives" %}
+                                
+                                  <small class="form-text text-muted">
+                                    {{ question_option_form.text.help_text  }}
+                                  </small>
+
+                                  {% if question_option_form.text.errors %}
+                                    <label class="text-danger">
+                                      {{ question_option_form.text.errors.0 }}
+                                    </label>
+                                  {% endif %}
+                                </div>
+
+                              </div>
+                            {% endif %}
+                          {% endfor %}
+                        </div>
+                        <h5>
+                          <a class="mb-5" data-toggle="collapse" href="#collapseFeedback" role="button" aria-expanded="false" aria-controls="collapseFeedback">
+                            <span>Resposta comentada e feedback do professor</span>
+                          </a>
+                        </h5>
+                        <div class="collapse" :class="{ 'show' : clientTeacherObligation.commentedResponse }" id="collapseFeedback">
+                          <div class="row">
+                            <div class="col-12 col-md-6">
+                              <div class="form-group">
+                                <label for="">{{ form.commented_awnser.label }}</label>
+                                <small class="form-text text-muted">
+                                  {{ form.commented_awnser.help_text }}
+                                </small>
+                                {% render_field form.commented_awnser %}
+                                {% if form.commented_awnser.errors %}
+                                  {% for error in form.commented_awnser.errors %}
+                                    <label class="text-danger">
+                                      {{ error }}
+                                    </label>
+                                    {% endfor %}
+                                  {% endif %}
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="form-group">
+                                <label for="">{{ form.feedback.label }}</label>
+
+                                <small class="form-text text-muted">
+                                  {{ form.feedback.help_text }}
+                                </small>
+                                {% render_field form.feedback %}
+                                {% if form.feedback.errors %}
+                                <label class="text-danger">
+                                  {{ form.feedback.errors.0 }}</label>
+                                {% endif %}
+                              </div>
+                            </div>
+
+                            <div v-if="canAddSupportContentDiscursiveQuestions" class="col-12 ">
+                              <div class="form-group">
+                                <label for="">{{ form.support_content_question.label }}</label>
+
+                                <small class="form-text text-muted">
+                                  {{ form.support_content_question.help_text }}
+                                </small>
+                                {% render_field form.support_content_question %}
+                                {% if form.support_content_question.errors %}
+                                  {% for error in form.support_content_question.errors %}
+                                    <label class="text-danger">
+                                      {{ error }}
+                                    </label>
+                                    {% endfor %}
+                                  {% endif %}
+                              </div>
+                            </div>
+
+                            <div class="col-12">
+                              <h6 class="font-weight-bold">Resposta comentada em vídeo</h6>
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                              <div class="form-group">
+                                <label for="">{{ form.answer_video_type.label }}</label>
+                                <small class="form-text text-muted">
+                                  {{ form.answer_video_type.help_text }}
+                                </small>
+                                {% render_field form.answer_video_type @change="verifyChange($event)"  class="form-control" %}
+                                {% if form.answer_video_type.errors %}
+                                <label class="text-danger">
+                                  {{ form.answer_video_type.errors.0 }}</label>
+                                {% endif %}
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-8">
+                              <div class="form-group">
+                                <label for="">{{ form.answer_video.label }}</label>
+
+                                <small class="form-text text-muted">
+                                  {{ form.answer_video.help_text }}
+                                </small>
+                                {% render_field form.answer_video class="form-control" %}
+                                {% if form.answer_video.errors %}
+                                <label class="text-danger">
+                                  {{ form.answer_video.errors.0 }}</label>
+                                {% endif %}
+                              </div>
+                            </div>
+                            
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-12 d-flex justify-content-end">
+                              <button type="button" @click="changeTab('#question-subject')" class="btn btn-success">Dados
+                                Pedagógicos
+                                <i class="fas fa-chevron-right"></i>
+                              </button>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div class="tab-pane fade" id="question-subject" role="tabpanel" aria-labelledby="profile-tab">
+                        <h5>Dados pedagógicos</h5>
+                        <div class="row">
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="">Segmento</label>
+                              <select v-model="selectedLevel" class="form-control" id="selectLevel">
+                                <option value="0">Ensino médio</option>
+                                <option value="1">Ensino fundamental 1</option>
+                                <option value="2">Ensino fundamental 2</option>
+                              </select>
+                            </div>
+                          </div>
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="">Ano/Série</label>
+                              <select name="grade" class="form-control" id="selectGrade" v-model="selectedGrade" :required="clientTeacherObligation.pedagogical_data">
+                                <option value="">Selecione um Ano/Série</option>
+                                <option v-for="grade in grades" :value="grade.id" v-html="grade.name"></option>
+                              </select>
+                              {% for error in obligation_error.grade %}
+                                <small class="text-danger">{{error.message}}</small>
+                              {% endfor %}
+                            </div>
+                          </div>
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="">Área de conhecimento</label>
+                              <select class="form-control" id="selectArea" v-model="selectedArea" :required="clientTeacherObligation.pedagogical_data">
+                                <option value="">Selecione uma Área de conhecimento</option>
+                                <option v-for="selectedArea in knowledgeAreas" :value="selectedArea.id"
+                                  v-html="selectedArea.name"></option>
+                              </select>
+                            </div>
+                          </div>
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="">Disciplina</label>
+                              <select name="subject" class="form-control" id="selectSubject" v-model="selectedSubject" :required="clientTeacherObligation.pedagogical_data">
+                                <option value="">Selecione uma disciplina</option>
+                                <option v-for="subject in subjects" :value="subject.id" v-html="subject.name"></option>
+                              </select>
+                              {% for error in obligation_error.subject %}
+                                <small class="text-danger">{{error.message}}</small>
+                              {% endfor %}
+                            </div>
+                          </div>
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="{{ form.level.auto_id }}">{{ form.level.label }}</label>
+                              <select name="level" v-model="level" class="form-control" id="{{ form.level.auto_id }}" :required="clientTeacherObligation.difficult">
+                                <option value="0">Fácil</option>
+                                <option value="1">Médio</option>
+                                <option value="2">Difícil</option>
+                                <option value="3" v-if="!clientTeacherObligation.difficult">Indefinido</option>
+                              </select>
+                              <small class="form-text text-muted">
+                                {{ form.level.help_text }}
+                              </small>
+                              {% for error in obligation_error.difficult %}
+                                <small class="text-danger">{{error.message}}</small>
+                              {% endfor %}
+                            </div>
+                          </div>
+                        </div>
+                      </section>
+                          <div class="d-flex justify-content-between tw-mb-0 tw-ml-0 "  >
+                            <h5 class="tw-pt-2 tw-font-medium" >Assuntos Abordados</h5>
+                            {% if 'questions.can_add_subject_question' in  user.get_all_permissions or 'subjects.add_topic' in user.get_all_permissions %}
+                              <button id="bt_create_topic" type="button"  data-toggle="tooltip" :title="tooltipTitle" :disabled="!enableRegistration" @click="openModalCreateTopic" class="btn btn-primary">
+                                <i class="fas fa-plus" ></i> Cadastrar Assunto
+                              </button>
+                            {% endif %}
+                          </div>
+                        <div class="row">
+                          <div class="col-12">
+                            <div class="form-group">
+                              <label for="">Buscar assuntos disponíveis</label>
+                              <input placeholder="Digite aqui o assunto que você está procurando" type="text" v-model="searchTopic" class="form-control" :required="clientTeacherObligation.topics && !currentTopics.length">
+                              {% for error in obligation_error.topics %}
+                                <small class="text-danger">{{error.message}}</small>
+                              {% endfor %}
+                            </div>
+                          </div>
+                          <input v-for="topicId in currentTopics" type="hidden" :value="topicId" name="topics">
+                          <div class="col-6" style="margin-bottom: 1rem;" v-for="stage in topicsRegrouped">
+                            <h6>
+                              Assuntos (${stage.name})
+                              <span class="text-muted small">Assuntos abordados nessa questão</span>
+                            </h6>
+                            <details v-for="theme in stage.themes" open>
+                              <summary class="d-flex align-items-center cursor-pointer" style="padding: 0.5rem 1rem;">
+                                <span class="mr-2 rotate-icon transition">&#9654;</span>
+                                <div class="custom-control custom-checkbox font-weight-bold">
+                                  <input
+                                    type="checkbox"
+                                    class="custom-control-input"
+                                    :id="'stage_' + stage.id + '_theme_' + (theme.id || 'null')"
+                                    :checked="isThemeChecked(theme)"
+                                    @change="toggleTheme(theme, $event)"
+                                  />
+                                  <label class="custom-control-label" :for="'stage_' + stage.id + '_theme_' + (theme.id || 'null')">
+                                    ${theme.name}
+                                  </label>
+                                </div>
+                              </summary>
+                              <details v-for="mainTopic in theme.mainTopics" class="ml-3" open>
+                                <summary class="d-flex align-items-center cursor-pointer" style="padding: 0.5rem 1rem;">
+                                  <span class="mr-2 rotate-icon transition">&#9654;</span>
+                                  <div class="custom-control custom-checkbox">
+                                    <input
+                                      type="checkbox"
+                                      class="custom-control-input"
+                                      :id="'stage_' + stage.id + '_theme_' + (theme.id || 'null') + '_mainTopic_' + (mainTopic.id || 'null')"
+                                      :checked="isMainTopicChecked(mainTopic)"
+                                      @change="toggleMainTopic(mainTopic, $event)"
+                                    />
+                                    <label class="custom-control-label" :for="'stage_' + stage.id + '_theme_' + (theme.id || 'null') + '_mainTopic_' + (mainTopic.id || 'null')">
+                                      ${mainTopic.name}
+                                    </label>
+                                  </div>
+                                </summary>
+                                <div v-for="topic in mainTopic.topics" class="ml-4">
+                                  <div style="padding: 0.5rem 1rem;">
+                                    <div class="custom-control custom-checkbox">
+                                      <input
+                                        type="checkbox"
+                                        class="custom-control-input"
+                                        :id="'stage_' + stage.id + '_theme_' + (theme.id || 'null') + '_mainTopic_' + (mainTopic.id || 'null') + '_topic_' + topic.id"
+                                        :value="topic.id"
+                                        v-model="currentTopics"
+                                      />
+                                      <label class="custom-control-label" :for="'stage_' + stage.id + '_theme_' + (theme.id || 'null') + '_mainTopic_' + (mainTopic.id || 'null') + '_topic_' + topic.id">
+                                        ${topic.name}
+                                      </label>
+                                    </div>
+                                  </div>
+                                </div>
+                              </details>
+                            </details>
+                          </div>
+                        </div>
+
+                        <div class="row">
+                          <div class="col-12 d-flex justify-content-between">
+                            <button type="button" @click="changeTab('#question-data')" class="btn btn-success">
+                              <i class="fas fa-chevron-left"></i>
+                              Dados da questão
+                            </button>
+                            <button type="button" @click="changeTab('#question-bncc')" class="btn btn-success">
+                              BNCC e Matriz ENEM
+                              <i class="fas fa-chevron-right"></i>
+                            </button>
+                          </div>
+                        </div>
+                        
+                      </div>
+
+                      <div class="tab-pane fade" id="question-bncc" role="tabpanel" aria-labelledby="contact-tab">
+                        <h5>
+                          BNCC - Habilidade e Competências
+                        </h5>
+                        <div class="row">
+                          <div class="col-6">
+                            <div class="form-group">
+                              <label for="">Buscar competências disponíveis</label>
+                              {% if 'questions.can_add_ability_and_competence_question' in  user.get_all_permissions or 'subjects.add_topic' in user.get_all_permissions %}
+                                <div class="d-flex justify-content-between">
+                                  <input placeholder="Digite aqui a competência que está procurando" type="text" v-model="searchCompetence" class="form-control" :required="clientTeacherObligation.competences && !currentCompetences.length">
+                                    {% for error in obligation_error.competences %}
+                                      <small class="text-danger">{{error.message}}</small>
+                                    {% endfor %}
+                                  <button id="bt_create_competence" type="button"  data-toggle="tooltip" :title="tooltipTitleCompetence"  :disabled="!enableRegistration" @click="openModalCreateCompetence" class="ml-2 btn btn-primary">
+                                    <i class="fas fa-plus" ></i> 
+                                  </button>
+                                </div>
+                                {% else %}
+                                <div class="d-flex justify-content-between">
+                                  <input placeholder="Digite aqui a competência que está procurando" type="text" v-model="searchCompetence" class="form-control" :required="clientTeacherObligation.competences && !currentCompetences.length">
+                                    {% for error in obligation_error.competences %}
+                                      <small class="text-danger">{{error.message}}</small>
+                                    {% endfor %}
+                                </div>
+                              {% endif %}
+                            </div>
+                            <table class="table table table-bordered table-sm table-hover">
+                              <thead>
+                                <tr>
+                                  <th>Competências
+                                    <span class="text-muted small">Competências necessárias para realizar esta questão</span>
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+
+                                <input v-for="competence in currentCompetences" v-if="competence.id" type="hidden" :value="competence.id" name="competences">
+                                
+                                <tr v-for="competence in filterCompetences">
+                                  <td>
+                                    <div class="custom-control custom-checkbox">
+                                      <input type="checkbox" class="custom-control-input" :id="'competence_'+competence.id"
+                                        :value="competence.id" :checked="checkExist(competence.id, currentCompetences)"
+                                        name="competences_reference"
+                                        @change="checkOption(competence, currentCompetences, $event)">
+                                      <label class="custom-control-label" :for="'competence_'+competence.id">
+                                        ${competence.text}
+                                      </label>
+                                    </div>
+                                  </td>
+                                <tr v-if="!competences.length > 0">
+                                  <td>Não há competências disponíveis</td>
+                                </tr>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                          <div class="col-6">
+                            <div class="form-group">
+                              <label for="">Buscar habilidades disponíveis</label>
+                              {% if 'questions.can_add_ability_and_competence_question' in  user.get_all_permissions or 'subjects.add_topic' in user.get_all_permissions %}
+                                <div class="d-flex justify-content-between">
+                                  <input placeholder="Digite aqui a habilidade que está procurando" type="text" v-model="searchAbility" class="form-control" :required="clientTeacherObligation.abilities && !currentAbilities.length">
+                                    {% for error in obligation_error.abilities %}
+                                        <small class="text-danger">{{error.message}}</small>
+                                    {% endfor %}
+                                    <button id="bt_create_ability" type="button"  data-toggle="tooltip" :title="tooltipTitleAbility"  :disabled="!enableRegistration" @click="openModalCreateAbility" class="ml-2 btn btn-primary">
+                                      <i class="fas fa-plus" ></i> 
+                                    </button>
+                                </div>
+                                {% else %}
+                                <div class="d-flex justify-content-between">
+                                  <input placeholder="Digite aqui a habilidade que está procurando" type="text" v-model="searchAbility" class="form-control" :required="clientTeacherObligation.abilities && !currentAbilities.length">
+                                  {% for error in obligation_error.abilities %}
+                                      <small class="text-danger">{{error.message}}</small>
+                                    {% endfor %}
+                                </div>
+                              {% endif %}
+                              {% comment %} <div class= "d-flex justify-content-between">
+                                <input placeholder="Digite aqui a habilidade que está procurando" type="text" v-model="searchAbility" class="form-control" :required="clientTeacherObligation.abilities && !currentAbilities.length">
+                                
+                                {% for error in obligation_error.abilities %}
+                                  <small class="text-danger">{{error.message}}</small>
+                                {% endfor %}
+                                <button id="bt_create_ability" type="button"  data-toggle="tooltip" :title="tooltipTitleAbility"  :disabled="!enableRegistration" @click="openModalCreateAbility" class="ml-2 btn btn-primary">
+                                  <i class="fas fa-plus" ></i> 
+                                </button>
+                              </div> {% endcomment %}
+                            </div>
+                            <table class="table table table-bordered table-sm table-hover">
+                              <thead>
+                                <tr>
+                                  <th>Habilidades
+                                    <span class="text-muted small">Habilidades necessárias para realizar esta questão</span>
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+
+                                <input v-for="ability in currentAbilities" v-if="ability.id" type="hidden" :value="ability.id"
+                                  name="abilities">
+
+                                <tr v-for="ability in filterAbilities">
+                                  <td>
+                                    <div class="custom-control custom-checkbox">
+                                      <input type="checkbox" class="custom-control-input" :id="'ability_'+ability.id"
+                                        :value="ability.id" :checked="checkExist(ability.id, currentAbilities)"
+                                        name="abilities_reference" @change="checkOption(ability, currentAbilities, $event)">
+                                      <label class="custom-control-label" :for="'ability_'+ability.id">
+                                        (${ability.code}) ${ability.text}
+                                      </label>
+                                    </div>
+                                  </td>
+                                </tr>
+                                <tr v-if="!abilities.length > 0">
+                                  <td>Não há habilidades disponíveis</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        <div class="row">
+                          <div class="col-12 d-flex justify-content-between">
+
+                          <button type="button" @click="changeTab('#question-subject')" class="btn btn-success">
+                            <i class="fas fa-chevron-left"></i>
+                            Pedagógico e Assuntos
+                          </button>
+                          <button type="button" @click="changeTab('#question-print')" class="btn btn-success">
+                            Configuração de impressão
+                            <i class="fas fa-chevron-right"></i>
+                          </button>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      
+                      <div class="tab-pane fade" id="question-print" role="tabpanel" aria-labelledby="contact-tab">
+                        <h5>Configuração de impressão</h5>
+                        <div class="row">
+                          <div class="col-6 col-md-4">
+                            <div class="custom-control custom-switch ">
+                              {% render_field form.print_only_enunciation @change="verifyCheckbox($event)" class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.print_only_enunciation.auto_id}}">
+                                <i class="fas fa-print"></i>
+                                {{ form.print_only_enunciation.label }}</label>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.print_only_enunciation.help_text }}
+                              </small>
+                              {% if form.print_only_enunciation.errors %}
+                              <label class="text-danger">
+                                {{ form.print_only_enunciation.errors.0 }}
+                              </label>
+                              {% endif %}
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-6 col-md-4">
+                            <div class="custom-control custom-switch ">
+                              {% render_field form.break_enunciation @change="verifyCheckbox($event)" class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.break_enunciation.auto_id}}">
+                                <i class="fas fa-print"></i>
+                                {{ form.break_enunciation.label }}</label>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.break_enunciation.help_text }}
+                              </small>
+                              {% if form.break_enunciation.errors %}
+                              <label class="text-danger">
+                                {{ form.break_enunciation.errors.0 }}
+                              </label>
+                              {% endif %}
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-6 col-md-4">
+                            <div class="custom-control custom-switch ">
+                              {% render_field form.force_one_column @change="verifyCheckbox($event)" class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.force_one_column.auto_id}}">
+                                <i class="fas fa-print"></i>
+                                {{ form.force_one_column.label }}</label>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.force_one_column.help_text }}
+                              </small>
+                              {% if form.force_one_column.errors %}
+                              <label class="text-danger">
+                                {{ form.force_one_column.errors.0 }}
+                              </label>
+                              {% endif %}
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-6 col-md-4">
+                            <div class="custom-control custom-switch ">
+                              {% render_field form.force_choices_with_statement class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.force_choices_with_statement.auto_id}}">
+                                <i class="fas fa-print"></i>
+                                {{ form.force_choices_with_statement.label }}</label>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.force_choices_with_statement.help_text }}
+                              </small>
+                              {% if form.force_choices_with_statement.errors %}
+                              <label class="text-danger">
+                                {{ form.force_choices_with_statement.errors.0 }}
+                              </label>
+                              {% endif %}
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row mb-0">
+                          <div class="col-6 col-md-4">
+                            <div class="form-group">
+                              <label for="{{ form.text_question_format.auto_id }}">
+                                <i class="fas fa-bars"></i>
+                                {{ form.text_question_format.label }}</label>
+                              {% render_field form.text_question_format class="form-control" %}
+                              <small class="form-text text-muted">
+                                {{ form.text_question_format.help_text }}
+                              </small>
+                              {% if form.text_question_format.errors %}
+                              <label class="text-danger">
+                                {{ form.text_question_format.errors.0 }}</label>
+                              {% endif %}
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row mb-0">
+                          <div class="col-6 col-md-4">
+                            <div class="form-row w-100">
+                              <div class="form-group">
+                                <label for="{{ form.quantity_lines.auto_id }}">
+                                  <i class="fas fa-bars"></i>
+                                  {{ form.quantity_lines.label }}</label>
+                                {% render_field form.quantity_lines class="form-control" %}
+                                <small class="form-text text-muted">
+                                  {{ form.quantity_lines.help_text }}
+                                </small>
+                                {% if form.quantity_lines.errors %}
+                                <label class="text-danger">
+                                  {{ form.quantity_lines.errors.0 }}</label>
+                                {% endif %}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row mb-0">
+                          <div class="col-6 col-md-4">
+                            <div class="form-row w-75">
+                              <div class="form-group">
+                                <label for="{{ form.draft_rows_number.auto_id }}">
+                                  <i class="fas fa-bars"></i>
+                                  {{ form.draft_rows_number.label }}</label>
+                                {% render_field form.draft_rows_number class="form-control" %}
+                                <small class="form-text text-muted">
+                                  {{ form.draft_rows_number.help_text }}
+                                </small>
+                                {% if form.draft_rows_number.errors %}
+                                <label class="text-danger">
+                                  {{ form.draft_rows_number.errors.0 }}</label>
+                                {% endif %}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-6 col-md-4">
+                            <div class="custom-control custom-switch ">
+                              {% render_field form.force_break_page @change="verifyCheckbox($event)" class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.force_break_page.auto_id}}">
+                                <i class="fas fa-print"></i>
+                                {{ form.force_break_page.label }}</label>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.force_break_page.help_text }}
+                              </small>
+                              {% if form.force_break_page.errors %}
+                              <label class="text-danger">
+                                {{ form.force_break_page.errors.0 }}
+                              </label>
+                              {% endif %}
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-6 col-md-4">
+                            <div class="custom-control custom-switch ">
+                              {% render_field form.number_is_hidden @change="verifyCheckbox($event)" class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.number_is_hidden.auto_id}}">
+                                <i class="fas fa-print"></i>
+                                {{ form.number_is_hidden.label }}</label>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.number_is_hidden.help_text }}
+                              </small>
+                              {% if form.number_is_hidden.errors %}
+                              <label class="text-danger">
+                                {{ form.number_is_hidden.errors.0 }}
+                              </label>
+                              {% endif %}
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-12 d-flex justify-content-between">
+                            <button type="button" @click="changeTab('#question-bncc')" class="btn btn-success">
+                              <i class="fas fa-chevron-left"></i>
+                              BNCC e Matriz ENEM
+                            </button>
+                            {% if object.history.all %}
+                              <button type="button" @click="changeTab('#question-history')" class="btn btn-success">
+                                Histórico da questão
+                                <i class="fas fa-chevron-right"></i>
+                              </button>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="tab-pane fade" id="question-history" role="tabpanel" aria-labelledby="contact-tab">
+
+                        {% if object.history.all %}
+                          <h5>Histórico da questão</h5>
+                          <div class="row">
+                            <div class="col-12">
+                              <div class="table-responsive">
+                                <table class="tw-min-w-full tw-divide-y tw-divide-[#E5E7EA]">
+                                  <thead>
+                                    <tr>
+                                      <th scope="col" class="tw-py-3.5 tw-pl-4 tw-pr-3 tw-text-left tw-text-sm tw-font-normal tw-text-[#667085] sm:tw-pl-0">Modificado por</th>
+                                      <th scope="col" class="tw-px-3 tw-py-3.5 tw-text-left tw-text-sm tw-font-normal tw-text-[#667085]">Mudanças</th>
+                                      <th scope="col" class="tw-px-3 tw-py-3.5 tw-text-left tw-text-sm tw-font-normal tw-text-[#667085]">Data</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    <tr v-for="(change, index) in changesHistory" :key="index">
+                                      <td class="tw-whitespace-nowrap tw-py-4 tw-pl-4 tw-pr-3 tw-text-base tw-font-semibold tw-text-[#374151] sm:tw-pl-0">${ change.history_user }</td>
+                                      <td class="tw-px-3 tw-py-4 tw-text-sm tw-text-[#384250]">${ change.fields }</td>
+                                      <td class="tw-whitespace-nowrap tw-px-3 tw-py-4 tw-text-sm tw-text-[#384250]">${ change.history_date }</td>
+                                      <td>
+                                        <button 
+                                          v-if="['Resposta comentada', 'Texto da alternativa', 'Enunciado da questão', 'Feedback do professor'].some(field => change.fields.includes(field))"
+                                          type="button" 
+                                          @click="openModalHistory(change.details, change.fields)" 
+                                          class="btn btn-primary">
+                                          Ver versão
+                                        </button> 
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="row">
+                            <div class="col-12 d-flex justify-content-between">
+                              <button type="button" @click="changeTab('#question-print')" class="btn btn-success">
+                                <i class="fas fa-chevron-left"></i>
+                                Configurações de impressão
+                              </button>
+                            </div>
+                          </div>
+
+                        {% endif %}
+                      </div>
+
+
+                      <div class="tab-pane fade" id="history-ult-tab" role="tabpanel" aria-labelledby="history-ult-tab">
+                        <div class="row mb-1">
+                          <div class="col-12">
+                            <template v-for="examQuestion in historicalQuestion">
+                              <div class="card my-3">
+                                <div class="card-header p-2">
+                                  <div class="mt-1 font-weight-bold d-flex justify-content-between">
+                                    <span class="text-truncate" style="max-width: 30rem;" :title="examQuestion.exam_name">${examQuestion.exam_name}</span>
+                                    <span v-if="examQuestion.application_date">
+                                      ${momentRef() < momentRef(examQuestion.application_date) ? 'Será aplicada dia:':'Aplicada dia:'} 
+                                      ${momentRef(examQuestion.application_date).format("DD/MM/YYYY")}
+                                      </span>
+                                    <span v-if="!examQuestion.application_date">O exame não foi aplicado</span>
+                                  </div>
+                                  <span class="text-muted" v-if="examQuestion.teacher_name">${examQuestion.teacher_name} em ${examQuestion.teacher_subject}</span>
+                                </div>
+                              </div>
+                            </template>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                    <div class="d-flex justify-content-start align-items-start mt-3" >
+                      <button type="submit"id="button-save-question" class="btn float-left btn-lg btn-primary mt-2">Salvar questão</button>
+
+                      <span class="ml-3 float-left" v-if="!selectedGrade">
+                        <b class="text-danger">Atenção:</b> 
+                        A questão está sem dados pedagógicos. <br/>
+
+                        <span class="text-muted">
+                          Estes dados te ajudarão a gerar análises mais precisas<br /> sobre a performance de seus alunos no
+                          futuro.
+                        </span>
+                      </span>
+                      
+                      <input type="hidden" name="selected_tags" id="selected_tags" :value="selectedTags">
+                      <input type="hidden" name="status_note" id="status_note">
+                    </div>
+                    <template v-for="baseText in selectedBaseTexts">
+                      <input type="hidden" name="base_texts" :value="baseText.id">
+                    </template>
+                  </form>
+                </div>
+              </div>
+            {% endwith %}
+          </div>
+      </div>
+      <div class="df-settings show">
+        <i id="dfSettingsShow" class="df-settings-link fa fa-times"></i>
+        <div class="df-settings-body">
+          <div class="mt-2">
+            <button class="btn btn-sm pd-x-15 btn-white btn-uppercase" data-toggle="modal" data-target="#shortcutFunction">
+              <i class="fas fa-braille"></i> Atalhos <span class="badge badge-light ml-1 font-weight-bold">Ctrl + L</span>
+            </button>
+          </div>
+          {% if user.client_has_question_formatter or user.ispector and user.ispector.has_question_formatter %}
+            {% if not object %}
+              <div class="mt-2">
+                <button class="btn btn-sm pd-x-15 btn-white btn-uppercase" data-toggle="modal" data-target="#formatterQuestion">
+                  <i class="fas fa-magic"></i> Formatar questão <span class="badge badge-primary ml-1 font-weight-bold">NOVO</span>
+                </button>
+              </div>
+            {% endif %}
+          {% endif %}
+          <div class="mt-2">
+            <button id="view-question" class="btn btn-sm pd-x-15 btn-white btn-uppercase"  @click="modalForm(), getSelectedAlternatives(), openModal('viewQuestion')">
+              <i class="far fa-eye"></i> Visualizar questão <span class="badge badge-light ml-1 font-weight-bold">Ctrl + I</span>
+            </button>
+          </div>
+          <div class="mt-2 px-12">
+            <button class="btn btn-sm pd-x-15 btn-primary btn-uppercase" type="button" @click="requestStatusTags()">
+              <i class="fas fa-save"></i> Salvar questão <span class="badge badge-light ml-1 font-weight-bold">Ctrl + S</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+  <!-- Modal -->
+<div class="modal fade" id="modalBaseTexts" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h5 class="modal-title" id="modalBaseTextsLabel">Textos Base</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button> 
+      </div>
+      <div class="modal-body">
+        <div class="card mb-3 pb-0" v-show="addBaseText">
+          <div class="row">
+            <div class="card-body">
+              <div class="col-12">
+                <div class="form-group">
+                  <label for="base-title">Título</label>
+                  <input v-model="newBaseText.title" maxlength="100" class="form-control form-control-sm" id="base-title" placeholder="Digite o título" type="text">
+                </div>
+              </div>
+              <div v-if="alertRequiredField" class="alert alert-warning d-flex align-items-center" role="alert">
+                <i data-feather="alert-circle" class="mg-r-10"></i> 
+                Todos os campos são obrigatorios! 
+              </div>
+              <div class="col-12">
+                <label for="base-text">Texto base</label>
+                {{form_base_texts.text}}
+              </div>
+              <div class="col-12 mt-3">
+                <button class="btn btn-primary m-1" v-if="!editBaseText" @click="createBaseText()" :disabled="!validValueBaseText()"><i class="fas fa-plus"></i> Adicionar</button>
+                <button class="btn btn-primary m-1" v-if="editBaseText" @click="updateBaseTextEdit()" :disabled="!validValueBaseText()"><i class="fas fa-plus"></i> Atualizar</button>
+                <button class="btn btn-secondary m-1" @click="btnCancelBaseText()">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row" v-show="!addBaseText">
+          <div class="col-md-6 order-1 order-md-0">
+            <input type="search" v-model="searchBaseText" id="id_search_base_text" class="form-control form-control-sm" placeholder="Pesquisar por texto base">
+          </div>
+          <div class="col-md-6 order-0 order-md-1">
+            <button class="btn btn-success btn-sm float-right mb-2" type="button" @click="startCreationNewBaseText()"><i class="fas fa-plus"></i> Adicionar Novo Texto Base</button>
+          </div>
+        </div>
+
+        <template v-if="baseTextFounds.length > 0">
+          <h5 class="text-muted">Lista de textos base encontrados</h5>
+          <div id="accordionBaseTexts">
+            <div class="card my-2" v-for="baseText in baseTextFounds">
+              <div class="card-header p-0" style="cursor: pointer;">
+                <div class="row mb-0 d-flex justify-content-between align-items-center" data-toggle="collapse" :data-target="'#baseText-' +baseText.id" aria-expanded="true" :aria-controls="'baseText-' +baseText.id">
+                  <div class="col">
+                    <p class="mb-0 p-2 tx-medium">
+                      ${baseText.title}
+                    </p>
+                    <div class="col text-right" id="base_button" >
+                      <button type="button" v-if="!baseTextCheckExist(baseText)" @click="deleteBaseText(baseText.id)" class="btn btn-xs btn-danger btn-icon"><i class="fas fa-trash px-2"></i></button>
+                      <i v-if="baseTextCheckExist(baseText)" class="far fa-check-circle px-2 text-success"></i>
+                      <button type="button"  @click="selectToEdit(baseText)" class="btn btn-xs btn-primary btn-icon"><i class="far fa-edit px-2"></i></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div :id="'baseText-' +baseText.id" class="collapse" data-parent="#accordionBaseTexts">
+                <div class="card-body pb-0" v-html="baseText.text"></div>
+
+                <div class="row">
+                  <div class="col">
+                    <template v-if="baseTextCheckExist(baseText)">
+                      <button class="btn btn-sm btn-secondary float-right" type="button" @click="selectBaseText(baseText)">Não Usar Este Texto <i class="fas fa-times"></i></button>
+                    </template>
+                    <template v-else>
+                      <button class="btn btn-sm btn-primary float-right mr-2" type="button" @click="selectBaseText(baseText)">Usar Este Texto <i class="far fa-share-square"></i></button>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <template v-else>
+          <template v-if="selectedBaseTexts.length > 0">
+            <h5 class="text-muted mb-0 d-flex align-items-center">
+              <span class="badge badge-primary mr-2">${selectedBaseTexts.length}</span> Texto(s) base utilizado(s) nesta questão
+            </h5>
+            <div id="accordionBaseTexts" class="mb-4">
+              <div class="card my-2" v-for="baseText in selectedBaseTexts">
+                <div class="card-header p-0" style="cursor: pointer;">
+                  <div class="row mb-0 d-flex justify-content-between align-items-center" data-toggle="collapse" :data-target="'#baseText-' +baseText.id" aria-expanded="true" :aria-controls="'baseText-' +baseText.id">
+                    <div class="col">
+                      <p class="mb-0 p-2 tx-medium">
+                        ${baseText.title}
+                      </p>
+                    </div>
+                    <div class="col text-right" id="margin_button" v-if="baseTextCheckExist(baseText)">
+                      <i class="far fa-check-circle px-2 text-success"></i>
+                      <button type="button" @click="selectToEdit(baseText)" class="btn btn-xs btn-primary btn-icon"><i class="far fa-edit px-2"></i></button>
+                    </div>
+                  </div>
+                </div>
+
+                <div :id="'baseText-' +baseText.id" class="collapse" data-parent="#accordionBaseTexts">
+                  <div class="card-body pb-0" v-html="baseText.text"></div>
+                  
+                  <div class="row">
+                    <div class="col">
+                      <button class="btn btn-sm btn-secondary float-right mr-2" type="button" @click="selectBaseText(baseText)">Não Usar Este Texto <i class="fas fa-times"></i></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>   
+          </template>
+        
+          <h5 class="text-muted">Lista de textos base</h5>
+          <div id="accordionBaseTexts">
+            <div class="card my-2" v-for="baseText in baseTexts" v-if="!baseTextCheckExist(baseText)">
+              <div class="card-header p-0" style="cursor: pointer;">
+                <div class="row mb-0 d-flex justify-content-between align-items-center" data-toggle="collapse" :data-target="'#baseText-' +baseText.id" aria-expanded="true" :aria-controls="'baseText-' +baseText.id">
+                  <div class="col">
+                    <p class="mb-0 p-2 tx-medium">
+                      ${baseText.title}
+                    </p>
+                    <div class="col text-right" id="base_button" v-if="!baseTextCheckExist(baseText)">
+                      <button type="button"  @click="deleteBaseText(baseText.id)" class="btn btn-xs btn-danger btn-icon"><i class="fas fa-trash px-2"></i></button>
+                      <button type="button" @click="selectToEdit(baseText), goToTop()" class="btn btn-xs btn-primary btn-icon"><i class="far fa-edit px-2"></i></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div :id="'baseText-' +baseText.id" class="collapse" data-parent="#accordionBaseTexts">
+                <div class="card-body pb-0" v-html="baseText.text"></div>
+                
+                <div class="row">
+                  <div class="col">
+                    <button class="btn btn-sm btn-primary float-right mr-2" type="button" @click="selectBaseText(baseText)">Usar Este Texto <i class="far fa-share-square"></i></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+        </template>
+      
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-dismiss="modal">Concluir</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="viewQuestion" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">DETALHES DA QUESTÃO</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body modal-html">
+
+        <div class="alert" :class="{ 'alert-success': formatter.status == 'success' }" v-if="formatter.status != 'iddle'">
+          <p v-if="formatter.status == 'success'" class="mb-0">
+            A formatação foi concluída com sucesso.
+            <br>
+            <strong>Se precisar fazer alguma alteração, feche essa janela e edite a questão normalmente.</strong>
+          </p>
+        </div>
+
+        <div id="question-details" class="mb-3" >
+          <ul class="nav nav-tabs mb-4" id="questiontab">
+            <li class="nav-item">
+              <a class="nav-link active" data-toggle="tab" href="#question-tab" aria-current="page">
+                <i class="fas fa-align-right mr-1"></i>
+                Enunciado</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="tab" href="#data-tab">
+                <i class="fas fa-info-circle  mr-1"></i>
+                Dados Pedagógicos <span class="badge badge-secondary ml-1">${currentTopics.length} selecionados</span></a>  
+            </li>
+          </ul>
+
+          <div class="tab-content">
+              <div class="tab-pane fade show active" id="question-tab" role="tabpanel" aria-labelledby="question-tab">
+                <div class="container">
+                  <i class="fas "></i>
+                  <div class="row">
+                    <div class="col-12 font-weight-bold">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <span>
+                          <i class="fas fa-check" v-if="categoryForm == 'Objetiva'"></i>
+                          <i class="fas fa-align-justify" v-if="categoryForm == 'Discursiva'"></i>
+                          <i class="fas fa-folder-plus" v-if="categoryForm == 'Arquivo anexado'"></i>
+                          Questão ${categoryForm}
+                        </span>
+                        <button class="btn btn-sm" :class="contrast ? 'btn-dark':'btn-outline-dark'" title="Ver imagens em preto e branco" @click="contrast = !contrast">${contrast ? 'Visualizar Normal':'Visualizar P&B'} <i class="fas fa-adjust"></i></button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-12">
+                      <div v-if="enunciationForm" :class="{ 'grayscale' : contrast }" v-html="enunciationForm"></div>
+                      <div class="tab-pane fade show active" id="question-tab" role="tabpanel" aria-labelledby="question-tab">
+                        <div class="mb-2">
+                        </div>
+                        <table class="table table-sm tx-13 mt-4 mg-b-0">
+                          <tbody>
+                            <tr v-for="alternative in selectedAlternatives">
+                              <td style="border-radius: 0.375rem;"  v-bind:class="alternative.is_correct ? 'bg-success-custom' : ''">
+                                <div class="d-flex align-items-center">
+                                  <div class="wd-15 ht-15 rounded-circle bd bd-3 mr-2" v-bind:class="alternative.is_correct ? 'border-success' : ''">
+                                  </div> 
+                                  <div class="w-100 clean-v-html" v-html="alternative.text">
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tab-pane fade" id="data-tab" role="tabpanel" aria-labelledby="data-tab">
+                <div class="row">
+                  <div class="col-12">
+                    <div class="card">
+                      <div class="card-header p-2 font-weight-bold">
+                        Assuntos Abordados
+                      </div>
+                        <table class="table table table-bordered table-sm table-hover">
+                          <tr v-for="topic in currentTopicsObj">
+                            <td>
+                              ${topic.name} 
+                            </td>
+                            <tr v-if="!topics.length > 0">
+                            <td>Não há assuntos disponíveis para esses dados pedagógicos</td>
+                          </tr>
+                        </table>
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="card mt-2">
+                      <div class="card-header p-2 font-weight-bold">
+                        Habilidades
+                      </div>
+                      
+                        <table class="table table table-bordered table-sm table-hover">
+                          <tr v-for="ability in currentAbilities">
+                            <td>
+                              ${ability.text}
+                            </td>
+                          </tr>
+                          <tr v-if="!currentAbilities.length > 0">
+                            <td>Não há habilidades disponíveis</td>
+                          </tr>
+                        </table>
+                    </div>
+                  </div>
+                  
+                  <div class="col-12">
+                    <div class="card mt-2">
+                      <div class="card-header p-2 font-weight-bold">
+                        Competências
+                      </div>
+                        <table class="table table table-bordered table-sm table-hover">
+                          <tr v-for="competence in currentCompetences">
+                            <td>
+                              ${competence.text}
+                            </td>
+                          </tr>
+                          <tr v-if="!currentCompetences.length > 0">
+                            <td>Não há competências disponíveis</td>
+                          </tr>
+                        </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer d-flex justify-content-between">
+        <div>
+          <div role="group" aria-label="Basic example" class="btn-group btn-group-justified">
+            <button type="button" class="btn btn-secondary mt-2 " data-dismiss="modal"> Fechar </button>
+          </div>
+          <div role="group" aria-label="Basic example" class="btn-group btn-group-justified">
+            <button class="btn btn-primary mt-2" type="button" data-dismiss="modal" @click="changeTab('#question-subject')">Inserir dados pedagógicos</button>
+          </div>
+        </div>
+        <div>
+          <div role="group" aria-label="Basic example" class="btn-group btn-group-justified">
+            <button class="btn btn-primary mt-2" type="button" @click="requestStatusTags()">Salvar questão</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade shortcut" id="shortcutFunction" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class='col-12 modal-title text-center'>ATALHOS</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="col-12 mt-3">
+          <span class="badge badge-light ml-1 font-weight-bold">F1</span> Dados da questão 
+        </div>
+        <div class="col-12 mt-3">
+          <span class="badge badge-light ml-1 font-weight-bold">F2</span> Pedagógico e Assuntos 
+        </div>
+        <div class="col-12 mt-3">
+          <span class="badge badge-light ml-1 font-weight-bold">F3</span> BNCC e Matriz ENEM 
+        </div>
+        <div class="col-12 mt-3">
+          <span class="badge badge-light ml-1 font-weight-bold">F4</span> Configuração de impressão
+        </div>
+        <div class="col-12 mt-3">
+          <span class="badge badge-light ml-1 font-weight-bold">F5</span> Histórico
+        </div>
+        <div class="col-12 mt-3">
+          <span class="badge badge-light ml-1 font-weight-bold">F6</span> Utilizações
+        </div>
+        <div class="col-12 mt-3">
+          <span class="badge badge-light ml-1 font-weight-bold">CTRL + L</span> Atalhos
+        </div>
+        <div class="col-12 mt-3">
+          <span class="badge badge-light ml-1 font-weight-bold">CTRL + I</span> Visualizar Questão
+        </div>
+        <div class="col-12 mt-3">
+          <span class="badge badge-light ml-1 font-weight-bold">CTRL + S</span> Salvar questão
+        </div>
+        <div class="modal-footer bg-light text-right mt-5">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% if user.client_has_question_formatter or user.ispector and user.ispector.has_question_formatter %}
+  <div class="modal fade" id="formatterQuestion" role="dialog" tabindex="-1">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="col-12 modal-title text-center">FORMATADOR DE QUESTÕES</h5>
+          <button type="button" class="close" data-dismiss="modal" id="closeFormatterQuestion" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body h-100">
+          <div class="alert" :class="{ 'alert-success': formatter.status == 'success', 'alert-danger': formatter.status == 'error'}" v-if="formatter.status != 'iddle'">
+            <p v-if="formatter.status == 'success'" class="mb-0">A formatação foi concluída com sucesso.</p>
+            <p v-if="formatter.status == 'error'" class="mb-0">Ocorreu um erro ao tentar formatar a questão, tente novamente. <br> <div id="errorCode"></div></p>
+          </div>
+          <div v-show="!formatter.loading">
+            <textarea id="questionFormatterInput"></textarea>
+            
+            <p class="text-right mt-2">${formatter.tokens}</p>
+
+            <button class="btn btn-primary btn-block mt-3" @click="formatterQuestion()" :disabled="formatter.loading">${ formatter.loading ? 'Aguarde...':'Formatar Questão'}</button>
+          </div>
+          <div class="row" v-if="formatter.loading">
+            <div class="col-12 text-center py-5 text-center">
+              <div class="spinner-border text-primary mx-2" role="status">
+                <span class="sr-only">Loading...</span>
+              </div>
+              <h3 class="mt-2">${formatter.fakeStatus}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+<div class="modal fade" id="modalCreateTopic" role="dialog" tabindex="-1">
+  <div class=" modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class='col-12 modal-title text-center'>Cadastrar Assunto</h5>
+      </div>
+      <div class="modal-body-create-topic">
+        <form id="topicCreateTopic">
+          {% csrf_token %}
+          <div class="col-12 border-bottom pb-3">
+            <div class="d-flex justify-content-between mb-2">
+                <div>
+                    <h6 class="mb-0 text-muted">Disciplina:</h6>
+                    <span class="font-weight-normal subject-value"></span>
+                </div>
+                <div>
+                    <h6 class="mb-0 text-muted">Ano/Série:</h6>
+                    <span class="font-weight-normal grade-value"></span>
+                </div>
+            </div>
+            <div>
+                <h6 class="text-muted">Área de conhecimento:</h6>
+                <span class="font-weight-normal area-value"></span>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="form-group mb-2">
+              <label for="topic" class="mb-0 mt-1">Nome do assunto</label>
+              <input type="text" v-model="topicName" id="topic" class="form-control" placeholder="Digite aqui">
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="form-group mb-2">
+              <label for="etapa" class="mb-0 mt-1">Etapa</label>
+              <select v-model="stage" id="etapa" class="form-control form-control-sm">
+                <option value="" selected>Selecione uma Etapa</option>
+                <option value="1">1ª Etapa</option>
+                <option value="2">2ª Etapa</option>
+                <option value="3">3ª Etapa</option>
+                <option value="4">4ª Etapa</option>
+                <option value="5">5ª Etapa</option>
+                <option value="6">6ª Etapa</option>
+                <option value="7">Geral</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-12 mt-2">
+            <div class="form-group mb-2">
+              <label for="selectedTheme" class="mb-0 mt-1">Tema<small class="text-muted mt-0"> (Opcional)</small></label>
+              <div v-show="isAddingNewTheme">
+                <div class="d-flex align-items-center">
+                  <input type="text" class="form-control" v-model="newThemeName" placeholder="Digite o novo tema">
+                  <button class="btn btn-success ml-2" @click.prevent="saveNewTheme('{{ csrf_token }}')">
+                    Salvar
+                  </button>
+                  <button class="btn btn-secondary ml-2" @click.prevent="toggleThemeInput">
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+              <div v-show="!isAddingNewTheme">
+                <div class="d-flex align-items-center">
+                  <select class="form-control flex-grow-1" name="theme" id="theme" v-model="selectedTheme">
+                    <!-- <option value="" selected>Selecione um Tema</option> -->
+                    <!-- <option v-for="theme in themes" :value="theme.id" v-html="theme.name"></option> -->
+                  </select>
+                  <button class="btn btn-primary ml-2"  title="Cadastar Tópico" data-toggle="tooltip"  @click.prevent="toggleThemeInput">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div> 
+          <div class="col-12" >
+            <div class="form-group mb-2" id="filderMainTopic" data-toggle="tooltip"  :title="titleMainTopic">
+              <label for="selectedMainTopic" class="mb-0 mt-1">Tópico<small class="text-muted mt-0"> (Opcional)</small></label>
+              <div v-show="isAddingNewMainTopic">
+                <div class="d-flex align-items-center">
+                  <input type="text" class="form-control" v-model="newMainTopicName" placeholder="Digite o novo tópico">
+                  <button class="btn btn-success ml-2" @click.prevent="saveNewMainTopic('{{ csrf_token }}')">
+                    Salvar
+                  </button>
+                  <button class="btn btn-secondary ml-2" @click.prevent="toggleMainTopicInput">
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+              <div v-show="!isAddingNewMainTopic">
+                <div class="d-flex align-items-center">
+                  <select :disabled="!selectedTheme" class="form-control"  name="main_topic" id="main_topic" v-model="selectedMainTopic" >
+                    <!-- <option value="" selected>Selecione um Tópico</option> -->
+                    <!-- <option v-for="mainTopic in mainTopics" :value="mainTopic.id" v-html="mainTopic.name"></option> -->
+                  </select>
+                  <button class="btn btn-primary ml-2" data-toggle="tooltip" id="bt_create_main_topic"  :title="tooltipTitleMainTopic" :disabled="!enableMainTopicRegistration" @click.prevent="toggleMainTopicInput">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer bg-light text-right">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+        <button type="button" class="btn btn-success"  @click="submitForm('{{ csrf_token }}')">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<template>
+  <div class="modal" id="modalHistoryDetails">
+    <div class=" modal-dialog modal-lg modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class='col-12 modal-title text-center'>Versão Anterior</h5>
+        </div>
+        <div class="modal-body-history">
+          <ul class="tw-text-sm tw-text-[#384250]">
+            <li class="tw-mb-2" v-for="(detail, index) in selectedDetails" :key="index">
+              <strong>${ detail.field_name } :</strong>
+              <span  v-html="detail.old_value" ></span> 
+            </li>
+          </ul>
+        </div>
+        <div class="modal-footer bg-light text-right">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</template>
+
+<div class="modal fade" id="modalCreateAbility" role="dialog" tabindex="-1">
+  <div class=" modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class='col-12 modal-title text-center'>Cadastrar Habilidade</h5>
+      </div>
+      <div class="modal-body-create-topic mt-3">
+        <form >
+          {% csrf_token %}
+          <div class="col-12 border-bottom pb-3">
+            <div class="d-flex justify-content-between mb-2">
+                <div>
+                    <h6 class="mb-0 text-muted">Disciplina:</h6>
+                    <span class="font-weight-normal subject-value"></span>
+                </div>
+                <div>
+                    <h6 class="mb-0 text-muted">Ano/Série:</h6>
+                    <span class="font-weight-normal grade-value"></span>
+                </div>
+            </div>
+            <div>
+                <h6 class="text-muted">Área de conhecimento:</h6>
+                <span class="font-weight-normal area-value"></span>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="form-group mb-2">
+              <label for="code" class="mb-0 mt-1">Código da Habilidade</label>
+              <input type="text" v-model="selectedAbilityCode" id="code" class="form-control" placeholder="Digite aqui">
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="form-group mb-2">
+              <label for="text" class="mb-0 mt-1">Habilidade</label>
+              <textarea name="text"v-model="selectedAbility"  cols="40" rows="2" maxlength="4096"  id="text" class="form-control"></textarea>            
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer bg-light text-right">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+        <button type="button" class="btn btn-success"  @click="submitFormCreateAbility('{{ csrf_token }}')">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalCreateCompetence" role="dialog" tabindex="-1">
+  <div class=" modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class='col-12 modal-title text-center'>Cadastrar Competência</h5>
+      </div>
+      <div class="modal-body-create-topic mt-3">
+        <form >
+          {% csrf_token %}
+          <div class="col-12 border-bottom pb-3">
+            <div class="d-flex justify-content-between mb-2">
+                <div>
+                    <h6 class="mb-0 text-muted">Disciplina:</h6>
+                    <span class="font-weight-normal subject-value"></span>
+                </div>
+                <div>
+                    <h6 class="mb-0 text-muted">Ano/Série:</h6>
+                    <span class="font-weight-normal grade-value"></span>
+                </div>
+            </div>
+            <div>
+                <h6 class="text-muted">Área de conhecimento:</h6>
+                <span class="font-weight-normal area-value"></span>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="form-group mb-2">
+              <label for="code" class="mb-0 mt-1">Código da competência</label>
+              <input type="text" v-model="selectedCompetenceCode" id="code" class="form-control" placeholder="Digite aqui">
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="form-group mb-2">
+              <label for="text" class="mb-0 mt-1">Competência</label>
+              <textarea name="text"v-model="selectedCompetence"  cols="40" rows="2" maxlength="4096"  id="text" class="form-control" data-lt-tmp-id="lt-401381"></textarea>            
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer bg-light text-right">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+        <button type="button" class="btn btn-success"  @click="submitFormCreateCompetence('{{ csrf_token }}')">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock extra-modal %}
+
+{% block js-additional %}
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/5.3.0/tinymce.min.js"></script>
+<script type="text/javascript" src="{% static 'django_custom_tinymce/init_tinymce.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<script src="{% static 'administration/lib/jquery/jquery.min.js' %}"></script>
+<script src="{% static 'administration/lib/jquery-steps/build/jquery.steps.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.20/lodash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/choices.js@11.1.0/public/assets/scripts/choices.min.js"></script>
+<script>
+  function goToTop(){
+    $("html, body").animate({ scrollTop: "0"}, 3000);
+  }
+</script>
+
+<script type="text/javascript">
+  var app_question = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {
+      selectedTags: [],
+      requestTags: 
+      {% if request_tags == 'true' and question.created_by.id != user.id %}
+        true
+      {% else %}
+        false
+      {% endif %},
+      no_tags: {% if not tags %}true{% else %}false{% endif %},
+      historical_tags:[
+        {% for record in tags_history %}
+          {
+            "record_id": '{{record.record_id}}',
+            "record_tags": [{% for tag in record.tags.all %} '{{tag.name}}', {% empty %} 'tags não encontradas' {% endfor %}]
+          },
+        {% endfor %}
+      ],
+      level: {% if object %} {{object.level}} {% elif form.level.value %} {{form.level.value}} {% else %} 3 {% endif %},
+      selectedAlternatives: [],
+      questionForm: '', 
+      enunciationForm: '',
+      categoryForm: '',
+      searchTopic: "",
+      searchCompetence: "",
+      searchAbility: "",
+      searchThemes: "",
+      topicName: "",
+      stage: "",
+      grades: [],
+      knowledgeAreas: [],
+      subjects: [],
+      competences: [],
+      abilities: [],
+      topics: [],
+      themes: [],
+      mainTopics:[],
+      isAddingNewMainTopic: false,
+      newMainTopicName: '',
+      isAddingNewTheme: false,
+      newThemeName: '',
+      currentGrade: "{{form.instance.grade.pk|default:current_grade|default:''}}",
+      currentKnowledgeArea: "{{form.instance.subject.knowledge_area.pk|default:current_knowledge_area|default:''}}",
+      current_subject: "{{form.instance.subject.pk|default:current_subject|default:''}}",
+      searchQuery: '',
+      selectedLevel: "0",
+      selectedGrade: "",
+      selectedArea:"",
+      selectedSubject:"",
+      selectedTopic: "",
+      selectedCompetenceCode: "",
+      selectedCompetence: "",
+      selectedAbility:  "",
+      selectedAbilityCode: "",
+      selectedTheme: "",
+      selectedMainTopic: "",
+      alternaticves: "",
+      changesHistory:   [
+        {% for change in object.changes %}
+          {
+            history_user: "{{ change.history_user|escapejs }}",
+            fields: "{{ change.fields|escapejs }}", 
+            history_date: "{{ change.history_date|date:'d/m/Y \\à\\s H:i'|escapejs }}",
+            details: [
+            {% for detail in change.details %} {
+                field_name: "{{ detail.field_name|escapejs }}",
+                old_value: "{% if detail.old_value %}{{ detail.old_value|escapejs }}{% else %}Sem valor anterior.{% endif %}",
+                new_value: "{{ detail.new_value|escapejs }}"
+              }{% if not forloop.last %},{% endif %}
+            {% endfor %},
+            ],
+          },
+        {% endfor %}
+      ],
+      currentTopics: [
+        {% for topic in form.instance.topics.all %}
+          '{{ topic.id }}',
+        {% endfor %}
+      ],
+      currentCompetences: [
+        {% if form.competences.value %}
+          {% for competence in form.competences.value %}
+            {
+              id:'{{competence}}',
+              text: ''
+            },
+          {% endfor %}
+        {% else %}
+          {% for competence in form.instance.competences.all %}
+            {
+              id:'{{competence.id}}',
+              text:'{{competence.text|remove_line_break|safe}}'
+            },  
+          {% endfor %}
+        {% endif %}
+      ],
+      currentAbilities: [
+        {% if form.competences.value %}
+          {% for ability in form.abilities.value %}
+            {
+              id:'{{ability}}',
+              text: ''
+            },
+          {% endfor %}
+        {% else %}
+          {% for ability in form.instance.abilities.all %}
+            {
+              id:'{{ability.id}}',
+              text:'{{ability.text|remove_line_break|safe}}'
+            },  
+          {% endfor %}
+        {% endif %}
+      ],
+      teste: [],
+      historicalQuestion: '',
+      baseTexts: [],
+      selectedBaseText: '',
+      selectedBaseTexts: [
+        {% for base_text in base_texts %}
+          {
+            id: "{{base_text.id}}",
+            title: "{{base_text.title}}",
+            text: "{{base_text.text_escaped|remove_line_break|safe}}",
+          },
+        {% endfor %}
+      ],
+      newBaseText: {
+        title: '',  
+        text: '',  
+      },
+      searchBaseText: '',
+      baseTextFounds: [],
+      addBaseText: false,
+      editBaseText: false,
+      alertRequiredField: false,
+      selectCompetence: false,
+      selectTextCorrection: false,
+      textCorrection: {% if object.text_correction %}true{% else %}false{% endif %},
+      contrast: false,
+      clientTeacherObligation: {
+        {% if object and object.grade %}
+          {% with user|get_teacher_obligation:object.grade.level as teacher_obligation %}
+            template: {{teacher_obligation.template|default:False|lower}},
+            topics: {{teacher_obligation.topics|default:False|lower}},
+            abilities: {{teacher_obligation.abilities|default:False|lower}},
+            competences: {{teacher_obligation.competences|default:False|lower}},
+            difficult: {{teacher_obligation.difficult|default:False|lower}},
+            pedagogical_data: {{teacher_obligation.pedagogical_data|default:False|lower}},
+            commentedResponse: {{teacher_obligation.commented_response|default:False|lower}},
+            apply_on_homework: {{teacher_obligation.apply_on_homework|default:False|lower}},
+          {% endwith %}
+        {% else %}
+          template: false,
+          topics: false,
+          abilities: false,
+          competences: false,
+          difficult: false,
+          pedagogical_data: false,
+          commentedResponse: false,
+          apply_on_homework: false,
+        {% endif %}
+      },
+      formatter: {
+        loading: false,
+        status: 'iddle',
+        fakeStatus: '',
+        statusList: [
+          'Analisando conteúdo da questão...', 
+          'Identificando enunciado e alternativas...', 
+          'Formatando questão...', 
+          'Revisando formatação da questão...',
+          'Estamos quase lá...',
+          'Finalizando criação da questão...',
+        ],
+        statusCopy: [],
+        interval: null,
+        tokens: 0,
+        maxTokens: 3000
+      },
+      canAddSupportContentDiscursiveQuestions: {{ user.questions_configuration.can_add_support_content_discursive_questions|lower|default:"false" }},
+      tinyMCEDefaults: {{tinymce_configs|safe}},
+      originalData: {},
+      currentData: {},
+      initialQuestionState: {}, 
+      saveButtonClicked: false,
+      showModal: false,
+      selectedDetails: [],
+      details:  [],
+      selectedFieldName: '',
+      isEssay: Boolean("{{object.is_essay|default:''|lower}}"),
+      hasCorrectAlternative: false,
+      choicesRefThemes: null,
+      choicesRefMainTopics: null,
+    },
+    watch: {
+      themes: function(value) {
+        this.choicesRefThemes.destroy()
+        let elementTheme = document.getElementById('theme')
+        this.choicesRefThemes = new Choices(elementTheme, {
+          placeholderValue: 'Selecione um Tema',
+          removeItemButton: true,
+          classNames: {
+            containerOuter: ['choices', 'w-100', 'mb-0'],
+            containerInner: ['choices__inner', 'custom-choices__inner'],
+            listSingle: ['choices__list--single', 'custom-choices__list--single'],
+          },
+        })
+        this.choicesRefThemes.clearChoices()
+        let choices = value.map(theme => ({ value: theme.id, label: theme.name }))
+        this.choicesRefThemes.setChoices(
+          choices,
+          'value',
+          'label',
+          false,
+        )
+        this.choicesRefThemes.setChoiceByValue(this.selectedTheme)
+      },
+      mainTopics: function(value) {
+        this.choicesRefMainTopics.destroy()
+        let elementMainTopic = document.getElementById('main_topic')
+        this.choicesRefMainTopics = new Choices(elementMainTopic, {
+          placeholderValue: 'Selecione um Tópico',
+          removeItemButton: true,
+          classNames: {
+            containerOuter: ['choices', 'w-100', 'mb-0'],
+            containerInner: ['choices__inner', 'custom-choices__inner'],
+            listSingle: ['choices__list--single', 'custom-choices__list--single'],
+          },
+        })
+        this.choicesRefMainTopics.clearChoices()
+        let choices = value.map(theme => ({ value: theme.id, label: theme.name }))
+        this.choicesRefMainTopics.setChoices(
+          choices,
+          'value',
+          'label',
+          false,
+        )
+        this.choicesRefMainTopics.setChoiceByValue(this.selectedMainTopic)
+      },
+      selectedTheme: function(value) {
+        this.choicesRefMainTopics.clearStore()
+        this.selectedMainTopic = ''
+        this.fetchTheme(value)
+        this.fetchMainTopic(value)
+      },
+      selectedLevel: function(value){ this.fetchGrades(value)},
+      selectedGrade: function(value){ this.fetchKnowledgeArea(value) },
+      selectedArea: function(value){
+        if (value ==   "")
+          this.selectedSubject = ""
+        if (value !== "" || this.selectedSubject !== ""){
+          this.fetchSubject(value)
+          this.fetchCompetences(this.selectedSubject, value)
+          this.fetchAbilities(this.selectedSubject, value)
+          return
+        }
+        this.resetBNCCsAndTopics()
+        this.resetPedagogicalData()
+      },
+      selectedSubject: function(value){
+        if(value !== "" || this.selectedArea !== ""){
+          this.fetchCompetences(value, this.selectedArea)
+          this.fetchAbilities(value, this.selectedArea)
+        }
+        else {
+          this.resetBNCCsAndTopics()
+        }
+        if (value !== "" ) {
+          this.fetchTopic(value, this.selectedGrade)
+        }
+        else {
+          this.topics = []
+        }
+      },
+      searchBaseText: function(value) {        
+        if(value == ""){
+          this.baseTextFounds = []
+        }
+      },
+    },
+    computed: {
+      titleMainTopic(){
+        if (this.selectedTheme) {
+          $('#filderMainTopic').attr('data-original-title', "");
+          $('#filderMainTopic').tooltip('update');
+        } else {
+          return "Selecione um tema para habilitar este campo."
+        }
+      },
+      enableRegistration() {
+        return this.selectedSubject !== '' && this.selectedGrade !== '' && this.selectedLevel !== ''  && this.selectedArea !== '' ;
+      },
+      enableMainTopicRegistration() {
+        return this.selectedTheme;
+      },
+      tooltipTitleCompetence(){
+        if (this.enableRegistration) {
+          $('#bt_create_competence').attr('data-original-title', "Cadastrar Competência");
+          $('#bt_create_competence').tooltip('update');
+        } else {
+          return 'Preencha os dados pedagógicos para poder cadastrar uma nova competência.';
+        }
+      },
+      tooltipTitleAbility(){
+        if (this.enableRegistration) {
+          $('#bt_create_ability').attr('data-original-title', "Cadastrar Habilidade");
+          $('#bt_create_ability').tooltip('update');
+        } else {
+          return 'Preencha os dados pedagógicos para poder cadastrar uma nova habilidade.';
+        }
+      },
+      tooltipTitleMainTopic(){
+        if (this.enableMainTopicRegistration) {
+          $('#bt_create_main_topic').attr('data-original-title', "Cadastrar Tema");
+          $('#bt_create_main_topic').tooltip('update');
+        } else {
+          return 'Voçê deve selecionar Tema para poder cadastrar um novo Tópico.';
+        }
+      },
+      tooltipTitle() {
+        if (this.enableRegistration) {
+          $('#bt_create_topic').attr('data-original-title', "Cadastrar Assunto");
+          $('#bt_create_topic').tooltip('update');
+        } else {
+          return 'Preencha os dados pedagógicos para poder cadastrar um novo assunto.';
+        }
+      },
+      regroupedTopics: function(){
+        var self = this;
+        return _.groupBy(self.filterTopics, "stage")
+      },
+      filterTopics: function(){
+        return this.topics.filter(item => {
+          return item.name.toLowerCase().indexOf(this.searchTopic.toLowerCase()) > -1
+        })
+      },
+      filterCompetences: function(){
+        return this.competences.filter(item => {
+          return item.text.toLowerCase().indexOf(this.searchCompetence.toLowerCase()) > -1 || (item.code && item.code.toLowerCase().indexOf(this.searchCompetence.toLowerCase()) > -1)
+        })
+      },
+      filterAbilities: function(){
+        return this.abilities.filter(item => {
+          return item.text.toLowerCase().indexOf(this.searchAbility.toLowerCase()) > -1 || (item.code && item.code.toLowerCase().indexOf(this.searchAbility.toLowerCase()) > -1)
+        })
+      },
+      filteredThemes: function() {
+        if (this.searchFilterThemes) {
+            return this.themes.filter(theme => {
+                return theme.name.toLowerCase().indexOf(this.searchThemes.toLowerCase()) !== -1;
+            });
+        } else {
+            return this.themes;
+        }
+      },
+      topicsRegrouped: function() {
+        let items = this.filterTopics
+        let result = {}
+
+        items.forEach(topic => {
+          let stageId = this.slugify(topic.stage) || 'sem-etapa'
+          let stageName = topic.stage || 'Sem etapa'
+
+          if (!result[stageId]) {
+            result[stageId] = {
+              id: stageId,
+              name: stageName,
+              themes: {}
+            }
+          }
+
+          let themeId = null
+          let themeName = null
+
+          if (topic.theme) {
+            themeId = topic.theme.id
+            themeName = topic.theme.name
+          } else if (topic.main_topic && topic.main_topic.theme) {
+            themeId = topic.main_topic.theme.id
+            themeName = topic.main_topic.theme.name
+          }
+
+          if (themeId) {
+            if (!result[stageId].themes[themeId]) {
+              result[stageId].themes[themeId] = {
+                id: themeId,
+                name: themeName,
+                main_topics: {}
+              }
+            }
+          }
+
+          let mainTopicId = null
+          let mainTopicName = null
+
+          if (topic.main_topic) {
+            mainTopicId = topic.main_topic.id
+            mainTopicName = topic.main_topic.name
+
+            if (!themeId) {
+              themeId = 'without-theme'
+              if (!result[stageId].themes[themeId]) {
+                result[stageId].themes[themeId] = {
+                  id: 'without-theme',
+                  name: 'Sem tema',
+                  main_topics: {}
+                }
+              }
+            }
+
+            if (!result[stageId].themes[themeId].main_topics[mainTopicId]) {
+              result[stageId].themes[themeId].main_topics[mainTopicId] = {
+                id: mainTopicId,
+                name: mainTopicName,
+                topics: []
+              }
+            }
+          } else {
+            if (!themeId) {
+              themeId = 'without-theme'
+              if (!result[stageId].themes[themeId]) {
+                result[stageId].themes[themeId] = {
+                  id: 'without-theme',
+                  name: 'Sem tema',
+                  main_topics: {}
+                }
+              }
+            }
+
+            mainTopicId = 'without-main-topic'
+            if (!result[stageId].themes[themeId].main_topics[mainTopicId]) {
+              result[stageId].themes[themeId].main_topics[mainTopicId] = {
+                id: 'without-main-topic',
+                name: 'Sem tópico principal',
+                topics: []
+              }
+            }
+          }
+
+          result[stageId].themes[themeId].main_topics[mainTopicId].topics.push({
+            id: topic.id,
+            name: topic.name
+          })
+        })
+
+        let formattedResult = Object.values(result)
+          .map((stage) => ({
+            ...stage,
+            themes: Object.values(stage.themes)
+              .map((theme) => ({
+                ...theme,
+                mainTopics: Object.values(theme.main_topics)
+                  .map((mainTopic) => ({
+                    ...mainTopic,
+                    topics: [...mainTopic.topics].sort((a, b) =>
+                      a.name.localeCompare(b.name),
+                    ),
+                  }))
+                  .sort((a, b) => a.name.localeCompare(b.name)),
+              }))
+              .sort((a, b) => a.name.localeCompare(b.name)),
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name))
+
+        return formattedResult
+      },
+      currentTopicsObj() {
+        return this.topics.filter(item => this.currentTopics.includes(item.id))
+      },
+    },
+    methods: {
+      slugify(text) {
+        if (!text) return ''
+        return text
+          .toString()
+          .toLowerCase()
+          .trim()
+          .replace(/\s+/g, '-')
+          .replace(/[^\w\-]+/g, '')
+          .replace(/\-\-+/g, '-')
+          .replace(/^-+/, '')
+          .replace(/-+$/, '')
+      },
+      openModalHistory(details) {
+        const fieldNamesArray = [
+          'Resposta comentada',
+          'Texto da alternativa',
+          'Enunciado da questão',
+          'Feedback do professor'
+        ];       
+        const cleanFieldName = fieldName => {
+          if (fieldName.startsWith('Texto da alternativa')) {
+            return fieldName.replace(/^Texto da alternativa\s*[A-Ea-e]*/i, 'Texto da alternativa').trim();
+          }
+          return fieldName;  
+        };
+        this.selectedDetails = details.filter(detail => {
+          const cleanedFieldName = cleanFieldName(detail.field_name);  // Remove a letra
+          console.log(cleanedFieldName)
+          return fieldNamesArray.includes(cleanedFieldName);  // Compara sem a letra
+        });
+        this.isModalOpen = true;
+        $('#modalHistoryDetails').modal('show');        
+      },
+      formatDate(date) {
+        const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+        return new Date(date).toLocaleDateString('pt-BR', options);
+      },
+      handleSubmitFormQuestion(event) {
+        if (event.ctrlKey && event.which == 83 || event.type === 'submit') {
+          event.preventDefault(); 
+          this.submitQuestionForm(); 
+        }
+      },
+      stripHtmlTags(text) {              
+        text = text.replace(/<[^>]*>/g, '');// Remove todas as tags HTML
+        text = text.replace(/\.\s*$/, ''); // Remove o ponto final seguido de zero ou mais espaços no final da string
+        text = text.replace(/\s+$/, '');   // Remove sequências de espaços em branco no final da string
+        text = text.replace(/[,\.]/g, '');  // Remove os caracteres ',' e '.'
+
+        return text;
+      },
+      hasQuestionsDuplicates() {
+        const seen = new Set();
+        selectedAlternatives = this.getSelectedAlternatives()
+        lenAlternatives = selectedAlternatives.length;
+
+        for (let i = 0; i < lenAlternatives; i++) {
+          const option = selectedAlternatives[i];
+          const normalizedOption = option.text.toLowerCase();
+
+          const text = this.stripHtmlTags(normalizedOption);
+          if (seen.has(text) && text != "") {
+            return true;
+          }
+          seen.add(text); 
+          if (i == lenAlternatives && seen.has(text)) {
+            return true;
+          }
+        }
+        return false; 
+      },
+      submitQuestionForm( event) {
+        if (this.hasQuestionsDuplicates()) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Alternativas iguais',
+            text: 'Atenção! Aparentemente a questão possui 2 ou mais alternativas iguais, certeza que deseja continuar?',
+            showCancelButton: true,
+            confirmButtonText: 'Sim, continuar',
+            cancelButtonText: 'Não, corrigir',
+          }).then((result) => {
+            if (result.isConfirmed) {
+              document.getElementById('questionForm').submit();
+            }
+            const submitButton = this.$el.querySelector('#button-save-question');
+            submitButton.disabled = false;
+            this.saveButtonClicked = true; 
+          });
+        } else {
+          document.getElementById('questionForm').submit();
+          this.saveButtonClicked = true; 
+        }
+      },
+      toggleThemeInput() {
+        this.isAddingNewTheme = !this.isAddingNewTheme;
+        this.newThemeName = '';
+      },
+      saveNewTheme(csrf_token) {
+        if (this.newThemeName.trim()) {
+          var postData = {
+            name: this.newThemeName, 
+          };
+          var themeUrl = `{% url 'subjects:theme_create_api' %}`; 
+          axios.post(themeUrl, postData, {
+            headers: {
+              'X-CSRFToken': csrf_token 
+            }
+          })
+          .then(response => {
+            if (response.status === 201) {
+              const theme = response.data;
+              this.themes.push(theme);
+              this.themes.sort((a, b) => a.name.localeCompare(b.name));
+              this.selectedTheme = theme.id;
+              this.isAddingNewTheme = false;
+              this.newThemeName = '';
+              this.showMessageToast("Tema criado com sucesso!", 'success')
+
+            } else {
+              throw new Error('Network response was not ok ' + response.statusText);
+            }
+          })
+          .catch(error => {
+            this.showMessageToast("Ocorreu algum erro ao criar o tema. Verifique os dados e tente novamente.", 'error')
+          });
+        }
+      },
+      toggleMainTopicInput() {
+        this.isAddingNewMainTopic = !this.isAddingNewMainTopic;
+        this.newMainTopicName = '';
+      },
+      saveNewMainTopic(csrf_token) {
+        if (this.newMainTopicName.trim()) {
+          var postData = {
+            name: this.newMainTopicName, 
+            theme: this.selectedTheme 
+          };
+          var mainTopicUrl = `{% url 'subjects:main_topic_create_api' %}`; 
+          axios.post(mainTopicUrl, postData, {
+            headers: {
+              'X-CSRFToken': csrf_token 
+            }
+          })
+          .then(response => {
+            if (response.status === 201) {
+              const mainTopic = response.data;
+              this.mainTopics.push(mainTopic);
+              this.mainTopics.sort((a, b) => a.name.localeCompare(b.name));
+              this.selectedMainTopic = mainTopic.id;
+              this.isAddingNewMainTopic = false;
+              this.newMainTopicName = '';
+              this.showMessageToast("Tópico criado com sucesso!", 'success')
+
+            } else {
+              throw new Error('Network response was not ok ' + response.statusText);
+            }
+          })
+          .catch(error => {
+            this.showMessageToast("Para criar um Tópico é necessário selecioanar ou criar um Tema.", 'error')
+          });
+        }
+      },
+      showMessageToast(errorMessage, icon) {
+        Swal.fire({
+            position: 'top-end',
+            text: errorMessage,
+            icon: icon,
+            showConfirmButton: false,
+            timer: 5000,
+            toast: true,
+            timerProgressBar: true,
+        });
+      },
+      updateSelectedValues() {
+        var selectedGradeText = $('#selectGrade option:selected').text();
+        $('.grade-value').text(selectedGradeText);
+    
+        var selectedArea = $('#selectArea option:selected').text();
+        $('.area-value').text(selectedArea);
+    
+        var selectedSubject = $('#selectSubject option:selected').text();
+        $('.subject-value').text(selectedSubject);
+      },
+      openModalCreateTopic() {
+        this.selectedTheme = '';
+        this.selectedMainTopic = '';
+        this.topicName = '';
+        this.stage = '';
+
+        this.updateSelectedValues();
+
+        $('#modalCreateTopic').modal('show');
+      },
+      openModalCreateCompetence() {
+        this.selectedCompetenceCode = '';
+        this.selectedCompetence = '';
+
+        this.updateSelectedValues();
+
+        $('#modalCreateCompetence').modal('show');
+      },
+      openModalCreateAbility() {
+        this.selectedAbilityCode = '';
+        this.selectedAbility = '';
+
+        this.updateSelectedValues();
+
+        $('#modalCreateAbility').modal('show');
+      },
+      submitFormCreateCompetence(csrf_token) {
+        const postData = {
+            code: this.selectedCompetenceCode,
+            text: this.selectedCompetence,
+            grade: this.selectedGrade,
+            subject: this.selectedSubject,
+            knowledge_area: this.selectedArea,
+
+        };
+        var postUrl = "{% url 'bncc:competence_create_api' %}";
+
+        axios.post(postUrl, postData, {
+          headers: {
+            'X-CSRFToken': csrf_token 
+          }
+        })
+        .then(response => {
+          if (response.status === 201) {
+                const competence = response.data;
+                this.competences.push(competence)
+                this.competences.sort((a, b) => a.text.localeCompare(b.text))
+                this.showMessageToast("Competência cadastrado com sucesso!", 'success')
+                $('#modalCreateCompetence').modal('hide');    
+          } 
+        })
+        .catch(error => {
+          if (error.response && error.response.data && error.response.data.non_field_errors) {
+            this.showMessageToast( error.response.data.non_field_errors, "error")
+          } else {
+            this.showMessageToast("Ocorreu algum erro no preenchimento do formulário. Por favor, verifique se preencheu todos os campos e tente novamente.", 'error')
+          }
+        });
+      }, 
+      submitFormCreateAbility(csrf_token) {
+        grades = []
+        grades.push(this.selectedGrade)
+        const postData = {
+            code: this.selectedAbilityCode,
+            text: this.selectedAbility,
+            grades: grades,
+            subject: this.selectedSubject,
+            knowledge_area: this.selectedArea,
+
+        };
+        var postUrl = "{% url 'bncc:ability_create_api' %}";
+
+        axios.post(postUrl, postData, {
+          headers: {
+            'X-CSRFToken': csrf_token 
+          }
+        })
+        .then(response => {
+          if (response.status === 201) {
+                const ability = response.data;
+                this.abilities.push(ability)
+                this.abilities.sort((a, b) => a.text.localeCompare(b.text))
+                this.showMessageToast("Habilidade cadastrado com sucesso!", 'success')
+                $('#modalCreateAbility').modal('hide');    
+          } 
+        })
+        .catch(error => {
+          if (error.response && error.response.data && error.response.data.non_field_errors) {
+            this.showMessageToast(error.response.data.non_field_errors, "error")
+          } else {
+            this.showMessageToast("Ocorreu algum erro no preenchimento do formulário. Por favor, verifique se preencheu todos os campos e tente novamente.", 'error')
+          }
+        });
+      }, 
+      submitForm(csrf_token) {
+        const postData = {
+            grade: this.selectedGrade,
+            subject: this.selectedSubject,
+            theme: this.selectedTheme,
+            main_topic: this.selectedMainTopic,
+            name: this.topicName,
+            stage: this.stage || null,
+        };
+        var postUrl = "{% url 'subjects:topic_create_complete' %}";
+
+        axios.post(postUrl, postData, {
+          headers: {
+            'X-CSRFToken': csrf_token 
+          }
+        })
+        .then(response => {
+          if (response.status === 201) {
+                const topic = response.data;
+                this.topics.push(topic);
+                this.topics.sort((a, b) => a.name.localeCompare(b.name));
+                this.showMessageToast("Assunto cadastrado com sucesso!", 'success')
+                this.closeModal();       
+          } 
+        })
+        .catch(error => {
+          this.showMessageToast(" Ocorreu algum erro no preenchimento do formulário. Por favor, verifique se preencheu todos os campos e tente novamente.", 'error')
+        });
+      },
+      closeModal() {
+        $('#modalCreateTopic').modal('hide');
+        $('.modal-backdrop').remove(); 
+      },
+      momentRef(args) {
+        return moment(args)
+      },
+      requestStatusTags(){
+        self = this
+
+        if(this.no_tags){
+          return this.submitQuestionForm()
+        }
+        if(this.requestTags){
+          Swal.fire({
+            title: 'Selecione os motivos para essa ação',
+            html: 
+              '{% for tag in tags %}<input type="checkbox" class="btn-check statusTags" id="{{tag.pk}}" autocomplete="off"><label class="btn btn-outline-primary btn-sm" for="{{tag.pk}}">{{tag.name}}</label>{% endfor %}',
+            focusConfirm: false,
+            preConfirm: () => {
+              const statusTags = document.querySelectorAll('.statusTags')
+              const selectedPks = []
+  
+              statusTags.forEach((tagElement)=>{
+                if(tagElement.checked) selectedPks.push(tagElement.id)
+              })
+              return selectedPks
+            },
+            showCancelButton: true,
+            showConfirmButton: true,
+            confirmButtonText: "Continuar",
+            cancelButtonText: "Cancelar",
+          }).then((result) => {
+            if(result.isConfirmed) {
+              result.value.forEach((value)=>{
+                this.selectedTags.push(value)
+              })
+              $("#selected_tags").val(this.selectedTags)
+              this.requestNote()
+            }
+          })
+        }else{
+          this.submitQuestionForm()
+        }
+      },
+      requestNote() {
+        self = this
+        Swal.fire({
+          title: 'Deseja enviar alguma anotação para o professor?',
+          input: 'textarea',
+          inputPlaceholder: 'Adicione a anotação que deseja enviar para o professor, você pode deixar vazio caso não tenha nenhuma anotação a enviar.',
+          inputAttributes: {
+            'aria-label': 'Adicione a anotação que deseja enviar para o professor, você pode deixar vazio caso não tenha nenhuma anotação a enviar.'
+          },
+          showCancelButton: true,
+          showConfirmButton: true,
+          confirmButtonText: "Enviar anotação",
+          cancelButtonText: "Cancelar",
+        }).then((result) => {
+          if(result.isConfirmed) {
+            $("#status_note").val(result.value)
+            this.submitQuestionForm()          
+          }
+        })
+      },
+      getSelectedAlternatives() {
+        self = this;
+        this.selectedAlternatives = []
+        $("textarea[id*='-text']").each(function(){
+          let id = $(this).attr('id')
+          let check = id.replace('text', 'is_correct')
+          if(tinymce.get(id) && tinymce.get(id).getContent()){
+            self.selectedAlternatives.push({
+              text: tinymce.get(id).getContent(),
+              is_correct: $('#'+check).is(':checked')
+            })
+          }
+        })
+        return this.selectedAlternatives
+      },
+      modalForm(){
+        this.enunciationForm = tinymce.get("{{form.enunciation.auto_id}}").getContent()
+        this.categoryForm = $('#{{form.category.auto_id}} :selected').text()
+      },  
+      changeTab(tab){
+        $('.nav-tabs a[href="'+tab+'"]').tab('show')
+      },
+      verifyCheckbox(event){
+        if (!this.currentData[event.id]) 
+            this.currentData[event.id] = [];
+        if (!this.originalData[event.id]) 
+            this.originalData[event.id] = [];
+          const isChecked = event.target.checked; 
+
+        if (isChecked) {
+          if (!this.currentData[event.id].includes(event.id)) {
+            this.currentData[event.id].push(event.id); 
+          } else {
+            this.currentData[event.id] = this.currentData[event.id].filter(item => item !== event.id);
+          }
+        }
+      },
+      checkOption(from, to, event){
+        if (!this.currentData['bnccReference']) 
+            this.currentData['bnccReference'] = [];
+        if (!this.originalData['bnccReference']) 
+            this.originalData['bnccReference'] = [];
+
+        if (event.target.checked) {
+            to.push(from)
+            this.currentData['bnccReference'].push(from.id);
+            this.originalData['bnccReference'].push(from.id);
+        } else {
+          let i = to.map(item => item.id).indexOf(from.id) 
+          to.splice(i, 1)
+          this.currentData['bnccReference'] = this.currentData['bnccReference'].filter(id => id !== from.id);
+          {% comment %} this.originalData['bnccReference'] = this.originalData['bnccReference'].filter(id => id !== from.id);     {% endcomment %}
+        }
+      },
+      fetchGrades: function(level){
+        var self = this
+        if(level || level == 0) {
+          var gradeListUrl = `{% url 'classes:grade_list_api' %}?level=${level}`
+          axios.get(gradeListUrl).then(function(response) {
+              self.grades = response.data
+              self.selectedGrade = self.checkExist(self.currentGrade, self.grades)
+          })
+        } else {
+          this.resetPedagogicalData()
+        }
+      },
+      fetchTheme: function () {
+        var self = this
+          var themeListUrl = `{% url 'subjects:theme_list_api' %}` 
+          axios.get(themeListUrl).then(function(response) {
+            self.themes = response.data
+        })
+      },
+      fetchMainTopic: function (theme) {
+        var self = this
+        if (theme) {
+          var mainTopicListUrl = `{% url 'subjects:main_topic_list_api' %}?theme_pk=${theme}` 
+          axios.get(mainTopicListUrl).then(function(response) {
+            self.mainTopics = response.data
+          })
+          return
+        }
+        else {
+          var mainTopicListUrl = `{% url 'subjects:main_topic_list_api' %}`
+          axios.get(mainTopicListUrl).then(function(response) {
+              self.mainTopics = response.data
+          })
+          }
+      },
+
+      fetchKnowledgeArea: function(grade){
+        var self = this
+        this.selectedSubject = ''
+        this.knowledgeAreas = []
+        this.subjects = []
+        
+        if(grade) {
+          var knowledgeAreaListUrl = `{% url 'subjects:knowledge_area_list_api' %}?grades=${grade}`
+          axios.get(knowledgeAreaListUrl).then(function(response) {
+              self.knowledgeAreas = response.data
+              self.selectedArea = self.checkExist(self.currentKnowledgeArea, self.knowledgeAreas)
+          })
+        } else {
+          this.resetPedagogicalData()
+        }
+      },
+      fetchSubject: function(knowledgeArea){
+        var self = this
+        this.subjects = []
+        if(knowledgeArea) {
+          var subjectListUrl = `{% url 'subjects:subject_list_api' %}?knowledge_area=${knowledgeArea}`
+          axios.get(subjectListUrl).then(function(response) {
+              self.subjects = response.data
+              self.selectedSubject = self.checkExist(self.current_subject, self.subjects)
+          })
+        }
+      },
+      fetchTopic: function(subject, grade){
+        var self = this
+        
+        var objectSubject = self.subjects.find(function(subject_obj){
+          return subject_obj.id == subject
+        })
+
+        var topictListUrl = `{% url 'subjects:topic_list_api' %}?grade=${grade}&subject_pk=${subject}`
+
+        axios.get(topictListUrl).then(function(response) {
+            self.topics = response.data
+        })
+      },
+      fetchCompetences: function(subject, knowledge_area){
+        var self = this
+        if(subject) {
+          var objectSubject = self.subjects.find(function(subject_obj){
+            return subject_obj.id == subject
+          })
+  
+          var competenceListUrl = `{% url 'bncc:competence_list_api' %}?`
+  
+          if(subject){
+            competenceListUrl += `&subject_in_or_none=${subject}`
+            
+            if (objectSubject && objectSubject.parent_subjects){
+              objectSubject.parent_subjects.forEach(function(parent){
+                competenceListUrl += `&subject_in_or_none=${parent}`
+              })
+            }
+          }
+          
+          if(knowledge_area){
+            competenceListUrl += `&knowledge_area=${knowledge_area}`
+          }
+  
+          axios.get(competenceListUrl).then(function(response) {
+              self.competences = response.data
+          })
+        }
+      },
+      fetchAbilities: function(subject, knowledge_area){
+        var self = this
+
+        if(subject) {
+          var objectSubject = self.subjects.find(function(subject_obj){
+            return subject_obj.id == subject
+          })
+  
+          var abilityUrl = `{% url 'bncc:ability_list_api' %}?grades=${self.selectedGrade}`
+  
+          if(subject){
+            abilityUrl += `&subject_in_or_none=${subject}`
+            
+            if (objectSubject && objectSubject.parent_subjects){
+              objectSubject.parent_subjects.forEach(function(parent){
+                abilityUrl += `&subject_in_or_none=${parent}`
+              })
+            }
+          }
+          
+          if(knowledge_area){
+            abilityUrl += `&knowledge_area=${knowledge_area}`
+          }
+  
+          axios.get(abilityUrl).then(function(response) {
+              self.abilities = response.data
+          })
+        }
+      },
+      removeQuestionOption(option_index) {
+        let editing_question = {{ question|yesno:"true,false" }}; 
+        
+        const alternative_container = $(`#id_question-option-form-${option_index}-text`).parent().parent();
+        const delete_input = $(`#id_question-option-form-${option_index}-DELETE`);
+        const is_correct_input = $(`#id_question-option-form-${option_index}-is_correct`);
+
+        alternative_container.hide();
+        is_correct_input.prop("checked", false);
+
+        if (editing_question){
+          delete_input.prop("checked", true);
+        }
+      },
+      checkCategory: function(category_id) {
+        if(category_id == 0 || category_id == 2){
+          $("#selectCompetence").show(400)
+          $("#selectIsEssay").show(400)
+        }else{
+          $("#selectCompetence").hide(400)
+          $("#selectIsEssay").hide(400)
+          $("#checkBoxCorrection").prop('checked', false)
+          $("#id_is_essay").prop('checked', false)
+          this.selectTextCorrection = false;
+        }
+
+        if(category_id == 4) {
+          $("#cloze-question-section").show()
+          $("#row-alternatives").hide()
+        } else {
+          $("#cloze-question-section").hide()
+        }
+
+        switch (parseInt(category_id)) {
+          case 1:
+          case 3:
+            $("#row-alternatives").show()
+            $('input:hidden#id_question-option-form-MIN_NUM_FORMS').val(5)
+            break;
+          case 4:
+            $("#cloze-question-section").show()
+            break;
+          default:
+            $("#row-alternatives").hide()
+            $("#cloze-question-section").hide()
+            $('input:hidden#id_question-option-form-MIN_NUM_FORMS').val(0)
+        }
+      },
+      checkExist(value, list){
+        var elementExists = list.find(element => element.id == value)
+        return elementExists ? elementExists.id  : ""
+      },
+      getHistoricalQuestion() {
+        {% if object.pk %}
+          let questionUrl = "{% url 'questions:question_historical' pk='00000000-0000-0000-0000-000000000000' %}"
+          axios.get(questionUrl.replace('00000000-0000-0000-0000-000000000000', '{{object.pk}}')).then((response) => {
+            this.historicalQuestion = response.data.exam_question
+          })
+        {% endif %}
+      },
+      getBaseTexts() {
+        return axios.get("{% url 'questions:base_text_list_create' %}").then((response) => {
+          this.baseTexts = response.data
+        })
+      },
+      startCreationNewBaseText() {
+        this.newBaseText = {
+          title: '', text: ''
+        }
+        this.addBaseText = true
+        this.alertRequiredField = false
+        tinymce.get('id_new_base_text').setContent("<p></p>");
+      },
+      createBaseText() {
+        if(tinymce.get("id_new_base_text").getContent({ format: 'text'}).length > 1 && this.newBaseText.title.length){
+          this.newBaseText.text = tinyMCE.get('id_new_base_text').getContent()
+          axios.post("{% url 'questions:base_text_list_create' %}", {title: this.newBaseText.title, text: this.newBaseText.text }).then((response) => {
+          this.baseTexts.push(response.data)
+          this.selectedBaseTexts.push(response.data)
+          Swal.fire({
+            title: 'Texto base criado com sucesso!',
+            text: "O texto base será adicionado nesta questão",
+            icon: 'success',
+          })
+          this.fetchBaseTexts()
+          this.addBaseText = false
+          })
+        }else{
+          this.alertRequiredField = true
+        }
+      },
+
+      validValueBaseText() {
+        //&& tinyMCE.get('id_new_base_text').getContent().length > 0
+        if(this.newBaseText.title.length > 0)
+          return true
+        return false
+      },
+      updateBaseTextEdit() {
+        if(tinymce.get("id_new_base_text").getContent({ format: 'text'}).length > 1 && this.newBaseText.title.length){
+          this.selectedBaseText.title = this.newBaseText.title
+          baseText = Object.assign(this.selectedBaseText, {})
+        
+          baseText.text = tinyMCE.get('id_new_base_text').getContent()
+          
+          let baseTextUpdatenUrl = "{% url 'questions:base_text_retrive_update_destroy' pk='00000000-0000-0000-0000-000000000000' %}"
+          axios.put(baseTextUpdatenUrl.replace('00000000-0000-0000-0000-000000000000', baseText.id), baseText).then(response => {
+              Swal.fire({
+                title: 'Texto base atualizado com sucesso!',
+                icon: 'success',
+              })
+              this.selectedBaseText = response.data
+            
+              tinymce.get('id_new_base_text').setContent("<p></p>");
+              this.fetchBaseTexts()
+              this.addBaseText = false
+              this.editBaseText = false
+              this.alertRequiredField = false
+          })
+        }else{
+          this.alertRequiredField = true
+        }
+      },
+      selectToEdit(baseText){
+        this.addBaseText = true
+        this.editBaseText = true
+        this.alertRequiredField = false
+
+        this.selectedBaseText = baseText
+        this.newBaseText.title = baseText.title
+        tinymce.get('id_new_base_text').setContent(baseText.text)
+      },
+      deleteBaseText(baseText) {
+        Swal.fire({
+          title: 'Deseja realmente deletar o texto base?',
+          text: "Você não será capaz de reverter isso!",
+          icon: 'warning',
+          showCancelButton: true,
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Sim, deletar!'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            let baseTextDeleteUrl = "{% url 'questions:base_text_retrive_update_destroy' pk='00000000-0000-0000-0000-000000000000' %}"
+            axios.delete(baseTextDeleteUrl.replace('00000000-0000-0000-0000-000000000000', baseText))
+            .then(response => {
+              Swal.fire({
+                title: 'Texto base deletado com sucesso!',
+                icon: 'success',
+              })
+              this.getBaseTexts()
+              this.fetchBaseTexts()
+            }).catch(e => {
+              Swal.fire({
+                title: 'Não foi possível deletar!',
+                text: 'Verifique se o texto base não está vinculado a uma questão',
+                icon: 'error',
+              })
+            })
+          }
+        })
+      },
+      btnCancelBaseText(){
+        this.addBaseText = false
+        this.editBaseText = false
+        this.alertRequiredField = false
+      },
+      baseTextCheckExist(baseText) {
+        return this.selectedBaseTexts.find((_baseText) => _baseText.id == baseText.id)
+      },
+      selectBaseText(baseText) {
+        if (!this.currentData['baseTexts']) {
+          this.currentData['baseTexts'] = []; 
+        }
+        if (!this.originalData['baseTexts']) {
+            this.originalData['baseTexts'] = []; 
+        }
+        if(!this.baseTextCheckExist(baseText)){
+          this.currentData['baseTexts'].push(baseText);
+          this.originalData['baseTexts'].push(baseText);
+          this.selectedBaseTexts.push(baseText)
+        }
+        else{
+            this.currentData['baseTexts'] = this.currentData['baseTexts'].filter(text => text !== baseText); // Remove do currentData
+            this.originalData['baseTexts'] = this.originalData['baseTexts'].filter(text => text !== baseText); // Remove do originalData
+            this.selectedBaseTexts.splice(this.selectedBaseTexts.indexOf(baseText), 1)
+
+          }
+      },
+      fetchBaseTexts() {
+        if(this.searchBaseText.length > 1) {
+          axios.get(`{% url 'questions:base_text_list_create' %}?search=${this.searchBaseText}`).then((response) => this.baseTextFounds = response.data)
+        }
+      },
+      openModal(id){
+        $('#'+id).modal('toggle');
+      },
+      resetBNCCsAndTopics() {
+        this.currentCompetences = []
+        this.currentAbilities = []
+        this.competences = []
+        this.abilities = []
+      },
+      resetPedagogicalData(grades) {
+        this.selectedSubject = ''
+        this.selectedGrade = ''
+        this.selectedArea = ''
+      },
+      getFormatterTokens() {
+        let text = tinymce.get('questionFormatterInput').getContent()
+        text = text.replace(/\s+/g, ' ').trim();
+        this.formatter.tokens = text.length
+      
+      },
+      getFormatterStatus(seconds = 3) {
+        this.formatter.statusCopy = Object.assign(this.formatter.statusList, [])
+        this.formatter.fakeStatus = this.formatter.statusCopy.shift()
+        this.formatter.interval = setInterval(() => {
+          if(this.formatter.statusCopy.length) {
+            this.formatter.fakeStatus = this.formatter.statusCopy.shift()
+          }
+        }, seconds * 1000)
+        
+      },
+      formatterQuestion() {
+        {% if user.client_has_question_formatter or user.ispector and user.ispector.has_question_formatter %}
+          
+          this.formatter.loading = true
+          let content = tinymce.get('questionFormatterInput').getContent()
+          this.getFormatterStatus()
+          axios({
+            method: 'post',
+            url: "{% url 'questions:formatter' %}",
+            data: {
+              text: String(content)
+            },
+          }).then((response) => {
+            tinymce.get("{{form.enunciation.auto_id}}").setContent(response.data.enunciation)
+
+            response.data.alternatives.forEach((alternative, index) => {
+              if(alternative.is_correct) {
+                $(`#id_question-option-form-${index}-is_correct`).click()
+              }
+              tinymce.get(`id_question-option-form-${index}-text`).setContent(alternative.text)
+            })
+            tinymce.get('questionFormatterInput').setContent('')
+
+            $("#closeFormatterQuestion").click();
+            $(".modal-backdrop").remove();
+            $("#view-question").click();
+            this.formatter.status = 'success'
+          
+          }).finally(() => {
+            this.formatter.loading = false
+            clearInterval(this.formatter.interval)
+          }).catch((e) => {
+            this.formatter.status = 'error'
+            $("#errorCode").text(e)
+          })
+        {% endif %}
+      },
+      detectChanges() {
+        for (let key in this.originalData) {
+          if (this.originalData[key] !== this.currentData[key]) {
+            return true;
+          }
+        }
+        return false;
+      },
+      initializeAndTrackFormChanges(){
+        document.querySelectorAll('input, textarea, select').forEach(field => {
+          this.originalData[field.id] = field.value;
+          this.currentData[field.id] = field.value;
+
+          field.addEventListener('change', (event) => {
+              this.currentData[event.target.id] = event.target.value;
+          });       
+        });
+      },
+      checkUnsavedChangesOnClose(){
+        window.onbeforeunload = (event) => {
+          if (this.detectChanges() && !this.saveButtonClicked) {
+            event.preventDefault();
+            event.returnValue = '';
+          }
+        };
+      },
+      setupTinyMCEEditorsWithChangeTracking(){
+        tinymce.init({
+          ...this.tinyMCEDefaults,
+          selector: "#id_enunciation, #id_commented_awnser,  #id_feedback",
+          setup: (editor) => {
+            this.originalData[editor.id] = editor.getContent();
+            this.currentData[editor.id] = editor.getContent();
+            editor.on('change', () => {
+              const content = editor.getContent();
+              this.currentData[editor.id] = content;
+            });
+          }
+        });
+      },
+      getAllTopicIdsFromTheme(theme) {
+        return theme.mainTopics.flatMap(mt => mt.topics.map(t => t.id))
+      },
+      getAllTopicIdsFromMainTopic(mainTopic) {
+        return mainTopic.topics.map(t => t.id)
+      },
+      isThemeChecked(theme) {
+        let topicIds = this.getAllTopicIdsFromTheme(theme)
+        return topicIds.every(id => this.currentTopics.includes(id))
+      },
+      isMainTopicChecked(mainTopic) {
+        let topicIds = this.getAllTopicIdsFromMainTopic(mainTopic)
+        return topicIds.every(id => this.currentTopics.includes(id))
+      },
+      toggleTheme(theme, event) {
+        let topicIds = this.getAllTopicIdsFromTheme(theme)
+        if (event.target.checked) {
+          this.currentTopics = Array.from(new Set([...this.currentTopics, ...topicIds]))
+        } else {
+          this.currentTopics = this.currentTopics.filter(id => !topicIds.includes(id))
+        }
+      },
+      toggleMainTopic(mainTopic, event) {
+        let topicIds = this.getAllTopicIdsFromMainTopic(mainTopic)
+        if (event.target.checked) {
+          this.currentTopics = Array.from(new Set([...this.currentTopics, ...topicIds]))
+        } else {
+          this.currentTopics = this.currentTopics.filter(id => !topicIds.includes(id))
+        }
+      },
+    },
+    updated: function() {
+      if(window.MathJax) {
+        MathJax.typeset();
+      }
+      this.hasCorrectAlternative = $("[id*='-is_correct']").is(':checked')
+    },
+    mounted: function() {
+      let elementTheme = document.getElementById('theme')
+      this.choicesRefThemes = new Choices(elementTheme, {
+        removeItemButton: true,
+        classNames: {
+          containerOuter: ['choices', 'w-100', 'mb-0'],
+          containerInner: ['choices__inner', 'custom-choices__inner'],
+          listSingle: ['choices__list--single', 'custom-choices__list--single'],
+        },
+      })
+      let elementMainTopic = document.getElementById('main_topic')
+      this.choicesRefMainTopics = new Choices(elementMainTopic, {
+        removeItemButton: true,
+        classNames: {
+          containerOuter: ['choices', 'w-100', 'mb-0'],
+          containerInner: ['choices__inner', 'custom-choices__inner'],
+          listSingle: ['choices__list--single', 'custom-choices__list--single'],
+        },
+      })
+
+      this.initializeAndTrackFormChanges()
+      this.checkUnsavedChangesOnClose()
+
+      window.addEventListener('keydown', this.handleSubmitFormQuestion);
+      
+      document.getElementById("id_is_essay").addEventListener("change", function() {
+        if (this.checked) {
+          var input = document.getElementById("id_quantity_lines")
+          input.value = "30"
+        }
+      })
+
+      self = this
+      self.setupTinyMCEEditorsWithChangeTracking()
+
+      tinymce.init({
+        ...self.tinyMCEDefaults,
+        selector: '#questionFormatterInput',
+        setup: function(editor) {
+          editor.on('keyup paste input', function(e) {
+            self.getFormatterTokens()
+          });
+        }
+      })
+
+      const alternativeEditors = document.querySelectorAll('.question-option')
+      alternativeEditors.forEach((alternativeEditor) => {
+        tinymce.init({
+          ...self.tinyMCEDefaults,
+          selector: "#" +alternativeEditor.id,
+          setup: function(editor) {
+            self.originalData[editor.id] = editor.getContent();
+            self.currentData[editor.id] = editor.getContent();
+
+            editor.on('change', () => {
+              const content = editor.getContent();
+              self.currentData[editor.id] = content; 
+            });
+            editor.on('keydown', function(event) {
+              if (event.keyCode === 9) {
+                event.preventDefault();
+        
+                // Obtém o valor do atributo data-section do editor atual
+                let currentSection = editor.getElement().getAttribute('data-section');
+                
+                // Filtra os editores que pertencem à mesma seção
+                let editors = tinymce.editors.filter(function(ed) {
+                  return ed.getElement().getAttribute('data-section') === currentSection;
+                });
+        
+                let currentIndex = editors.indexOf(editor); // Index do editor atual
+        
+                // Mover para o próximo editor dentro da mesma seção
+                if (currentIndex + 1 < editors.length) {
+                  editors[currentIndex + 1].focus();
+                } else {
+                  // Se for o último editor na seção, voltar ao primeiro (opcional)
+                  editors[0].focus();
+                }
+              }
+            });
+          }
+        })
+      })
+
+      if(this.textCorrection){
+        $('#checkBoxCorrection').prop('checked', true)
+        this.selectTextCorrection = true
+      }
+      
+      $('#checkBoxCorrection').on('change', (e) => {
+        $(e.target).prop('checked') ? this.selectTextCorrection = true : this.selectTextCorrection = false
+      })
+      
+      var self = this;
+      this.checkCategory($("#id_category").val())
+      this.getHistoricalQuestion()
+      this.getBaseTexts()
+
+      $('#dfSettingsShow').on('click', function (e) {
+        if ($(this).hasClass('fa fa-times')) {
+            $(this).removeClass('fa fa-times').addClass('fa fa-angle-left');
+        }else{
+            $(this).removeClass('fa fa-angle-left').addClass('fa fa-times');
+        }
+      });
+
+      document.onkeydown = function(e) {
+        if (e.which == 112) {
+          self.changeTab('#question-data')
+          return false;
+        }else if(e.which == 113){
+          self.changeTab('#question-subject')
+          return false;
+        }else if(e.which == 114){
+          self.changeTab('#question-bncc')
+          return false;
+        }else if(e.which == 115){
+          self.changeTab('#question-print')
+          return false;
+        }else if(e.which == 116){
+          self.changeTab('#question-history')
+          return false;
+        }else if(e.which == 117){
+          self.changeTab('#history-ult-tab')
+          return false;
+        }else if(e.ctrlKey && e.which == 73){
+          $('#view-question').click();
+          return false;
+        }else if(e.ctrlKey && e.which == 76){
+          $('[data-target="#shortcutFunction"]').click()
+          return false;
+        }
+      };
+
+      {% comment %} else if(e.ctrlKey && e.which == 83){
+        $('#submitModal').click() {% endcomment %}
+      
+      $('#id_search_base_text').on('keyup', _.debounce(() => this.fetchBaseTexts(), 800))
+      {% if form.instance.grade %}
+        this.selectedLevel = {{ form.instance.grade.level }}
+      {% elif current_selected_level %}
+        this.selectedLevel = {{current_selected_level}}
+      {% else %}
+        this.selectedLevel = 1
+      {% endif %}
+
+
+      self.fetchGrades(self.selectedLevel)
+      self.fetchTheme()
+      self.fetchMainTopic(this.selectedTheme)
+
+
+      $(document).ready(function () {
+        $(".select2").select2();
+      });
+      
+      $('.vue-select2').select2({
+        matcher: function(params, data) {
+          if ($.trim(params.term) === '') {
+            return data;
+          }
+          if (typeof data.text === 'undefined') {
+            return null;
+          }
+          if (data.text.toUpperCase().indexOf(params.term.toUpperCase()) == 0) {
+            return data;
+          }
+          return null;
+        }
+      });
+      
+      $("#id_category").change(function(){
+        self.checkCategory($(this).val())
+      })
+      
+
+      $('#canceled_question').click(function() {
+        const checked = $(this).is(':checked')
+        $('input:checkbox.check-is-correct').prop('checked', checked);
+
+        if (checked) {
+          $('input:checkbox.check-is-correct').prop('disabled', 'disabled');
+        } else {
+          $('input:checkbox.check-is-correct').removeAttr('disabled')
+        }
+      })
+
+      {% if object.is_canceled %}
+        $('#canceled_question').click();
+      {% endif %}
+
+      $('form').submit(function(e) {
+          $('input[type="checkbox"]:disabled').each(function(e) {
+            $(this).removeAttr('disabled');
+          })
+      });
+
+      {% if is_popup %}
+        if(!window.opener && !window.opener.app_question) {
+          Swal.fire({
+            title: 'Ops...',
+            html: 'Algo deu errado ao tentar cadastrar ou editar esta questão! <br> Para cadastrar ou editar a questão você precisa usar o modo popup.',
+            icon: 'error',
+          }).then((response) =>{
+            window.close()
+          })
+        }
+      {% endif %}
+        
+      $("button[type='submit']").on("click", function(event) {  
+        $("input[required='required'], select[required='required']").each(function() {
+            if ($(this).val() == "" || $(this).val() == null) {
+              $(".tab-pane").removeClass("fade active show")
+              $(".nav-link").removeClass("active")
+              $(this).closest(".tab-pane").addClass("fade active show")
+              return false;
+            }
+          });
+        if(!app_question.no_tags){
+          event.preventDefault()
+          app_question.requestStatusTags()
+        }
+      });
+      
+      {% if not form.instance|check_can_be_updated:user %}
+        $(window).on('load',  () => {
+          tinymce.get("{{form.enunciation.auto_id}}").setMode('readonly');
+          inputs = $('input').filter(function() {
+            return this.id.match(/id_question-option-form-\d+-id/);
+          });
+          inputs.each((i, e) => {
+            tinymce.get(e.id.replace('-id', '-text')).setMode('readonly');
+          })
+        })
+      {% endif %}
+
+    },
+    beforeDestroy() {
+      window.onbeforeunload = null
+      window.removeEventListener('keydown', this.handleKeydown);
+      if (this.questionForm) 
+        this.questionForm.removeEventListener('submit', this.handleSubmitFormQuestion);
+      }
+  })
+
+
+</script>
+
+{% endblock %}

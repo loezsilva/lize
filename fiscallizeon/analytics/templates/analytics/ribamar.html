@@ -1,0 +1,65 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+
+
+{% block title %}Ribamar - Lize{% endblock title %}
+
+{% block css-additional %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css">
+
+  <link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10 performance-content">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">COORDENAÇÃO</a></li>
+          <li class="breadcrumb-item active" aria-current="page">RESULTADOS</li>
+        </ol>
+      </nav> 
+    </div>
+    <button class="btn btn-white" onclick="history.back()">Voltar</button>
+  </div>
+  <div class="row mb-0">
+    <div class="col-12 d-flex justify-content-between">
+      <h4>Resultados</h4>
+      <div class="text-right justify-content-end"></div>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+<div class="ard cex ddc">
+  <div class="ls" style="margin-top: 0.625rem; margin-bottom: 1rem; justify-content: space-between;"></div>
+  <div class="row" style="justify-content: center;">
+    <div class="col-4 col-md-3 col-lg-2 mb-3">
+      <a href="{%  url 'analytics:analytics_elit' %}" class="btn btn-outline-primary btn-icon p-3 h-100">
+        <i class="fa fa-chart-bar mb-2 display-3" ></i>
+        <br/>
+        <b>Resultados da ELIT</b>
+      </a>
+    </div>
+    <div class="col-4 col-md-3 col-lg-2 mb-3">
+      <a href="{%  url 'analytics:analytics_avha' %}" class="btn btn-outline-primary btn-icon p-3">
+        <i class="fa fa-chart-bar mb-2 display-3" ></i>
+        <br/>
+        <b>Resultados da AVHA</b>
+      </a>
+    </div>
+    <div class="col-4 col-md-3 col-lg-2 mb-3">
+      <a href="{%  url 'analytics:analytics_gae' %}" class="btn btn-outline-primary btn-icon p-3">
+        <i class="fa fa-chart-bar mb-2 display-3" ></i>
+        <br/>
+        <b>Resultados da GAE</b>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock content-fixed %}

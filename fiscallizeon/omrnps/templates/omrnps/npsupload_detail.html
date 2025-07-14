@@ -1,0 +1,894 @@
+{% extends 'redesign/base.html' %}
+{% load permissions %}
+{% load static %}
+{% load cdn_url %}
+
+{% block title %}
+  Detalhes do upload - Lize
+{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<link rel="stylesheet" href="{% static 'administration/lib/datatables.net-responsive-dt/css/responsive.dataTables.min.css' %}">
+<link rel="stylesheet" href="{% static 'administration/assets/css/app.filemgr.css' %}">
+<link rel="stylesheet" href="{% static 'css/jquery-ui.min.css' %}">
+<style>
+    .formset-select {
+        width: 300px;
+    }
+    .omr-thumb {
+        margin-bottom: 30px;
+    }
+    .modal-fullscreen {
+        min-width: 98%;
+        max-width: 98%;
+    }
+    .border-left {
+        border-left: 1px solid rgb(161, 161, 161);
+    }
+    .grid-content {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-rows: repeat(4, minmax(0, 1fr));
+        grid-auto-flow: column;
+    }
+    .answer-table {
+        max-width: 200px;
+        border-collapse: collapse;
+        text-align: center;
+        margin: 7px 5px;
+        font-size: 9pt;
+    }
+    .answer-table th {
+        border: 1px solid black;
+        width: 25px;
+        height: 25px;
+    }
+    .answer-table td {
+        border: 1px solid black;
+        width: 25px;
+        height: 25px;
+        padding: 0;
+        cursor: pointer;
+    }
+    .answer-table td a {
+        color: #000;
+    }
+    .unity-table {
+        margin: 40px 0px 5px 5px;
+        max-width: 880px;
+        border: 1px solid black;
+    }
+    .unity-table td {
+        border-left: 1px solid black;
+        padding: 13px;
+    }
+    .unity-marker {
+        border: 1px solid black;
+        padding: 0px;
+        min-width: 20px;
+        border-radius: 10px;
+        text-align: center;
+        margin: 0 4px;
+        font-size: 9pt;
+        cursor: pointer;
+    }
+    .marked-answer {
+        background-color: #2e2d2d;
+        color: #fff;
+        font-weight: bold;
+    }
+    .updated-answer {
+        background-color: #d1841f !important;
+        color: #fff;
+        font-weight: bold;
+    }
+    .legend-span {
+        display: inline-block;
+        min-width: 12px;
+        min-height: 12px;
+    }
+</style>
+{% endblock css-additional %}
+
+
+{% block content-fixed %}
+<div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+        <nav class="ls" aria-label="Breadcrumb">
+        <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+            <li>
+            <div>
+                <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                    <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+                </a>
+            </div>
+            </li>
+            <li>
+            <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="{% url 'omrnps:omrnps-list' %}" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">NPS</a>
+            </div>
+            </li>
+            <li>
+            <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Detalhes</a>
+            </div>
+            </li>
+        </ol>
+        </nav>
+        <div class="d-none d-md-block">
+        <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+        {% if object.can_be_reprocessed %}
+            {% if user.is_superuser or object.status == 3 %}
+            <a href="{% url 'omr:retry_import_answer_sheets' pk=object.pk %}" class="btn btn-sm pd-x-15 btn-info btn-uppercase">
+                Reprocessar upload
+            </a>
+            {% endif %}
+        {% endif %}
+        </div>
+    </div>
+    <h4>Detalhes do upload</h4>
+<div class="row">
+    <div class="col-sm-4 col-lg-4">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Usuário</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <h5 class="tx-small tx-rubik mg-b-0 mg-r-5 lh-1">
+                    {{ object.user }}
+                </h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4 col-lg-4">
+            <div class="card card-body">
+                <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Status do envio</h6>
+                <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                    <h5 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">
+                        {{ object.get_status_display }}
+                        {% if object.status == 5 %}
+                        <i class="fas fa-spinner fa-spin text-primary"></i>
+                        {% endif %}
+                    </h5>
+                </div>
+            </div>
+    </div>
+    <div class="col-sm-4 col-lg-2">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Páginas lidas</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <h5 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">
+                    {{ object.total_pages }}
+                </h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4 col-lg-2">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Páginas com erro</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <h5 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1">
+                    {{ object.error_pages_count }}
+                </h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if object.status == 5 %}
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-primary fade show" role="alert">
+            Aguarde enquanto as folhas de resposta estão sendo recorrigidas. Ao final do processo, atualizaremos esta página.
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if object.processing_log %}
+<div class="row">
+    <div class="col-12 mb-3">
+        <div class="card">
+            <div class="card-header">Erros registrados</div>
+            <div class="card-body">
+                {{ object.processing_log|linebreaksbr }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if object.get_unsolved_errors and object.status != 5 %}
+    <div class="row">
+        <div class="col-12 mb-3">
+            <div class="card">
+                <div class="card-header">Corrigir erros de leitura
+                    <i class="fas fa-question-circle" data-toggle="tooltip" 
+                    title="Abaixo estão relacionadas as páginas cujo QR code não pode ser identificado pelo sistema.
+                    Selecione a aplicação e a turma para que os arquivos sejam reprocessados."></i>
+                </div>
+                <div class="card-body p-0"> 
+                    <form method="POST" action="{% url 'omrnps:upload-fix' pk=object.pk %}">
+                        {% csrf_token %}
+
+                        {{ formset.management_form }}
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Problema</th>
+                                    <th>Página</th>
+                                    <th>Aplicação</th>
+                                    <th>Turma</th>
+                                    <th>Arquivo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for form in formset %}
+                                    {{ form.omr_nps_error.as_hidden }}
+                                    {{ form.category_description.as_hidden }}
+                                    {{ form.page_number.as_hidden }}
+                                    <tr id="{{form.omr_nps_error.value}}">
+                                        <td>{{ form.category_description.value }}</td>
+                                        <td>{{ form.page_number.value }}</td>
+                                        <td>
+                                            <select 
+                                                name="{{ form.application.html_name }}"
+                                                id="{{ form.application.id_for_label }}"
+                                                class="form-control application-formset formset-select"
+                                            >
+                                                {% if form.application.initial %}
+                                                <option value="{{ form.application.initial.pk }}" selected="selected">{{ form.application.initial }}</option>
+                                                {% endif %}
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <select 
+                                                name="{{ form.school_class.html_name }}"
+                                                id="{{ form.school_class.id_for_label }}"
+                                                class="form-control school-class-formset formset-select"
+                                            >
+                                                {% if form.school_class.initial %}
+                                                    <option value="{{ form.school_class.initial.pk }}" selected="selected">{{ form.school_class.initial.name }}</option>
+                                                {% endif %}
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <div class="actions" class="d-flex">
+                                                {% if forloop.counter0 == 0 %}
+                                                <a href="#" id="copy-application"
+                                                    data-toggle="tooltip" title="Repetir aplicação e turma para todos os campos">
+                                                    <i class="far fa-copy"></i>
+                                                </a>
+                                                {% endif %}
+                                                {% if form.error_image %}
+                                                    <a href="{{ form.error_image.value|cdn_url }}" class="mx-2"
+                                                        target="_blank" rel="noopener noreferrer"
+                                                        data-toggle="tooltip" title="Ver folha de respostas escaneada">
+                                                        <i class="far fa-file-image"></i>
+                                                    </a>
+                                                {% endif %}
+                                                <a href="#" class="mx-2" @click="removeOmrnpsError('{{ form.omr_nps_error.value }}')"
+                                                    data-toggle="tooltip" title="Remover erro do updload">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <button type="submit" class="btn btn-primary float-right m-3">Corrigir erros</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<div class="row">
+    <div class="col-12 mb-3">
+        <div class="card">
+            <div class="card-header">Páginas escaneadas</div>
+            <div class="card-body">
+                <table class="table" id="table-uploadstudents">
+                    <thead>
+                        <tr>
+                            <th>Avaliação</th>
+                            <th>Turma</th>
+                            <th>Lidas/Corrigidas/Total</th>
+                            <th>Opções</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="page in npsPages">
+                            <td>
+                                ${page.npsApplication}
+                            </td>
+                            <td>
+                                ${page.schoolClass}
+                            </td>
+                            <td>
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <span data-toggle="tooltip" data-questioncount="{{omr_student.id}}" title="Respostas lidas automaticamente" style="cursor: pointer;">${page.totalReadAnswers}</span> /
+                                        <span data-toggle="tooltip" data-questioncount="{{omr_student.id}}" title="Respostas corrigidas manualmente" style="cursor: pointer;">${page.totalCorrectedAnswers}</span> /
+                                        <span data-toggle="tooltip" title="Total de respostas do questionário" style="cursor: pointer;">${page.totalQuestions}</span>
+                                        <i
+                                            v-if="(page.totalReadAnswers + page.totalCorrectedAnswers) < page.totalQuestions"
+                                            class="fas fa-exclamation-triangle text-danger ml-1"
+                                            data-toggle="tooltip"
+                                            title="Total de marcações menor que o número de questões">
+                                        </i>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex">
+                                    <div class="dropdown">
+                                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButtonConfig"
+                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <i class="fas fa-cog"></i> Opções
+                                        </button>
+                                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButtonConfig">
+                                            <button 
+                                                type="button" 
+                                                class="dropdown-item nav-link" 
+                                                title="Corrigir marcações"
+                                                @click="openCorrectionModal(page)" 
+                                            >
+                                                <i class="far fa-edit"></i> Ajuste de marcações
+                                            </button>
+                                            
+                                            <a :href="page.scanImageUrl" target="_blank">
+                                                <button 
+                                                type="button" 
+                                                class="dropdown-item nav-link" 
+                                                title="Visualizar página escaneada" 
+                                                >
+                                                    <i class="far fa-file-image"></i> Visualizar página escaneada
+                                                </button>
+                                            </a>
+                                        </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+
+                        {% comment %}
+                            <tr>
+                                <td colspan="4" class="font-weight-bold">Nenhuma folha de resposta lida</td>
+                            </tr>
+                        {% endcomment %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+<div id="correctionModal" class="modal" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Ajuste de marcações</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-6">
+                <div class="alert alert-primary" role="alert">
+                    Utilize os quadros abaixo para ajustar a resposta de um formulário nos casos cujo aluno rasurou 
+                    ou o sistema não identificou a marcação, baseando-se no escaneamento ao lado
+                </div>
+                <template v-if="loading">
+                    <div class="text-center mt-4">
+                        <i class="fas fa-spinner fa-spin"></i> Carregando marcações...
+                    </div>
+                </template>
+                <template v-if="selectedNpsPage && !loading">
+                    <div>
+                        <p><span class="font-weight-bold">Aplicação: </span>${selectedNpsPage.npsApplication}</p>
+                        <p><span class="font-weight-bold">Turma: </span>${selectedNpsPage.schoolClass}</p>
+                        <div><span class="legend-span marked-answer"></span> Marcação identificada pelo sistema</div>
+                        <div><span class="legend-span updated-answer"></span> Marcação adicionada manualmente</div>
+                    </div>
+
+                    <div style="padding-right: 22px;">
+                        <table class="unity-table w-100">
+                            <tbody>
+                                <tr>
+                                    <td class="text-left">Avaliação da unidade:</td>
+                                    <td class="d-flex">
+                                        <div 
+                                            v-for="index in 10" 
+                                            class="unity-marker" 
+                                            @click="updateUnityAnswer(index)"
+                                            :class="{
+                                                'marked-answer': selectedNpsPage.unityGrade == index, 
+                                                'updated-answer': selectedNpsPage.unityGrade == index && selectedNpsPage.unityGradeModified
+                                            }">
+                                            ${index}
+                                        </div>
+                                        <div v-if="selectedNpsPage.unityGradeId" class="w-100">
+                                            <a href="#" @click="removeUnityAnswer()" class="text-danger float-right">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="grid-content">
+                        <table class="answer-table" v-for="teacherOrder in currentTeacherOrders">
+                            <thead>
+                                <tr>
+                                    <th colspan="6">
+                                        <span>${truncateString(teacherOrder.teacher_name)}</span> <br>
+                                        </span>${truncateString(teacherOrder.subject_name)}</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="axis, index in selectedNpsApplication.nps_axis" @mouseenter="showTrash(teacherOrder, index)" @mouseleave="showTrash()">
+                                    <td class="font-weight-bold" @click="removeTeacherAnswer(teacherOrder, index)">
+                                        <template v-if="selectedTeacherOrder == teacherOrder && selectedTeacherIndex == index">
+                                            <i class="fas fa-trash"></i>
+                                        </template>
+                                        <template v-else>
+                                            T${index+1}
+                                        </template>
+                                    </td>
+                                    <td :class="getMarkedClass(axis, teacherOrder.teacher_answers, 1)" @click="updateTeacherAnswer(1, index, teacherOrder)">1</td>
+                                    <td :class="getMarkedClass(axis, teacherOrder.teacher_answers, 2)" @click="updateTeacherAnswer(2, index, teacherOrder)">2</td>
+                                    <td :class="getMarkedClass(axis, teacherOrder.teacher_answers, 3)" @click="updateTeacherAnswer(3, index, teacherOrder)">3</td>
+                                    <td :class="getMarkedClass(axis, teacherOrder.teacher_answers, 4)" @click="updateTeacherAnswer(4, index, teacherOrder)">4</td>
+                                    <td :class="getMarkedClass(axis, teacherOrder.teacher_answers, 5)" @click="updateTeacherAnswer(5, index, teacherOrder)">5</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+            </div>
+            <div class="col-6 border-left">
+                <img v-if="selectedNpsPage" :src="selectedNpsPage.scanImageUrl" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock extra-modal %}
+
+{% block js-additional %}
+    <script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+    <script src="{% static 'administration/assets/vendor/jquery-ui.min.js' %}"></script>
+    <script src="{% static 'administration/lib/datatables.net-responsive-dt/js/responsive.dataTables.min.js' %}"></script>
+    <script src="{% static 'administration/lib/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+    <script>
+        moment.locale('pt-br')
+        var app = new Vue({
+            delimiters: ["${", "}"],
+            el: '#app',
+            data: {
+                loading: false,
+                selectedNpsApplication: null,
+                selectedNpsPage: null,
+                currentTeacherOrders: [],
+                totalErrorsCount: {{ object.error_pages_count }},
+                npsPages: [
+                    {% for nps_page in nps_pages %}
+                    {
+                        id: "{{nps_page.pk}}",
+                        npsApplicationId: "{{ nps_page.class_application.nps_application.pk }}",
+                        npsApplication: "{{ nps_page.class_application.nps_application }}",
+                        schoolClass: "{{ nps_page.class_application.school_class }}",
+                        classApplication: "{{ nps_page.class_application.pk }}",
+                        totalReadAnswers: {{ nps_page.total_read_answers }},
+                        totalCorrectedAnswers: {{ nps_page.total_corrected_answers }} + {{ nps_page.total_corrected_unity_answers }},
+                        totalQuestions: {{ nps_page.class_application.total_questions }},
+                        scanImageUrl: "{{ nps_page.scan_image.url|cdn_url|safe }}",
+                        unityGrade: {{ nps_page.unity_grade|default_if_none:0 }},
+                        unityGradeId: "{{ nps_page.unity_grade_id|default_if_none:'' }}",
+                        unityGradeModified: "{{ nps_page.unity_grade_created_by|default_if_none:'' }}",
+                    },
+                    {% endfor %}
+                ],
+                selectedTeacherOrder: null,
+                selectedTeacherIndex: null
+            },
+            methods: {
+                showTrash(teacherOrder, index) {
+                    if(teacherOrder) {
+                        this.selectedTeacherOrder = teacherOrder
+                        this.selectedTeacherIndex = index
+                    } else {
+                        this.selectedTeacherOrder = null
+                    }
+                },
+                openCorrectionModal(npsPage) {
+                    this.selectedNpsPage = npsPage
+                    this.fetchTeacherOrders(npsPage)
+                    this.fetchApplicationAxis(npsPage.npsApplicationId)
+                    $('#correctionModal').modal('show')
+                },
+                fetchTeacherOrders(npsPage) {
+                    this.loading = true
+                    let url = "{% url 'omrnps:teacher_order_page_answers' pk='00000000-0000-0000-0000-000000000000' %}"
+                    fetch(url.replace('00000000-0000-0000-0000-000000000000', npsPage.id))
+                    .then(response => response.json())
+                    .then(data => {
+                            this.currentTeacherOrders = data.length > 16 ? data.slice(0, 16) : data
+                            this.loading = false
+                        })
+                },
+                fetchApplicationAxis(npsApplicationId) {
+                    let url = "{% url 'omrnps:nps_application_detail' pk='00000000-0000-0000-0000-000000000000' %}"
+                    fetch(url.replace('00000000-0000-0000-0000-000000000000', npsApplicationId))
+                    .then(response => response.json())
+                    .then(data => {
+                        this.selectedNpsApplication = data
+                        this.selectedNpsApplication.nps_axis = this.selectedNpsApplication.nps_axis.map((a) => ({ ...a, showTrash: false }))
+                    })
+                },
+                updateTeacherAnswer(grade, axis_index, teacherOrder) {
+                    let url = "{% url 'omrnps:create_update_teacher_answer' %}"
+                    const npsApplicationAxis = this.selectedNpsApplication.nps_axis.filter(el => el.order == axis_index)[0].id
+                    const data = {
+                        teacher: teacherOrder.id,
+                        grade: grade,
+                        omr_nps_page: this.selectedNpsPage.id,
+                        nps_application_axis: npsApplicationAxis,
+                    }
+
+                    axios.post(url, data)
+                    .then(response => {
+                        const currentAnswer = teacherOrder.teacher_answers.filter(el => el.nps_axis_index == axis_index)
+                        if (currentAnswer.length > 0) {
+                            currentAnswer[0].grade = grade
+                            currentAnswer[0].created_by = 'modified'
+                        } else {
+                            teacherOrder.teacher_answers.push({...response.data, created_by: 'modified'})
+                            this.selectedNpsPage.totalCorrectedAnswers += 1
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire({
+                            position: 'top-end',
+                            icon: 'error',
+                            text: "Erro! Não foi possível atualizar a marcação!",
+                            showConfirmButton: false,
+                            timer: 3000,
+                            backdrop: false,
+                            allowOutsideClick: false,
+                            timerProgressBar: true,
+                        })
+                    })
+                },
+                updateUnityAnswer(grade) {
+                    let url = "{% url 'omrnps:create_update_unity_answer' %}"
+
+                    const data = {
+                        grade: grade,
+                        omr_nps_page: this.selectedNpsPage.id,
+                    }
+
+                    axios.post(url, data)
+                    .then(response => {
+                        if (!this.selectedNpsPage.unityGradeId) {
+                            this.selectedNpsPage.totalCorrectedAnswers += 1
+                        }
+
+                        this.selectedNpsPage.unityGradeId = response.data.id
+                        this.selectedNpsPage.unityGrade = response.data.grade
+                        this.selectedNpsPage.unityGradeModified = 'modified'
+                    })
+                    .catch(error => {
+                        Swal.fire({
+                            position: 'top-end',
+                            icon: 'error',
+                            text: "Erro! Não foi possível atualizar a marcação!",
+                            showConfirmButton: false,
+                            timer: 3000,
+                            backdrop: false,
+                            allowOutsideClick: false,
+                            timerProgressBar: true,
+                        })
+                    })
+                },
+                removeTeacherAnswer(teacherOrder, axis_index) {
+                    const teacherAnswers = teacherOrder.teacher_answers.filter(el => el.nps_axis_index == axis_index)
+                    
+                    if (teacherAnswers.length > 0) {
+                        Swal.fire({
+                            title: 'Você tem certeza que deseja remover essa marcação?',
+                            showCancelButton: true,
+                            reverseButtons: true,
+                            confirmButtonText: 'Sim',
+                            cancelButtonText: "Cancelar",
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                let url = "{% url 'omrnps:delete_teacher_answer' pk='00000000-0000-0000-0000-000000000000' %}"
+                                axios.delete(url.replace('00000000-0000-0000-0000-000000000000', teacherAnswers[0].id))
+                                .then(response => {
+                                    teacherOrder.teacher_answers = teacherOrder.teacher_answers.filter(el => el.nps_axis_index != axis_index)
+
+                                    Swal.fire({
+                                        position: 'top-end',
+                                        icon: 'success',
+                                        text: "Marcação removida com sucesso!",
+                                        showConfirmButton: false,
+                                        timer: 3000,
+                                        backdrop: false,
+                                        allowOutsideClick: false,
+                                        timerProgressBar: true,
+                                    })
+                                })
+                                .catch(error => {
+                                    Swal.fire({
+                                        position: 'top-end',
+                                        icon: 'error',
+                                        text: "Erro! Não foi possível remover a marcação!",
+                                        showConfirmButton: false,
+                                        timer: 3000,
+                                        backdrop: false,
+                                        allowOutsideClick: false,
+                                        timerProgressBar: true,
+                                    })
+                                })
+                            }
+                        })
+                    }
+                },
+                removeUnityAnswer() {
+                    Swal.fire({
+                        title: 'Você tem certeza que deseja remover essa marcação?',
+                        showCancelButton: true,
+                        reverseButtons: true,
+                        confirmButtonText: 'Sim',
+                        cancelButtonText: "Cancelar",
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            let url = "{% url 'omrnps:delete_unity_answer' pk='00000000-0000-0000-0000-000000000000' %}"
+                            axios.delete(url.replace('00000000-0000-0000-0000-000000000000', this.selectedNpsPage.unityGradeId))
+                            .then(response => {
+                                this.selectedNpsPage.unityGradeId = ""
+                                this.selectedNpsPage.unityGrade = ""
+                                this.selectedNpsPage.unityGradeModified = ""
+
+                                Swal.fire({
+                                    position: 'top-end',
+                                    icon: 'success',
+                                    text: "Marcação removida com sucesso!",
+                                    showConfirmButton: false,
+                                    timer: 3000,
+                                    backdrop: false,
+                                    allowOutsideClick: false,
+                                    timerProgressBar: true,
+                                })
+                            })
+                            .catch(error => {
+                                Swal.fire({
+                                    position: 'top-end',
+                                    icon: 'error',
+                                    text: "Erro! Não foi possível remover a marcação!",
+                                    showConfirmButton: false,
+                                    timer: 3000,
+                                    backdrop: false,
+                                    allowOutsideClick: false,
+                                    timerProgressBar: true,
+                                })
+                            })
+                        }
+                    })
+                    
+                },
+                truncateString(str, maxLength=20) {
+                    if (str.length > maxLength) {
+                        return str.slice(0, maxLength) + '...'
+                    }
+                    return str
+                },
+                getMarkedClass(axis, teacher_answers, position) {
+                    const answers = teacher_answers.filter(el => el.nps_axis == axis.nps_axis)
+
+                    if (answers.length > 0 && answers[0].grade == position) {
+                        return answers[0].created_by ? 'updated-answer' : 'marked-answer'
+                    }
+                },
+                removeOmrnpsError(errorId) {
+                    Swal.fire({
+                        title: 'Você tem certeza que deseja remover esse erro?',
+                        showCancelButton: true,
+                        reverseButtons: true,
+                        confirmButtonText: 'Sim',
+                        cancelButtonText: "Cancelar",
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            let url = "{% url 'omrnps:delete_omr_nps_error' pk='00000000-0000-0000-0000-000000000000' %}"
+                            axios.delete(url.replace('00000000-0000-0000-0000-000000000000', errorId))
+                            .then(response => {
+                                document.getElementById(errorId).remove()
+                                Swal.fire({
+                                    position: 'top-end',
+                                    icon: 'success',
+                                    text: "Erro removido com sucesso!",
+                                    showConfirmButton: false,
+                                    timer: 3000,
+                                    backdrop: false,
+                                    allowOutsideClick: false,
+                                    timerProgressBar: true,
+                                })
+                            })
+                            .catch(error => {
+                                Swal.fire({
+                                    position: 'top-end',
+                                    icon: 'error',
+                                    text: "Erro! Não foi possível remover o erro!",
+                                    showConfirmButton: false,
+                                    timer: 3000,
+                                    backdrop: false,
+                                    allowOutsideClick: false,
+                                    timerProgressBar: true,
+                                })
+                            })
+                        }
+                    })
+                },
+            },
+            watch: {},
+            mounted() {
+                $('[data-toggle="tooltip"]').tooltip()
+        
+                $('.application-formset').select2({
+                    placeholder: 'Buscar pelo nome da aplicação NPS...',
+                    minimumInputLength: 3,
+                    allowClear: true,  
+                    closeOnSelect: false,
+                    escapeMarkup: function (text) {
+                        return text;
+                    },          
+                    ajax: {
+                        url: '{% url "omrnps:nps_application_list" %}',
+                        delay: 250,              
+                        data: function (params) {
+                            return {
+                                search: params.term
+                            }
+                        },
+                        processResults: function(results) {
+                            let new_results = $.map(results, function(element) {
+                                element.text = element.name
+                                return element 
+                            })
+        
+                            return {
+                                results: new_results,
+                            }
+                        }
+                    },            
+                    templateResult: (data) => {
+                        if(data.text){
+                            result = `<span class="font-weight-bold">
+                            <span class="mr-1">${data.text}</span>`
+                        
+                            if (data.date){
+                                result += "<p class='m-0'>"                        
+                                result += `<span class="badge mr-1 badge-primary font-weight-bold">${data.date}</span>`
+                                result += "</p>"
+                            }
+                            result += "</span>"
+                            return result
+                        } else {
+                            return "Buscar pela aplicação..."
+                        }
+                    }
+                })
+        
+                $('.school-class-formset').select2({
+                    placeholder: 'Buscar pelo nome da turma...',
+                    minimumInputLength: 3,
+                    allowClear: true,  
+                    closeOnSelect: false,
+                    escapeMarkup: function (text) {
+                        return text;
+                    },
+                    ajax: {
+                        url: `{% url "classes:classes_list_api" %}?year=${new Date().getFullYear()}`,
+                        delay: 250,
+                        data: function (params) {
+                        return {
+                            search: params.term
+                        }
+                        },
+                        processResults: function(results) {
+                            let new_results = $.map(results, function(element) {
+                                element.text = element.name
+                                element.unity = element.unity_name
+                                return element 
+                            })
+                            return {
+                                results: new_results,
+                            }
+                        }
+                    },
+                    templateResult: (data) => {
+                        if(data.text) {
+                            result = `<span class="font-weight-bold">
+                            <span class="mr-1">${data.text}</span>`
+                        
+                            if (data.unity_name) {
+                                result += "<p class='m-0'>"
+                                result += `<span class="badge mr-1 badge-primary font-weight-bold">${data.unity_name}</span>`
+                                result += "</p>"
+                            }
+                            result += "</span>"
+                            return result
+                        } else {
+                            return "Buscar pelo nome da turma..."
+                        }
+                    }
+                })
+        
+                $('#copy-application').click(function() {
+                    const applicationData = $('#id_form-0-application').select2("data")
+                    const schoolClassData = $('#id_form-0-school_class').select2("data")
+                    
+                    if (applicationData.length === 0) return
+        
+                    $(".application-formset").each(function(){
+                        const newOption = new Option(applicationData[0].text, applicationData[0].id, false, false)
+                        $(this).append(newOption).trigger('change')
+                    })
+                    $(".school-class-formset").each(function(){
+                        const newOption = new Option(schoolClassData[0].text, schoolClassData[0].id, false, false)
+                        $(this).append(newOption).trigger('change')
+                    })
+                })
+
+                {% if object.status == 5 %}
+                    let interval = setInterval(function() {
+                        axios.get('{% url "omrnps:omr_upload_status" pk=object.pk %}')
+                        .then(response => {
+                            if (response.data.status != 5) {
+                                clearInterval(interval)
+                                window.location.reload()
+                            }
+                        })
+                    }, {% if DEBUG %} 1000 {% else %} 5000 {% endif %})
+                {% endif %}
+                
+                $('#table-uploadstudents').DataTable({
+                    responsive: true,
+                    pageLength: 50,
+                    language: {
+                        url: "//cdn.datatables.net/plug-ins/1.10.22/i18n/Portuguese-Brasil.json"
+                    },
+                });
+            }
+        })
+
+    </script>
+{% endblock js-additional %}

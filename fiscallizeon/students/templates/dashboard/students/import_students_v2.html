@@ -1,0 +1,308 @@
+{% extends 'redesign/base.html' %}
+{% comment %}{% extends 'dashboard/base_fixed.html' %}{% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+{% load format_duration %}
+
+{% block title %}
+  Importar alunos - Lize
+{% endblock title %}
+
+{% block css-additional %}
+  <link rel="stylesheet" href="{% static 'administration/lib/datatables.net-responsive-dt/css/responsive.dataTables.min.css' %}">
+{% endblock %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-30">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="{% url 'applications:applications_list' %}">ALUNOS</a></li>
+          <li class="breadcrumb-item active" aria-current="page">IMPORTAR</li>
+        </ol>
+      </nav>
+      <h4>Importação de alunos V2 (CSV)</h4>
+      <p>O arquivo CSV deve possuir todos os campos preenchidos, sendo opcional apenas o email do responsável. Você pode baixar o modelo de arquivo <a href="{% static 'modelo_importacao_alunos_v2.csv' %}">neste link</a>.</p>
+      <p>O campo série deve ser preenchido com algum dos seguintes valores: F1, F2, F3, F4, F5, F6, F7, F8, F9, M1, M2 ou M3. O sistema entenderá F1 a F5 como Ensino Fundamental I (anos iniciais) e F6 a F9 como Ensino Fundamental II (anos finais). </p>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+<div class="ard cer dcv tw-mb-16">
+  <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1rem; justify-content: space-between;">
+    <div style="flex: 1;">
+      <!-- Empty -->
+    </div>
+  </div>
+<h4>Importação de alunos V2 (CSV)</h4>
+{% if user.last_import %}
+  <template>
+    <div class="my-4 p-2 rounded-lg border border-info">
+      <div class="row m-0">
+        <div class="col d-flex align-items-center">
+          <div class="mt-2">
+            <h5 class="text-info">Última importação</h5>
+            <p>Detalhes: ${lastTask.details != '' ? lastTask.details : ''}</p>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3 d-flex align-items-center justify-content-end" v-if="importationErrors.length">
+          <button class="btn btn-danger" data-toggle="modal" data-target="#modalErrors">
+            Ver erro de importação
+          </button>
+        </div>
+      </div>
+    </div>
+  </template>
+{% endif %}
+<div class="my-4 p-2 rounded-lg border border-danger">
+  <div class="row m-0">
+    <div class="col">
+      <h5 class="text-danger">Informações importantes</h5>
+      <p>O arquivo CSV deve possuir todos os campos preenchidos, sendo opcional apenas o email do responsável. Você pode baixar o modelo de arquivo <a href="{% static 'modelo_importacao_alunos_v2_.csv' %}">neste link</a>.</p>
+      <p>O campo série deve ser preenchido com algum dos seguintes valores: F1, F2, F3, F4, F5, F6, F7, F8, F9, M1, M2 ou M3. O sistema entenderá F1 a F5 como Ensino Fundamental I (anos iniciais) e F6 a F9 como Ensino Fundamental II (anos finais). </p>
+    </div>
+  </div>
+</div>
+<form method="POST" enctype='multipart/form-data' id="table-form">
+  {% csrf_token %}  
+  <div class="row">
+    <div class="form-group col-12">
+      <div class="custom-file">
+        {% render_field form.students_file class="custom-file-input" %}
+        <label class="custom-file-label" for="{{ form.students_file.id_for_label }}">Selecione o arquivo CSV...</label>
+      </div>
+    </div>
+
+    <div class="form-group col-12">
+      <div class="form-check">
+        {% render_field form.replace_old_classes class="form-check-input" %}
+        
+        <label class="form-check-label" for="{{ form.replace_old_classes.id_for_label }}">
+          Remover alunos de turmas anteriores (ano letivo atual)
+        </label>
+      </div>
+    </div>
+  </div>
+</form>
+<div v-show="showStudentsTable" class="col-2 mt-5 mb-3">
+  <button class="btn btn-primary btn-block" @click="submitForm()" :disabled="maxStudentsHit">Confirmar Envio</button>
+  <small>Revise os alunos com a tabela abaixo</small>
+</div>
+<div v-show="showStudentsTable" class="row">
+  <div class="col-12">
+    <div class="card p-2">
+      <div class="card-header p-2 font-weight-bold ">Alunos lidos da planilha</div>
+      <div class="tw-overflow-x-auto">
+        <table id="students-table" class="table">
+          <thead>
+            <tr>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<div v-show="showStudentsTable" class="col-2 mt-5">
+  <button class="btn btn-primary btn-block" @click="submitForm()" :disabled="maxStudentsHit">Confirmar Envio</button>
+  <small>Revise os alunos com a tabela acima</small>
+</div>
+<div class="row">
+  <div class="col-12">
+    <div class="card p-2">
+      <div class="card-header p-2 font-weight-bold">Consulta de IDs das coordenações</div>
+      <table id="coordinations-table" class="table">
+        <thead>
+          <tr>
+            <th>Unidade</th>
+            <th>Coordenação</th>
+            <th>ID</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for coordination in coordinations %}
+            <tr>
+              <td>{{coordination.unity.name}}</td>
+              <td>{{coordination.name}}</td>
+              <td>{{coordination.id}}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+  
+  <div aria-hidden="true" class="modal fade" id="modalErrors" role="dialog" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title text-truncate" id="modal-exam-export-title">Erro de importação</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body h-100 p-5">
+          <h5 class="text-center" v-for="error in importationErrors">
+            ${error}. 
+            <br>
+            <br>
+            Por favor, corrija seu arquivo e envie novamente.
+          </h5>
+          <h6 class="tw-text-green-600 tw-text-center">As linhas <b>sem erros</b> foram importadas com sucesso.</h6>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock extra-modal %}
+  
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/datatables.net-responsive-dt/js/responsive.dataTables.min.js' %}"></script>
+<script src="{% static 'administration/lib/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'js/sweetalert/sweetalert2.min.js' %}"></script>
+
+<script>
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {
+      showStudentsTable: false,
+      clientMaxStudents: {{ client_max_students|default_if_none:9999999|default:9999999|safe }},
+      clientStudentsCount: {{ client_students_count|safe }},
+      maxStudentsHit: false,
+      lastTask: {
+        status: `{{ last_import_task_status|default:''|safe }}`,
+        details: `{{ last_import_task_details|default:''|safe }}`
+      },
+      checkTaskInterval: null,
+      importationErrors: [],
+    },
+    methods: {
+      submitForm() {
+        $('#table-form').submit();
+      },
+      generateStudentsTable() {
+        const file = $('#id_students_file')[0].files[0];
+        if (file) {
+          const reader = new FileReader();
+          
+          reader.onload = (e) => {
+              const csv = e.target.result;
+              const lines = csv.split('\n');
+              const availablesCvsQuantityLines = lines.length - 1
+              const availableStudents = this.clientMaxStudents - this.clientStudentsCount;
+              
+              if (availablesCvsQuantityLines > availableStudents) {
+                this.maxStudentsHit = true;
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Erro',
+                  html: `<b>O número de estudantes na planilha excede o limite de estudantes disponível da sua conta.</b><br/> (${String(availableStudents)}/${String(this.clientMaxStudents)} estudantes disponíveis) <br/><br/> Por favor, remova alguns estudantes da planilha e tente novamente, ou contate o suporte para aumentar o limite de estudantes da sua conta.`,
+                });
+              }
+            
+              $('#students-table').empty();
+              
+              lines.forEach((line) => {
+                const cells = this.parseCSVRow(line);
+                const row = $('<tr>');
+                
+                cells.forEach((cell) => {
+                  row.append($('<td>').text(cell));
+                });
+
+                $('#students-table').append(row);
+              });
+          };
+          reader.readAsText(file);
+        }
+        this.showStudentsTable = true;
+      },
+      parseCSVRow(row) {
+        let insideQuotes = false;
+        let currentCell = '';
+        const cells = [];
+    
+        [...row].forEach((char) => {
+            if (char === '"') {
+                insideQuotes = !insideQuotes;
+            } else if (char === ',' && !insideQuotes) {
+                cells.push(currentCell.trim());
+                currentCell = '';
+            } else {
+                currentCell += char;
+            }
+        });
+    
+        cells.push(currentCell.trim());
+    
+        return cells;
+      },
+      checkTaskStatus() {
+        axios.get("{% url 'core:get_generic_task_status' %}?task_id=IMPORT_STUDENTS_{{user.id}}").then((response) => {
+          if(response.data.status == 'SUCCESS') {
+            this.lastTask.details = response.data.details;
+            clearInterval(this.checkTaskInterval);
+            if(this.lastTask.status == 'STARTED' && !response.data.details.includes('Importação de alunos finalizada com sucesso')) {
+              $('#modalErrors').modal('show')
+            }
+          } else if(response.data.status == 'FAILURE') {
+            this.lastTask.details = response.data.details;
+            clearInterval(this.checkTaskInterval);
+          } else if (response.data.status == 'PENDING') {
+            this.lastTask.details = 'A importação está na fila e será iniciada em breve.';
+          } else if (response.data.status == 'STARTED') {
+            this.lastTask.status = response.data.status
+            this.lastTask.details = 'Importação em andamento, aguarde...';
+          }
+        })
+      },
+      getImportationErrors() {
+        {% if user.last_import %}
+          axios.get("{% url 'exports:get-importation-errors' user.last_import.id %}").then((response) => {
+            this.importationErrors = response.data
+          })
+        {% endif %}
+      }
+    },
+    mounted() {
+      $('#id_students_file').change(this.generateStudentsTable);
+
+      this.checkTaskStatus()
+      setTimeout(() => {
+        this.getImportationErrors()
+      }, 2000)
+
+      this.checkTaskInterval = setInterval(() => {
+        this.checkTaskStatus()
+        this.getImportationErrors()
+      }, 10000)
+    }
+  })
+
+  $('#coordinations-table').DataTable({
+    language: {
+        url: "//cdn.datatables.net/plug-ins/1.10.22/i18n/Portuguese-Brasil.json"
+    },
+  })
+  $('#students-table').DataTable({
+    language: {
+        url: "//cdn.datatables.net/plug-ins/1.10.22/i18n/Portuguese-Brasil.json"
+    },
+  })
+</script>
+{% endblock %}

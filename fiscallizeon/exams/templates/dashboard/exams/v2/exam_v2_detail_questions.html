@@ -1,0 +1,1059 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load questions_tags %}
+{% load round_to %}
+{% load math %}
+{% load proportion %}
+{% load static %}
+{% load exams_tags %}
+{% load remove_line_break %}
+{% load call_method %}
+
+{% block css-additional %}
+  <link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+  <style>
+    .select2-selection__choice__remove {
+      display: none !important;
+    }
+    @media print {
+      .pagebreak {
+          clear: both;
+          page-break-inside: always;
+      }
+      button, .hidden-print{
+        display:none !important;
+      }
+  }
+  </style>
+{% endblock css-additional %}
+  
+{% block content %}
+<main id="app">
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+      <nav class="ls" aria-label="Breadcrumb">
+        <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+          <li>
+            <div>
+              <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                  <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+              </a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="{% url 'exams:exams_list' %}?category=exam" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Cadernos</a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Detalhes</a>
+            </div>
+          </li>
+        </ol>
+      </nav>
+      {% include "dashboard/exams/includes/exam/exam-nav-links.html" with page="questions" %}
+    </div>
+    <div class="row row-xs" id="divPrint">
+      <div class="col-12 mg-t-10">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mg-b-0">CADERNO: {{ object.name }} <span class="badge badge-primary align-middle ml-2">Utilizado {{object.count_applications_count}} vez(es)</span></h6>
+            <div class="float-right text-right">
+              <button class="btn btn-sm btn-info btn-icon rounded-pill" @click="printPDF('divPrint')">
+                <i class="fas fa-print"></i> Exportar PDF          
+              </button>
+              <button data-toggle-off-canvas="#right-off-canvas"
+                class="btn btn-sm btn-info btn-icon rounded-pill off-canvas-menu">
+                <i class="fas fa-search"></i> Filtrar Resultados           
+                {% if count_filters > 0 %}
+                <span class="badge badge-danger">{{count_filters}} Aplicado(s)</span>
+                {% endif %}
+              </button>
+              {% if count_filters > 0 %}
+              <a href="{% url 'exams:dash_exam_teacher_detail_questions' pk=object.pk %}"
+                class="btn btn-sm btn-info btn-icon rounded-pill hidden-print">
+                <i class="fas fa-eraser"></i> Apagar filtro(s)
+              </a>
+              {% endif %}
+            </div>
+          </div>
+          <div class="card-body pd-0">
+            <div class="row no-gutters">
+              <div class="col col-sm-6 col-lg">
+                <div class="crypto">
+                  <div class="media mg-b-10">
+                    <div class="crypto-icon bg-primary">
+                      <i class="fas fa-users"></i>
+                    </div>
+                    <div class="media-body pd-l-8">
+                      <h6 class="tx-11 tx-spacing-1 tx-uppercase tx-semibold mg-b-5">
+                        Alunos
+                      </h6>
+                      <div class="d-flex align-items-baseline tx-rubik">
+                        <h5 class="tx-20 mg-b-0">{{ total_students }} 
+                          {% with total_students_start_application|proportion:total_students as students_start %}
+                            <span class="{% if students_start > 50 %} text-success {% else %} text-danger {% endif %}text-primary op-4" style="cursor: pointer;" data-toggle="tooltip" data-placement="right" title="{% if students_start > 50%} Média de alunos que iniciaram as provas {% else %} Menos da metade dos alunos iniciaram a prova {% endif %}">({{students_start|floatformat:2}})</span></h5>                              
+                          {% endwith %}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="b-5 l-20 tx-medium">
+                    <label class="tx-9 tx-uppercase tx-sans mb-0">
+                      <span class="link-01 tx-semibold tx-success">
+                        {{ total_students_start_application }}
+                      </span> Iniciaram a prova
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="col col-sm-6 col-lg bd-t bd-sm-t-0 bd-sm-l">
+                <div class="crypto">
+                  <div class="media mg-b-10">
+                    <div class="crypto-icon bg-primary">
+                      <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <div class="media-body pd-l-8">
+                      <h6 class="tx-11 tx-spacing-1 tx-uppercase tx-semibold mg-b-5">
+                        Questões
+                      </h6>
+                      <div class="d-flex align-items-baseline tx-rubik">
+                        <h5 class="tx-20 mg-b-0">{{ total_questions_exam }}</h5>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="b-5 l-20 tx-medium">
+                    {% if total_objective_questions %}
+                      <label class="tx-9 tx-uppercase mb-0" data-toggle="tooltip" data-placement="bottom" title="Total de questões objetivas">
+                        <span class="link-01 tx-medium">
+                          {{ total_objective_questions }}
+                        </span> Questões Objetivas
+                      </label>
+                    {% endif %}
+
+                    {% if total_sum_questions %}
+                      <label class="tx-9 tx-uppercase mb-0" data-toggle="tooltip" data-placement="bottom" title="Total de questões objetivas">
+                        <span class="link-01 tx-medium">
+                          {{ total_sum_questions }}
+                        </span> Questões de somatório
+                      </label>
+                    {% endif %}
+                    
+                    {% if total_discursive_questions %}
+                      <label class="tx-9 tx-uppercase mb-0 mg-l-10" data-toggle="tooltip" data-placement="bottom" title="Total de questões discursivas">
+                        <span class="link-01 tx-medium">
+                          {{ total_discursive_questions }}
+                        </span> Questões Discursivas
+                      </label>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              {% if not question_category or question_category == '1' %}
+                <div class="col col-sm-6 col-lg bd-t bd-sm-t-0 bd-sm-l">
+                  <div class="crypto">
+                    <div class="media mg-b-10">
+                      <div class="crypto-icon bg-primary">
+                        <i class="far fa-dot-circle"></i>
+                      </div>
+                      <div class="media-body pd-l-8">
+                        <h6 class="tx-11 tx-spacing-1 tx-uppercase tx-semibold mg-b-5">
+                          Respostas Objetivas
+                        </h6>
+                        <div class="d-flex align-items-baseline tx-rubik">
+                          <h5 class="tx-20 mg-b-0">{{ total_objective_answers }} <span class="text-success op-4" style="cursor: pointer;" data-toggle="tooltip" data-placement="right" title="Média de acertos">({{total_correct_objective_answers|proportion:total_objective_answers|floatformat:2}} %)</span></h5>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="b-5 l-20 tx-medium">
+                      <label class="tx-9 tx-uppercase tx-sans mb-0">
+                        <span class="link-01 tx-semibold tx-success">
+                          {{ total_correct_objective_answers }}
+                        </span> Acertos
+                      </label>
+                      <label class="tx-9 tx-uppercase tx-sans mb-0 mg-l-10">
+                        <span class="link-01 tx-semibold tx-danger">
+                          {{ total_incorrect_objective_answers }}
+                        </span> Erros
+                      </label>
+                      {% comment %}
+                        {% if objective_performance > 50 %}
+                          <br>
+                          <small class="tx-9 tx-uppercase tx-sans tx-success mb-0">    
+                            Mais da metade dos alunos responderam corretamente
+                          </small>
+                        {% else %}
+                          <br>
+                          <small class="tx-9 tx-uppercase tx-sans tx-warinig mb-0">    
+                            Menos da metade dos alunos responderam corretamente
+                          </small>
+                        {% endif %}
+                      {% endcomment %}
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+              {% if not question_category or question_category != '1' %}
+                <div class="col col-sm-6 col-lg bd-t bd-sm-t-0 bd-sm-l">
+                  <div class="crypto">
+                    <div class="media mg-b-10">
+                      <div class="crypto-icon bg-primary">
+                        <i class="fas fa-pen"></i>
+                      </div>
+                      <div class="media-body pd-l-8">
+                        <h6 class="tx-11 tx-spacing-1 tx-uppercase tx-semibold mg-b-5">
+                          Respostas Discursivas
+                        </h6>
+                        <div class="d-flex align-items-baseline tx-rubik">
+                          <h5 class="tx-20 mg-b-0">{{ total_discursive_answers }}</h5>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="b-5 l-20 tx-medium">
+                      <label class="tx-9 tx-uppercase tx-sans mb-0" data-toggle="tooltip" data-placement="right" title="Acertos">
+                        <span class="link-01 tx-semibold tx-success">
+                          {{ total_correct_discursive_answers }} <span class="text-muted op-4">({{total_correct_discursive_answers|proportion:total_discursive_answers|floatformat:2}} %)</span>
+                        </span> Acertos
+                      </label>
+                      <label class="tx-9 tx-uppercase tx-sans mb-0" data-toggle="tooltip" data-placement="right" title="Acertos parciais">
+                        <span class="link-01 tx-semibold tx-warning">
+                          {{ total_partial_hit_discursive_answers }} <span class="text-muted op-4">({{total_partial_hit_discursive_answers|proportion:total_discursive_answers|floatformat:2}} %)</span>
+                        </span> Parcial
+                      </label>
+                      <label class="tx-9 tx-uppercase tx-sans mb-0">
+                        <span class="link-01 tx-semibold tx-danger">
+                          {{ total_discursive_answers|sub:total_correct_discursive_answers|sub:total_partial_hit_discursive_answers }}
+                        </span> Erros
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 mg-t-10">
+        <div class="card">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h6 class="lh-5 mg-b-0">Lista de Questões do Caderno</h6>
+            <div class="">
+              <button type="button" @click="list_type = 'grid'" class="btn btn-sm pd-x-15 btn-uppercase" :class="list_type == 'grid' ? 'btn-primary':'btn-white'"> <i class="fas fa-th"></i> Em Grade</button>
+              <button type="button" @click="list_type = 'table'" class="btn btn-sm pd-x-15 btn-uppercase mg-l-5" :class="list_type == 'table' ? 'btn-primary':'btn-white'"><i class="fas fa-list"></i> Em Tabela</button>
+              <button type="button" @click="list_type = 'details'" class="btn btn-sm pd-x-15 btn-uppercase mg-l-5" :class="list_type == 'details' ? 'btn-primary':'btn-white'"><i class="fas fa-columns"></i> Em Detalhes</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row card-events" v-show="!load">
+              <template v-for="(question, index) in questions">
+                <template v-if="list_type == 'grid'">
+                  <div class="col-lg-4 my-2 pagebreak">
+                    <div class="media-body event-panel-gray rounded ml-0 pt-2 h-100" @click="showQuestionDetail(index + 1, question)" style="cursor: pointer;">
+                      <alert-component v-if="question.correct_alternative != 'ANULADA' && question.category != 'Somatório'" :data="getQuestionReport(question)" :tag="true"></alert-component>                    
+                      <h6 class="event-title">Questão #{question.question_number} <span class="text-muted">(#{question.subject_name})</span></h6>
+                      <p class="mt-2 mb-0">Tipo: <span class="text-uppercase tx-medium">#{question.category}</span></p>
+                      <p class="mb-0">Dificuldade: <span class="text-uppercase tx-medium">#{question.level}</span></p>
+                      <template v-if="question.category == 'Objetiva' || question.category == 'Somatório'">
+                        <p class="mb-1" v-if="question.correct_alternative">Alternativa correta: <span class="text-uppercase tx-medium">#{question.correct_alternative}</span></p>
+                        <p class="mb-1 text-danger" v-else>Sem gabarito</p>
+                        <div class="row align-items-center mb-1" v-for="(alternative, indexAlternative) in question.alternatives">
+                          <template v-if="alternative.is_correct">
+                            <div class="col-1 d-flex align-items-center justify-content-center rounded-circle bg-success-light ml-1" data-toggle="tooltip" data-placement="bottom" title="Alternativa correta">
+                              <span v-if="question.category == 'Objetiva'" class="event-time text-uppercase">#{generateAlternativeOrder(indexAlternative)}</span>
+                              <span v-else class="event-time text-uppercase">#{generateAlternativeOrder(indexAlternative, true)}</span>
+                            </div>
+                            <div class="col d-flex justify-content-between" data-toggle="tooltip" data-placement="bottom" title="Alternativa correta">
+                              <div class="progress bg-transparent op-7 w-100" style="height: 15px;">
+                                <div class="progress-bar bg-success bd-l bd-white" :style="{ 'width': alternative.answers_count.toFixed(0)+'%'}" role="progressbar" :aria-valuenow="alternative.answers_count" aria-valuemin="0" aria-valuemax="100">#{alternative.answers_count.toFixed(2)}%</div>
+                              </div>
+                              <i style="font-size: 0.6rem;" class="fas text-success fa-check-double"></i>
+                            </div>
+                          </template>
+                          <template v-else>
+                            <div class="col-1 d-flex align-items-center justify-content-center ml-1" data-toggle="tooltip" data-placement="bottom" :title="alternative.is_max ? 'Alternativa incorreta mais selecionada':'Alternativa incorreta'">
+                              <span v-if="question.category == 'Objetiva'" class="event-time text-uppercase">#{generateAlternativeOrder(indexAlternative)}</span>
+                              <span v-else class="event-time text-uppercase">#{generateAlternativeOrder(indexAlternative, true)}</span>
+                            </div>
+                            <div class="col d-flex justify-content-between" data-toggle="tooltip" data-placement="bottom" :title="alternative.is_max ? 'Alternativa incorreta mais selecionada':'Alternativa incorreta'">
+                              <div class="progress bg-transparent op-7 w-100" style="height: 15px;">
+                                <div class="progress-bar bg-pink bd-l bd-white" :style="{ 'width': alternative.answers_count.toFixed(0)+'%'}" role="progressbar" :aria-valuenow="alternative.answers_count" aria-valuemin="0" aria-valuemax="100">
+                                  <template v-if="alternative.answers_count > 0">
+                                    #{alternative.answers_count.toFixed(0)}%
+                                  </template>
+                                </div>
+                              </div>
+                              <i style="font-size: 0.7rem;" class="fas text-danger fa-times" v-if="alternative.is_max"></i>
+                            </div>
+                          </template>
+                        </div>
+                      </template>
+                      <template v-else>
+                        <div class="row align-items-center mb-1 mt-3">
+                          <template>
+                            <div class="col-1 d-flex align-items-center justify-content-center rounded-circle bg-success-light ml-1" data-toggle="tooltip" data-placement="bottom">
+                              <span class="event-time text-uppercase">0</span>
+                            </div>
+                            <div class="col d-flex justify-content-between" data-toggle="tooltip" data-placement="bottom" title="">
+                              <div class="progress bg-transparent op-7 w-100" style="height: 15px;">
+                                <div class="progress-bar bg-danger bd-l bd-white" :style="{ 'width': question.discursives_choices[0].toFixed(0)+'%'}" role="progressbar" :aria-valuenow="question.discursives_choices[0]" aria-valuemin="0" aria-valuemax="100">#{question.discursives_choices[0].toFixed(2)}%</div>
+                              </div>
+                            </div>
+                          </template>
+                        </div>
+                        <div class="row align-items-center mb-1">
+                          <template>
+                            <div class="col-1 d-flex align-items-center justify-content-center rounded-circle bg-success-light ml-1" data-toggle="tooltip" data-placement="bottom">
+                              <span class="event-time text-uppercase">25</span>
+                            </div>
+                            <div class="col d-flex justify-content-between" data-toggle="tooltip" data-placement="bottom" title="">
+                              <div class="progress bg-transparent op-7 w-100" style="height: 15px;">
+                                <div class="progress-bar bg-warning bd-l bd-white" :style="{ 'width': question.discursives_choices[25].toFixed(0)+'%'}" role="progressbar" :aria-valuenow="question.discursives_choices[25]" aria-valuemin="0" aria-valuemax="100">#{question.discursives_choices[25].toFixed(2)}%</div>
+                              </div>
+                            </div>
+                          </template>
+                        </div>
+                        <div class="row align-items-center mb-1">
+                          <template>
+                            <div class="col-1 d-flex align-items-center justify-content-center rounded-circle bg-success-light ml-1" data-toggle="tooltip" data-placement="bottom">
+                              <span class="event-time text-uppercase">50</span>
+                            </div>
+                            <div class="col d-flex justify-content-between" data-toggle="tooltip" data-placement="bottom" title="">
+                              <div class="progress bg-transparent op-7 w-100" style="height: 15px;">
+                                <div class="progress-bar bg-warning bd-l bd-white" :style="{ 'width': question.discursives_choices[50].toFixed(0)+'%'}" role="progressbar" :aria-valuenow="question.discursives_choices[50]" aria-valuemin="0" aria-valuemax="100">#{question.discursives_choices[50].toFixed(2)}%</div>
+                              </div>
+                            </div>
+                          </template>
+                        </div>
+                        <div class="row align-items-center mb-1">
+                          <template>
+                            <div class="col-1 d-flex align-items-center justify-content-center rounded-circle bg-success-light ml-1" data-toggle="tooltip" data-placement="bottom">
+                              <span class="event-time text-uppercase">75</span>
+                            </div>
+                            <div class="col d-flex justify-content-between" data-toggle="tooltip" data-placement="bottom" title="">
+                              <div class="progress bg-transparent op-7 w-100" style="height: 15px;">
+                                <div class="progress-bar bg-warning bd-l bd-white" :style="{ 'width': question.discursives_choices[75].toFixed(0)+'%'}" role="progressbar" :aria-valuenow="question.discursives_choices[75]" aria-valuemin="0" aria-valuemax="100">#{question.discursives_choices[75].toFixed(2)}%</div>
+                              </div>
+                            </div>
+                          </template>
+                        </div>
+                        <div class="row align-items-center mb-1">
+                          <template>
+                            <div class="col-1 d-flex align-items-center justify-content-center rounded-circle bg-success-light ml-1" data-toggle="tooltip" data-placement="bottom">
+                              <span class="event-time text-uppercase">100</span>
+                            </div>
+                            <div class="col d-flex justify-content-between" data-toggle="tooltip" data-placement="bottom" title="">
+                              <div class="progress bg-transparent op-7 w-100" style="height: 15px;">
+                                <div class="progress-bar bg-success bd-l bd-white" :style="{ 'width': question.discursives_choices[100].toFixed(0)+'%'}" role="progressbar" :aria-valuenow="question.discursives_choices[100]" aria-valuemin="0" aria-valuemax="100">#{question.discursives_choices[100].toFixed(2)}%</div>
+                              </div>
+                              <i style="font-size: 0.6rem;" class="fas text-success fa-check-double"></i>
+                            </div>
+                          </template>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+                <template v-if="list_type == 'table'">
+                  <div class="col-12 my-2">
+                    <div class="media-body event-panel-gray rounded ml-0 pt-0 h-100" @click="showQuestionDetail(index + 1, question)" style="cursor: pointer;">
+                      <alert-component v-if="question.category != 'Somatório'" :data="getQuestionReport(question, false)" :alert="true" :tag="false"></alert-component>
+                      <div class="d-flex align-items-center justify-content-between pt-2">
+                        <h6 class="event-title">#{index + 1}&#170; Questão (#{question.category}) <span class="text-muted">(#{question.subject_name})</span></h6>
+                        <template v-if="question.category == 'Objetiva'">
+                          <p class="mb-1" v-if="question.correct_alternative">Alternativa correta: <span class="text-uppercase tx-medium">#{question.correct_alternative}</span></p>
+                          <p class="mb-1 text-danger" v-else>Sem tem gabarito</p>
+                        </template>
+                        <p class="mt-1 mb-0">Dificuldade: <span class="text-uppercase tx-medium">#{question.level}</span></p>
+                      </div>                
+                      <hr class="mt-1 mb-1">
+                      <div class="d-flex justify-content-between align-items-center text-uppercase">
+                        <template v-if="['Objetiva', 'Somatório'].includes(question.category)">
+                          <template v-for="(alternative, alternativeIndex) in question.alternatives">
+                            <div v-if="alternative.is_correct" class="bg-success-light rounded py-1 px-3" data-toggle="tooltip" data-placement="bottom" title="Resposta correta" :data-value="question.answers_count"><span class="tx-bold">#{generateAlternativeOrder(alternativeIndex, question.category == 'Somatório')}</span> (#{alternative.answers_count.toFixed(2)} %) <i class="fas fa-check-double"></i></div>
+                            <div v-else data-incorrect-alternative class="py-1 px-3 rounded" :style="alternative.is_max ? 'background-color: rgba(255, 0, 0, 0.18);':''" data-toggle="tooltip" data-placement="bottom" :title="alternative.is_max ? 'Alternativa incorreta mais selecionada':'Alternativa incorreta'"  data-value="question.answers_count"><span class="tx-bold">#{generateAlternativeOrder(alternativeIndex, question.category == 'Somatório')}</span> (#{alternative.answers_count.toFixed(2)} %) <i class="fas fa-times" v-if="alternative.is_max"></i></div>
+                            <template v-if="alternativeIndex < (question.alternatives.length - 1)">
+                              |
+                            </template>
+                          </template>
+                        </template>
+                        <template v-else>
+                          <div class="bg-pink-light rounded py-1 px-3" data-toggle="tooltip" data-placement="bottom" title="" :data-value="question.discursives_choices[0]"><span class="tx-bold">0</span> (#{question.discursives_choices[0].toFixed(2)} %) </div>
+                          | <div class="bg-warning-light rounded py-1 px-3" data-toggle="tooltip" data-placement="bottom" title="" :data-value="question.discursives_choices[25]"><span class="tx-bold">25</span> (#{question.discursives_choices[25].toFixed(2)} %) </div>
+                          | <div class="bg-warning-light rounded py-1 px-3" data-toggle="tooltip" data-placement="bottom" title="" :data-value="question.discursives_choices[50]"><span class="tx-bold">50</span> (#{question.discursives_choices[50].toFixed(2)} %) </div>
+                          | <div class="bg-warning-light rounded py-1 px-3" data-toggle="tooltip" data-placement="bottom" title="" :data-value="question.discursives_choices[75]"><span class="tx-bold">75</span> (#{question.discursives_choices[75].toFixed(2)} %) </div>
+                          <div class="bg-success-light rounded py-1 px-3" data-toggle="tooltip" data-placement="bottom" title="" :data-value="question.discursives_choices[100]"><span class="tx-bold">100</span> (#{question.discursives_choices[100].toFixed(2)} %) <i class="fas fa-check-double"></i></div>
+                        </template>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+                <template v-if="list_type == 'details'">
+                  <div class="col-12 my-2">
+                    <div class="media-body event-panel-gray rounded ml-0 pt-0 h-100" @click="showQuestionDetail(index + 1, question)" style="cursor: pointer;">
+                      <alert-component v-if="question.category != 'Somatório'" :data="getQuestionReport(question, false)" :alert="true" :tag="false"></alert-component>
+                      <div class="d-flex align-items-center justify-content-between pt-2">
+                        <h6 class="event-title">#{index + 1}&#170; Questão (#{question.category}) <span class="text-muted">(#{question.subject_name})</span></h6> 
+                        <template v-if="question.category == 'Objetiva'">
+                          <p class="mb-1" v-if="question.correct_alternative">Alternativa correta: <span class="text-uppercase tx-medium">#{question.correct_alternative}</span></p>
+                          <p class="mb-1 text-danger" v-else>Sem tem gabarito</p>
+                        </template>
+                        <p class="mt-1 mb-0">Dificuldade: <span class="text-uppercase tx-medium">#{question.level}</span></p>
+                      </div>  
+                      <hr class="my-1">
+                      <div class="row my-3">
+                        <div class="col">
+                          <h5>Enunciado:</h5>
+                          #{question.enunciation}
+                        </div>
+                      </div>
+                      <div class="row my-3" v-if="['Objetiva', 'Somatório'].includes(question.category) && question.alternatives.length">
+                        <div class="col">
+                          <h5>Alternativas:</h5>
+                          <table class="table table-sm tx-13 my-0">
+                            <tbody>
+                              <template v-for="(alternative, alternativeIndex) in question.alternatives">
+                                <tr v-if="alternative.is_correct" data-toggle="tooltip" class="bg-success-light" data-placement="bottom" title="Resposta correta" :data-value="alternative.answers_count">
+                                  <td class="text-uppercase">#{generateAlternativeOrder(alternativeIndex, question.category == 'Somatório')}</span> (#{alternative.answers_count.toFixed(2)} %) <i class="fas fa-check-double"></i></td>
+                                  <td>
+                                    <div class="d-flex align-items-center">
+                                      <div
+                                        class="wd-15 ht-15 rounded-circle bd bd-3 mr-2"
+                                        class="bd-success"
+                                      ></div>
+                                      <div class="w-100 clean-v-html">#{alternative.text}</div>
+                                    </div>
+                                  </td>
+                                </tr>
+                                <tr v-else data-toggle="tooltip" :style="alternative.is_max ? 'background-color: rgba(255, 0, 0, 0.18);':''" data-placement="bottom" :title="alternative.is_max ? 'Alternativa incorreta mais selecionada':'Alternativa incorreta'"  :data-value="alternative.answers_count">
+                                  <td class="text-uppercase" style="width: 7rem;">#{generateAlternativeOrder(alternativeIndex, question.category == 'Somatório')}</span> (#{alternative.answers_count.toFixed(2)} %)</td>
+                                  <td>
+                                    <div class="d-flex align-items-center">
+                                      <div class="wd-15 ht-15 rounded-circle bd bd-3 mr-2" class="bd-danger"></div>
+                                      <div class="w-100 clean-v-html">#{alternative.text}</div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              </template>
+                              <tr v-if="!question.alternatives.length">
+                                <td>Questão sem alternativa</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                      <div class="row" v-else>
+                        <div class="col">
+                          <table class="table table-sm tx-13 my-0">
+                            <tbody>
+                              <tr data-toggle="tooltip" class="bg-pink-light" data-placement="bottom" :data-value="question.discursives_choices[0]">
+                                <td class="text-uppercase" style="width: 2rem;">0</span></td>
+                                <td style="border-left: 1px solid #999;">(#{question.discursives_choices[0].toFixed(2)} %)</td>
+                              </tr>
+                              <tr data-toggle="tooltip" class="bg-warning-light" data-placement="bottom" :data-value="question.discursives_choices[25]">
+                                <td class="text-uppercase" style="width: 2rem;">25</span></td>
+                                <td style="border-left: 1px solid #999;"> (#{question.discursives_choices[25].toFixed(2)} %)</td>
+                              </tr>
+                              <tr data-toggle="tooltip" class="bg-warning-light" data-placement="bottom" :data-value="question.discursives_choices[50]">
+                                <td class="text-uppercase" style="width: 2rem;">50</span></td>
+                                <td style="border-left: 1px solid #999;"> (#{question.discursives_choices[50].toFixed(2)} %)</td>
+                              </tr>
+                              <tr data-toggle="tooltip" class="bg-warning-light" data-placement="bottom" :data-value="question.discursives_choices[75]">
+                                <td class="text-uppercase" style="width: 2rem;">75</span></td>
+                                <td style="border-left: 1px solid #999;"> (#{question.discursives_choices[75].toFixed(2)} %)</td>
+                              </tr>
+                              <tr data-toggle="tooltip" class="bg-success-light" data-placement="bottom" :data-value="question.discursives_choices[100]">
+                                <td class="text-uppercase" style="width: 2rem;">100</span></td>
+                                <td style="border-left: 1px solid #999;"> (#{question.discursives_choices[100].toFixed(2)} %) <i class="fas fa-check-double"></i></td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </template>
+              <div class="col-12" v-if="!questions.length">
+                <div class="alert alert-secondary" role="alert">
+                  Não tem questões
+                </div>
+              </div>
+            </div>
+            <div class="row" v-if="load">
+              <p class="text-center">Aguarde enquanto carregamos os dados das questões 
+                <div class="spinner-border text-info mx-3" role="status">
+                  <span class="sr-only"></span>
+                </div>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade effect-sign" id="modalQuestion" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-body pd-x-30 pd-sm-x-30 pd-t-40 pd-sm-t-20 pd-b-15 pd-sm-b-20" v-if="selectedQuestion">
+          <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </a>
+
+          <div class="nav-wrapper mg-b-20 tx-13">
+            <div>
+              <nav class="nav nav-line tx-medium">
+                <a href="#details" class="nav-link active" data-toggle="tab">Detalhes da questão</a>
+                <a href="#topics" class="nav-link" data-toggle="tab">Assuntos abordados <span class="badge badge-primary">#{selectedQuestion.topics.length}</span></a>
+                <a href="#abilities" class="nav-link" data-toggle="tab">Habilidades <span class="badge badge-primary">#{selectedQuestion.abilities.length}</span></a>
+                <a href="#competences" class="nav-link" data-toggle="tab">Competências <span class="badge badge-primary">#{selectedQuestion.competences.length}</span></a>
+              </nav>
+            </div>
+          </div>
+
+          <div class="tab-content">
+            <div id="details" class="tab-pane fade active show">
+              <h4 class="mg-b-15 mg-md-b-20">
+                #{ selectedQuestion.index }&#170; Questão
+              </h4>
+              <div class="tx-14 tx-md-16 tx-color-02 clean-v-html" v-html="selectedQuestion.full_enunciation"></div>
+              <div class="row my-3">
+                <h4 class="mg-b-15 mg-md-b-20" v-if="selectedQuestion.alternatives.length">
+                  Alternativas
+                </h4>
+                <table class="table table-sm tx-13 my-0">
+                  <tbody>
+                    <template v-if="['Objetiva', 'Somatório'].includes(selectedQuestion.category) && selectedQuestion.alternatives.length">
+                      <template v-for="(alternative, alternativeIndex) in selectedQuestion.alternatives">
+                        <tr v-if="alternative.is_correct" data-toggle="tooltip" class="bg-success-light" data-placement="bottom" title="Resposta correta" :data-value="alternative.answers_count">
+                          <td v-if="selectedQuestion.category == 'Objetiva'" class="text-uppercase">
+                            #{generateAlternativeOrder(alternativeIndex)}</span> (#{alternative.answers_count.toFixed(2)} %) <i class="fas fa-check-double"></i>
+                          </td>
+                          <td v-else class="text-uppercase">
+                            #{generateAlternativeOrder(alternativeIndex, true)}</span> (#{alternative.answers_count.toFixed(2)} %) <i class="fas fa-check-double"></i>
+                          </td>
+                          <td style="border-left: 1px solid #999;">
+                            <div class="d-flex align-items-center">
+                              <div class="w-100 clean-v-html">#{alternative.text}</div>
+                            </div>
+                          </td>
+                        </tr>
+                        <tr v-else data-toggle="tooltip" :style="alternative.is_max ? 'background-color: rgba(255, 0, 0, 0.18);':''" data-placement="bottom" :title="alternative.is_max ? 'Alternativa incorreta mais selecionada':'Alternativa incorreta'"  :data-value="alternative.answers_count">
+                          <td v-if="selectedQuestion.category == 'Objetiva'" class="text-uppercase" style="width: 7rem;">
+                            #{generateAlternativeOrder(alternativeIndex)}</span> (#{alternative.answers_count.toFixed(2)} %)
+                          </td>
+                          <td v-else class="text-uppercase" style="width: 7rem;">
+                            #{generateAlternativeOrder(alternativeIndex, true)}</span> (#{alternative.answers_count.toFixed(2)} %)
+                          </td>
+                          <td style="border-left: 1px solid #999;">
+                            <div class="d-flex align-items-center">
+                              <div class="w-100 clean-v-html">#{alternative.text}</div>
+                            </div>
+                          </td>
+                        </tr>
+                      </template>
+                      <tr v-if="!selectedQuestion.alternatives.length">
+                        <td>Questão sem alternativa</td>
+                      </tr>
+                    </template>
+                    <template v-else>
+                      <tr data-toggle="tooltip" class="bg-pink-light" data-placement="bottom" :data-value="selectedQuestion.discursives_choices[0]">
+                        <td class="text-uppercase" style="width: 2rem;">0</span></td>
+                        <td style="border-left: 1px solid #999;">(#{selectedQuestion.discursives_choices[0].toFixed(2)} %)</td>
+                      </tr>
+                      <tr data-toggle="tooltip" class="bg-warning-light" data-placement="bottom" :data-value="selectedQuestion.discursives_choices[25]">
+                        <td class="text-uppercase" style="width: 2rem;">25</span></td>
+                        <td style="border-left: 1px solid #999;"> (#{selectedQuestion.discursives_choices[25].toFixed(2)} %)</td>
+                      </tr>
+                      <tr data-toggle="tooltip" class="bg-warning-light" data-placement="bottom" :data-value="selectedQuestion.discursives_choices[50]">
+                        <td class="text-uppercase" style="width: 2rem;">50</span></td>
+                        <td style="border-left: 1px solid #999;"> (#{selectedQuestion.discursives_choices[50].toFixed(2)} %)</td>
+                      </tr>
+                      <tr data-toggle="tooltip" class="bg-warning-light" data-placement="bottom" :data-value="selectedQuestion.discursives_choices[75]">
+                        <td class="text-uppercase" style="width: 2rem;">75</span></td>
+                        <td style="border-left: 1px solid #999;"> (#{selectedQuestion.discursives_choices[75].toFixed(2)} %)</td>
+                      </tr>
+                      <tr data-toggle="tooltip" class="bg-success-light" data-placement="bottom" :data-value="selectedQuestion.discursives_choices[100]">
+                        <td class="text-uppercase" style="width: 2rem;">100</span></td>
+                        <td style="border-left: 1px solid #999;"> (#{selectedQuestion.discursives_choices[100].toFixed(2)} %) <i class="fas fa-check-double"></i></td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div id="topics" class="tab-pane fade">
+              <div class="row m-0">
+                <div class="col-12">
+                  <h6 class="tx-uppercase tx-spacing-1 tx-semibold tx-10 tx-color-02 mg-b-15">Assuntos abordados</h6>
+                  <table class="table table-sm table-bordered tx-14 mg-b-0">
+                    <tbody>
+                      <tr v-for="(topic, index) in selectedQuestion.topics">
+                        <td>#{topic.name}</td>
+                        <td class="align-middle"><a target="_blank" :href="`{% url 'exams:dash_exam_teacher_detail_bncc' pk=object.pk %}?topic=${topic.id}`" class="btn btn-outline-primary btn-xs"><i class="fas fa-eye" title="Ver detalhes do assunto"></i></a></td>
+                      </tr>
+                      <tr v-if="!selectedQuestion.topics.length">
+                        <td class="tx-medium">Não há assuntos abordados</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div id="abilities" class="tab-pane fade">
+              <div class="row m-0">
+                <div class="col-12">
+                  <h6 class="tx-uppercase tx-spacing-1 tx-semibold tx-10 tx-color-02 mg-b-15">Habilidades Selecionadas</h6>
+                  <table class="table table-sm table-bordered tx-13 mg-b-0">
+                    <thead>
+                      <tr>
+                        <th>Código</th>
+                        <th>Objetivo</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(ability, index) in selectedQuestion.abilities">
+                        <td class="tx-medium">#{ability.code}</td>
+                        <td>#{ability.text}</td>
+                        <td class="align-middle"><a target="_blank" :href="`{% url 'exams:dash_exam_teacher_detail_bncc' pk=object.pk %}?ability=${ability.id}`" class="btn btn-outline-primary btn-xs"><i class="fas fa-eye" title="Ver detalhes da habilidade"></i></a></td>
+                      </tr>
+                      <tr v-if="!selectedQuestion.abilities.length">
+                        <td colspan="3" class="tx-medium">Nenhuma habilidade selecionada</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div id="competences" class="tab-pane fade">
+              <div class="row m-0">
+                <div class="col-12">
+                  <h6 class="tx-uppercase tx-spacing-1 tx-semibold tx-10 tx-color-02 mg-b-15">Competências Selecionadas</h6>
+                  <table class="table table-sm table-bordered tx-14 mg-b-0">
+                    <thead>
+                      <tr>
+                        <th>Código</th>
+                        <th>Objetivo</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(competence, index) in selectedQuestion.competences">
+                        <td class="tx-medium">#{competence.code}</td>
+                        <td>#{competence.text}</td>
+                        <td class="align-middle"><a target="_blank" :href="`{% url 'exams:dash_exam_teacher_detail_bncc' pk=object.pk %}?competence=${competence.id}`" class="btn btn-outline-primary btn-xs"><i class="fas fa-eye" title="Ver detalhes da competência"></i></a></td>
+                      </tr>
+                      <tr v-if="!selectedQuestion.competences.length">
+                        <td colspan="3" class="tx-medium">Nenhuma competência selecionada</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-block btn-primary mb-2" data-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock content %}
+
+{% block off-canvas %}
+  <div id="right-off-canvas" class="off-canvas off-canvas-right wd-400 bg-white"
+    style="overflow-y: auto; overflow-x: hidden;">
+    <form action="" method="GET">
+      <div class="row p-3">
+        <div class="col-12">
+          <h5>Filtrar cadernos</h5>
+          <p>Adiciona abaixo os filtros que você deseja aplicar na listagem abaixo</p>
+          <hr/>
+        </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="id_application" class="mb-1">Aplicações</label>
+            <select name="q_applications" id="id_application" multiple class="form-control">
+              {% for application in applications %}
+                <option value="{{application.id}}" {% if application.id|stringformat:'s' in q_applications %} selected="selected" {% endif %}>
+                  {{application.date|date:'d/m/Y'}} {{application.start}} as {{application.end}} com {{application.students.count}} alunos
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group mb-3">
+            <label for="id_unities" class="mb-1">Unidades</label>
+            <select name="q_unities" id="id_unities" multiple class="form-control">
+              {% for unity in unities %}
+                <option value="{{unity.id}}" {% if unity.id|stringformat:'s' in q_unities %} selected="selected" {% endif %}>
+                  {{unity}}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group mb-3">
+            <label for="id_classes" class="mb-1">Turmas</label>
+            <select name="q_classes" id="id_classes" multiple class="form-control">
+              {% for classe in classes %}
+                <option value="{{classe.id}}" {% if classe.id|stringformat:'s' in q_classes %} selected="selected" {% endif %}>
+                  {{classe}}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        
+        <div class="col-12 mt-5">
+          <button type="submit" class="btn btn-primary btn-block">
+            <i class="fas fa-search"></i>
+            Aplicar filtro
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+{% endblock %}
+
+{% block js-additional %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/print_this.js' %}"></script>
+
+<script>
+  var alertComponent = Vue.component('alert-component', {
+    props: ['data', 'alert', 'tag'],
+    delimiters: ['#{', '}'],
+    template: `
+      <div v-if="data.messages.length">
+        <div class="pos-absolute t-10 r-30" v-if="tag && data.compact">
+          <div 
+            class="text-danger"
+            data-toggle="popover" 
+            data-placement="bottom"
+            data-title="Avisos"
+            data-html="true"
+            :data-content="data.messages.map((message) => message.text).join('<br><br>')"
+            :title="data.message">#{data.messages.length} <i class="fas fa-exclamation-circle"></i>
+          </div>
+        </div>
+        <div class="pos-relative" v-if="tag && !data.compact">
+          <div class="marker text-light pos-absolute t-5 r-5" :class="data.bgColor" data-toggle="tooltip" data-html="true" data-placement="left" :title="data.message">#{data.title}</div>
+          &nbsp;
+        </div>
+        <div class="row my-2" v-if="alert && !data.compact" v-for="message in data.messages">
+          <div class="d-flex align-items-center m-1 p-1" :class="'alert '+data.bgColor.replace('bg', 'alert')" role="alert" v-html="message.text"></div>
+        </div>
+      </div>
+    `,
+    methods: {
+
+    },
+    mounted() {
+      self = this
+    },
+  })
+
+  var app = new Vue({
+    delimiters: ["#{", "}"],
+    el: "#app",
+    components: {
+      'alert-component': alertComponent,
+    },
+    data: {
+      load: true,
+      urls: {
+        questionDetail: "{% url 'questions:questions_api_detail' pk='00000000-0000-0000-0000-000000000000' %}",
+        applicationStudentDetails: "{% url 'applications:application_exam_student_detail_v2' pk='00000000-0000-0000-0000-000000000000' %}",
+      },
+      list_type: '{{list_type|default:"grid"}}',
+      questions: [
+        {% for question in questions %}
+          {% with question.id|get_instance as question_instance %}
+            {
+              id: '{{question_instance.id}}',
+              question_number: "{% call_method exam 'number_print_question' question_instance %}",
+              category: '{{question_instance.get_category_display}}',
+              level: '{{question_instance.get_level_display}}',
+              correct_alternative: '{{question_instance|get_correct_option_answer}}',
+              full_enunciation: "{{question_instance.enunciation_escaped|remove_line_break|safe}}",
+              enunciation: '{{question_instance.get_enunciation_str|truncatechars:250|remove_line_break}}',
+              subject_name: '{{question_instance.subject.name|default:"Sem disciplina"}}',
+              discursives_choices: {% tag_get_discursive_percentage question_instance object total_discursive_answers coordinations q_applications q_unities q_classes %},
+              alternatives: [
+                {% for alternative in question_instance.alternatives.all %}
+                    {
+                      id: '{{alternative.id}}',
+                      text: '{{alternative.striped|remove_line_break}}',
+                      is_correct: {{alternative.is_correct|safe|lower}},
+                      {% if question_instance.category == 1 %}
+                      answers_count: {% tag_get_alternative_percentage alternative object question.objetive_answers coordinations q_applications q_unities q_classes %},
+                      {% elif question_instance.category == 3 %}
+                      answers_count: {% tag_get_alternative_percentage alternative object question.sum_answers_count coordinations q_applications q_unities q_classes %},
+                      {% endif %}
+                    },
+                {% endfor %}
+              ],
+              topics: [
+                {% for topic in question_instance.topics.all %}
+                  {
+                    id: '{{topic.id}}',
+                    name: '{{topic.name|remove_line_break|safe}}',
+                  },
+                {% endfor %}
+              ],
+              abilities: [
+                {% for ability in question_instance.abilities.all %}
+                  {
+                    id: '{{ability.id}}',
+                    code: '{{ability.code|default:""}}',
+                    text: '{{ability.text|remove_line_break|safe}}',
+                  },
+                {% endfor %}
+              ],
+              competences: [
+                {% for competence in question_instance.competences.all %}
+                  {
+                    id: '{{competence.id}}',
+                    code: '{{competence.code|default:""}}',
+                    text: '{{competence.text|remove_line_break|safe}}',
+                  },
+                {% endfor %}
+              ],
+            },
+          {% endwith %}
+        {% endfor %}
+      ],
+      modalSubject: {
+        open: false,
+        status: 'idle',
+        index: 0,
+        data: {
+          category: '',
+          feedback: ''
+        }
+      },
+      selectedQuestion: '',
+      modalQuestion: {
+        open: false,
+        status: 'idle',
+        index: 0,
+        data: {
+          category: '',
+          feedback: ''
+        }
+      }
+    },
+    watch: {
+      list_type: function(val) {
+        setTimeout(() => {
+          $('[data-toggle="tooltip"]').tooltip()
+          $('[data-toggle="popover"]').popover({ trigger: "hover" })
+        }, 500)
+      },
+    },
+    methods: {
+      printPDF(elem){
+        $("#"+elem).printThis();
+    },
+      generateAlternativeOrder(index, isSum = false){
+        if (isSum) {
+          return Math.pow(2, index)
+        }
+        return "abcdefghij"[index]
+      },
+      showQuestionDetail(index, question) {
+        $('#modalQuestion').modal('show');
+        this.selectedQuestion = question
+        this.selectedQuestion['index'] = index;
+      },
+      getDiscursiveQuestionReport(question, compact = true) {
+        
+        let report = {
+          compact: compact,
+          correct: 0,
+          title: 'POSSÍVEL PROBLEMA',
+          message: '',
+          messages: [],
+          showAlertTag: true,
+          showAlert: false,
+          bgColor: 'bg-danger',
+        }
+
+        if(question.discursives_choices[100] > 95) {
+          message = {
+            text: `<i class="fas fa-check mx-2"></i> A maioria dos alunos <span class="tx-medium ml-1">acertou a essa questão</span>.`,
+          }
+          report.messages.push(message)
+        }
+
+        if(question.discursives_choices[100] < 50) {
+          message = {
+            text: `<i class="fas fa-exclamation-circle mx-2"></i> Menos da metade dos alunos <span class="tx-medium ml-1">acertou a essa questão</span>.`,
+          }
+          report.messages.push(message)
+        }
+        
+        return report
+      },
+      getQuestionReport(question, compact = true) {
+        if(question.category == 'Objetiva') {
+          const correct_alternative = question.alternatives.find(item => item.is_correct)
+          let correctOptionAnswers = 0
+          if (correct_alternative) {
+            correctOptionAnswers = correct_alternative.answers_count;
+          }
+          const incorrectOptions = question.alternatives.filter(item => !item.is_correct).map(item => item.answers_count);
+          let report = {
+            compact: compact,
+            correct: correctOptionAnswers,
+            title: 'POSSÍVEL PROBLEMA',
+            message: '',
+            messages: [],
+            showAlertTag: true,
+            showAlert: false,
+            bgColor: 'bg-danger',
+            maxIncorrectAlternative: this.getMaxIncorrectAlternative(question.alternatives)
+          }
+  
+          if(incorrectOptions.find(option => option > 30)) {
+            message = {
+              text: `<i class="fas fa-exclamation-circle mx-2"></i> Mais de 1/3 dos alunos marcaram a mesma alternativa <span class="tx-medium ml-1">incorreta</span>.`,
+            }
+            report.messages.push(message)
+          }
+          if(incorrectOptions.some((option) => Number(option) > correctOptionAnswers)) {
+            message = {
+              text: `<i class="fas fa-exclamation-circle mx-2"></i> ${report.maxIncorrectAlternative.answers_count.toFixed(0)}% dos alunos marcaram a mesma alternativa <span class="tx-medium ml-1">incorreta</span>.`,
+            }
+            report.messages.push(message)
+          } 
+          if(correctOptionAnswers > 95) {
+            message = {
+              text: `<i class="fas fa-check mx-2"></i> A maioria dos alunos <span class="tx-medium ml-1">acertaram a essa questão</span>.`,
+            }
+            report.messages.push(message)
+          }
+          if(correctOptionAnswers < 50) {
+            message = {
+              text: `<i class="fas fa-exclamation-circle mx-2"></i> Menos da metade dos alunos <span class="tx-medium ml-1">acertaram a essa questão</span>.`,
+            }
+            report.messages.push(message)
+          }
+          if(!report.messages.length) { // Show Only Exist Message
+            delete report.maxIncorrectAlternative.is_max
+          } 
+          return report
+        }
+        return this.getDiscursiveQuestionReport(question, compact)
+      },
+      getMaxIncorrectAlternative(alternatives = []) { 
+        let maxIncorrectNumber = 0
+        if(alternatives.length) {
+          maxIncorrectNumber = Math.max(...alternatives.filter(item => !item.is_correct).map(item => item.answers_count))
+          let alternative = alternatives.find(item => item.answers_count == maxIncorrectNumber)
+          if(alternative) {
+            alternative['is_max'] = true
+            return alternative
+          }
+        } else {
+          return ''
+        }
+      },
+      getUrl(url, id, params = false) {
+        if (params) {
+          url += params;
+        }
+        return url.replace('00000000-0000-0000-0000-000000000000', id);
+      },
+    },
+    mounted() {
+      
+      axios.post("{% url 'notifications:api-especial-notification' %}", { where: "in_view_exam_results" })
+
+      moment.locale('pt-br');
+      setTimeout(() => {
+        $('[data-toggle="tooltip"]').tooltip()
+        $('[data-toggle="popover"]').popover({ trigger: "hover" })
+      }, 2000)
+      this.load = false
+
+      $('#id_application').select2({
+        placeholder: "Selecione uma aplicação",
+        width: '100%',
+        closeOnSelect: false,
+      }).on('select2:selecting', function(e) {
+        let cur = e.params.args.data.id;
+        let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+        $(e.target).val(old).trigger('change');
+        $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+        return false;
+      });
+      $('#id_unities').select2({
+        placeholder: "Selecione uma unidade",
+        width: '100%',
+        closeOnSelect: false,
+      }).on('select2:selecting', function(e) {
+        let cur = e.params.args.data.id;
+        let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+        $(e.target).val(old).trigger('change');
+        $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+        return false;
+      });
+      $('#id_classes').select2({
+        placeholder: "Selecione uma turma",
+        width: '100%',
+        closeOnSelect: false,
+      }).on('select2:selecting', function(e) {
+        let cur = e.params.args.data.id;
+        let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+        $(e.target).val(old).trigger('change');
+        $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+        return false;
+      });
+      
+      $('.off-canvas-menu').on('click', function (e) {
+        e.preventDefault();
+        var target = $(this).attr('data-toggle-off-canvas');
+        $(target).addClass('show');
+      });
+  
+      $('.off-canvas .close').on('click', function (e) {
+        e.preventDefault();
+        $(this).closest('.off-canvas').removeClass('show');
+      })
+    
+      $(document).on('click touchstart', function (e) {
+        if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+          return
+        }
+        e.stopPropagation();
+        if (!$(e.target).closest('.off-canvas-menu').length) {
+          var offCanvas = $(e.target).closest('.off-canvas').length;
+          if (!offCanvas) {
+            $('.off-canvas.show').removeClass('show');
+          }
+        }
+      });
+      setTimeout(() => {
+        axios.post("{% url 'notifications:api-especial-notification' %}", { where: "after_view_exam_results" }) 
+      }, 8000)
+    }
+  });
+</script>
+{% endblock js-additional %}
+

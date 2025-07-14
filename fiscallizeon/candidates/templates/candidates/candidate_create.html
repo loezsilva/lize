@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block css-additional %}
+{% endblock css-additional %}
+
+{% block content %}
+<div class="content">
+    <div class="container text-center mb-5">
+        {% if client.logo %}
+                <img src="{{client.logo.url}}" style="width: 20%; min-width: 200px;">
+            {% endif %}
+    </div>
+      <div class="container">
+          <form method="POST" class="d-flex  justify-content-center">
+            {% csrf_token %}
+
+            <label for="">
+              {{form.non_field_errors}}
+            </label>
+            
+            <div class="sign-wrapper">
+            
+              <div class="wd-100p">
+                <h3 class="tx-color-01 mg-b-5">Cadastre-se abaixo</h3>
+                <p class="tx-color-03 tx-16 mg-b-40">Bem vindo a Lize, insira seus dados abaixo e aguarde o contato da instituição.</p>
+
+
+                <div class="form-group">
+                  <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                  {% render_field form.name  class="form-control" placeholder="Digite seu nome completo"%}
+                  {% if form.name.errors %}
+                    {% for error in form.name.errors %}
+                      <div class="invalid-feedback">
+                        {{ error|escape }}
+                      </div>
+                    {% endfor %}
+                  {% endif %}
+                </div>
+
+                <div class="form-group">
+                  <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                  {% render_field form.email  class="form-control" placeholder="Digite seu email"%}
+                  {% if form.email.errors %}
+                    {% for error in form.email.errors %}
+                      <div class="invalid-feedback">
+                        {{ error|escape }}
+                      </div>
+                    {% endfor %}
+                  {% endif %}
+                </div>
+
+                <div class="form-group">
+                  <label for="{{ form.cpf.id_for_label }}">{{ form.cpf.label }}</label>
+                  {% render_field form.cpf  class="form-control" placeholder="Digite seu cpf"%}
+                  {% if form.cpf.errors %}
+                  {% for error in form.cpf.errors %}
+                  <div class="invalid-feedback">
+                    {{ error|escape }}
+                  </div>
+                  {% endfor %}
+                  {% endif %}
+                </div>
+
+
+                <div class="form-group">
+                    <label for="{{ form.classes.id_for_label }}">
+                      Escolha a opção na qual você se encaixa:</label><br/>
+                                     
+                    <select name="classes" id="{{form.classes.id_for_label}}" class="form-control select" required="required">
+                    </select>
+                    {% if form.classes.errors %}
+                        <label class="text-danger">
+                        {{ form.classes.errors.0 }}</label>
+                    {% endif %}
+                  </div>
+
+                <div class="form-group">
+                  <label for="{{ form.note.id_for_label }}">{{ form.note.label }}</label>
+                  {% render_field form.note  class="form-control" placeholder="Alguma observação?" rows="3" %}
+                  {% if form.note.errors %}
+                    {% for error in form.note.errors %}
+                      <div class="invalid-feedback">
+                        {{ error|escape }}
+                      </div>
+                    {% endfor %}
+                  {% endif %}
+                </div>
+                
+                {% render_field form.client value=client.pk %}
+
+                {{ form.captcha }}
+
+                {% if client.orientations_candidates_file %}
+                <p class="text-center">
+                  Antes de concluir <a target="_blank" href="{{client.orientations_candidates_file.url}}">baixe nosso guia de utilização da
+                    plataforma.</a>
+                </p>
+                {% endif %}
+                                
+                <button id="button-submit" type="submit" class="btn btn-brand-02 btn-block bg-primary">Concluir cadastro agora</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+{% endblock %}
+
+{% block js-additional %}
+
+<script src="{% static 'administration/assets/vendor/jquery.mask.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+
+<script>
+moment.locale('pt-br');
+var new_list = {}
+
+$("#id_financial_responsible_phone").mask('(00) 00000-0000')
+$("#id_cpf").mask('000.000.000-00')
+
+
+// $('#{{form.classes.auto_id}}').select2();
+
+// $('#{{form.classes.auto_id}}').on('select2:select', function (e) {
+
+//     var selectedElement = $(e.params.data.element)
+//     var groupElement = $(e.params.data.element).parent()
+
+//     var options = groupElement.find("option")
+
+//     $.each($(options), function(index, option){
+//       if ($(option).val() !== selectedElement.val())
+//         $(option).attr("disabled", "disabled")
+//     })
+
+//     $('#{{form.classes.auto_id}}').select2();
+
+//     // checkSelectedClass()
+// });
+
+// $('#{{form.classes.auto_id}}').on('select2:unselect', function (e) {
+//     var selectedElement = $(e.params.data.element)
+//     var groupElement = $(e.params.data.element).parent()
+
+//     var options = groupElement.find("option")
+
+//     $.each($(options), function(index, option){
+//         $(option).removeAttr("disabled")
+//     })
+
+//     $('#{{form.classes.auto_id}}').select2();
+
+//     // checkSelectedClass()
+
+// });
+
+
+// $('#{{form.classes.auto_id}}').on('select2:close', function (e) {
+//   checkSelectedClass()
+// });
+
+// function checkSelectedClass(){
+//   var selectElement = $('#{{form.classes.auto_id}}')
+//     $("#button-submit").removeAttr("disabled")
+//     $("#error-message").hide()
+
+//     var groups = selectElement.children("optgroup")
+
+//     $.each(groups, function(index, group){
+//       var selected = $(group).find("option:selected").length
+//       if(!selected){
+//         $("#error-message").show()
+//         $('#{{form.classes.auto_id}}').select2("open");
+//         $("#button-submit").attr("disabled", "disabled")
+//       }
+//     })
+// }
+
+function loadClasses(grade_id, changed=false){
+  axios.get(`{% url 'classes:classes_list_public_api' client_id=client.id %}`).then(response => {
+      
+      var select = $('#{{form.classes.auto_id}}')
+      select.find('option').remove();
+      select.find('optgroup').remove();
+
+      new_list = groupBy(response.data, "name")
+
+      var option = new Option("Escolha uma opção", "");
+      option.disabled = true
+      option.selected = true
+      select.append(option)
+
+      $.each(Object.keys(new_list), function (index, key) {
+          var optGroup = $(`<optgroup label="${key}">`);
+          $.each(new_list[key], function(index, schoolClass){
+            var date = moment(schoolClass.date, "YYYY-MM-DD")
+            
+            var optionText = `${date.format('dddd')} (${date.format('DD')}/${date.format('MM')}) de
+            ${schoolClass.start.substring(0, 5)} até ${schoolClass.end.substring(0, 5)} (${key})`
+            
+            var option = new Option(optionText, schoolClass.id);
+            
+            optGroup.append(option)
+          })
+          
+          select.append(optGroup)
+      });
+
+  })
+}
+
+var groupBy = function(list, group_by) {
+  return list.reduce(function(rv, x) {
+    (rv[x[group_by]] = rv[x[group_by]] || []).push(x);
+    return rv;
+  }, {});
+};
+
+loadClasses()
+
+</script>
+{% endblock %}

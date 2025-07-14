@@ -1,0 +1,572 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Configurações de obrigatoriedade dos professores - Lize{% endblock title %}
+
+{% block css-additional %}
+    <style>
+        .text {
+            color: #374151;
+            font-weight: 600;
+        }
+    </style>
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+    <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                    <li class="breadcrumb-item"><a href="#">CONFIGURAÇÕES</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        CADASTRAR
+                    </li>
+                </ol>
+            </nav>
+            <h4>
+                Gerenciar campos obrigatórios para professores
+            </h4>
+        </div>
+        <div class="d-none d-md-block">
+            <button class="btn btn-sm pd-x-15 btn-white btn-uppercase" onclick="history.back();">
+                <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+            </button>
+        </div>
+    </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block top-menu %}
+{% include "includes/configurations_header.html" %}
+{% endblock top-menu %}
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+      <div class="ls" style="margin-top: 0.5rem; margin-bottom: 1rem; justify-content: space-between;">
+        <!-- Empty -->
+      </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mg-b-5">
+                        Configurações
+                    </h6>
+                    <p class="tx-13 tx-color-03 mg-b-5">Gerencie as configurações abaixo</p>
+                </div>
+                <div>
+                    <button class="btn btn-sm pd-x-15 btn-white btn-uppercase" @click="saveForm(null, null, true)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-save-icon lucide-save"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>
+                        Salvar alterações
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="accordion" id="accordionOne">
+                <div class="card cp" @click="controls.selectedSegment = 'initials'" style="border-radius: 16px; gap: 8px; border: none;" :style="controls.selectedSegment == 'initials' ? 'background-color: #FFFFFF;' : 'background-color: transparent !important; border: 1px solid #E5E7EA !important;'">
+                    <div class="card-header d-flex justify-content-between align-items-center" id="headingOne">
+                        <div class="d-flex justify-content-between align-items-center" >  
+                            <div class="text d-flex">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-fence"><path d="M4 3 2 5v15c0 .6.4 1 1 1h2c.6 0 1-.4 1-1V5Z"/><path d="M6 8h4"/><path d="M6 18h4"/><path d="m12 3-2 2v15c0 .6.4 1 1 1h2c.6 0 1-.4 1-1V5Z"/><path d="M14 8h4"/><path d="M14 18h4"/><path d="m20 3-2 2v15c0 .6.4 1 1 1h2c.6 0 1-.4 1-1V5Z"/></svg>
+                                <span class="mx-3 fw-600">Anos iniciais</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                            <template v-if="controls.selectedSegment == 'initials'">
+                                <svg width="17" height="3" viewBox="0 0 17 3" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1.37793 1.51562H15.3779" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg> 
+                            </template>
+                            <template v-else>
+                                <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M8.37793 1.51562V15.5156M1.37793 8.51562H15.3779" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>                                
+                            </template>
+                        </button>
+                    </div>
+                    <div id="collapseOne" class="collapse show p-3" aria-labelledby="headingOne" data-parent="#accordionOne">
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.template class="custom-control-input" id="initialsTemplateId" v-model="clientTeacherObligation.initials.template" %}
+                                    <label class="custom-control-label" for="initialsTemplateId">
+                                        {{form.template.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.template.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.topics class="custom-control-input" id="initialsTopicsId" v-model="clientTeacherObligation.initials.topics" %}
+                                    <label class="custom-control-label" for="initialsTopicsId">
+                                        {{form.topics.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.topics.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.abilities class="custom-control-input" id="initialsAbilitiesId" v-model="clientTeacherObligation.initials.abilities" %}
+                                    <label class="custom-control-label" for="initialsAbilitiesId">
+                                        {{form.abilities.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.abilities.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.competences class="custom-control-input" id="initialsCompetencesId" v-model="clientTeacherObligation.initials.competences" %}
+                                    <label class="custom-control-label" for="initialsCompetencesId">
+                                        {{form.competences.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.competences.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.difficult class="custom-control-input" id="initialsDifficultId" v-model="clientTeacherObligation.initials.difficult" %}
+                                    <label class="custom-control-label" for="initialsDifficultId">
+                                        {{form.difficult.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.difficult.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.pedagogical_data class="custom-control-input" id="initialsPedagogicalDataId" v-model="clientTeacherObligation.initials.pedagogicalData" %}
+                                    <label class="custom-control-label" for="initialsPedagogicalDataId">
+                                        {{form.pedagogical_data.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.pedagogical_data.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.commented_response class="custom-control-input" id="initialsCommentedResponseId" v-model="clientTeacherObligation.initials.commentedResponse" %}
+                                    <label class="custom-control-label" for="initialsCommentedResponseId">
+                                        {{form.commented_response.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.commented_response.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.apply_on_homework class="custom-control-input" id="initialsApplyOnHomeworkId" v-model="clientTeacherObligation.initials.applyOnHomework" %}
+                                    <label class="custom-control-label" for="initialsApplyOnHomeworkId">
+                                        {{form.apply_on_homework.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.apply_on_homework.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card my-3 cp" @click="controls.selectedSegment = 'finals'" style="border-radius: 16px; gap: 8px; border: none;" :style="controls.selectedSegment == 'finals' ? 'background-color: #FFFFFF;' : 'background-color: transparent !important; border: 1px solid #E5E7EA !important;'"> 
+                    <div class="card-header d-flex justify-content-between align-items-center" id="headingOne">
+                        <div class="d-flex justify-content-between align-items-center" >  
+                            <div class="text d-flex">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-graduation-cap"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>
+                                <span class="mx-3 fw-600">Anos Finais</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                            <template v-if="controls.selectedSegment == 'finals'">
+                                <svg width="17" height="3" viewBox="0 0 17 3" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1.37793 1.51562H15.3779" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg> 
+                            </template>
+                            <template v-else>
+                                <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M8.37793 1.51562V15.5156M1.37793 8.51562H15.3779" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>                                
+                            </template>
+                        </button>
+                    </div>
+                    <div id="collapseTwo" class="collapse p-3" aria-labelledby="headingOne" data-parent="#accordionOne">
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.template class="custom-control-input" id="finalsTemplateId" v-model="clientTeacherObligation.finals.template" %}
+                                    <label class="custom-control-label" for="finalsTemplateId">
+                                        {{form.template.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.template.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.topics class="custom-control-input" id="finalsTopicsId" v-model="clientTeacherObligation.finals.topics" %}
+                                    <label class="custom-control-label" for="finalsTopicsId">
+                                        {{form.topics.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.topics.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.abilities class="custom-control-input" id="finalsAbilitiesId" v-model="clientTeacherObligation.finals.abilities" %}
+                                    <label class="custom-control-label" for="finalsAbilitiesId">
+                                        {{form.abilities.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.abilities.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.competences class="custom-control-input" id="finalsCompetencesId" v-model="clientTeacherObligation.finals.competences" %}
+                                    <label class="custom-control-label" for="finalsCompetencesId">
+                                        {{form.competences.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.competences.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.difficult class="custom-control-input" id="finalsDifficultId" v-model="clientTeacherObligation.finals.difficult" %}
+                                    <label class="custom-control-label" for="finalsDifficultId">
+                                        {{form.difficult.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.difficult.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.pedagogical_data class="custom-control-input" id="finalsPedagogicalDataId" v-model="clientTeacherObligation.finals.pedagogicalData" %}
+                                    <label class="custom-control-label" for="finalsPedagogicalDataId">
+                                        {{form.pedagogical_data.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.pedagogical_data.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.commented_response class="custom-control-input" id="finalsCommentedResponseId" v-model="clientTeacherObligation.finals.commentedResponse" %}
+                                    <label class="custom-control-label" for="finalsCommentedResponseId">
+                                        {{form.commented_response.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.commented_response.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.apply_on_homework class="custom-control-input" id="finalsApplyOnHomeworkId" v-model="clientTeacherObligation.finals.applyOnHomework" %}
+                                    <label class="custom-control-label" for="finalsApplyOnHomeworkId">
+                                        {{form.apply_on_homework.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.apply_on_homework.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card cp" @click="controls.selectedSegment = 'high'" style="border-radius: 16px; gap: 8px; border: none;" :style="controls.selectedSegment == 'high' ? 'background-color: #FFFFFF;' : 'background-color: transparent !important; border: 1px solid #E5E7EA !important;'">
+                    <div class="card-header d-flex justify-content-between align-items-center" id="headingOne">
+                        <div class="d-flex justify-content-between align-items-center" >  
+                            <div class="text d-flex">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-university"><circle cx="12" cy="10" r="1"/><path d="M22 20V8h-4l-6-4-6 4H2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2"/><path d="M6 17v.01"/><path d="M6 13v.01"/><path d="M18 17v.01"/><path d="M18 13v.01"/><path d="M14 22v-5a2 2 0 0 0-2-2a2 2 0 0 0-2 2v5"/></svg>
+                                <span class="mx-3 fw-600">Ensino médio</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
+                            <template v-if="controls.selectedSegment == 'high'">
+                                <svg width="17" height="3" viewBox="0 0 17 3" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1.37793 1.51562H15.3779" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg> 
+                            </template>
+                            <template v-else>
+                                <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M8.37793 1.51562V15.5156M1.37793 8.51562H15.3779" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>                                
+                            </template>
+                        </button>
+                    </div>
+                    <div id="collapseThree" class="collapse p-3" aria-labelledby="headingOne" data-parent="#accordionOne">
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.template class="custom-control-input" id="highTemplateId" v-model="clientTeacherObligation.high.template" %}
+                                    <label class="custom-control-label" for="highTemplateId">
+                                        {{form.template.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.template.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.topics class="custom-control-input" id="highTopicsId" v-model="clientTeacherObligation.high.topics" %}
+                                    <label class="custom-control-label" for="highTopicsId">
+                                        {{form.topics.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.topics.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.abilities class="custom-control-input" id="highAbilitiesId" v-model="clientTeacherObligation.high.abilities" %}
+                                    <label class="custom-control-label" for="highAbilitiesId">
+                                        {{form.abilities.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.abilities.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.competences class="custom-control-input" id="highCompetencesId" v-model="clientTeacherObligation.high.competences" %}
+                                    <label class="custom-control-label" for="highCompetencesId">
+                                        {{form.competences.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.competences.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.difficult class="custom-control-input" id="highDifficultId" v-model="clientTeacherObligation.high.difficult" %}
+                                    <label class="custom-control-label" for="highDifficultId">
+                                        {{form.difficult.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.difficult.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.pedagogical_data class="custom-control-input" id="highPedagogicalDataId" v-model="clientTeacherObligation.high.pedagogicalData" %}
+                                    <label class="custom-control-label" for="highPedagogicalDataId">
+                                        {{form.pedagogical_data.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.pedagogical_data.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.commented_response class="custom-control-input" id="highCommentedResponseId" v-model="clientTeacherObligation.high.commentedResponse" %}
+                                    <label class="custom-control-label" for="highCommentedResponseId">
+                                        {{form.commented_response.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.commented_response.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12 mt-1 mb-2">
+                                <div class="custom-control custom-switch ">
+                                    {% render_field form.apply_on_homework class="custom-control-input" id="highApplyOnHomeworkId" v-model="clientTeacherObligation.high.applyOnHomework" %}
+                                    <label class="custom-control-label" for="highApplyOnHomeworkId">
+                                        {{form.apply_on_homework.label}}
+                                    </label>
+                                    <p class="m-0 text-muted">
+                                        {{form.apply_on_homework.help_text}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 mt-4">
+            <button class="btn pd-x-15 btn-block btn-white btn-uppercase" @click="saveForm(null, null, true)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-save-icon lucide-save"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>
+                Salvar alterações
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+
+{% endblock extra-modal %}
+
+{% block js-additional %}
+
+<script type="text/javascript" src="{% static 'tinymce/tinymce.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.20/lodash.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    var app = new Vue({
+        el: '#app',
+        delimiters: ['${', '}'],
+        data: {
+            controls: {
+                selectedSegment: 'initials',
+            },
+            clientTeacherObligation: {
+                initials: {
+                    template: false,
+                    topics: false,
+                    abilities: false,
+                    competences: false,
+                    difficult: false,
+                    pedagogicalData: false,
+                    commentedResponse: false,
+                    applyOnHomework: false,
+                    level: 1,
+                },
+                finals: {
+                    template: false,
+                    topics: false,
+                    abilities: false,
+                    competences: false,
+                    difficult: false,
+                    pedagogicalData: false,
+                    commentedResponse: false,
+                    applyOnHomework: false,
+                    level: 2,
+                },
+                high: {
+                    template: false,
+                    topics: false,
+                    abilities: false,
+                    competences: false,
+                    difficult: false,
+                    pedagogicalData: false,
+                    commentedResponse: false,
+                    applyOnHomework: false,
+                    level: 3,
+                },
+            }
+        },
+        watch: {
+            'controls.selectedSegment': function(val) {
+                if(val == 'initials') {
+                    this.changeCollapse('#collapseOne')
+                } else if(val == 'finals') {
+                    this.changeCollapse('#collapseTwo')
+                } else if(val == 'high') {
+                    this.changeCollapse('#collapseThree')
+                }
+            }
+        },
+        methods: {
+            async saveConfiguration(form, level) {
+                await axios.post("{% url 'api:clients:client-configurations-create-update-teachers-obligation' %}", form)
+            },
+            async saveForm(form, level, all = false) {
+                if (all) {
+                    this.saveForm(this.clientTeacherObligation.initials, 'initials')
+                    this.saveForm(this.clientTeacherObligation.finals, 'finals')
+                    this.saveForm(this.clientTeacherObligation.high, 'high')
+                    Swal.fire({
+                        title: "Sucesso!",
+                        text: "Salvo com sucesso!",
+                        icon: "success"
+                    });
+                } else {
+                    if(level == 'initials') {
+                        form.level = '1'
+                    } else if(level == 'finals') {
+                        form.level = '2'
+                    } else if(level == 'high') {
+                        form.level = '0'
+                    }
+                    await this.saveConfiguration(form, level)
+                }
+            },
+            changeCollapse(target) {
+                $(target).collapse('show')
+            },
+            getConfigurations() {
+                axios.get("{% url 'api:clients:client-configurations-teachers-obligation' %}").then((response) => {
+                    this.clientTeacherObligation = response.data
+                })
+            },
+        },
+        mounted() {
+            this.getConfigurations()
+        }
+    });
+</script>
+{% endblock js-additional %}

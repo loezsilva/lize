@@ -1,0 +1,444 @@
+{% load static %}
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Processar dados - Lize</title>
+  <link href="{% static 'favicon/favicon.ico' %}" rel="shortcut icon" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+  <link href="{% static 'tw/full/output.css' %}" rel="stylesheet">
+  <style>
+    ::backdrop {
+      background-color: #001737;
+      opacity: 0.6;
+    }
+  </style>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+  <div class="flex flex-col h-screen">
+    <header class="flex items-center justify-between border-b border-[#E5E7EA] px-[11.5rem] py-4">
+      <a class="flex-none text-primary-600" href="/">
+        <span class="sr-only">Lize</span>
+        <svg width="52" height="32" viewBox="0 0 52 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M15.362 21.6376C13.5956 20.8193 11.5161 20.3893 9.87081 20.1636C8.22555 19.938 4.7732 19.7265 2.71343 20.1197C3.46911 12.9932 3.92787 4.67531 4.08972 1.44461C4.12465 0.746213 3.64726 0.110763 2.96959 0.0133674C2.19645 -0.0970939 1.5153 0.490845 1.47571 1.26645C1.34879 3.81419 0.417295 15.6561 0.00627239 20.8276C-0.0892059 22.0272 0.919138 23.0131 2.08933 22.8622C2.96261 22.7506 4.05595 22.6556 5.31812 22.6164C6.5803 22.5772 8.11378 22.671 8.60747 22.7173C11.4148 22.981 13.2801 23.601 14.3257 24.0571C14.937 24.3232 15.6449 24.0737 15.9663 23.481C16.3331 22.804 16.0524 21.956 15.362 21.6365V21.6376ZM13.6996 2.87095C14.4286 2.91699 15.0538 2.32674 15.1977 1.61019C15.351 0.849951 14.9971 1.41725e-09 14.0075 1.41725e-09C13.3458 1.41725e-09 12.638 0.495805 12.5507 1.43783C12.4811 2.17564 12.9577 2.82373 13.7008 2.87095H13.6996ZM48.6574 10.4645C48.9523 9.78699 49.7227 9.44167 50.3917 9.72983L50.3905 9.72864C51.07 10.0216 51.38 10.8182 51.0933 11.5029C49.9697 14.1797 47.5595 19.269 41.4359 19.269C40.6561 19.269 39.8904 19.1713 39.1596 18.9725C37.0326 18.3926 35.3449 16.9327 34.6421 14.8274C32.923 17.1447 30.8717 18.982 28.5826 19.8631C28.9987 21.4421 29.1385 23.2866 28.9311 25.3549C28.4847 29.8929 25.8728 32.3482 23.0546 31.96C20.5196 31.6111 18.7107 28.9938 19.3762 25.7681C20.2772 21.4183 22.6898 19.4119 25.015 18.2521C24.7527 17.8996 24.4753 17.6174 24.1921 17.3983C23.8203 17.1101 23.6035 16.66 23.635 16.1849L23.6944 15.2799C23.7481 14.4607 24.1991 13.7153 24.9077 13.3259C26.3157 12.5531 27.8472 11.0647 27.8472 8.24616C27.8472 7.09589 27.4346 6.5279 26.5837 6.32428C25.107 5.96705 23.1839 7.34595 21.8215 10.3002L21.7445 10.2633L21.8226 10.3014C21.7475 10.4614 21.6524 10.6789 21.5381 10.9404C20.4805 13.3593 17.7795 19.5366 14.0487 18.7081C12.5521 18.3795 11.6337 17.1506 11.5358 15.4228C11.4029 13.1044 12.15 5.92895 12.1932 5.54315C12.2771 4.80488 12.9391 4.27261 13.657 4.35358C14.375 4.43455 14.8832 5.11566 14.8261 5.85036C14.721 7.20467 14.6146 8.39185 14.5201 9.446C14.3546 11.2929 14.2256 12.7314 14.2048 13.9451C14.1827 15.2549 15.0615 16.3207 16.3925 14.4333C17.4473 12.9377 18.6967 10.7682 19.452 9.16065C20.9298 5.95515 23.6816 2.87109 27.1851 3.71891C29.4369 4.25951 30.4404 6.26117 30.4707 8.20567C30.5115 10.8349 28.9847 14.0939 26.3308 15.7431C26.8064 16.2087 27.2294 16.7612 27.5872 17.384C29.874 16.5159 32.2679 14.0356 34.1269 10.761C34.5057 10.0942 34.8239 9.39404 35.113 8.68197C35.1444 8.60219 35.1782 8.52241 35.212 8.44263C37.0162 4.24522 40.1258 2.60913 42.6958 3.74868C44.9009 4.72629 45.8928 7.4936 44.7075 10.1811C43.6154 12.6448 40.3414 14.1654 36.881 12.5222C36.8706 15.1085 38.7668 16.5921 41.4382 16.5921C45.8415 16.5921 47.5257 13.0663 48.6574 10.4645ZM41.6527 6.2052C40.9394 5.88965 39.1433 5.95634 37.613 9.51907H37.6142C37.5741 9.61297 37.5695 9.62227 37.5655 9.63178C37.5606 9.643 37.5565 9.65451 37.4953 9.80604C40.0069 11.3254 41.81 10.2252 42.3193 9.07611C43.0023 7.52575 42.359 6.51837 41.6527 6.2052ZM23.4054 29.3082C24.2457 29.4237 25.9555 28.8379 26.325 25.0846C26.4963 23.3747 26.3809 21.897 26.0896 20.7002C24.3599 21.5635 22.6466 22.9281 21.9427 26.323C21.5359 28.2949 22.5487 29.1903 23.4054 29.3082Z" fill="#FF8F3D"/>
+        </svg>
+      </a>
+      <nav aria-label="Progress">
+        <ol role="list" class="space-x-6 divide-y divide-gray-300 md:flex md:divide-y-0">
+          <li class="relative md:flex md:flex-1">
+            <a href="#" class="group flex w-full items-center">
+              <span class="flex items-center text-sm text-[#667085]">
+                <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 group-hover:bg-primary-800">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 3L4.5 8.5L2 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <span class="ml-3">Usuários</span>
+              </span>
+            </a>
+          </li>
+          <li class="relative md:flex md:flex-1">
+            <a href="#" class="flex items-center text-sm font-semibold" aria-current="step">
+              <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#FFF2E9] border border-[#FFE0C9]">
+                <span class="text-primary-600">2</span>
+              </span>
+              <span class="ml-3 text-[#384250]">Segmentos</span>
+            </a>
+          </li>
+          <li class="relative md:flex md:flex-1">
+            <a href="#" class="group flex items-center">
+              <span class="flex items-center text-sm text-[#667085]">
+                <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#F9FAFA] group-hover:border-gray-400">
+                  <span class="group-hover:text-gray-900">3</span>
+                </span>
+                <span class="ml-3 group-hover:text-gray-900">Permissões</span>
+              </span>
+            </a>
+          </li>
+        </ol>
+      </nav>
+    </header>
+    <main class="h-full overflow-y-auto">
+      <div class="bg-[#F9FAFA]">
+        <div class="flex flex-col gap-4 px-[11.5rem] py-10">
+          <div class="flex gap-8">
+            <h1 class="text-3xl leading-[2.125rem] font-medium tracking-[-0.01em] text-[#101828]">Segmentos</h1>
+            <span class="flex items-center gap-2">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g clip-path="url(#clip0_864_1725)">
+                  <path d="M10.0003 4.99999V9.99999L13.3337 11.6667M18.3337 9.99999C18.3337 14.6024 14.6027 18.3333 10.0003 18.3333C5.39795 18.3333 1.66699 14.6024 1.66699 9.99999C1.66699 5.39762 5.39795 1.66666 10.0003 1.66666C14.6027 1.66666 18.3337 5.39762 18.3337 9.99999Z" stroke="#D2D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_864_1725">
+                    <rect width="20" height="20" fill="white"/>
+                  </clipPath>
+                </defs>
+              </svg>
+              <span class="text-sm text-[#9BA3AF]">Tempo médio: </span><span class="text-sm font-semibold text-[#9BA3AF]">3 min</span>
+            </span>
+          </div>
+          <div class="flex justify-between items-center">
+            <p class="text-sm text-[#667085]">
+              Anexe as planilhas que você possui referente aos perfis de usuários abaixo identificados. É importante que a planilha<br /> esteja atualizada para que o sistema possa identificar corretamente os dados. Assista ao vídeo ao lado.
+            </p>
+            <button id="buttonWatchVideo" type="button" class="flex items-center gap-3 text-start bg-white rounded-full border border-[#E5E7EA] px-4 py-2">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3.33301 3.32642C3.33301 2.67898 3.33301 2.35526 3.468 2.17681C3.5856 2.02135 3.76536 1.92515 3.95994 1.91353C4.1833 1.9002 4.45265 2.07977 4.99135 2.4389L12.0017 7.11248C12.4469 7.40923 12.6694 7.55761 12.747 7.74462C12.8148 7.90813 12.8148 8.09188 12.747 8.25538C12.6694 8.4424 12.4469 8.59077 12.0017 8.88752L4.99135 13.5611C4.45265 13.9202 4.1833 14.0998 3.95994 14.0865C3.76536 14.0749 3.5856 13.9787 3.468 13.8232C3.33301 13.6447 3.33301 13.321 3.33301 12.6736V3.32642Z" stroke="#FF8F3D" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="text-xs leading-[0.875rem] font-medium text-[#384250]">
+                Assista ao vídeo <br />explicativo
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="px-[11.5rem] py-10">
+        <p class="text-xs leading-[1.125rem] text-[#6C727F]">Organização por segmento</p>
+        <div class="flex flex-col gap-2 mt-6">
+          <details class="rounded-xl border border-[#E5E7EA] p-6">
+            <summary class="flex justify-between">
+              <div>
+                <div class="flex justify-center items-center gap-3">
+                  <div class="flex justify-center items-center">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M10.8337 5.83333L9.90404 3.9741C9.6365 3.439 9.50271 3.17144 9.30313 2.97597C9.12664 2.80311 8.91393 2.67164 8.68039 2.59109C8.4163 2.5 8.11716 2.5 7.5189 2.5H4.33366C3.40024 2.5 2.93353 2.5 2.57701 2.68166C2.2634 2.84144 2.00844 3.09641 1.84865 3.41002C1.66699 3.76654 1.66699 4.23325 1.66699 5.16667V5.83333M1.66699 5.83333H14.3337C15.7338 5.83333 16.4339 5.83333 16.9686 6.10582C17.439 6.3455 17.8215 6.72795 18.0612 7.19836C18.3337 7.73314 18.3337 8.4332 18.3337 9.83333V13.5C18.3337 14.9001 18.3337 15.6002 18.0612 16.135C17.8215 16.6054 17.439 16.9878 16.9686 17.2275C16.4339 17.5 15.7338 17.5 14.3337 17.5H5.66699C4.26686 17.5 3.5668 17.5 3.03202 17.2275C2.56161 16.9878 2.17916 16.6054 1.93948 16.135C1.66699 15.6002 1.66699 14.9001 1.66699 13.5V5.83333Z" stroke="#E5E7EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </div>
+                  <div class="flex gap-5">
+                    <p class="min-w-[7.5rem] text-sm font-semibold text-[#384250]">Anos iniciais</p>
+                    <div class="flex gap-2">
+                      <span class="bg-[#FFF2E9] border border-[#FFE0C9] rounded px-1 py-0.5">
+                        <p class="text-xs font-medium text-[#667085] text-center">
+                          {{ subjects_elementary_school.count }} Disciplinas
+                        </p>
+                      </span>
+                      <span class="bg-[#FFF2E9] border border-[#FFE0C9] rounded px-1 py-0.5">
+                        <p class="text-xs font-medium text-[#667085] text-center">
+                          {{ teachers_elementary_school.count }} Professores
+                        </p>
+                      </span>
+                      <span class="bg-[#FFF2E9] border border-[#FFE0C9] rounded px-1 py-0.5">
+                        <p class="text-xs font-medium text-[#667085] text-center">
+                          {{ classes_elementary_school.count }} Turmas
+                        </p>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="flex justify-center items-center">
+                <div class="flex items-center gap-4 text-sm leading-4">
+                  <!-- Content -->
+                </div>
+              </div>
+            </summary>
+            <div class="mt-4 space-y-8">
+              <div>
+                <h3 class="text-base font-semibold leading-7 text-gray-900">Disciplinas</h3>
+                <ul role="list" class="divide-y divide-gray-100">
+                  {% for subject in subjects_elementary_school %}
+                    <li class="flex justify-between py-2">
+                      <p class="text-sm leading-6 text-gray-900">
+                        {{ subject.name }}
+                      </p>
+                    </li>
+                  {% empty %}
+                    <li class="flex justify-between py-2">
+                      <p class="text-sm leading-6 text-gray-900">
+                        Nenhuma disciplina cadastrada
+                      </p>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <div>
+                <h3 class="text-base font-semibold leading-7 text-gray-900">Professores</h3>
+                <ul role="list" class="divide-y divide-gray-100">
+                  {% for teacher in teachers_elementary_school %}
+                    <li class="flex justify-between py-2">
+                      <p class="text-sm leading-6 text-gray-900">
+                        {{ teacher.name }}
+                      </p>
+                    </li>
+                  {% empty %}
+                    <li class="flex justify-between py-2">
+                      <p class="text-sm leading-6 text-gray-900">
+                        Nenhum professor cadastrado
+                      </p>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <div>
+                <h3 class="text-base font-semibold leading-7 text-gray-900">Turmas</h3>
+                <ul role="list" class="divide-y divide-gray-100">
+                  {% for school_class in classes_elementary_school %}
+                    <li class="flex justify-between py-2">
+                      <p class="text-sm leading-6 text-gray-900">
+                        {{ school_class.name }}
+                      </p>
+                    </li>
+                  {% empty %}
+                    <li class="flex justify-between py-2">
+                      <p class="text-sm leading-6 text-gray-900">
+                        Nenhuma turma cadastrada
+                      </p>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </details>
+          <details class="rounded-xl border border-[#E5E7EA] p-6">
+            <summary class="flex justify-between">
+              <div>
+                <div class="flex justify-center items-center gap-3">
+                  <div class="flex justify-center items-center">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M10.8337 5.83333L9.90404 3.9741C9.6365 3.439 9.50271 3.17144 9.30313 2.97597C9.12664 2.80311 8.91393 2.67164 8.68039 2.59109C8.4163 2.5 8.11716 2.5 7.5189 2.5H4.33366C3.40024 2.5 2.93353 2.5 2.57701 2.68166C2.2634 2.84144 2.00844 3.09641 1.84865 3.41002C1.66699 3.76654 1.66699 4.23325 1.66699 5.16667V5.83333M1.66699 5.83333H14.3337C15.7338 5.83333 16.4339 5.83333 16.9686 6.10582C17.439 6.3455 17.8215 6.72795 18.0612 7.19836C18.3337 7.73314 18.3337 8.4332 18.3337 9.83333V13.5C18.3337 14.9001 18.3337 15.6002 18.0612 16.135C17.8215 16.6054 17.439 16.9878 16.9686 17.2275C16.4339 17.5 15.7338 17.5 14.3337 17.5H5.66699C4.26686 17.5 3.5668 17.5 3.03202 17.2275C2.56161 16.9878 2.17916 16.6054 1.93948 16.135C1.66699 15.6002 1.66699 14.9001 1.66699 13.5V5.83333Z" stroke="#E5E7EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </div>
+                  <div class="flex gap-5">
+                    <p class="min-w-[7.5rem] text-sm font-semibold text-[#384250]">Ensino médio</p>
+                    <div class="flex gap-2">
+                      <span class="bg-[#FFF2E9] border border-[#FFE0C9] rounded px-1 py-0.5">
+                        <p class="text-xs font-medium text-[#667085] text-center">
+                          {{ subjects_elementary_school_2.count }} Disciplinas
+                        </p>
+                      </span>
+                      <span class="bg-[#FFF2E9] border border-[#FFE0C9] rounded px-1 py-0.5">
+                        <p class="text-xs font-medium text-[#667085] text-center">
+                          {{ teachers_elementary_school_2.count }} Professores
+                        </p>
+                      </span>
+                      <span class="bg-[#FFF2E9] border border-[#FFE0C9] rounded px-1 py-0.5">
+                        <p class="text-xs font-medium text-[#667085] text-center">
+                          {{ classes_elementary_school_2.count }} Turmas
+                        </p>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="flex justify-center items-center">
+                <div class="flex items-center gap-4 text-sm leading-4">
+                  <!-- Content -->
+                </div>
+              </div>
+            </summary>
+            <div class="mt-4 space-y-8">
+              <div>
+                <h3 class="text-base font-semibold leading-7 text-gray-900">Disciplinas</h3>
+                <ul role="list" class="divide-y divide-gray-100">
+                  {% for subject in subjects_elementary_school_2 %}
+                    <li class="flex justify-between py-2">
+                      <p class="text-sm leading-6 text-gray-900">
+                        {{ subject.name }}
+                      </p>
+                    </li>
+                  {% empty %}
+                    <li class="flex justify-between py-2">
+                      <p class="text-sm leading-6 text-gray-900">
+                        Nenhuma disciplina cadastrada
+                      </p>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <div>
+                <h3 class="text-base font-semibold leading-7 text-gray-900">Professores</h3>
+                <ul role="list" class="divide-y divide-gray-100">
+                  {% for teacher in teachers_elementary_school_2 %}
+                    <li class="flex justify-between py-2">
+                      <p class="text-sm leading-6 text-gray-900">
+                        {{ teacher.name }}
+                      </p>
+                    </li>
+                  {% empty %}
+                    <li class="flex justify-between py-2">
+                      <p class="text-sm leading-6 text-gray-900">
+                        Nenhum professor cadastrado
+                      </p>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <div>
+                <h3 class="text-base font-semibold leading-7 text-gray-900">Turmas</h3>
+                <ul role="list" class="divide-y divide-gray-100">
+                  {% for school_class in classes_elementary_school_2 %}
+                    <li class="flex justify-between py-2">
+                      <p class="text-sm leading-6 text-gray-900">
+                        {{ school_class.name }}
+                      </p>
+                    </li>
+                  {% empty %}
+                    <li class="flex justify-between py-2">
+                      <p class="text-sm leading-6 text-gray-900">
+                        Nenhuma turma cadastrada
+                      </p>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </details>
+          <details class="rounded-xl border border-[#E5E7EA] p-6">
+            <summary class="flex justify-between">
+              <div>
+                <div class="flex justify-center items-center gap-3">
+                  <div class="flex justify-center items-center">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M10.8337 5.83333L9.90404 3.9741C9.6365 3.439 9.50271 3.17144 9.30313 2.97597C9.12664 2.80311 8.91393 2.67164 8.68039 2.59109C8.4163 2.5 8.11716 2.5 7.5189 2.5H4.33366C3.40024 2.5 2.93353 2.5 2.57701 2.68166C2.2634 2.84144 2.00844 3.09641 1.84865 3.41002C1.66699 3.76654 1.66699 4.23325 1.66699 5.16667V5.83333M1.66699 5.83333H14.3337C15.7338 5.83333 16.4339 5.83333 16.9686 6.10582C17.439 6.3455 17.8215 6.72795 18.0612 7.19836C18.3337 7.73314 18.3337 8.4332 18.3337 9.83333V13.5C18.3337 14.9001 18.3337 15.6002 18.0612 16.135C17.8215 16.6054 17.439 16.9878 16.9686 17.2275C16.4339 17.5 15.7338 17.5 14.3337 17.5H5.66699C4.26686 17.5 3.5668 17.5 3.03202 17.2275C2.56161 16.9878 2.17916 16.6054 1.93948 16.135C1.66699 15.6002 1.66699 14.9001 1.66699 13.5V5.83333Z" stroke="#E5E7EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </div>
+                  <div class="flex gap-5">
+                    <p class="min-w-[7.5rem] text-sm font-semibold text-[#384250]">Anos finais</p>
+                    <div class="flex gap-2">
+                      <span class="bg-[#FFF2E9] border border-[#FFE0C9] rounded px-1 py-0.5">
+                        <p class="text-xs font-medium text-[#667085] text-center">
+                          {{ subjects_hight_school.count }} Disciplinas
+                        </p>
+                      </span>
+                      <span class="bg-[#FFF2E9] border border-[#FFE0C9] rounded px-1 py-0.5">
+                        <p class="text-xs font-medium text-[#667085] text-center">
+                          {{ teachers_hight_school.count }} Professores
+                        </p>
+                      </span>
+                      <span class="bg-[#FFF2E9] border border-[#FFE0C9] rounded px-1 py-0.5">
+                        <p class="text-xs font-medium text-[#667085] text-center">
+                          {{ classes_hight_school.count }} Turmas
+                        </p>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="flex justify-center items-center">
+                <div class="flex items-center gap-4 text-sm leading-4">
+                  <!-- Content -->
+                </div>
+              </div>
+            </summary>
+            <div class="mt-4 space-y-8">
+              <div>
+                <h3 class="text-base font-semibold leading-7 text-gray-900">Disciplinas</h3>
+                <ul role="list" class="divide-y divide-gray-100">
+                  {% for subject in subjects_hight_school %}
+                    <li class="flex justify-between py-2">
+                      <p class="text-sm leading-6 text-gray-900">
+                        {{ subject.name }}
+                      </p>
+                    </li>
+                  {% empty %}
+                    <li class="flex justify-between py-2">
+                      <p class="text-sm leading-6 text-gray-900">
+                        Nenhuma disciplina cadastrada
+                      </p>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <div>
+                <h3 class="text-base font-semibold leading-7 text-gray-900">Professores</h3>
+                <ul role="list" class="divide-y divide-gray-100">
+                  {% for teacher in teachers_hight_school %}
+                    <li class="flex justify-between py-2">
+                      <p class="text-sm leading-6 text-gray-900">
+                        {{ teacher.name }}
+                      </p>
+                    </li>
+                  {% empty %}
+                    <li class="flex justify-between py-2">
+                      <p class="text-sm leading-6 text-gray-900">
+                        Nenhum professor cadastrado
+                      </p>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <div>
+                <h3 class="text-base font-semibold leading-7 text-gray-900">Turmas</h3>
+                <ul role="list" class="divide-y divide-gray-100">
+                  {% for school_class in classes_hight_school %}
+                    <li class="flex justify-between py-2">
+                      <p class="text-sm leading-6 text-gray-900">
+                        {{ school_class.name }}
+                      </p>
+                    </li>
+                  {% empty %}
+                    <li class="flex justify-between py-2">
+                      <p class="text-sm leading-6 text-gray-900">
+                        Nenhuma turma cadastrada
+                      </p>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </details>
+        </div>
+      </div>
+      <dialog id="modal2" class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:w-full sm:max-w-[45.5rem] sm:p-6">
+        <div>
+          <form method="dialog" class="absolute right-0 top-0 hidden pr-6 pt-6 sm:block">
+            <button type="submit" class="rounded-md bg-white text-[#D0D3D9] hover:text-[#BEC2CA] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+              <span class="sr-only">Fechar</span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </form>
+          <div>
+            <div>
+              <h3 class="text-2xl font-medium text-[#101928]" id="modal-title">
+                Veja o vídeo explicativo
+              </h3>
+            </div>
+            <div class="mt-4">
+              <iframe class="rounded" width="680" height="382.50" src="https://www.youtube.com/embed/YC8TVAtt5Og?si=6RX6LKTMhqZYFiQO" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture;" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            </div>
+          </div>
+        </div>
+      </dialog>
+    </main>
+    <footer class="flex justify-between border-t border-[#E5E7EA] px-[11.5rem] py-4">
+      <a href="{% url 'onboarding:detail' 3 %}" class="flex items-center gap-2 rounded-lg text-[#667085] py-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12.5 5L7.5 10L12.5 15" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Voltar
+      </a>
+      <a
+        href="{% url 'onboarding:define-permissions' 6 %}"
+        class="flex items-center gap-4 rounded-lg bg-primary-600 text-white px-[8.375rem] py-3 text-sm font-semibold hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+      >
+        Continuar
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4.1665 10H15.8332M15.8332 10L9.99984 4.16669M15.8332 10L9.99984 15.8334" stroke="white" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </footer>
+  </div>
+  <script>
+    let dialog2 = document.getElementById("modal2");
+
+    let buttonWatchVideo = document.getElementById("buttonWatchVideo");
+
+    dialog2.addEventListener("click", function onClick(event) {
+      if (event.target === dialog2) {
+        dialog2.close();
+      }
+    });
+
+    buttonWatchVideo.addEventListener("click", function onClick(event) {
+      dialog2.showModal();
+    });
+  </script>
+</body>
+</html>

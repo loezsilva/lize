@@ -1,0 +1,131 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load split %}
+
+{% block title %}Tutorial {{object.title}} - Lize{% endblock title %}
+
+
+{% block css-additional %}
+{% endblock css-additional %}
+    
+
+{% block main %}<main style="padding-top: 1rem; padding-bottom: 2.5rem;">{% endblock main %}
+{% block content-fixed %}
+<div class="ard cex ddc">
+    <div class="row d-flex justify-content-center align-items-center text-white" style="height: 180px; background-color: #FF8F3E; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+        <div class="col-12 col-lg-10">
+            <div class="text-white d-flex justify-content-between flex-wrap"><span class="tx-26 tx-medium">{{object.title}}</span><a href="javascript:;" class="btn btn-white rounded-pill" onclick="history.back()">Voltar</a></div>
+            <div>
+                {% include 'help/includes/search.html' %}
+            </div>
+        </div>
+    </div>
+    <div class="hos">
+        <template v-if="tutorial">
+            <div class="row d-flex justify-content-center">
+                <div class="col-12 col-lg-9">
+                    <div class="row" style="min-height: 70vh;" v-if="tutorial.emmbbededVideo">
+                        <div class="col-12">
+                            <div class="img-thumbnail" v-html="tutorial.emmbbededVideo"></div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12" v-if="tutorial.content">
+                            <div v-html="tutorial.content"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <div class="d-flex align-items-center">
+          <div class="btn-group mr-4" role="group" aria-label="Basic example">
+            <button
+              type="button"
+              class="btn btn-white"
+              :style="feedback && feedback.value == 'N' ? 'background-color: #f2f2f2; color: #161c2d' : 'color: #869ab8'"
+              @click="sendFeedback('dislike')"
+            >
+              <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path></svg>
+            </button>
+            <button
+              type="button"
+              class="btn btn-white"
+              :style="feedback && feedback.value == 'P' ? 'background-color: #f2f2f2; color: #161c2d' : 'color: #869ab8'"
+              @click="sendFeedback('like')"
+            >
+              <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+            </button>
+          </div>
+          <span class="text-sm text-secondary">Isso ajudou a resolver seu problema?</span>
+        </div>
+    </div>
+</div>
+{% endblock content-fixed %}
+{% block endmain %}</main>{% endblock endmain %}
+
+{% block js-additional %}
+
+<script>
+  moment.locale('pt-br')
+
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {
+      tutorial: null,
+      feedback: null,
+    },
+    methods: {
+      getTutorial() {
+        url = "{{object.get_urls.api_detail}}"
+        axios.get(url).then((response) => {
+          this.tutorial = response.data
+        })
+      },
+      extractYouTubeVideoId(url) {
+        const match = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/)
+        if (match && match[1]) {
+          return match[1]
+        } else {
+          return null
+        }
+      },
+      getThumbnail(tutorial) {
+        if (tutorial.thumbnail) {
+          return tutorial.thumbnail
+        }
+        id = this.extractYouTubeVideoId(tutorial.youtubeUrl)
+        return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
+      },
+      async getFeedback() {
+        const url = "{% url 'api:clients:tutoriais-feedback' object.pk %}"
+        try {
+          const response = await fetch(url)
+          if (response.status === 204) return
+          const data = await response.json()
+          this.feedback = data
+        } catch (error) {
+          console.log(error)
+        }
+      },
+      async sendFeedback(feeback) {
+        const url = "{% url 'api:clients:tutoriais-feedback' object.pk %}"
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ value: feeback == 'like' ? 'P' : 'N' }),
+        })
+        const data = await response.json()
+        this.feedback = data
+      },
+    },
+    mounted() {
+      this.getTutorial()
+      this.getFeedback()
+    },
+  })
+</script>
+{% endblock %}

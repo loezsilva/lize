@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block css-additional %}
+
+<style>
+  form i#togglePassword {
+    cursor: pointer;
+    top: -30px;
+    float: right;
+    margin-right: 17px;
+    font-size: 16px;
+    margin-bottom: p;
+    position: relative;
+  }
+  .linhaComTexto {
+    width: 100%;
+    height: 20px;
+    border-bottom: 1.5px solid rgb(174, 174, 174);
+    text-align: center;
+  }
+
+  .linhaComTexto > span {
+    font-size: 12px;
+    background-color: white;
+    position: relative;
+    top: 9px;
+    padding: 0 14px;
+    color: rgb(131, 131, 131);
+    font-weight: 700;
+  }
+  .content-div{
+    max-width: 65%;
+  }
+  @media only screen and (max-width: 600px) {
+    .content-div{
+      max-width: 85%;
+    }
+}
+  *{
+    font-family: 'Poppins', sans-serif;
+  }
+  input{
+    padding: 22px 15px 22px 15px !important;
+  }
+  .btn{
+    padding-top: 10px !important;
+    padding-bottom: 10px !important; 
+  }
+</style>
+{% endblock css-additional %}
+
+{% block content %}
+<div class="row mr-0 ml-0" style="min-height: 100%;">
+  <div class="col-12 col-md-6 bg-white d-flex justify-content-center align-items-center py-5">
+      <form class="content-div" method="POST" action=".">
+        {% csrf_token %}
+        <div class="sign-wrapper">
+          <div class="wd-100p py-3">
+            <img class="mb-3 d-block d-md-none" src="{% static 'mentorizze/logo-fundo-branco.png' %}" style="max-width: 250px;" alt="">
+
+            <h3 class="mg-b-5">Olá,</h3>
+            <p class="tx-16 mb-3">Seja bem vindo de volta ao Mentorizze!</p>
+
+              {% include 'includes/messages.html' with messages=messages only %}
+            
+            <a class="white btn btn-outline-secondary btn-block font-weight-bold"
+              href="{% url 'social:begin' 'google-oauth2' %}">
+              <img class="mr-2"
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/24px-Google_%22G%22_Logo.svg.png">
+              Entrar com o Google
+            </a>
+            <div class="linhaComTexto mt-4 mb-5">
+              <span>ou entre com seu email</span>
+            </div>
+            {% if form.non_field_errors %}
+            <p class="text-danger">
+              <em>Seu <strong>usuário</strong> e
+                <strong>senha</strong> não correspondem. Por favor, tente novamente.
+              </em>
+            </p>
+            {% endif %}
+            <div class="form-group">
+              <label class="font-weight-bold" for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+              <input class="form-control {% if form.username.errors %}is-invalid{% endif %}" placeholder="Digite seu usuário" type="text" id="{{ form.username.auto_id }}" name="{{ form.username.name }}" oninput="this.value=this.value.toLowerCase()" />
+              {% if form.username.errors %}
+                {% for error in form.username.errors %}
+                  <div class="invalid-feedback">
+                    {{ error|escape }}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <div class="d-flex justify-content-between mg-b-5">
+                <label class="font-weight-bold" for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+              </div>
+              <input class="form-control {% if form.password.errors %}is-invalid{% endif %}"
+                placeholder="Digite sua senha" type="password" id="{{ form.password.auto_id }}"
+                name="{{ form.password.name }}" />
+              <i class="far fa-eye-slash" id="togglePassword"></i>
+              {% if form.password.errors %}
+                {% for error in form.password.errors %}
+                  <div class="invalid-feedback">
+                    {{ error|escape }}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            </div>
+            <div class="row">
+              <div class="col-12">
+                Ao utilizar essa plataforma estou ciente e de acordo com o <a
+                  href="{% url 'terms' slug='aviso-privacidade' %}" target="_blank"> Aviso de Privacidade
+                </a> e
+
+                <a href="{% url 'terms' slug='condicoes-uso' %}" target="_blank"> Condições de Uso
+                </a> da Mentorizze.
+              </div>
+            </div>
+            <button type="submit" class="btn btn-brand-02 btn-block bg-primary font-weight-bold">Entrar agora</button>
+            
+          </div>
+        </div>
+      </form>
+  </div>
+  <div class="col-12 col-md-6 bg-primary d-flex justify-content-center align-items-center py-5"
+    style="box-shadow: -7px 8px 20px 0px #a0a0a0; border-top-left-radius: 35px;">
+    <div class="content-div">
+      <img class="mb-5" src="{% static 'mentorizze/logo-fundo-roxo.png' %}" style="max-width: 250px;" alt="">
+      <div class="mb-5">
+        <h3 style="color: #5df8fd;">01. Vantagem Injusta</h3>
+        <h6 class="text-white" style="font-weight: 400;">Com uma tecnologia que individualiza sua trila de estudos, você tem muito mais resultados e passa a ter uma vantagem injusta sobre a concorrência no dia do ENEM</h6>
+      </div>
+      <div class="mb-5">
+        <h3 style="color: #5df8fd;">02. Metodologia científica</h3>
+        <h6 class="text-white" style="font-weight: 400;">Para entregar suas listas individualizadas de estudo, a inteligência Artificial da plataforma se baseia numa metodologia cientificamente comprovada, fruto de investimentos pesados em treinamentos, cursos e formações em Neurociência</h6>
+      </div>
+      <div>
+        <h3 style="color: #5df8fd;">03. Feito por quem esteve no seu lugar</h3>
+        <h6 class="text-white" style="font-weight: 400;">A plataforma foi desenhada e criada a partir da experiência dos sócios-fundadores, que hoje cursam Medicina na Federal, já estiveram no seu lugar e sabem exatamente o que gostariam de ter tido</h6>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script type="text/javascript">
+  const togglePassword = document.querySelector("#togglePassword");
+  const password = document.querySelector("#id_password");
+
+  togglePassword.addEventListener("click", function () {
+      // toggle the type attribute
+      const type = password.getAttribute("type") === "password" ? "text" : "password";
+      password.setAttribute("type", type);
+      
+      // toggle the icon
+      this.classList.toggle("fa-eye-slash");
+      this.classList.toggle("fa-eye");
+  });
+
+
+  // delete cookies if key start with "_sleek_"
+  function delete_cookie(key) {
+    document.cookie = key + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+  }
+  function delete_all_cookies() {
+    var cookies = document.cookie.split(";");
+    for (var i = 0; i < cookies.length; i++) {
+      var cookie = cookies[i];
+      var eqPos = cookie.indexOf("=");
+      var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+      if (name.indexOf("_sleek_") == 0) {
+        delete_cookie(name);
+      }
+    }
+  }
+
+  delete_all_cookies()
+
+  // delete local storage if key start with "_sleek_"
+  function delete_local_storage(key) {
+    localStorage.removeItem(key);
+  }
+
+  function delete_all_local_storage() {
+    console.log(key)
+    var keys = Object.keys(localStorage);
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      if (key.indexOf("_sleek_") == 0) {
+        delete_local_storage(key);
+      }
+    }
+  }
+
+  delete_all_local_storage()
+
+  
+</script>
+{% endblock %}

@@ -1,0 +1,1186 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'administration/base.html' %} {% endcomment %}
+
+{% load static %}
+{% load increment %}
+{% load remove_line_break %}
+{% load get_answer_file_link %}
+{% load get_exam_question %}
+{% load call_method %}
+{% load exams_tags %}
+{% load permissions %}
+
+{% block title %}Diagramar caderno - Lize{% endblock title %}
+
+{% block css-additional %}
+<link
+  rel="stylesheet"
+  href="{% static 'new/administration/assets/css/dashforge.mail.css' %}"
+/>
+<style>
+.skeleton {
+  background-color: #ccc;
+  animation: loading 1.5s ease-in-out infinite;
+}
+
+@keyframes loading {
+  0% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.5;
+  }
+}
+</style>
+{% endblock css-additional %}
+
+{% block content-fixed %}
+<div id="app" class="ard cer dcv tw-mb-16">
+  <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+    <nav class="ls" aria-label="Breadcrumb">
+      <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+        <li>
+          <div>
+            <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+              </svg>
+              <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+            </a>
+          </div>
+        </li>
+        <li>
+          <div class="ls yu">
+            <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+              <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+            </svg>
+            <a href="{% url 'exams:exams_list' %}?category=exam" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Cadernos</a>
+          </div>
+        </li>
+        <li>
+          <div class="ls yu">
+            <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+              <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+            </svg>
+            <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Diagramar</a>
+          </div>
+        </li>
+      </ol>
+    </nav>
+    <div class="d-none d-md-block">
+      <a :href="pdfPreviewBase64" :download="convertToSlug('{{object.name}}')+'-'+'{{ object.id }}.pdf'" class="btn btn-sm pd-x-15 btn-white btn-uppercase mg-l-5">
+        <i data-feather="download" class="wd-10 mg-r-5"></i>
+        Baixar
+      </a>
+      <button
+        type="button"
+        class="btn btn-sm pd-x-15 btn-primary btn-uppercase mg-l-5"
+        @click="handleSubmitGeneralAndRebuildPdf()"
+      >
+        <i data-feather="refresh-cw" class="wd-10 mg-r-5"></i>
+        Atualizar visualização
+      </button>
+      <button @click="finishDiagration()" class="btn btn-sm pd-x-15 btn-warning btn-uppercase mg-l-5">
+        <i data-feather="archive" class="wd-10 mg-r-5"></i>
+        Finalizar diagramação
+      </button>
+    </div>
+  </div>
+  <div>
+    <h4>Diagramar caderno: {{object.name|truncatechars:50}}</h4>
+  </div>
+  <div class="row no-gutters">
+    <div class="col-12 col-md-3" style="padding-right: 5px;">
+      <div class="card">
+        <div class="card-header pd-10 d-md-flex align-items-center justify-content-between">
+          <h6 class="mg-b-0">Configuração de impressão</h6>
+        </div>
+        <div class="card-body p-0" style="height: calc(100vh - 253px); overflow-y: auto;">
+          <div class="row no-gutters">
+            <div class="col">
+              <div>
+                <div class="mail-group-body">
+                  <label class="mail-group-label">Geral</label>
+                  <ul class="list-unstyled media-list mg-b-0">
+                    <li
+                      class="media"
+                      :class="{ 'selected': kind === 'general' }"
+                      @click="handleClickGeneral()"
+                    >
+                      <div class="media-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <h6 class="tx-13">Formatar layout</h6>
+                          <div>
+                            <template v-if="examPrintConfig.editStatus === 'change'">
+                              <span class="tx-16 tx-color-03 tx-medium mg-b-0" title="As informações relacionadas a este item não foram salvas ainda.">
+                                <span class="tx-warning">
+                                  <i class="fe fe-alert-triangle"></i>
+                                </span>
+                              </span>
+                            </template>
+                          </div>
+                        </div>
+                        <p class="tx-12 tx-color-03 mg-b-0">
+                          Configure o layout geral do caderno 
+                        </p>
+                      </div>
+                    </li>
+                  </ul>
+                  <ul class="list-unstyled media-list mg-b-0">
+                    <template v-for="(examteachersubject, teacherIndex) in examteachersubjects">
+                      <label class="mail-group-label">#{examteachersubject.name}</label>
+                      <draggable handle=".move-handle" :group="{name: examteachersubject.id, put: canSwapGroups}" draggable=".item:not(.dont-move)" v-model="examteachersubject.examquestions" ghost-class="ghost" @add="switchGroups" @change="changeObjectsOrder(examteachersubject.examquestions)" class="list-group" @start="dragging = true" @end="dragging = false" :disabled="swaping">
+                        <transition-group>
+                          <li
+                            v-for="(examquestion, index) in examteachersubject.examquestions"
+                            :key="examquestion.id" 
+                            :data-examteachersubject="examteachersubject.id" 
+                            :data-examquestion="examquestion.id"
+                            class="media item" 
+                            :class="{
+                              'selected': kind === 'question' && questionSelected === examquestion.question.id
+                            }" 
+                            @click="handleClickQuestion(examquestion)" 
+                          >
+                            <div class="media-body" @mouseenter="examquestion['showOptions'] = true, $forceUpdate()" @mouseleave="examquestion['showOptions'] = false, $forceUpdate()">
+                              <div class="d-flex align-items-center justify-content-between">
+                                <h6 class="tx-13 mb-0">Questão #{examquestion.question.numberPrint}</h6>
+                                <div class="d-flex align-items-center">
+                                  <template v-if="examquestion['showOptions']" class="d-flex align-items-center">
+                                    {% if user.questions_configuration and user.questions_configuration.can_edit_and_change_position %}
+                                      <i v-if="canChangeQuestionsOrder" class="fas fa-arrows-alt-v mt-2 move-handle mr-2"></i>
+                                      <i class="fas fa-edit mt-2 mr-2" @click="openModal('/questoes/'+examquestion.question.id+'/editar/?is_popup=1');"></i>
+                                      {% if user.is_superuser %}
+                                        <i class="fas fa-edit mt-2 mr-2" @click="openModal('/questoes/'+examquestion.question.id+'/editar/?is_popup=1&v=2');" style="color: #0075a3;"></i>
+                                      {% endif %}
+                                    {% endif %}
+                                    {% if user|has_perm:'questions.can_duplicate_question' %}
+                                    <span class="mt-2 mr-2" :class="[examquestion['showOptions'] ? 'tw-visible' : 'tw-invisible']" @click="openCopyModal()">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M15 2H9a1 1 0 0 0-1 1v2c0 .6.4 1 1 1h6c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1Z"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2M16 4h2a2 2 0 0 1 2 2v2M11 14h10"/><path d="m17 10 4 4-4 4"/></svg>
+                                    </span>
+                                    {% endif %}
+                                  </template>
+                                  <template v-if="examquestion.question.editStatus === 'change'">
+                                    <span class="tx-16 tx-color-03 tx-medium mg-b-0" title="As informações relacionadas a este item não foram salvas ainda.">
+                                      <span class="tx-warning">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                      </span>
+                                    </span>
+                                  </template>
+                                  <template v-if="examquestion.sourceExamTeacherSubject.id && examquestion.sourceExamTeacherSubject.id != examquestion.switchedExamTeacherSubject.id">
+                                    <span :id="'tippy-'+examquestion.id" class="d-none">Questão originalmente atribuída a: #{examquestion.sourceExamTeacherSubject.name}</span>
+                                    <svg :data-template="'tippy-'+examquestion.id" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-2 mr-2 tippy-switched"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                                  </template>
+                                </div>
+                              </div>
+                              <p class="tx-12 tx-color-03 mg-b-0">
+                                #{ examquestion.question.enunciation }
+                              </p>
+                            </div>
+                          </li>
+                        </transition-group>
+                      </draggable>
+                    </template>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4" style="padding-right: 5px;">
+      <div class="card">
+        <div class="card-header pd-y-10 pd-r-10 d-md-flex align-items-center justify-content-between">
+          <div>
+            <h6 class="mg-b-0">Ajustes</h6>
+          </div>
+          <div>
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              style="font-size: 11px; font-weight: 600; letter-spacing: 1px; line-height: 1.454; border-width: 2px; padding: 0.16rem 0.85rem;"
+              :style="{ opacity: examPrintConfig.editStatus === 'idle' || examPrintConfig.editStatus === 'loading' ? 0.65 : 0.75 }"
+              @click="handleSubmitGeneralAndRebuildPdf()"
+              :disabled="generalEditStatus === 'idle' || generalEditStatus === 'loading'"
+            >
+              <span class="fe fe-upload-cloud" style="font-weight: 600;"></span>
+              <span>
+                <template v-if="generalEditStatus === 'loading'">Salvando...</template>
+                <template v-else>Salvar e visualizar</template>
+              </span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; line-height: 1.454; border-width: 2px; padding: 0.16rem 0.85rem;"
+              @click="handleSubmitGeneral()"
+              :disabled="generalEditStatus === 'idle' || generalEditStatus === 'loading'"
+            >
+              <span class="fe fe-upload-cloud" style="font-weight: 600;"></span>
+              <span>
+                <template v-if="generalEditStatus === 'loading'">Salvando...</template>
+                <template v-else>Salvar</template>
+              </span>
+            </button>
+          </div>
+        </div>
+        <div class="card-body" style="height: calc(100vh - 260px); overflow-y: auto;">
+          <form v-show="kind === 'general'" @change="handleExamPrintConfigEditStatus()">
+            <div class="form-group" v-if="printDefaults.length">
+              <label for="id-exam-print-config-default">Selecione o padrão de impressão</label>
+              <select class="form-control" id="id-exam-print-config-default" ref="inputPrintDefault" @change="selectPrintDefault()">
+                  <option value="">Não aplicar nenhum padrão de prova</option>
+                  <option :id="printDefault.id" v-for="printDefault in printDefaults">#{printDefault.name}</option>
+              </select>
+            </div>
+            {% include "dashboard/exams/v2/exam_configs_form.html" %}
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              style="font-size: 11px; font-weight: 600; letter-spacing: 1px; line-height: 1.454; border-width: 2px;"
+              :style="{ opacity: examPrintConfig.editStatus === 'idle' || examPrintConfig.editStatus === 'loading' ? 0.65 : 0.75 }"
+              @click="handleSubmitGeneralAndRebuildPdf()"
+              :disabled="examPrintConfig.editStatus === 'idle' || examPrintConfig.editStatus === 'loading'"
+            >
+              <span class="fe fe-upload-cloud" style="font-weight: 600;"></span>
+              <span>
+                <template v-if="examPrintConfig.editStatus === 'loading'">Salvando...</template>
+                <template v-else>Salvar e visualizar</template>
+              </span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; line-height: 1.454; border-width: 2px;"
+              @click="handleSubmitGeneral()"
+              :disabled="examPrintConfig.editStatus === 'idle' || examPrintConfig.editStatus === 'loading'"
+            >
+              <span class="fe fe-upload-cloud" style="font-weight: 600;"></span>
+              <span>
+                <template v-if="examPrintConfig.editStatus === 'loading'">Salvando...</template>
+                <template v-else>Salvar</template>
+              </span>
+            </button>
+          </form>
+          <form
+            v-if="kind === 'question' && selectedExamQuestion"
+            @change="handleExamQuestionPrintConfigEditStatus(selectedExamQuestion.question)"
+          >
+            <div>
+              <p class="tx-medium">Questão #{ selectedExamQuestion.question.numberPrint }</p>
+            </div>
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" :id="`id-print-only-enunciation-[${selectedExamQuestion.question.id}]`" v-model="selectedExamQuestion.question.printOnlyEnunciation" @>
+                <label class="custom-control-label" :for="`id-print-only-enunciation-[${selectedExamQuestion.question.id}]`">
+                  Imprimir apenas enunciado
+                </label>
+                <p class="tx-10 tx-gray-600">
+                  Marque esta opção se deseja remover o espaço para resposta do aluno (aplicável apenas para questões discursivas).
+                </p>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" :id="`id-break-enunciation-[${selectedExamQuestion.question.id}]`" v-model="selectedExamQuestion.question.breakEnunciation">
+                <label class="custom-control-label" :for="`id-break-enunciation-[${selectedExamQuestion.question.id}]`">
+                  Permitir quebra do enunciado
+                </label>
+                <p class="tx-10 tx-gray-600">
+                  Marque esta opção se deseja permitir que o enunciado seja separado em mais de uma coluna ou página.
+                </p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" :id="`id-break-alternatives-[${selectedExamQuestion.question.id}]`" v-model="selectedExamQuestion.question.breakAlternatives">
+                <label class="custom-control-label" :for="`id-break-alternatives-[${selectedExamQuestion.question.id}]`">
+                  Permitir quebra de alternativas
+                </label>
+                <p class="tx-10 tx-gray-600">
+                  Marque esta opção se deseja permitir que as alternativas sejam separadas em mais de uma coluna ou página.
+                </p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" :id="`id-force-one-column-[${selectedExamQuestion.question.id}]`" v-model="selectedExamQuestion.question.forceOneColumn">
+                <label class="custom-control-label" :for="`id-force-one-column-[${selectedExamQuestion.question.id}]`">
+                  Forçar uma coluna
+                </label>
+                <p class="tx-10 tx-gray-600">
+                  Marque esta opção se deseja que esta questão seja impressa em uma única coluna.
+                </p>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" :id="`id-force-choices-with-statement-[${selectedExamQuestion.question.id}]`" v-model="selectedExamQuestion.question.forceChoicesWithStatement">
+                <label class="custom-control-label" :for="`id-force-choices-with-statement-[${selectedExamQuestion.question.id}]`">
+                  Forçar alternativas junto ao enunciado.
+                </label>
+                <p class="tx-10 tx-gray-600">
+                  As alternativas de cada questão serão exibidas imediatamente junto ao enunciado. (Quebra de enunciado será desconsiderado.)
+                </p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="quantity">Quantidade de linhas</label>
+              <input type="number" class="form-control" :id="`id-quantity-[${selectedExamQuestion.question.id}]`" value="20" v-model="selectedExamQuestion.question.quantityLines" />
+            </div>
+            <div class="form-group">
+              <div v-if="canAddSupportContentDiscursiveQuestions">
+                <label for="support_content_question">Posição do conteúdo de suporte à questão</label>
+                <select class="form-control" v-model="selectedExamQuestion.question.supportContentPosition"  :id="`id-support-content-position-[${selectedExamQuestion.question.id}]`">
+                    <option value="center">Centralizada</option>
+                    <option value="left">À Esquerda</option>
+                    <option value="right">À Direita</option>
+                </select>
+              </div>
+          </div>
+            <div class="form-group">
+              <label for="quantity">Tipo de impressão de linhas</label>
+              <select class="form-control" v-model.number="selectedExamQuestion.question.textQuestionFormat" :id="`id-lines-type-[${selectedExamQuestion.question.id}]`">
+                <option value="0">Imprimir espaços em branco</option>
+                <option value="1">Imprimir linhas</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="`id-draftRowsNumber-[${selectedExamQuestion.question.id}]`">Quantidade de linhas para rascunho</label>
+              <input type="number" class="form-control" :id="`id-draftRowsNumber-[${selectedExamQuestion.question.id}]`" v-model.number="selectedExamQuestion.question.draftRowsNumber" />
+            </div>
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" :id="`id-force-break-page-[${selectedExamQuestion.question.id}]`" v-model="selectedExamQuestion.question.forceBreakPage">
+                <label class="custom-control-label" :for="`id-force-break-page-[${selectedExamQuestion.question.id}]`">
+                  Forçar quebra de página
+                </label>
+                <p class="tx-10 tx-gray-600">
+                  Marque esta opção se desejar que a questão esteja obrigatoriamente na próxima página ou coluna.
+                </p>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" :id="`id-number-is-hidden-[${selectedExamQuestion.question.id}]`" v-model="selectedExamQuestion.question.numberIsHidden">
+                <label class="custom-control-label" :for="`id-number-is-hidden-[${selectedExamQuestion.question.id}]`">
+                  Não mostrar numeração
+                </label>
+                <p class="tx-10 tx-gray-600">
+                  Marque esta opção se desejar ocultar a numeração da questão.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              style="font-size: 11px; font-weight: 600; letter-spacing: 1px; line-height: 1.454; border-width: 2px;"
+              :style="{ opacity: examPrintConfig.editStatus === 'idle' || examPrintConfig.editStatus === 'loading' ? 0.65 : 0.75 }"
+              @click="handleSubmitGeneralAndRebuildPdf()"
+              :disabled="selectedExamQuestion.question.editStatus === 'idle' || selectedExamQuestion.question.editStatus === 'loading'"
+            >
+              <span class="fe fe-upload-cloud" style="font-weight: 600;"></span>
+              <span>
+                <template v-if="selectedExamQuestion.question.editStatus === 'loading'">Salvando...</template>
+                <template v-else>Salvar e visualizar</template>
+              </span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; line-height: 1.454; border-width: 2px;"
+              @click="handleSubmitGeneral()"
+              :disabled="selectedExamQuestion.question.editStatus === 'idle' || selectedExamQuestion.question.editStatus === 'loading'"
+            >
+              <span class="fe fe-upload-cloud" style="font-weight: 600;"></span>
+              <span>
+                <template v-if="selectedExamQuestion.question.editStatus === 'loading'">Salvando...</template>
+                <template v-else>Salvar</template>
+              </span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-5" style="height: calc(100vh - 212px); overflow-y: auto;">
+      <div class="card h-100">
+        <div class="card-header pd-10 d-md-flex align-items-center justify-content-between">
+          <div class="d-flex justify-content-between w-100">
+            <div>
+              <p class="mg-b-0" style="color: #6A6B70;" v-show="pdfTotalPages !== ''">
+                #{ pdfTotalPages } página(s)
+              </p>
+            </div>
+            <div class="d-flex align-items-center">
+              <div v-show="haveUnsavedChanges()" class="card-todo">
+                <span class="badge badge-warning">Alterações ainda não foram salvas.</span>
+              </div>
+              {% if user.client_has_discursive_omr %}
+              <select id="teste" class="form-control form-control-sm ml-2" style="max-width: 200px;" v-model="pdfDocumment" @change="rebuildPdf()">
+                <option value="exam">Prova</option>
+                <option value="discursive-sheet">Folha de respostas discursivas</option>
+              </select>
+              {% endif %}
+              <a :href="pdfPreviewBase64" :download="convertToSlug('{{object.name}}')+'-'+'{{ object.id }}.pdf'" class="d-flex align-items-center justify-content-center" style="padding-left: 0.5rem; padding-right: 0.5rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 5px; color: #B5B5C0;">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+                <span style="color: #6B6C70;">
+                  Baixar PDF
+                </span>
+              </a>
+              <div style="border-left: 1px solid #E8E8EA;">
+                <button type="button" @click="rebuildPdf()" style="border: 0; background-color: transparent;">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; color: #D2D2DB;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <span v-if="alertStillLoading" class="pl-3 text-danger">o carregamento parece estar demorando mais que o esperado. <br/>Por favor, salve suas alterações e recarregue a página</span>
+        <div class="card-body pd-10">
+          <div v-show="statusPreviewPdf === 'idle'" style="width: 100%; height: 100%; background-color: #525659; display: flex; justify-content: center; align-items: center; border-width: 2px; border-style: inset; border-color: initial; border-image: initial;">
+            <p style="color: #fff; display: none;">Empty</p>
+          </div>
+          <div v-show="statusPreviewPdf === 'loading'" style="background-color: #525659; display: flex; justify-content: center; align-items: center; border-width: 2px; border-style: inset; border-color: initial; border-image: initial;">
+            <div style="background-color: #fff; width: 100%; height: calc(100% - 0.25rem); margin: 0.25rem;">
+              <div style="height: 100%; overflow: hidden; padding: 1rem;">
+                <div style="display: flex; gap: 0.5rem;">
+                  <span class="skeleton-wrapper skeleton" style="width: 30%; height: 40px;"></span>
+                  <span class="skeleton-wrapper skeleton" style="width: 70%; height: 40px;"></span>
+                </div>
+                <div style="display: flex; margin-top: 0.5rem;">
+                  <span class="skeleton-wrapper skeleton" style="width: 100%; height: 20px;"></span>
+                </div>
+                <div style="display: flex; margin-top: 2rem;">
+                  <span class="skeleton-wrapper skeleton" style="width: 100%; height: 10px;"></span>
+                </div>
+                <div style="display: flex; margin-top: 2rem;">
+                  <span class="skeleton-wrapper skeleton" style="width: 100%; height: 40px;"></span>
+                </div>
+                <div style="display: flex; margin-top: 2rem;">
+                  <span class="skeleton-wrapper skeleton" style="width: 100%; height: 40px;"></span>
+                </div>
+                <div style="display: flex; margin-top: 2rem;">
+                  <span class="skeleton-wrapper skeleton" style="width: 100%; height: 40px;"></span>
+                </div>
+                <div style="display: flex; margin-top: 2rem;">
+                  <span class="skeleton-wrapper skeleton" style="width: 100%; height: 40px;"></span>
+                </div>
+                <div style="display: flex; margin-top: 2rem;">
+                  <span class="skeleton-wrapper skeleton" style="width: 100%; height: 40px;"></span>
+                </div>
+                <div style="display: flex; margin-top: 2rem;">
+                  <span class="skeleton-wrapper skeleton" style="width: 100%; height: 40px;"></span>
+                </div>
+                <div style="display: flex; margin-top: 2rem;">
+                  <span class="skeleton-wrapper skeleton" style="width: 100%; height: 40px;"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <iframe
+            id="pdf-preview"
+            width="100%"
+            height="100%"
+            v-show="statusPreviewPdf === 'success'"
+            src=""
+          >
+          </iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<dialog id="copyQuestionDialog" class="tw-p-4 tw-px-8 tw-rounded-lg tw-w-1/3 tw-h-fit tw-overflow-visible">
+  <form onsubmit="return false" @submit="submitCopyQuestion()" class="tw-flex tw-flex-col tw-gap-4">
+    <div>
+      <h3 class="tw-mb-0">Copiar questão</h3>
+      <small>Copie essa questão para um outro caderno</small>
+    </div>
+    <div>
+      <label for="destinationExam" class="tw-block tw-mb-2 tw-text-sm tw-font-medium tw-text-gray-900">Caderno de destino</label>
+      <select id="availableExams" name="destinationExam" required class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6">
+        <option value="">Selecione o caderno de destino</option>
+      </select>
+    </div>
+    <div>
+      <label for="destinationExamTeacherSubject" class="tw-block tw-mb-2 tw-text-sm tw-font-medium tw-text-gray-900">Solicitação de destino</label>
+      <select id="availableExamTeacherSubjects" name="destinationExamTeacherSubject" required class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6">
+        <option value="">Selecione a solicitação de destino</option>
+        <option v-for="examTeacherSubject in availableExamTeacherSubjects" :value="examTeacherSubject.id" v-html="examTeacherSubject.name"></option>
+      </select>
+    </div>
+    <div class="tw-flex tw-items-start tw-mb-5 tw-gap-1">
+      <div class="tw-flex tw-items-center tw-h-5">
+        <input id="duplicateQuestion" type="checkbox" v-model="copyQuestionData.duplicateQuestion" class="tw-w-4 tw-h-4 tw-border tw-border-gray-300 tw-rounded tw-bg-gray-50 tw-focus:tw-ring-3 tw-focus:tw-ring-blue-300" />
+      </div>
+      <label for="duplicateQuestion" class="tw-ms-2 tw-text-sm tw-font-medium tw-text-gray-900 tw-flex tw-flex-col">Duplicar Questão no banco<small>Duplique a questão caso queira fazer alterações sem afetar a original</small></label>
+      
+    </div>
+    <div class="tw-flex tw-gap-3">
+      <button type="submit" class="tw-flex tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-lg tw-bg-primary-600 tw-px-9 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-primary-500 hover:tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600">
+        Enviar
+      </button>
+      <button @click="closeCopyModal()" type="button" class="tw-flex tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-lg tw-bg-primary-600 tw-px-9 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-primary-500 hover:tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600">
+        Cancelar
+      </button>
+    </div>
+  </form>
+</dialog>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.8.4/Sortable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Vue.Draggable/2.20.0/vuedraggable.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'js/tippy/popper.min.js' %}"></script>
+<script src="{% static 'js/tippy/tippy.min.js' %}"></script>
+
+<script>
+var app_question = new Vue({
+  delimiters: ["#{", "}"],
+  el: "#app",
+  data: {
+    alertStillLoading: false,
+    examPrintConfigObject: {
+      header: '{{ object.exam_print_config.header.pk|default_if_none:"" }}',
+      backgroundImage: '{{ object.exam_print_config.background_image.pk|default_if_none:"" }}',
+      customPages: [
+        {% for custom_page in object.exam_print_config.custom_pages.all %}
+          "{{custom_page.id}}",
+        {% endfor %}
+      ],
+      headerFormat: {% if not object.exam_print_config.header_format is None %}{{object.exam_print_config.header_format}}{% else %}1{% endif %},
+      columnType: {{ object.exam_print_config.column_type|default:0 }},
+      kind: {{ object.exam_print_config.kind|default:0 }},
+      textQuestionFormat: {% if not object.exam_print_config.text_question_format is None %}{{object.exam_print_config.text_question_format}}{% else %}1{% endif %},
+      lineHeight: {% if not object.exam_print_config.line_height is None %}{{object.exam_print_config.line_height}}{% else %}0{% endif %},
+      fontSize: {{ object.exam_print_config.font_size|default:0 }},
+      fontFamily: {{ object.exam_print_config.font_family|default:0 }},
+      printSubjectsName: {{ object.exam_print_config.print_subjects_name|yesno:'true,false' }},
+      printWithCorrectAnswers: {{ object.exam_print_config.print_with_correct_answers|yesno:'true,false' }},
+      hideQuestionsReferencies: {{ object.exam_print_config.hide_questions_referencies|yesno:'true,false' }},
+      hideAlternativesIndicator: {{ object.exam_print_config.hide_alternatives_indicator|yesno:'true,false' }},
+      hideKnowledgeAreasName: {{ object.exam_print_config.hide_knowledge_areas_name|yesno:'true,false' }},
+      printBlackAndWhiteImages: {{ object.exam_print_config.print_black_and_white_images|yesno:'true,false' }},
+      hyphenate: {{ object.exam_print_config.hyphenate|yesno:'true,false' }},
+      discursiveLineHeight: {% if not object.exam_print_config.discursive_line_height is None %}{{object.exam_print_config.discursive_line_height|stringformat:".2f"}}{% else %}1{% endif %},
+      showQuestionScore: {{ object.exam_print_config.show_question_score|yesno:'true,false' }},
+      showQuestionBoard: {{ object.exam_print_config.show_question_board|yesno:'true,false' }},
+      marginBottom:{{ object.exam_print_config.margin_bottom|stringformat:".2f"|default:0.6  }},
+      marginTop:{{ object.exam_print_config.margin_top|stringformat:".2f"|default:"0.6"  }},
+      marginLeft:{{ object.exam_print_config.margin_left|stringformat:".2f"|default:"0.6"  }},
+      marginRight: {{ object.exam_print_config.margin_right|stringformat:".2f"|default:"0.6"  }},
+      supportContentPosition: "{{ object.exam_print_config.support_content_position|lower }}",
+      uppercaseLetters: {{ object.exam_print_config.uppercase_letters|yesno:'true,false' }},
+      showFooter: {{ object.exam_print_config.show_footer|yesno:'true,false' }},
+      addPageNumber: {{ object.exam_print_config.add_page_number|yesno:'true,false' }},
+      economyMode: {{ object.exam_print_config.economy_mode|yesno:'true,false' }},
+      forceChoicesWithStatement: {{ object.exam_print_config.force_choices_with_statement|yesno:'true,false' }},
+      hideNumbering: {{ object.exam_print_config.hide_numbering|yesno:'true,false' }},
+      breakEnunciation: {{ object.exam_print_config.break_enunciation|yesno:'true,false' }},
+      breakAllQuestions: {{ object.exam_print_config.break_all_questions|yesno:'true,false' }},
+      discursiveQuestionSpaceType: {{ object.exam_print_config.discursive_question_space_type|default:0 }},
+      language: {{ object.exam_print_config.language|default:0 }},
+      breakAlternatives: {{ object.exam_print_config.break_alternatives|yesno:'true,false' }},
+    },
+    examPrintConfig: {},
+    generalEditStatus: 'idle',
+    pdfDocumment: 'exam',
+
+    pdfPreviewBase64: '',
+    pdfTotalPages: '',
+
+    kind: 'general',
+    questionSelected: '',
+    statusPreviewPdf: 'idle',
+    canSwapGroups: {{ user.questions_configuration.can_swap_questions_groups|lower|default:"false" }},
+    canAddSupportContentDiscursiveQuestions: {{ user.questions_configuration.can_add_support_content_discursive_questions|lower|default:"false" }},
+
+    startNumber: {{ exam.start_number|default:1 }},
+    examteachersubjects: [
+      {% for examteachersubject in examteachersubjects %}
+        {
+          name: '{{examteachersubject}}',
+          id: '{{examteachersubject.id}}',
+          subject: {
+            id: '{{examteachersubject.teacher_subject.subject.id}}',
+          },
+          examquestions: [
+            {% for examquestion in examteachersubject|get_exam_questions_availables %}
+              {
+                id: '{{examquestion.id}}',
+                order: {{examquestion.order}},
+                // controle para troca de solicitações
+                sourceExamTeacherSubject: {
+                  id: "{{ examquestion.source_exam_teacher_subject.id }}",
+                  name: "{{ examquestion.source_exam_teacher_subject }}"
+                },
+                currentExamTeacherSubject: {
+                  id: "{{ examquestion.exam_teacher_subject.id }}",
+                  name: "{{ examquestion.exam_teacher_subject }}"
+                },
+                switchedExamTeacherSubject: {
+                  id: "{{ examquestion.exam_teacher_subject.id }}",
+                  name: "{{ examquestion.exam_teacher_subject }}"
+                },
+                {% with examquestion.question as question %}
+                  question: {
+                    id: '{{ question.pk }}',
+                    numberPrint: {% if not question.number_is_hidden %}{% call_method exam 'number_print_question' question %}{% else %}''{% endif %},
+                    enunciation: '{{ question.get_enunciation_str|truncatechars:80|remove_line_break }}',
+                    // questionPrintConfig
+                    editStatus: 'idle',
+                    printOnlyEnunciation: {{ question.print_only_enunciation|lower }},
+                    breakEnunciation: {{ question.break_enunciation|lower }},
+                    forceOneColumn: {{ question.force_one_column|lower }},
+                    quantityLines: {{ question.quantity_lines|lower }},
+                    draftRowsNumber: {{ question.draft_rows_number|default:0 }},
+                    textQuestionFormat: {{ question.text_question_format|lower }},
+                    forceBreakPage: {{ question.force_break_page|lower }},
+                    forceChoicesWithStatement: {{ question.force_choices_with_statement|lower }},
+                    numberIsHidden: {{ question.number_is_hidden|lower }},
+                    hasBaseText: {{question.base_texts.exists|default:False|lower}},
+                    showOptions: false,
+                    supportContentQuestion: "{{ question.support_content_question|default:''|escapejs }}",
+                    supportContentPosition: "{{ question.support_content_position|lower }}",
+                    breakAlternatives: {{ question.break_alternatives|lower }},
+                  },
+                {% endwith %}
+              },
+            {% endfor %}
+          ]
+        },
+      {% endfor %}
+    ],
+    examquestions: [],
+    printDefaults: [],
+    printConfigControl: false,
+    selectedPrintDefault: null,
+    dragging: false,
+    questionIndex: 0,
+    selectedExamQuestion: null,
+    swaping: false,
+    currentYear: new Date().getFullYear(),
+    availableExams: [],
+    availableExamTeacherSubjects: [],
+    copyQuestionData: {
+      examQuestionToCopy: "",
+      destinationExam: "",
+      destinationExamTeacherSubject: "",
+      duplicateQuestion: false,
+    },
+    canChangeQuestionsOrder: {{ can_change_questions_order|lower }},
+    previousHeaderFormat: null,
+  },
+  mounted() {
+    this.$nextTick(() => {
+      this.previousHeaderFormat = this.examPrintConfig.headerFormat;
+    });
+
+    this.getExamQuestions()
+    axios.get("{% url 'api:clients:print-configs-list' %}").then((response) => this.printDefaults = response.data)
+    this.examPrintConfig = Object.assign({}, this.examPrintConfigObject)
+    $("#id-print-subjects-name").prop('checked', !this.examPrintConfig.printSubjectsName)
+    this.rebuildPdf();
+
+    $("#availableExams").select2({
+      width: '100%',
+      placeholder: 'Selecione', 
+      dropdownParent: $('dialog'),
+      ajax: {
+        url: '{% url "exams:exams_api_list" %}',
+        delay: 250,
+        data: function (params) {
+            return {
+                search: params.term
+            }
+        },
+        processResults: function(results) {
+            let new_results = $.map(results, function(element) {
+              element.text = element.name
+              return element
+            })
+            
+            return {
+                results: new_results,
+            }
+        }
+      },
+    })
+    $("#availableExamTeacherSubjects").select2({width: '100%', placeholder: 'Selecione', dropdownParent: $('dialog'),})
+    
+    $('#availableExams').on('select2:select', (e) => {
+      id = e.params.data.id
+      if (id) {
+        this.copyQuestionData.destinationExam = id
+      }
+    })
+    $('#availableExamTeacherSubjects').on('select2:select', (e) => {
+      id = e.params.data.id
+      if (id) {
+        this.copyQuestionData.destinationExamTeacherSubject = id
+      }
+    })
+    tippy('.tippy-switched', {
+      interactive: true,
+      sticky: true,
+      content(reference) {
+        const id = reference.getAttribute('data-template');
+        const template = document.getElementById(id);
+        return template.innerHTML;
+      }
+    });
+  },
+  watch: {
+    'copyQuestionData.destinationExam': function(newVal, oldVal) {
+      this.availableExamTeacherSubjects = []
+      this.copyQuestionData.destinationExamTeacherSubject = ""
+      
+      let url = '{% url "exams:exam_teacher_subjects_from_exam" %}' + `?exam_pk=${newVal}`
+      axios.get(`${url}`).then((res) => {
+        this.availableExamTeacherSubjects = res.data
+      })
+
+    }
+
+  },
+  watch: {
+    'examPrintConfig.headerFormat': function(newValue) {
+      if (newValue !== this.previousHeaderFormat) {
+          this.handleExamPrintConfigEditStatus();
+        this.previousHeaderFormat = newValue; // Atualiza o valor anterior
+      }
+    },
+    'examPrintConfig.marginRight': function(value){
+      if (value < 0.6 || value == null || value <= 0) {
+        this.examPrintConfig.marginRight = 0.6;
+      }
+    },
+    'examPrintConfig.marginLeft': function(value){
+      if (value < 0.6 || value == null || value <= 0) {
+        this.examPrintConfig.marginLeft = 0.6;
+      }
+    },
+    'examPrintConfig.marginBottom': function(value){
+      if (value < 0.6 || value == null || value <= 0) {
+        this.examPrintConfig.marginBottom = 0.6;
+      }
+    },
+    'examPrintConfig.marginTop': function(value){
+      if (value < 0.6 || value == null || value <= 0) {
+        this.examPrintConfig.marginTop = 0.6;
+      }
+    },
+  },
+  methods: {
+    openCopyModal() {
+      document.getElementById("copyQuestionDialog").showModal()
+    },
+    closeCopyModal() {
+      let dialogEl = document.getElementById("copyQuestionDialog")
+      dialogEl.close()
+      dialogEl.querySelectorAll("button").forEach((btn) => btn.disabled = false)
+    },
+    submitCopyQuestion() {
+      this.copyQuestionData.examQuestionToCopy = this.selectedExamQuestion.id
+
+      let url = '{% url "exams:exam_question_copy" %}'
+      axios.post(url, this.copyQuestionData).then((res) => {
+        let dialogEl = document.getElementById("copyQuestionDialog")
+        dialogEl.querySelectorAll("button").forEach((btn) => btn.disabled = false)
+
+        this.alertTop('Questão copiada com sucesso!')
+        this.closeCopyModal()
+
+      }).catch(() => {
+        this.alertTop('Erro ao copiar a questão.', 'error')
+
+        let dialogEl = document.getElementById("copyQuestionDialog")
+        dialogEl.querySelectorAll("button").forEach((btn) => btn.disabled = false)
+        console.error("Erro ao copiar a questão")
+
+      })
+
+    },
+    changePrintSubject() {
+      this.examPrintConfig.printSubjectsName = !$("#id-print-subjects-name").prop('checked')
+    },
+    haveUnsavedChanges() {
+      return this.examPrintConfig.editStatus === 'change' || this.examquestions.some(examquestion => examquestion.question.editStatus === 'change');
+    },
+    async handleSubmitExamPrintConfig() {
+      this.generalEditStatus = 'loading';
+      this.examPrintConfig.editStatus = 'loading';
+      const url = '{% url "api:exams-api:exam-print-config-update" exam_id=object.id %}';
+        if (!this.examPrintConfig.marginLeft) {
+          this.examPrintConfig.marginLeft = 0; 
+        }  
+        if (!this.examPrintConfig.marginBottom) {
+          this.examPrintConfig.marginBottom = 0.6; 
+        } 
+        if (!this.examPrintConfig.marginRight) {
+          this.examPrintConfig.marginRight = 0; 
+        }  
+        if (!this.examPrintConfig.marginTop) {
+          this.examPrintConfig.marginTop = 0.6; 
+        } 
+        let body = {
+          header: this.examPrintConfig.header || null,
+          backgroundImage: this.examPrintConfig.backgroundImage || null,
+          headerFormat: this.examPrintConfig.headerFormat,
+          columnType: this.examPrintConfig.columnType,
+          kind: this.examPrintConfig.kind,
+          textQuestionFormat: this.examPrintConfig.textQuestionFormat,
+          lineHeight: this.examPrintConfig.lineHeight,
+          discursiveLineHeight: this.examPrintConfig.discursiveLineHeight,
+          fontSize: this.examPrintConfig.fontSize,
+          fontFamily: this.examPrintConfig.fontFamily,
+          printSubjectsName: this.examPrintConfig.printSubjectsName,
+          printWithCorrectAnswers: this.examPrintConfig.printWithCorrectAnswers,
+          hideQuestionsReferencies: this.examPrintConfig.hideQuestionsReferencies,
+          hideAlternativesIndicator: this.examPrintConfig.hideAlternativesIndicator,
+          hideKnowledgeAreasName: this.examPrintConfig.hideKnowledgeAreasName,
+          printBlackAndWhiteImages: this.examPrintConfig.printBlackAndWhiteImages,
+          hyphenate: this.examPrintConfig.hyphenate,
+          showQuestionScore: this.examPrintConfig.showQuestionScore,
+          showQuestionBoard: this.examPrintConfig.showQuestionBoard,
+          marginTop: this.examPrintConfig.marginTop,
+          marginBottom: this.examPrintConfig.marginBottom,
+          marginRight: this.examPrintConfig.marginRight,
+          marginLeft: this.examPrintConfig.marginLeft,
+          supportContentPosition: this.supportContentPosition,
+          uppercaseLetters: this.examPrintConfig.uppercaseLetters,
+          showFooter: this.examPrintConfig.showFooter,
+          addPageNumber: this.examPrintConfig.addPageNumber,
+          economyMode: this.examPrintConfig.economyMode,
+          forceChoicesWithStatement: this.examPrintConfig.forceChoicesWithStatement,
+          hideNumbering: this.examPrintConfig.hideNumbering,
+          breakEnunciation: this.examPrintConfig.breakEnunciation,
+          breakAllQuestions: this.examPrintConfig.breakAllQuestions,
+          discursiveQuestionSpaceType: this.examPrintConfig.discursiveQuestionSpaceType,
+          language: this.examPrintConfig.language,
+          breakAlternatives: this.examPrintConfig.breakAlternatives,
+      }
+            
+      {% comment %} if(this.selectedPrintDefault) {
+        axios.patch(this.selectedPrintDefault.urls.apiDetail, body).then((response) => {
+          this.generalEditStatus = 'success';
+          this.examPrintConfig.editStatus = 'success';
+        }).catch((e) => {
+          this.generalEditStatus = 'error';
+          this.examPrintConfig.editStatus = 'error';
+        })
+        return
+      }  {% endcomment %}
+
+      try {
+        const res = await fetch(url, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        
+        this.generalEditStatus = 'success';
+        this.examPrintConfig.editStatus = 'success';
+        this.examPrintConfigObject = this.examPrintConfig
+      } catch (error) {
+        console.error(error);
+        this.generalEditStatus = 'error';
+        this.examPrintConfig.editStatus = 'error';
+      }
+    },
+    handleExamPrintConfigEditStatus() {
+      if(this.printConfigControl) {
+        this.printConfigControl = false
+        return
+      }
+      this.generalEditStatus = 'change';
+      this.examPrintConfig.editStatus = 'change';
+    },
+    async handleSubmitExamQuestionPrintConfig(question) {
+
+      this.generalEditStatus = 'loading';
+      question.editStatus = 'loading';
+      const baseUrl = '{% url "api:exams-api:exam-question-print-config-update" exam_id=object.id question_id="00000000-0000-0000-0000-000000000000" %}';
+      const url = baseUrl.replace('00000000-0000-0000-0000-000000000000', question.id);
+      try {
+        const res = await fetch(url, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            printOnlyEnunciation: question.printOnlyEnunciation,
+            breakEnunciation: question.breakEnunciation,
+            breakAlternatives: question.breakAlternatives,
+            forceOneColumn: question.forceOneColumn,
+            quantityLines: question.quantityLines,
+            draftRowsNumber: question.draftRowsNumber,
+            textQuestionFormat: question.textQuestionFormat,
+            forceBreakPage: question.forceBreakPage,
+            numberIsHidden: question.numberIsHidden,
+            supportContentQuestion: question.supportContentQuestion,
+            supportContentPosition: question.supportContentPosition,
+            forceChoicesWithStatement: question.forceChoicesWithStatement,
+          }),
+        });
+        const data = await res.json();
+
+        this.generalEditStatus = 'success';
+        question.editStatus = 'idle';
+      } catch (error) {
+        console.error(error);
+        this.generalEditStatus = 'error';
+        question.editStatus = 'error';
+      }
+    },
+    handleExamQuestionPrintConfigEditStatus(question) {
+      this.generalEditStatus = 'change';
+      question.editStatus = 'change';
+    },
+    async handleSubmitGeneralAndRebuildPdf() {
+      await this.handleSubmitGeneral()
+      this.rebuildPdf()
+    },
+    async handleSubmitGeneral() {
+      if (this.kind === 'general') {
+        await this.handleSubmitExamPrintConfig()
+      } else {
+        const examquestion = this.examquestions.find(examquestion => examquestion.question.id === this.questionSelected)
+        await this.handleSubmitExamQuestionPrintConfig(examquestion.question)
+      }
+    },
+    handleClickGeneral() {
+      this.kind = 'general';
+    },
+    handleClickQuestion(examQuestion) {
+      this.kind = 'question';
+      this.questionSelected = examQuestion.question.id;
+      this.selectedExamQuestion = examQuestion
+    },
+    convertBase64ToBlob(dataURI) {
+      const byteString = atob(dataURI.split(',')[1])
+      
+      const arrayBuffer = new ArrayBuffer(byteString.length)
+      let uint8Array = new Uint8Array(arrayBuffer)
+      
+      for (let i = 0; i < byteString.length; i++) {
+        uint8Array[i] = byteString.charCodeAt(i)
+      }
+      return arrayBuffer
+    },
+    async convertBase64ToBlobWithFetch(dataURI) {
+      const r = await fetch(dataURI)
+      const blob = await r.blob()
+      return blob
+    },
+    sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    },
+    async rebuildPdf() {
+
+      this.statusPreviewPdf = 'loading';
+
+      var iframePreview = document.getElementById('pdf-preview');
+      iframePreview.src = '';
+
+
+      const examPreviewUrl = `/api/v1/exams/{{ object.pk }}/pdf-preview/`
+      const discursiveSheetPreviewUrl = `{% url 'omr:omr_discursive_print_preview' exam_id=object.pk %}`
+
+      let timeElapsed = setTimeout(() => {
+        this.alertStillLoading = true
+      }, 20000);
+      await this.sleep(1000);
+
+      const res = await fetch(this.pdfDocumment == 'exam' ? examPreviewUrl : discursiveSheetPreviewUrl)
+      
+      const data = await res.json()
+      
+      const blob = await this.convertBase64ToBlobWithFetch(data.url)
+
+      const file = new Blob([blob], {type: 'application/pdf'})
+      const fileURL = URL.createObjectURL(file)
+
+      this.pdfPreviewBase64 = data.url;
+      this.pdfTotalPages = data.totalPages;
+      
+      iframePreview.src = fileURL + '#toolbar=0&navpanes=0';
+      await this.sleep(1000);
+      this.statusPreviewPdf = 'success';
+      this.alertStillLoading = false
+      clearTimeout(timeElapsed);
+
+    },
+    selectPrintDefault() {
+      const id = $(this.$refs['inputPrintDefault']).children(":selected").attr("id")
+      const printDefault = this.printDefaults.find(_default => _default.id == id)
+      
+      if(printDefault) {
+        this.getConfig(printDefault).then((response) => {
+          this.examPrintConfig = response.data
+          this.selectedPrintDefault = response.data
+        })
+      } else { 
+        this.selectedPrintDefault = null
+        this.examPrintConfig = Object.assign({}, this.examPrintConfigObject)
+      }
+
+      this.generalEditStatus = 'change';
+
+      this.printConfigControl = true
+    },
+    getConfig(printDefault) {
+      return axios.get(printDefault.urls.getConfig)
+    },
+    convertToSlug(str) {
+      str = str.replace(/^\s+|\s+$/g, ''); // trim
+      str = str.toLowerCase();
+      // remove accents, swap ñ for n, etc
+      var from = "ãàáäâẽèéëêìíïîõòóöôùúüûñç·/_,:;";
+      var to   = "aaaaaeeeeeiiiiooooouuuunc------";
+      for (var i = 0, l = from.length; i < l; i++) {
+          str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i));
+      }
+  
+      str = str.replace(/[^a-z0-9 -]/g, '') // remove invalid chars
+          .replace(/\s+/g, '-') // collapse whitespace and replace by -
+          .replace(/-+/g, '-'); // collapse dashes
+      return str;
+    },
+    alertTop(text, icon = 'success', timer = 1500) {
+      Swal.fire({
+          position: 'top-end',
+          text: text,
+          icon: icon,
+          showConfirmButton: false,
+          timer: timer,
+          timerProgressBar: true,
+          toast: true,
+      })
+    },
+    switchGroups(e){
+      // captura o evento de alteração entre grupos e troca o atributo de controle das questões
+      const fromExamTeacherSubject = e.item.getAttribute("data-examteachersubject")
+      const toExamTeacherSubject = Object.values(e.to)[1].options.group.name
+
+      const switchedQuestionId = e.item.getAttribute("data-examquestion")
+
+      let foundExamTeacherSubject = this.examteachersubjects.find((examteachersubject) => examteachersubject.id == toExamTeacherSubject)
+      if(foundExamTeacherSubject){
+        let foundExamQuestion = foundExamTeacherSubject.examquestions.find((examquestion) => examquestion.id == switchedQuestionId)
+        if(foundExamQuestion){
+          foundExamQuestion.switchedExamTeacherSubject.id = toExamTeacherSubject
+        }else{
+          console.log("questão não encontrada na solicitação")
+        }
+      }else{
+        console.log("Solicitação não encontrada")
+      }
+    },
+    getExamQuestionsNumber(examQuestions) {
+        if(examQuestions && examQuestions.length) {
+          axios.get("{% url 'exams:api-exam-get-exam-questions-number' pk=object.id %}").then((response) => {
+            this.examteachersubjects.forEach((et) => {
+              response.data.forEach((_e) => {
+                let examQuestion = et.examquestions.find((e) => e.id == _e.id)
+                if(examQuestion) {
+                  examQuestion.question.numberPrint = _e.exam_question_number
+                }
+              })
+            })
+          })
+        }
+      },
+    changeObjectsOrder(examQuestions) {
+
+      this.swaping = true
+      object = {
+        exam_questions: examQuestions,
+      }
+      axios.put("{% url 'exams:api-exam-swap-position' %}", object).then((response) => {
+        this.alertTop('As alterações foram salvas.')
+        this.generalEditStatus = 'change';
+        this.examPrintConfig.editStatus = 'change';
+        this.getExamQuestionsNumber(examQuestions)
+      }).catch((error) => {
+          this.alertTop('Erro ao tentar modificar a ordem das questões, tente novamente, caso o erro persista entre em contato com o suporte.', 'error')
+      }).finally(() => {
+        this.swaping = false
+      })
+    },
+    getExamQuestions() {
+      this.examteachersubjects.forEach((examteachersubject) => {
+        examteachersubject.examquestions.forEach((examquestion) => this.examquestions.push(examquestion))
+      })
+    },
+    openModal(url){
+      let popupWidth = screen.width / 2
+      var leftPos = screen.width - popupWidth;
+      window.open(url, "DescriptiveWindowName", "width=" + popupWidth + ", height=1040, top=0, left=" + leftPos +", resizable,scrollbars,status");
+    },
+    call(result) {
+      if (result.updated) {
+        
+        this.selectedExamQuestion.question.enunciation = result.enunciation
+        this.selectedExamQuestion.question.quantityLines = result.quantity_lines
+        this.selectedExamQuestion.question.draftRowsNumber = result.draft_rows_number
+        this.selectedExamQuestion.question.textQuestionFormat = result.text_question_format
+        this.selectedExamQuestion.question.breakEnunciation = result.break_enunciation
+        this.selectedExamQuestion.question.forceOneColumn = result.force_one_column
+        this.selectedExamQuestion.question.forceBreakPage = result.force_break_page
+        this.selectedExamQuestion.question.printOnlyEnunciation = result.print_only_enunciation
+        this.selectedExamQuestion.question.numberIsHidden = result.number_is_hidden
+        this.selectedExamQuestion.question.supportContentQuestion = result.support_content_question
+        this.selectedExamQuestion.question.supportContentPosition = result.support_content_position
+        this.selectedExamQuestion.question.forceChoicesWithStatement = result.force_choices_with_statement
+        this.selectedExamQuestion.question.breakAlternatives = result.break_alternatives
+
+        this.selectedExamQuestion.question.editStatus = 'change'
+      }
+
+    },
+    finishDiagration() {
+      Swal.fire({
+        title: 'Você confirma',
+        text: 'Ao confirmar, você concorda que o caderno será marcado como "Fechado"',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        cancelButtonText: 'Cancelar',
+        confirmButtonText: 'Sim, confirmo!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          axios.patch("{% url 'exams:api-exam-detail' object.id %}", { status: 2 }).then((response) => {
+            this.alertTop('O caderno foi alterado para: Fechado, aguarde, você será redirecionado...')
+            
+            axios.post("{% url 'notifications:api-especial-notification' %}", { where: "after_diagramation" }) // Responsável por criar notificação personalizada após diagramar um caderno
+
+            window.location.href = "{% url 'exams:exams_list' %}"
+          }).catch((response) => {
+            this.alertTop('Ocorreu um erro ao tentar alterar o status do caderno', 'error')
+          })
+        }
+      })
+    }
+  },
+});
+</script>
+{% endblock js-additional %}

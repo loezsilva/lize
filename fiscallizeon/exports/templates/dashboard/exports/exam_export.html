@@ -1,0 +1,707 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load format_duration %}
+{% load proportion %}
+{% load l10n %}
+{% load widget_tweaks %}
+
+
+{% block title %}Exportação de dados da prova - Lize{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">EXPORTAR</a></li>
+          <li class="breadcrumb-item active" aria-current="page">PROVA</li>
+        </ol>
+      </nav>
+      <h4>{{ object.name }}</h4>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+      <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+        <nav class="ls" aria-label="Breadcrumb">
+          <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+            <li>
+              <div>
+                <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                    <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+                </a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="{% url 'exams:exams_list' %}?category=exam" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Cadernos</a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Exportar</a>
+              </div>
+            </li>
+          </ol>
+        </nav>
+      </div>
+      <div><h4>{{object.name}}</h4></div>
+<div class="row">
+    <div class="col-md-12">
+        <ul class="nav nav-tabs" id="myTab" role="tablist">            
+            <li class="nav-item">
+                <a class="nav-link active" id="export-tab" data-toggle="tab" href="#export-erp" role="tab" aria-controls="export-erp" aria-selected="true">Exportação para ERP</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="export-tab" data-toggle="tab" href="#export-answers" role="tab" aria-controls="export-answers" aria-selected="false">Exportação de respostas</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="export-tab" data-toggle="tab" href="#simple-export" role="tab" aria-controls="simple-export" aria-selected="false">Exportação de acertos e erros</a>
+            </li>
+            {% if object.has_text_correction_questions %}
+            <li class="nav-item">
+                <a class="nav-link" id="export-tab" data-toggle="tab" href="#export-corrections" role="tab" aria-controls="export-corrections" aria-selected="false">Exportação de competências (redação)</a>
+            </li>
+            {% endif %}
+        </ul>
+        <div class="card card-body tab-content mb-3" id="tabContent">
+            <div class="tab-pane show active" id="export-erp" role="tabpanel" aria-labelledby="profile-tab">
+                <form action="{% url 'exports:exam_export_report' pk=object.pk %}">
+                    <div class="row mb-0">
+                        <div class="col-6">
+                            <h6>Unidade:</h6>
+                            <select class="form-control mb-3" name="unidade">
+                                <option value="">Todas as unidades</option>
+                                {% for unity in unities %}
+                                    <option value="{{ unity.pk }}">{{ unity }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-6">
+                            <h6>Turma:</h6>
+                            <select class="form-control mb-3" name="turma">
+                                <option value="">Todas as turmas</option>
+                                {% for school_class in school_classes %}
+                                    <option 
+                                        value="{{ school_class.pk }}"
+                                        {% if school_class.pk|stringformat:"s" == request.GET.turma %}selected="selected"{% endif %}
+                                    >{{ school_class }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <h6>Disciplinas:</h6>
+                    <select multiple class="form-control" name="disciplinas" id="subjects-export">
+                        {% for subject in exam_subjects %}
+                            <option 
+                                value="{{ subject.pk }}"
+                                {% if subject.pk|stringformat:"s" in subjects_filter %}selected="selected"{% endif %}
+                            >{{ subject }}</option>
+                        {% endfor %}
+                    </select> 
+
+                    <div class="row mb-0">
+                        <div class="col-4">
+                            <h6 class="mt-3">Formato de exportação:</h6>            
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-outline-primary btn-lg active">
+                                <input type="radio" name="formato" id="formato_default" value="xlsx" autocomplete="off"
+                                    checked>
+                                    <i class="fas fa-file-excel"></i>
+                                    XLSX
+                                </label>
+                                <label class="btn btn-outline-primary btn-lg">
+                                <input type="radio" name="formato" id="formato_csv" value="csv" autocomplete="off">
+                                    <i class="fas fa-file-csv"></i>
+                                    CSV
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-4">
+                            <h6 class="mt-3">Alunos:</h6>
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-outline-primary btn-lg active">
+                                <input type="radio" name="alunos" id="todos" value="todos" autocomplete="off"
+                                    checked>                            
+                                    Todos
+                                </label>
+                                <label class="btn btn-outline-primary btn-lg">
+                                <input type="radio" name="alunos" id="presentes" value="presentes" autocomplete="off">                            
+                                    Presentes
+                                </label>
+                                <label class="btn btn-outline-primary btn-lg">
+                                <input type="radio" name="alunos" id="ausentes" value="ausentes" autocomplete="off">
+                                    Ausentes
+                                </label>
+                            </div>
+                        </div>       
+                        
+                        <div class="col-4">
+                            <h6 class="mt-3">Disciplinas:</h6>
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-outline-primary btn-lg active">
+                                <input type="radio" name="disciplinas-detalhadas" value="somadas" autocomplete="off" checked>
+                                    Somadas
+                                </label>
+                                <label class="btn btn-outline-primary btn-lg">
+                                <input type="radio" name="disciplinas-detalhadas" value="colunas" autocomplete="off">                       
+                                    Colunas
+                                </label>
+                                <label class="btn btn-outline-primary btn-lg">
+                                <input type="radio" name="disciplinas-detalhadas" value="linhas" autocomplete="off">
+                                    Linhas
+                                </label>                                
+                            </div>
+                        </div>  
+                         
+                    </div>
+
+                    <div class="row">   
+
+                        <div class="col-4">
+                            <div class="custom-control custom-switch mt-4">
+                                <input type="checkbox" id="extra_columns" name="colunas-extras" class="custom-control-input" value="1">
+                                <label class="custom-control-label" for="extra_columns">
+                                <h6 class="mb-0">Adicionar unidade e turma</h6>
+                                </label>
+                                <small class="form-text text-muted mt-0">
+                                Selecione essa opção se deseja adicionar os campos<br/>"turma" e "unidade" à planilha.
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="col-4">
+                            <div class="custom-control custom-switch mt-4">
+                                <input type="checkbox" id="show_exam_name" name="show_exam_name" class="custom-control-input" value="1">
+                                <label class="custom-control-label" for="show_exam_name">
+                                <h6 class="mb-0">Adicionar nome do caderno</h6>
+                                </label>
+                                <small class="form-text text-muted mt-0">
+                                Selecione essa opção se deseja adicionar o "nome do caderno" à planilha.
+                                </small>
+                            </div>
+                        </div>  
+
+                        {% if not object.is_abstract and user.user_type == 'coordination'  %}
+
+                            <div class="col-4" id="div-teacher_name_first">
+                                <div class="custom-control custom-switch mt-4">
+                                    <input type="checkbox" id="show_teacher_name" name="show_teacher_name" class="custom-control-input" value="1">
+                                    <label class="custom-control-label" for="show_teacher_name">
+                                    <h6 class="mb-0">Adicionar nome do professor</h6>
+                                    </label>
+                                    <small class="form-text text-muted mt-0">
+                                        Selecione essa opção se deseja adicionar o nome do professor na exportação
+                                    </small>
+                                </div>
+                            </div>  
+
+                        {% endif %}
+                        
+                    </div>
+
+                    <button                  
+                        type="submit"
+                        class="mr-2 btn btn-success float-right not-disable">
+                        Exportar relatório
+                    </button>
+                </form>
+            </div>
+
+            <div class="tab-pane fade" id="export-answers" role="tabpanel" aria-labelledby="profile-tab">
+                <form action="{% url 'exports:exam_export_report_answers' pk=object.pk %}" method="POST">
+                    {% csrf_token %}
+                    <div class="row mb-0">
+                        <div class="col-12">
+                            <p>Esse modelo de exportação irá gerar uma planilha com todas as respostas dos alunos.</p>
+                        </div>
+                        <div class="col-12">
+                            <h6 class="mt-3">Período de exportação:</h6>
+
+                            <div class="row mb-1">
+                                <div class="col-3">
+                                    <input type="date" class="form-control" name="start_date" id="start_date_id"
+                                        type="date">
+                                </div>
+                                <div class="col-1 text-center" style="line-height: 40px;">
+                                    até
+                                </div>
+                                <div class="col-3">
+                                    <input type="date" class="form-control" name="end_date" id="start_date_id"
+                                        type="date">
+                                </div>
+                            </div>
+                           <p class="text-muted m-0 p-0">Deixe vazio caso deseje baixar todas as respostas</p>
+                        </div>
+                        
+                        
+                        <div class="col-4">
+                            <h6 class="mt-3">Extensão do arquivo:</h6>
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-outline-primary btn-lg active">
+                                <input type="radio" name="file_format" id="formato_default" value="xlsx" autocomplete="off"
+                                    checked>
+                                    <i class="fas fa-file-excel"></i>
+                                    XLSX
+                                </label>
+                                <label class="btn btn-outline-primary btn-lg">
+                                <input type="radio" name="file_format" id="formato_csv" value="csv" autocomplete="off">
+                                    <i class="fas fa-file-csv"></i>
+                                    CSV
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <h6 class="mt-3">Disposição do arquivo:</h6>
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-outline-primary btn-lg active">
+                                <input type="radio" name="export_disposition" id="todos" value="rows" autocomplete="off" checked>
+                                    Linhas
+                                </label>
+                                <label class="btn btn-outline-primary btn-lg">
+                                <input type="radio" name="export_disposition" id="presentes" value="columns" autocomplete="off">
+                                    Colunas
+                                </label>
+                            </div>
+                        </div>
+                        {% if not object.is_abstract and user.user_type == 'coordination'  %}
+                        <div class="col-4" id="div-teacher_name_second">
+                            <div class="custom-control custom-switch mt-4">
+                                <input type="checkbox" id="add_teacher_name" name="add_teacher_name"
+                                    class="custom-control-input" value="1">
+                                <label class="custom-control-label" for="add_teacher_name">
+                                    <h6 class="mb-0">Adicionar nome do professor</h6>
+                                </label>
+                                <small class="form-text text-muted mt-0">
+                                   Marque essa opção para adicionar o nome do professor de cada resposta
+                                </small>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="col-4">
+                            <div class="custom-control custom-switch mt-4">
+                                <input type="checkbox" id="only_correct_wrong" name="only_correct_wrong"
+                                    class="custom-control-input" value="1">
+                                <label class="custom-control-label" for="only_correct_wrong">
+                                    <h6 class="mb-0">Apenas acerto e erro</h6>
+                                </label>
+                                <small class="form-text text-muted mt-0">
+                                    Será usado 1 para acerto e 0 para erro
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="custom-control custom-switch mt-4">
+                                <input type="checkbox" id="add_topic" name="add_topic"
+                                    class="custom-control-input" value="1">
+                                <label class="custom-control-label" for="add_topic">
+                                    <h6 class="mb-0">Adicionar assuntos abordados</h6>
+                                </label>
+                                <small class="form-text text-muted mt-0">
+                                    Selecione essa opção se deseja adicionar assuntos abordados em cada questão no relatório
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="custom-control custom-switch mt-4">
+                                <input type="checkbox" id="add_bncc" name="add_bncc"
+                                    class="custom-control-input" value="1">
+                                <label class="custom-control-label" for="add_bncc">
+                                    <h6 class="mb-0">Adicionar habilidades e competências</h6>
+                                </label>
+                                <small class="form-text text-muted mt-0">
+                                    Selecione essa opção se deseja adicionar as habilidades e competências abordadas em cada questão no relatório
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="mr-2 btn btn-success float-right not-disable">
+                        Exportar relatório
+                    </button>
+                </form>
+            </div>
+            
+            <div class="tab-pane fade" id="simple-export" role="tabpanel" aria-labelledby="profile-tab">
+                <form action="{% url 'exports:exam_export_simple_report' pk=object.pk %}">
+                    <div class="row mb-0">
+                        <div class="col-6">
+                            <h6>Unidade:</h6>
+                            <select class="form-control mb-3" name="unidade">
+                                <option value="">Todas as unidades</option>
+                                {% for unity in unities %}
+                                    <option value="{{ unity.pk }}">{{ unity }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-6">
+                            <h6>Turma:</h6>
+                            <select class="form-control mb-3" name="turma">
+                                <option value="">Todas as turmas</option>
+                                {% for school_class in school_classes %}
+                                    <option 
+                                        value="{{ school_class.pk }}"
+                                        {% if school_class.pk|stringformat:"s" == request.GET.turma %}selected="selected"{% endif %}
+                                    >{{ school_class }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-0">
+                        <div class="col-4">
+                            <h6 class="mt-3">Formato de exportação:</h6>            
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-outline-primary btn-lg active">
+                                <input type="radio" name="formato" id="formato_default" value="xlsx" autocomplete="off"
+                                    checked>
+                                    <i class="fas fa-file-excel"></i>
+                                    XLSX
+                                </label>
+                                <label class="btn btn-outline-primary btn-lg">
+                                <input type="radio" name="formato" id="formato_csv" value="csv" autocomplete="off">
+                                    <i class="fas fa-file-csv"></i>
+                                    CSV
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-4">
+                            <h6 class="mt-3">Alunos:</h6>
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-outline-primary btn-lg active">
+                                <input type="radio" name="alunos" id="todos" value="todos" autocomplete="off"
+                                    checked>
+                                    Todos
+                                </label>
+                                <label class="btn btn-outline-primary btn-lg">
+                                <input type="radio" name="alunos" id="presentes" value="presentes" autocomplete="off">
+                                    Presentes
+                                </label>
+                                <label class="btn btn-outline-primary btn-lg">
+                                <input type="radio" name="alunos" id="ausentes" value="ausentes" autocomplete="off">
+                                    Ausentes
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="custom-control custom-switch mt-4">
+                                <input type="checkbox" id="separate_subjects" name="separar-disciplinas" class="custom-control-input" value="1">
+                                <label class="custom-control-label" for="separate_subjects">
+                                <h6 class="mb-0">Separar por disciplina</h6>
+                                </label>
+                                <small class="form-text text-muted mt-0">
+                                Selecione essa opção se deseja separar os acertos e erros por disciplina.
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="col-4">
+                            <div class="custom-control custom-switch mt-4">
+                                <input type="checkbox" id="extra_columns_simple" name="colunas-extras" class="custom-control-input" value="1">
+                                <label class="custom-control-label" for="extra_columns_simple">
+                                <h6 class="mb-0">Adicionar unidade e turma</h6>
+                                </label>
+                                <small class="form-text text-muted mt-0">
+                                Selecione essa opção se deseja adicionar os campos<br/>"turma" e "unidade" à planilha.
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="col-4">
+                            <div class="custom-control custom-switch mt-4">
+                                <input type="checkbox" id="adicionar-nome-caderno" name="adicionar-nome-caderno" class="custom-control-input" value="1">
+                                <label class="custom-control-label" for="adicionar-nome-caderno">
+                                <h6 class="mb-0">Adicionar nome do caderno</h6>
+                                </label>
+                                <small class="form-text text-muted mt-0">
+                                Selecione essa opção se deseja adicionar o "nome do caderno" à planilha.
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="col-4">
+                            <div class="custom-control custom-switch mt-4">
+                                <input type="checkbox" id="adicionar-nome-professor" name="adicionar-nome-professor" class="custom-control-input" value="1">
+                                <label class="custom-control-label" for="adicionar-nome-professor">
+                                <h6 class="mb-0">Adicionar nome do professor</h6>
+                                </label>
+                                <small class="form-text text-muted mt-0">
+                                Selecione essa opção se deseja adicionar o nome do professor que inseriu a questão à planilha.
+                                </small>
+                            </div>
+                        </div>
+                        
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="mr-2 btn btn-success float-right not-disable">
+                        Exportar relatório
+                    </button>
+                </form>
+            </div>
+            
+            {% if object.has_text_correction_questions %}
+            <div class="tab-pane fade" id="export-corrections" role="tabpanel" aria-labelledby="profile-tab">
+                <form action="{% url 'exports:exam_export_corrections' pk=object.pk %}">
+                    <div class="row mb-0">
+                        <div class="col-6">
+                            <h6>Unidade:</h6>
+                            <select class="form-control mb-3" name="unidade">
+                                <option value="">Todas as unidades</option>
+                                {% for unity in unities %}
+                                    <option value="{{ unity.pk }}">{{ unity }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-6">
+                            <h6>Turma:</h6>
+                            <select class="form-control mb-3" name="turma">
+                                <option value="">Todas as turmas</option>
+                                {% for school_class in school_classes %}
+                                    <option 
+                                        value="{{ school_class.pk }}"
+                                        {% if school_class.pk|stringformat:"s" == request.GET.turma %}selected="selected"{% endif %}
+                                    >{{ school_class }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-0">
+                        <div class="col-4">
+                            <h6 class="mt-3">Formato de exportação:</h6>
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-outline-primary btn-lg active">
+                                <input type="radio" name="formato" id="formato_default" value="xlsx" autocomplete="off"
+                                    checked>
+                                    <i class="fas fa-file-excel"></i>
+                                    XLSX
+                                </label>
+                                <label class="btn btn-outline-primary btn-lg">
+                                <input type="radio" name="formato" id="formato_csv" value="csv" autocomplete="off">
+                                    <i class="fas fa-file-csv"></i>
+                                    CSV
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="custom-control custom-switch mt-4">
+                                <input type="checkbox" id="extra_columns_corrections" name="colunas-extras" class="custom-control-input" value="1">
+                                <label class="custom-control-label" for="extra_columns_corrections">
+                                <h6 class="mb-0">Adicionar unidade e turma</h6>
+                                </label>
+                                <small class="form-text text-muted mt-0">
+                                Selecione essa opção se deseja adicionar os campos<br/>"turma" e "unidade" à planilha.
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="col-4">
+                            <div class="custom-control custom-switch mt-4">
+                                <input type="checkbox" id="show_exam_name_corrections" name="adicionar-nome-caderno" class="custom-control-input" value="1">
+                                <label class="custom-control-label" for="show_exam_name_corrections">
+                                <h6 class="mb-0">Adicionar nome do caderno</h6>
+                                </label>
+                                <small class="form-text text-muted mt-0">
+                                Selecione essa opção se deseja adicionar o "nome do caderno" à planilha.
+                                </small>
+                            </div>
+                        </div>
+
+                        {% if not object.is_abstract and user.user_type == 'coordination'  %}
+
+                            <div class="col-4" id="div-teacher_name_first">
+                                <div class="custom-control custom-switch mt-4">
+                                    <input type="checkbox" id="show_teacher_name_corrections" name="adicionar-nome-professor" class="custom-control-input" value="1">
+                                    <label class="custom-control-label" for="show_teacher_name_corrections">
+                                    <h6 class="mb-0">Adicionar nome do professor</h6>
+                                    </label>
+                                    <small class="form-text text-muted mt-0">
+                                        Selecione essa opção se deseja adicionar o nome do professor na exportação
+                                    </small>
+                                </div>
+                            </div>  
+
+                        {% endif %}
+                        
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="mr-2 btn btn-success float-right not-disable">
+                        Exportar relatório
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+<div aria-hidden="true" class="modal  fade" id="exportResultsModal" role="dialog" tabindex="-1">
+  <div class="modal-dialog modal-md" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-truncate">Exportação de resultados de prova</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times</span>
+        </button> 
+      </div>
+      <div class="modal-body" style="max-height: fit-content; height: fit-content;">
+        <div id="exporting-info">
+          <h6>Exportação em andamento... <i class="fas fa-spinner fa-spin text-primary mt-2"></i></h6>
+          <p>Mantenha esta janela aberta enquanto geramos o link para download dos resultados.</p>
+          <div class="progress">
+            <div
+                class="progress-bar bg-primary progress-bar-striped progress-bar-animated" 
+                role="progressbar"
+                id="progressbar"
+                style="width: 2%">
+            </div>
+          </div>
+        </div>
+
+        <div id="exported-info" class="d-none">
+          <p>Você pode baixar o arquivo com os resultados das provas clicando no botão abaixo:</p>
+          <a href="#" target="_blank" id="download-results-url" class="btn btn-primary btn-block">
+            <i class="fas fa-download"></i>
+             Baixar resultados
+          </a>
+        </div>
+        <div id="exported-pending" class="d-none p-3">
+            <h6>Exportação em andamento... <i class="fas fa-spinner fa-spin text-primary mt-2"></i></h6>
+            <p>A importação esta na fila, em breve será iniciada.</p>
+        </div>
+        <div id="exported-error" class="d-none p-3">
+          <p class="text-danger">Um erro aconteceu no processo de exportação. Tente novamente em alguns instantes.</p>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-center"></div>
+    </div>
+  </div>
+</div>
+{% endblock extra-modal %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+
+<script type="text/javascript">
+    $(document).ready(function(){
+        moment.locale('pt-br')
+    
+        $('#subjects-export').select2({
+            placeholder: "Todas as disciplinas",
+            closeOnSelect: false
+        });
+
+    $('input[type=radio][name=disciplinas-detalhadas]').change(function() {
+        if (this.value == 'colunas') {
+            $("#div-teacher_name_first").hide()
+            $("#show_teacher_name").prop( "checked", false);
+        }
+        else {
+            $("#div-teacher_name_first").show()
+        }
+    });
+
+    $('input[type=radio][name=export_disposition]').change(function() {
+        if (this.value == 'columns') {
+            $("#div-teacher_name_second").hide()
+            $("#add_teacher_name").prop( "checked", false);
+        }
+        else {
+            $("#div-teacher_name_second").show()
+        }
+    });
+
+    {% if export_id %}
+        $('#exportResultsModal').modal('show');
+        $('#myTab a[href="#export-answers"]')[0].click()
+
+        setTimeout(function() {}, 5000);
+
+        var x = setInterval(
+            function() {
+                const url = `{% url 'core:get_generic_task_status' %}?task_id=EXAMS_EXPORT_RESULTS_{{export_id}}`;
+                axios.get(url)
+                .then(function(response) {
+                    const data = response.data
+                    console.log(data)
+
+                    switch (data.status) {
+                        case 'PROGRESS':
+                            const {done, total} = data.details
+                            const progress = Math.round(done / total * 100)
+                            $('.progress-bar').css('width', `${progress}%`)
+                            break
+                        case 'SUCCESS':
+                            clearInterval(x)
+                            $('#download-results-url').attr('href', response.data.details)
+                            $('#exported-info').removeClass('d-none')
+                            $('#exported-pending').addClass('d-none')
+                            $('#exporting-info').addClass('d-none')
+                            $('#exported-error').addClass('d-none')
+                            break
+                        case 'PENDING':
+                            $('#exported-pending').removeClass('d-none')
+                            $('#exported-error').addClass('d-none')
+                            $('#exporting-info').addClass('d-none')
+                            break
+                        case 'FAILURE' || 'REVOKED' || 'REJECTED':
+                            clearInterval(x)
+                            $('#exported-error').removeClass('d-none')
+                            $('#exported-pending').addClass('d-none')
+                            $('#exporting-info').addClass('d-none')
+                            break
+                    }
+                })
+                .catch(function(response) {
+                    $('#exported-error').removeClass('d-none')
+                    $('#exporting-info').addClass('d-none')
+                    $('#exported-pending').addClass('d-none')
+                    clearInterval(interval)
+                })
+            },
+            5000
+        );
+    {% endif %}
+    })
+</script>
+{% endblock js-additional %}

@@ -1,0 +1,1711 @@
+{% extends 'redesign/base_without_sidebar.html' %}
+{% load static %}
+{% block title %}Lize - Prévia da prova{% endblock title %}
+{% load permissions %}
+
+{% load remove_line_break %}
+{% load get_value_from_dict %}
+{% load call_method %}
+{% load questions_tags %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<link rel="stylesheet" href="{% static 'css/jquery-ui.min.css' %}">
+<style>
+    
+.text-5 {
+    font-family: Inter;
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0em;
+    text-align: left;
+    }
+
+.lize-card hr{
+    background-color: #000;
+    margin-top: 0.8cm !important;
+}
+.border-pedagogical-data{
+	border-bottom-left-radius: 0.50rem !important;
+	border-bottom-right-radius: 0.50rem !important;
+}
+</style>
+{% endblock %}
+
+{% block content-fixed %}
+<div v-if="examQuestions">
+  <div class="row m-0" style="background-color: #cccccc1c;">
+      	<div class="offset-1 d-lg-block d-none"></div>
+        <div class="col-2 p-4 d-lg-block d-none px-4" style="max-height: calc(100vh - 60px); overflow-y: scroll;">
+            <div class="row">
+                <div class="col-12">
+                    <h3 class="tw-text-xl tw-text-ellipsis tw-overflow-hidden">{{ object.name }}</h3>
+                </div>
+                <div class="col-12 mt-3 pr-0">
+                    <small class="text-muted">Progresso</small>
+                    <div class="d-flex mt-2 align-items-center">
+                        <div class="tw-flex tw-items-center lz-parent tw-w-full">
+                            <div class="tw-relative tw-w-full">
+                            <div class="tw-overflow-hidden tw-text-xs tw-flex tw-rounded-full tw-h-2.5 tw-mr-2 tw-bg-gray-200">
+                                <div style="width: {{ object.new_percentage_status_questions.approved_and_use_later_questions_percentage }}%" class="tw-shadow-none tw-flex tw-flex-col tw-text-center tw-whitespace-nowrap tw-text-white tw-justify-center tw-bg-green-600"></div>
+                                <div style="width: {{ object.new_percentage_status_questions.other_questions_percentage }}%" class="tw-shadow-none tw-flex tw-flex-col tw-text-center tw-whitespace-nowrap tw-text-white tw-justify-center tw-bg-yellow-500"></div>
+                            </div>
+                            </div>
+                            <span class="tw-text-[#9BA3AF]">
+                            {{ object.new_percentage_status_questions.total_delivered_percentage }}%
+                            </span>
+                            {% with object.get_status_only_value as get_status_only_value %}
+                            {% with no_review_questions=get_status_only_value|get_value_from_dict:'Sem revisão'|default_if_none:0 checked_questions=get_status_only_value|get_value_from_dict:'Visto(s)'|default_if_none:0 awaiting_correction_questions=get_status_only_value|get_value_from_dict:'Aguardando correção'|default_if_none:0 approved_questions=get_status_only_value|get_value_from_dict:'Aprovada(s)'|default_if_none:0 use_later_questions=get_status_only_value|get_value_from_dict:'Usar depois'|default_if_none:0 canceled_questions=get_status_only_value|get_value_from_dict:'Anulada(s)'|default_if_none:0 rejected_questions=get_status_only_value|get_value_from_dict:'Reprovada(s)'|default_if_none:0 %}
+                                {% if no_review_questions > 0 or checked_questions > 0 or awaiting_correction_questions > 0 or approved_questions > 0 or use_later_questions > 0 or canceled_questions > 0 or rejected_questions > 0 %}
+                                <div class="tw-absolute tw-bottom-[-138px] tw-ml-auto tw-max-w-xl tw-min-h-[172px] tw-rounded-lg tw-z-[1] lz-hidden-element"{% if objects_count > 3 and forloop.last %} style="inset: 0px auto auto 0px; transform: translate3d(0px, -140px, 0px);"{% endif %}>
+                                <div class="tw-pointer-events-auto tw-rounded-lg tw-bg-white tw-px-3 tw-pt-2 tw-pb-4 tw-shadow-lg tw-ring-1 tw-ring-gray-900/10">
+                                    <p class="tw-text-sm tw-leading-6 tw-text-gray-900 tw-mb-2">
+                                    {{ questions_count }} Questões
+                                    </p>
+                                    <div class="tw-space-y-1 tw-min-w-[12.4rem]">
+                                        {% if no_review_questions > 0 %}
+                                        <div class="tw-flex tw-items-center tw-gap-2 tw-rounded tw-px-1.5 tw-bg-[#FFCB561A]">
+                                            <span>
+                                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                                <path d="M7.99976 6.00015V8.66682M7.99976 11.3335H8.00642M7.07663 2.59464L1.59338 12.0657C1.28924 12.591 1.13717 12.8537 1.15965 13.0693C1.17925 13.2573 1.27776 13.4282 1.43067 13.5394C1.60597 13.6668 1.90948 13.6668 2.5165 13.6668H13.483C14.09 13.6668 14.3935 13.6668 14.5688 13.5394C14.7217 13.4282 14.8203 13.2573 14.8399 13.0693C14.8623 12.8537 14.7103 12.591 14.4061 12.0657L8.92288 2.59463C8.61983 2.07119 8.46831 1.80947 8.27062 1.72157C8.09818 1.64489 7.90133 1.64489 7.72889 1.72157C7.5312 1.80947 7.37968 2.07119 7.07663 2.59464Z" stroke="#FFCB56" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                            </span>
+                                            <span>{{ no_review_questions }} sem revisão</span>
+                                        </div>
+                                        {% endif %}
+                                        {% if checked_questions > 0 %}
+                                        <div class="tw-flex tw-items-center tw-gap-2 tw-rounded tw-px-1.5 tw-bg-[#0C7BDB1A]">
+                                            <span>
+                                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                                <path d="M1.61342 8.47562C1.52262 8.33186 1.47723 8.25998 1.45182 8.14911C1.43273 8.06583 1.43273 7.9345 1.45182 7.85122C1.47723 7.74035 1.52262 7.66847 1.61341 7.52471C2.36369 6.33672 4.59693 3.3335 8.00027 3.3335C11.4036 3.3335 13.6369 6.33672 14.3871 7.52471C14.4779 7.66847 14.5233 7.74035 14.5487 7.85122C14.5678 7.9345 14.5678 8.06583 14.5487 8.14911C14.5233 8.25998 14.4779 8.33186 14.3871 8.47562C13.6369 9.6636 11.4036 12.6668 8.00027 12.6668C4.59693 12.6668 2.36369 9.6636 1.61342 8.47562Z" stroke="#0C7BDB" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                                                <path d="M8.00027 10.0002C9.10484 10.0002 10.0003 9.10473 10.0003 8.00016C10.0003 6.89559 9.10484 6.00016 8.00027 6.00016C6.8957 6.00016 6.00027 6.89559 6.00027 8.00016C6.00027 9.10473 6.8957 10.0002 8.00027 10.0002Z" stroke="#0C7BDB" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                            </span>
+                                            <span>{{ checked_questions }} visto(s)</span>
+                                        </div>
+                                        {% endif %}
+                                        {% if awaiting_correction_questions > 0 %}
+                                        <div class="tw-flex tw-items-center tw-gap-2 tw-rounded tw-px-1.5 tw-bg-[#0C7BDB1A]">
+                                            <span>
+                                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                                <g clip-path="url(#clip0_569_1715)">
+                                                <path d="M7.99992 4.00016V8.00016L10.6666 9.3335M14.6666 8.00016C14.6666 11.6821 11.6818 14.6668 7.99992 14.6668C4.31802 14.6668 1.33325 11.6821 1.33325 8.00016C1.33325 4.31826 4.31802 1.3335 7.99992 1.3335C11.6818 1.3335 14.6666 4.31826 14.6666 8.00016Z" stroke="#0C7BDB" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </g>
+                                                <defs>
+                                                <clipPath id="clip0_569_1715">
+                                                    <rect width="16" height="16" fill="white"/>
+                                                </clipPath>
+                                                </defs>
+                                            </svg>
+                                            </span>
+                                            <span>{{ awaiting_correction_questions }} aguardando correção</span>
+                                        </div>
+                                        {% endif %}
+                                        {% if approved_questions > 0 %}
+                                        <div class="tw-flex tw-items-center tw-gap-2 tw-rounded tw-px-1.5 tw-bg-[#41C5881A]">
+                                            <span>
+                                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                                <g clip-path="url(#clip0_569_1701)">
+                                                <path d="M14.6666 7.39065V8.00398C14.6658 9.44159 14.2003 10.8404 13.3395 11.9919C12.4787 13.1433 11.2688 13.9856 9.89016 14.3932C8.51154 14.8009 7.03809 14.7519 5.68957 14.2537C4.34104 13.7555 3.18969 12.8347 2.40723 11.6287C1.62476 10.4227 1.25311 8.99602 1.3477 7.56152C1.44229 6.12702 1.99806 4.76153 2.93211 3.66869C3.86615 2.57586 5.12844 1.81423 6.53071 1.49741C7.93298 1.18059 9.4001 1.32554 10.7133 1.91065M14.6666 2.66683L7.99992 9.34016L5.99992 7.34016" stroke="#41C588" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </g>
+                                                <defs>
+                                                <clipPath id="clip0_569_1701">
+                                                    <rect width="16" height="16" fill="white"/>
+                                                </clipPath>
+                                                </defs>
+                                            </svg>
+                                            </span>
+                                            <span>{{ approved_questions }} aprovada(s)</span>
+                                        </div>
+                                        {% endif %}
+                                        {% if use_later_questions > 0 %}
+                                        <div class="tw-flex tw-items-center tw-gap-2 tw-rounded tw-px-1.5 tw-bg-[#D92D201A]">
+                                            <span>
+                                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                                <path d="M2.66659 5.33106C2.55725 5.32824 2.47785 5.32191 2.40646 5.30771C1.87754 5.2025 1.46408 4.78904 1.35887 4.26012C1.33325 4.13132 1.33325 3.97644 1.33325 3.66667C1.33325 3.3569 1.33325 3.20201 1.35887 3.07321C1.46408 2.54429 1.87754 2.13083 2.40646 2.02562C2.53526 2 2.69015 2 2.99992 2H12.9999C13.3097 2 13.4646 2 13.5934 2.02562C14.1223 2.13083 14.5358 2.54429 14.641 3.07321C14.6666 3.20201 14.6666 3.3569 14.6666 3.66667C14.6666 3.97644 14.6666 4.13132 14.641 4.26012C14.5358 4.78904 14.1223 5.2025 13.5934 5.30771C13.522 5.32191 13.4426 5.32824 13.3333 5.33106M6.66659 8.66667H9.33325M2.66659 5.33333H13.3333V10.8C13.3333 11.9201 13.3333 12.4802 13.1153 12.908C12.9235 13.2843 12.6176 13.5903 12.2412 13.782C11.8134 14 11.2534 14 10.1333 14H5.86659C4.74648 14 4.18643 14 3.7586 13.782C3.38228 13.5903 3.07632 13.2843 2.88457 12.908C2.66659 12.4802 2.66659 11.9201 2.66659 10.8V5.33333Z" stroke="#D92D20" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                            </span>
+                                            <span>{{ use_later_questions }} usar depois</span>
+                                        </div>
+                                        {% endif %}
+                                        {% if canceled_questions > 0 %}
+                                        <div class="tw-flex tw-items-center tw-gap-2 tw-rounded tw-px-1.5 tw-bg-[#D92D201A]">
+                                            <span>
+                                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                                <g clip-path="url(#clip0_569_1709)">
+                                                <path d="M9.99992 6.00016L5.99992 10.0002M5.99992 6.00016L9.99992 10.0002M14.6666 8.00016C14.6666 11.6821 11.6818 14.6668 7.99992 14.6668C4.31802 14.6668 1.33325 11.6821 1.33325 8.00016C1.33325 4.31826 4.31802 1.3335 7.99992 1.3335C11.6818 1.3335 14.6666 4.31826 14.6666 8.00016Z" stroke="#D92D20" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </g>
+                                                <defs>
+                                                <clipPath id="clip0_569_1709">
+                                                    <rect width="16" height="16" fill="white"/>
+                                                </clipPath>
+                                                </defs>
+                                            </svg>
+                                            </span>
+                                            <span>{{ canceled_questions }} anulada(s)</span>
+                                        </div>
+                                        {% endif %}
+                                        {% if rejected_questions > 0 %}
+                                        <div class="tw-flex tw-items-center tw-gap-2 tw-rounded tw-px-1.5 tw-bg-[#D92D201A]">
+                                            <span>
+                                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                                <path d="M10.6667 4.00016V3.46683C10.6667 2.72009 10.6667 2.34672 10.5213 2.06151C10.3935 1.81063 10.1895 1.60665 9.93865 1.47882C9.65344 1.3335 9.28007 1.3335 8.53333 1.3335H7.46667C6.71993 1.3335 6.34656 1.3335 6.06135 1.47882C5.81046 1.60665 5.60649 1.81063 5.47866 2.06151C5.33333 2.34672 5.33333 2.72009 5.33333 3.46683V4.00016M6.66667 7.66683V11.0002M9.33333 7.66683V11.0002M2 4.00016H14M12.6667 4.00016V11.4668C12.6667 12.5869 12.6667 13.147 12.4487 13.5748C12.2569 13.9511 11.951 14.2571 11.5746 14.4488C11.1468 14.6668 10.5868 14.6668 9.46667 14.6668H6.53333C5.41323 14.6668 4.85318 14.6668 4.42535 14.4488C4.04903 14.2571 3.74307 13.9511 3.55132 13.5748C3.33333 13.147 3.33333 12.5869 3.33333 11.4668V4.00016" stroke="#D92D20" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                            </span>
+                                            <span>{{ rejected_questions }} reprovada(s)</span>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                </div>
+                                {% endif %}
+                            {% endwith %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                    <hr style="border-color: #E5E7EA !important;">
+                </div>
+                <div class="col-12">
+                    {% comment %} <p class="text-muted d-flex align-items-center mb-2 tx-16">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people mx-2 lize-text-gray" viewBox="0 0 16 16">
+                            <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h8Zm-7.978-1A.261.261 0 0 1 7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002a.274.274 0 0 1-.014.002H7.022ZM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM6.936 9.28a5.88 5.88 0 0 0-1.23-.247A7.35 7.35 0 0 0 5 9c-4 0-5 3-5 4 0 .667.333 1 1 1h4.216A2.238 2.238 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816ZM4.92 10A5.493 5.493 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275ZM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0Zm3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"/>
+                        </svg>
+                        {{object.grade}}
+                    </p> {% endcomment %}
+                    <p class="text-muted d-flex align-items-center mb-2 tx-16">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-layers-half mx-2 lize-text-gray" viewBox="0 0 16 16">
+                            <path d="M8.235 1.559a.5.5 0 0 0-.47 0l-7.5 4a.5.5 0 0 0 0 .882L3.188 8 .264 9.559a.5.5 0 0 0 0 .882l7.5 4a.5.5 0 0 0 .47 0l7.5-4a.5.5 0 0 0 0-.882L12.813 8l2.922-1.559a.5.5 0 0 0 0-.882l-7.5-4zM8 9.433 1.562 6 8 2.567 14.438 6 8 9.433z"/>
+                        </svg>
+                        {{object.quantity_questions_requested}} questões
+                    </p>
+                    <p class="text-muted d-flex align-items-center mb-2 tx-16">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart-line mx-2 lize-text-gray" viewBox="0 0 16 16">
+                            <path d="M11 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1v-3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3h1V7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7h1V2zm1 12h2V2h-2v12zm-3 0V7H7v7h2zm-5 0v-3H2v3h2z"/>
+                        </svg>
+                        Nível Difícil
+                    </p>
+                    <hr style="border-color: #E5E7EA !important;">
+                </div>
+                <div class="col-12 pr-0">
+                    <div class="d-flex flex-wrap w-100">
+                        <div v-for="(examQuestion, index) in examQuestions" @click="goToExamQuestion(examQuestion)">
+                            <span class="d-flex align-center cp rounded-circle m-1 text" :style="{ outline: selectedExamQuestion == examQuestion ? '2px solid #41C588':'2px solid #E6E8EC',  width: '32px', height: '32px', backgroundColor: getExamQuestionStatus(examQuestion).bgColor }">${examQuestion.question.numberPrint.padStart(2, '0')}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 pr-0 mt-4">
+                    <button class="btn lize-btn-primary btn-block" style="height: 42px;" type="button" onclick="window.location.href='{% url 'exams:exams_list' %}?category=exam'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-short" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5"/>
+                        </svg>
+                        Voltar para listagem
+                    </button>
+                    {% if object.status == 6  %}
+                        {% if not exists_application or exists_application and not exists_bag_generate%}           
+                        <button  @click="showExam()" class="tw-w-full tw-flex tw-items-center tw-gap-1 tw-justify-center tw-mt-5 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold hover:tw-text-white tw-shadow-sm hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600 tw-transition-all" type="button">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H9a1 1 0 0 0-1 1v2c0 .6.4 1 1 1h6c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1Z"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2M16 4h2a2 2 0 0 1 2 2v2M11 14h10"/><path d="m17 10 4 4-4 4"/></svg>
+                            VER PDF DA PROVA
+                        </button>
+                        {% endif %}
+                    {% endif %}
+                    <button v-if="examQuestionsToCopy.length" @click="handleCopyMultipleQuestions()" class="tw-w-full tw-flex tw-items-center tw-gap-1 tw-justify-center tw-mt-5 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold hover:tw-text-white tw-shadow-sm hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600 tw-transition-all" type="button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M15 2H9a1 1 0 0 0-1 1v2c0 .6.4 1 1 1h6c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1Z"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2M16 4h2a2 2 0 0 1 2 2v2M11 14h10"/><path d="m17 10 4 4-4 4"/></svg>
+                        Copiar ${examQuestionsToCopy.length} ${examQuestionsToCopy.length > 1 ? 'questões' : 'questão'}
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-9 p-4" style="max-height: calc(100vh - 60px); overflow-y: scroll;">
+					<div class="row m-0">
+							<div class="col-12">
+									<h3>Questões</h3>
+							</div>
+					</div>
+					<div class="row m-0 py-3" :id="'examQuestion-'+examQuestion.id" v-for="(examQuestion, index) in examQuestions">
+						<div class="col-12 col-lg-10 tw-flex tw-flex-col 2xl:tw-flex-row">
+							<div class="lize-card tw-rounded-2xl tw-w-full 2xl:tw-min-w-[1050px] tw-transition-all" :class="{'tw-ring-1 tw-ring-orange-400': examQuestionsToCopy.find((q) => q.id == examQuestion.id)}">
+								<div class="card-body p-3">
+                                    <div v-if="examQuestion.hasAlternativeDuplicate && ['Objetiva', 'Somatório'].includes(examQuestion.question.categoryDisplay)" class="row mb-0 mr-0">
+                                        <div class="col-12">
+                                            <div class="alert alert-danger">
+                                                Aparentemente essa questão possui 2 ou mais alternativas iguais.
+                                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-if="examQuestion.has_duplicate_enunciation" class="row mb-0 mr-0">
+                                        <div class="col-12">
+                                            <div class="alert alert-warning">
+                                                Aparentemente essa questão possui enunciado duplicado
+                                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-if="examQuestion.question.createWithIA || examQuestion.isQuestionCreateInspectorIa" class="row mb-0 mr-0">
+                                        <div class="col-12">
+                                            <div class="alert alert-info">
+                                                Questão criada ou modificada por IA.
+                                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-if="checkNoCorrectOption(examQuestion.question)" class="row mb-0 mr-0">
+                                        <div class="col-12">
+                                            <div class="alert alert-danger">
+                                                Nenhuma alternativa marcada como correta.
+                                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-if="isOptionCountIncorrect(examQuestion)" class="row mb-0 mr-0">
+                                        <div class="col-12">
+                                            <div class="alert alert-danger">
+                                                Questão com número de alternativas diferente do definido na solicitação.                                        
+                                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-if="hasMultipleCorrectOptions(examQuestion.question)" class="row mb-0 mr-0">
+                                        <div class="col-12">
+                                            <div class="alert alert-danger">
+                                                Mais de uma alternativa marcada como correta.
+                                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+									<nav>
+                                        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                                            <button 
+                                                class="nav-link"
+                                                style="border-top-left-radius: 0.75rem; border-top-right-radius: 0.75rem" 
+                                                :class="{'active': selectedTab[examQuestion.id] === 'questoes'}" 
+                                                @click="setActiveTab(examQuestion.id, 'questoes')" 
+                                                type="button"
+                                            >
+                                                Questões
+                                            </button>
+                                            <button 
+                                                class="nav-link" 
+                                                style="border-top-left-radius: 0.75rem; border-top-right-radius: 0.75rem" 
+                                                :class="{'active': selectedTab[examQuestion.id] === 'dados'}" 
+                                                @click="setActiveTab(examQuestion.id, 'dados')" 
+                                                type="button"
+                                            >   
+                                                Dados Pedagógicos
+                                                
+                                            </button>
+                                            <button 
+                                                class="nav-link" 
+                                                style="border-top-left-radius: 0.75rem; border-top-right-radius: 0.75rem" 
+                                                :class="{'active': selectedTab[examQuestion.id] === 'feedbacks'}" 
+                                                @click="setActiveTab(examQuestion.id, 'feedbacks')" 
+                                                type="button"
+                                            >
+                                                Feedbacks
+                                            </button>
+                                        </div>
+									</nav>
+									<div class="row">
+										<div class="col-1 text-5 p-4 d-flex" style="font-size: 24pt !important;">${examQuestion.question.numberPrint.padStart(2, '0')}  ${examQuestion.examTeacherSubject.teacher_subject}</div>
+											<div class="col p-4">
+												<div class="tab-content" id="questionTabsContent">
+													<div class="tab-pane fade" :class="{'show active': selectedTab[examQuestion.id] === 'questoes'}" role="tabpanel">
+														<div class="row"> 
+																<div class="col-12">
+																	<div class="row">
+																		<div class="tw-flex tw-flex-col tw-gap-3 tw-w-full tw-mx-3">
+																			<div class="tw-flex tw-justify-between">
+																				<div v-if="examQuestion.question.createWithIA || examQuestion.isQuestionCreateInspectorIa">
+																						<span data-toggle="tooltip" data-placement="top" title="Esta questão foi criada ou modificada por uma IA."
+																								style="width: 32px; height: 32px; color: #FF8F3D;"
+																								class="lize-bg-warning-light rounded-circle d-flex align-items-center justify-content-center">
+																								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
+																										<path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828l.645-1.937zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.734 1.734 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.734 1.734 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.734 1.734 0 0 0 3.407 2.31l.387-1.162zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732L10.863.1z"/>
+																								</svg>
+																						</span>
+																				</div>
+																				<div class="tw-flex tw-justify-end">
+																					<div class="border cp tw-w-fit tw-rounded-lg tw-px-2 tw-py-2 tw-cursor-pointer"  @click="addExamQuestionToCopy(examQuestion, index + 1)">
+																						<template v-if="examQuestionsToCopy.find((q) => q.id == examQuestion.id)"> 
+																							<div class="tw-flex tw-items-center cp">
+																									<div style="width: 16px; height: 16px; background-color: #FF8F3D; border-radius: 4px;">
+																										<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" class="bi bi-check2" viewBox="0 0 16 16">
+																												<path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+																										</svg>
+																									</div>
+																									<label class="m-0 mx-2 lize-text-warning tx-normal d-flex align-items-center tw-cursor-pointer">Selecionada para copiar</label>
+																							</div>
+																						</template>
+																						<template v-else>
+																							<div class="tw-flex tw-items-center cp">
+																									<div style="width: 16px; height: 16px; border: 1px solid #FF8F3D; border-radius: 4px;" ></div>
+																									<label class="m-0 mx-2 lize-text-warning tx-normal d-flex align-items-center tw-cursor-pointer">Selecionar para copiar</label>
+																							</div>
+																						</template>
+																					</div>
+																				</div>
+																			</div>
+																			<div class="tw-flex tw-justify-between">
+																					<div class="d-flex flex-wrap">
+																						<span class="tw-text-[10px] tw-px-2 tw-flex tw-items-center tw-mr-2" :style="{ color: '#667085', pading: '4px 12px 4px 12px', borderRadius: '16px', border: '1px solid #E5E7EA', backgroundColor: '#F2F4F7', height: '24px' }">
+																								${examQuestion.question.categoryDisplay}
+																						</span>
+																						<span v-if="examQuestion.question.level" class="tw-text-[10px] tw-px-2 tw-flex tw-items-center mx-2" :style="{ color: '#667085', pading: '4px 12px 4px 12px', borderRadius: '16px', border: '1px solid #E5E7EA', backgroundColor: '#F2F4F7', height: '24px' }">
+																								${examQuestion.question.pedagogicalData.levelDisplay}
+																						</span>
+																						<span v-if="examQuestion.question.subject" class="tw-text-[10px] tw-px-2 tw-flex tw-items-center mx-2" :style="{ color: '#667085', pading: '4px 12px 4px 12px', borderRadius: '16px', border: '1px solid #E5E7EA', backgroundColor: '#F2F4F7', height: '24px' }">
+																								${examQuestion.question.pedagogicalData.subject} ${examQuestion.question.pedagogicalData.segment ? '-' : ''} ${examQuestion.question.pedagogicalData.segment}
+																						</span>
+																					</div>
+																					<div>
+																							<div class="tw-text-[10px] tw-px-2 tw-rounded-full tw-flex tw-items-center text-muted" :style="{ pading: '4px 12px 4px 12px', borderRadius: '16px', border: '1px solid #E5E7EA', backgroundColor: getExamQuestionStatus(examQuestion).bgColor, height: '30px' }">
+																									<span v-html="getExamQuestionStatus(examQuestion, 12).icon" class="mx-1"></span> ${getExamQuestionStatus(examQuestion).label}
+																							</div>
+																					</div>
+																			</div>
+																		</div>
+																		<div class="col-12 text mt-3" v-if="examQuestion.question.baseTexts.length">
+                                                                            <span style="font-size: 14pt !important;" v-html="baseText.text" v-for="baseText in examQuestion.question.baseTexts"></span>
+																		</div>
+																		<div class="col-12 text mt-3">
+                                                                            <span style="font-size: 12pt !important;" v-html="examQuestion.question.enunciation"></span>
+																		</div>
+                                                                        <div class="col-12 text mt-3" v-if="examQuestion.question.categoryDisplay == 'Preencher lacunas'">
+                                                                            <p style="font-size: 12pt !important;" v-html="examQuestion.question.clozeContent"></p>
+                                                                            <p v-if="examQuestion.question.incorrectClozeAlternatives" class="mt-4">
+                                                                                Opções incorretas: <span v-html="examQuestion.question.incorrectClozeAlternatives"></span>
+                                                                            </p>
+                                                                        </div>
+																	</div>
+                                                                    
+																	<template v-if="['Objetiva', 'Somatório'].includes(examQuestion.question.categoryDisplay)">
+																			<div class="row">
+																					<div class="col-12">
+																							<hr style="border-color: #CDD4E0; ">
+																					</div>
+																			</div>
+																			<div class="row" v-for="(alternative, alternativeIndex) in examQuestion.question.alternatives">
+																				<div class="col-12">
+																					<div class="d-flex p-2 align-items-center" :style="{ backgroundColor: alternative.is_correct ? '#41C58814':'' }">
+																						<div>
+																								<span class="rounded-circle d-flex align-items-center justify-content-center" :style="{ color: alternative.is_correct ? '#41C588':'#E6E8EC' }">
+																										<template v-if="alternative.is_correct">
+																												<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
+																														<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+																														<path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05"/>
+																												</svg>
+																										</template>
+																										<template v-else>
+																												<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
+																														<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+																														<path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+																												</svg>
+																										</template>
+																								</span>
+																						</div>
+																						<div class="mx-3">
+																								{% if user.client_has_sum_questions %}
+																										<span class="mr-2 text-uppercase" style="font-size: 14pt !important;">${examQuestion.question.categoryDisplay == 'Objetiva' ? generateAlternativeLetter(alternativeIndex):generateAlternativeSum(alternativeIndex)}</span> 
+																								{% else %}
+																										<span class="mr-2 text-uppercase" style="font-size: 14pt !important;">${generateAlternativeLetter(alternativeIndex)}</span> 
+																								{% endif %}
+																						</div>
+																						<div>
+																								<span style="font-size: 12pt !important;" v-html="alternative.text"></span>
+																						</div>
+																					</div>
+																				</div>
+																			</div>
+																	</template>
+																</div>
+														</div>
+													</div>
+												
+													<div class="tab-pane fade" :class="{'show active': selectedTab[examQuestion.id] === 'dados'}" role="tabpanel">
+                                                        <div class="row">
+                                                            <div class="col-12">
+                                                                    <div class="card" style="border-radius: 0.50rem;">
+                                                                        <div class="card-header p-2 font-weight-bold">
+                                                                                Dificuldade
+                                                                        </div>
+                                                                        <ul class="list-group list-group-flush">
+                                                                                <li class="list-group-item p-1 px-2 border-pedagogical-data">${getLevelLabel(examQuestion.question.level)}</li>
+                                                                        </ul>
+                                                                    </div>
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <div class="card mt-2" style="border-radius: 0.50rem;">
+                                                                    <div class="card-header p-1 px-2 font-weight-bold">
+                                                                            Assuntos Abordados
+                                                                    </div>
+                                                                    <ul class="list-group list-group-flush">
+                                                                            <template v-if="examQuestion.question.topics">
+                                                                            <li v-if="!examQuestion.question.topics.length" class="list-group-item border-pedagogical-data p-1">Não há assuntos cadastrados nessa questão</li>
+                                                                            <li v-else v-for="topic in examQuestion.question.topics" :key="topic.text"  class="list-group-item border-pedagogical-data p-2">${topic.text}</li>
+                                                                            </template>
+                                                                    </ul>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <div class="card mt-2" style="border-radius: 0.50rem;">
+                                                                    <div class="card-header p-2 font-weight-bold">
+                                                                            Habilidades
+                                                                    </div>
+                                                                    <ul class="list-group list-group-flush">
+                                                                            <template v-if="examQuestion.question.abilities">
+                                                                            <li v-if="!examQuestion.question.abilities.length" class="list-group-item p-1 border-pedagogical-data" >Não há habilidades cadastradas nessa questão</li>
+                                                                            <li v-else v-for="ability in examQuestion.question.abilities" class="list-group-item p-2 border-pedagogical-data">${ability.code ? '('+ability.code+')':''} ${ability.text}</li>
+                                                                            </template>
+                                                                    </ul>
+                                                                </div>
+                                                            </div> 
+                                                            <div class="col-12">
+                                                                <div class="card mt-2" style="border-radius: 0.50rem;">
+                                                                    <div class="card-header p-2 font-weight-bold">
+                                                                            Competências
+                                                                    </div>
+                                                                    <ul class="list-group list-group-flush">
+                                                                            <template v-if="examQuestion.question.competences">
+                                                                            <li v-if="!examQuestion.question.competences.length" class="list-group-item p-1 border-pedagogical-data">Não há competências cadastradas nessa questão</li>
+                                                                            <li v-else v-for="competence in examQuestion.question.competences"  :key="competence.code" c class="list-group-item p-2 border-pedagogical-data">${competence.code ? '('+competence.code+')':''} ${competence.text}</li>
+                                                                            </template>
+                                                                    </ul>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+													</div>
+                                                    <div class="tab-pane fade" :class="{'show active': selectedTab[examQuestion.id] === 'feedbacks'}" role="tabpanel">
+                                                        <div class="row">
+                                                            <div class="col-12">
+                                                                    <div class="card" style="border-radius: 0.50rem;">
+                                                                        <div class="card-header p-2 font-weight-bold">
+                                                                            Resposta comentada
+                                                                        </div>
+                                                                        <ul class="list-group list-group-flush">
+                                                                            <li class="list-group-item p-1 px-2 border-pedagogical-data" v-html="examQuestion.question.commentedAwnser"></li>
+                                                                        </ul>
+                                                                    </div>
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <div class="card mt-2" style="border-radius: 0.50rem;">
+                                                                    <div class="card-header p-1 px-2 font-weight-bold">
+                                                                        Feedback do Professor 
+                                                                    </div>
+                                                                    <ul class="list-group list-group-flush">
+                                                                        <ul class="list-group list-group-flush">
+                                                                            <li class="list-group-item p-1 px-2 border-pedagogical-data" v-html="examQuestion.question.feedback"></li>
+                                                                        </ul>
+                                                                    </ul>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <div class="card mt-2" style="border-radius: 0.50rem;">
+                                                                    <div class="card-header p-1 px-2 font-weight-bold">
+                                                                        Resposta comentada em vídeo
+                                                                    </div>
+                                                                    <ul class="list-group list-group-flush">
+                                                                        <li class="list-group-item p-1 px-2 border-pedagogical-data" v-html="examQuestion.question.answerVideo"></li>
+                                                                    </ul>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div v-if="examQuestion.question.answerVideo != 'Nenhuma resposta em vídeo foi adicionado.'" class="col-12">
+                                                                <div class="card mt-2" style="border-radius: 0.50rem;">
+                                                                    <div class="card-header p-1 px-2 font-weight-bold">
+                                                                        Fonte do Vídeo
+                                                                    </div>
+                                                                    <ul class="list-group list-group-flush">
+                                                                        <li class="list-group-item p-1 px-2 border-pedagogical-data" v-html="examQuestion.question.answerVideoType"></li>
+                                                                    </ul>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="tw-flex tw-items-start tw-ml-3 2xl:tw-flex-col"> 
+									<!-- Edit button -->
+                                    
+                                    <button @click="openModal('/questoes/'+examQuestion.question.id+'/editar/?is_popup=1&exam_question_id='+examQuestion.id);" id="edit-button" class="tw-rounded-full tw-p-2 tw-w-fit tw-h-fit tw-border-2 tw-border-orange-400 tw-text-orange-400 tw-m-2 tw-cursor-pointer hover:tw-border-orange-400 hover:tw-bg-orange-400 hover:tw-text-white tw-transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-pen"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z"/></svg>
+                                    </button>
+									<!-- copy button -->
+									<button id="copy-button" @click="openCopyModal(examQuestion)" class="tw-rounded-full tw-p-2 tw-w-fit tw-h-fit tw-border-2 tw-border-orange-400 tw-text-orange-400 tw-m-2 tw-cursor-pointer hover:tw-border-orange-400 hover:tw-bg-orange-400 hover:tw-text-white tw-transition-colors">
+											<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M15 2H9a1 1 0 0 0-1 1v2c0 .6.4 1 1 1h6c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1Z"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2M16 4h2a2 2 0 0 1 2 2v2M11 14h10"/><path d="m17 10 4 4-4 4"/></svg>
+									</button>
+										<!-- Status Buttons -->
+										{% if user|has_perm:'exams.can_review_questions_exam' %}
+										<div class="tw-w-fit tw-relative tw-inline-block">
+												<button id="reviews-button" @click="showReviewOptions(examQuestion.id)" class="tw-rounded-full tw-p-2 tw-w-fit tw-border-2 tw-border-orange-400 tw-text-orange-400 tw-m-2 tw-cursor-pointer hover:tw-border-orange-400 hover:tw-bg-orange-400 hover:tw-text-white tw-transition-colors">
+														<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+												</button>
+												<div :id="'review-'+examQuestion.id" class="tw-relative tw-hidden">
+													<template v-if="!applicationIsFinished">
+													{% if user_type != 'teacher' or user.inspector.can_viewed %}
+														<button type="button" class="tw-group tw-shadow-sm tw-w-fit tw-p-2 tw-flex tw-gap-2 tw-items-center tw-justify-center tw-rounded-xl tw-text-[#101928] hover:tw-bg-[#E7F2FB] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600" @click="openDialog(examQuestion, 5)">
+															<div class="tw-rounded-full tw-bg-[#E7F2FB] tw-p-2 tw-text-[#0C7BDB] group-hover:tw-text-white group-hover:tw-bg-[#0C7BDB]">
+																	<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+																	<path d="M2.42012 12.7132C2.28394 12.4975 2.21584 12.3897 2.17772 12.2234C2.14909 12.0985 2.14909 11.9015 2.17772 11.7766C2.21584 11.6103 2.28394 11.5025 2.42012 11.2868C3.54553 9.50484 6.8954 5 12.0004 5C17.1054 5 20.4553 9.50484 21.5807 11.2868C21.7169 11.5025 21.785 11.6103 21.8231 11.7766C21.8517 11.9015 21.8517 12.0985 21.8231 12.2234C21.785 12.3897 21.7169 12.4975 21.5807 12.7132C20.4553 14.4952 17.1054 19 12.0004 19C6.8954 19 3.54553 14.4952 2.42012 12.7132Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+																	<path d="M12.0004 15C13.6573 15 15.0004 13.6569 15.0004 12C15.0004 10.3431 13.6573 9 12.0004 9C10.3435 9 9.0004 10.3431 9.0004 12C9.0004 13.6569 10.3435 15 12.0004 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+																	</svg>
+															</div>
+															<div>
+																	Visto
+															</div>
+															</button>
+															{% endif %}
+															{% if user_type != 'teacher' or user.inspector.can_approve %}
+															<button type="button" class="tw-group tw-shadow-sm tw-w-fit tw-p-2 tw-flex tw-gap-2 tw-items-center tw-justify-center tw-rounded-xl tw-text-[#101928] hover:tw-bg-[#ECF9F3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600" v-if="examQuestion.lastStatus !== 'Aprovada'" @click="openDialog(examQuestion, 0)">
+															<div class="tw-rounded-full tw-bg-[#ECF9F3] tw-p-2 tw-text-[#41C588] group-hover:tw-text-white group-hover:tw-bg-[#41C588]">
+																	<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+																	<path d="M22 11.0857V12.0057C21.9988 14.1621 21.3005 16.2604 20.0093 17.9875C18.7182 19.7147 16.9033 20.9782 14.8354 21.5896C12.7674 22.201 10.5573 22.1276 8.53447 21.3803C6.51168 20.633 4.78465 19.2518 3.61096 17.4428C2.43727 15.6338 1.87979 13.4938 2.02168 11.342C2.16356 9.19029 2.99721 7.14205 4.39828 5.5028C5.79935 3.86354 7.69279 2.72111 9.79619 2.24587C11.8996 1.77063 14.1003 1.98806 16.07 2.86572M22 4L12 14.01L9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+																	</svg>
+															</div>
+															<div>
+																	Aprovar
+															</div>
+														</button>
+													{% endif %}
+													{% if user_type != 'teacher' or user.inspector.can_suggest_correction %}
+													<button type="button" class="tw-group tw-shadow-sm tw-w-fit tw-p-2 tw-flex tw-gap-2 tw-items-center tw-justify-center tw-rounded-xl tw-text-[#101928] hover:tw-bg-[#FEF7EF] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600" @click="openDialog(examQuestion, 3)" v-if="examQuestion.lastStatus !== 'Aguardando correção'">
+														<div class="tw-rounded-full tw-bg-[#FEF7EF] tw-p-2 tw-text-[#F3B364] group-hover:tw-text-white group-hover:tw-bg-[#F3B364]">
+																<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+																<path d="M11.9998 8.99999V13M11.9998 17H12.0098M10.6151 3.89171L2.39019 18.0983C1.93398 18.8863 1.70588 19.2803 1.73959 19.6037C1.769 19.8857 1.91677 20.142 2.14613 20.3088C2.40908 20.5 2.86435 20.5 3.77487 20.5H20.2246C21.1352 20.5 21.5904 20.5 21.8534 20.3088C22.0827 20.142 22.2305 19.8857 22.2599 19.6037C22.2936 19.2803 22.0655 18.8863 21.6093 18.0983L13.3844 3.89171C12.9299 3.10654 12.7026 2.71396 12.4061 2.58211C12.1474 2.4671 11.8521 2.4671 11.5935 2.58211C11.2969 2.71396 11.0696 3.10655 10.6151 3.89171Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+																</svg>
+														</div>
+														<div>
+																Corrigir
+														</div>
+													</button>
+														<button type="button" class="tw-group tw-shadow-sm tw-w-fit tw-p-2 tw-flex tw-gap-2 tw-items-center tw-justify-center tw-rounded-xl tw-text-[#101928] hover:tw-bg-[#FBEAE9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600" @click="openDialog(examQuestion, 7)">
+														<div class="tw-rounded-full tw-bg-[#FBEAE9] tw-p-2 tw-text-[#D92D20] group-hover:tw-text-white group-hover:tw-bg-[#D92D20]">
+																<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+																<path d="M4 7.9966C3.83599 7.99236 3.7169 7.98287 3.60982 7.96157C2.81644 7.80376 2.19624 7.18356 2.03843 6.39018C2 6.19698 2 5.96466 2 5.5C2 5.03534 2 4.80302 2.03843 4.60982C2.19624 3.81644 2.81644 3.19624 3.60982 3.03843C3.80302 3 4.03534 3 4.5 3H19.5C19.9647 3 20.197 3 20.3902 3.03843C21.1836 3.19624 21.8038 3.81644 21.9616 4.60982C22 4.80302 22 5.03534 22 5.5C22 5.96466 22 6.19698 21.9616 6.39018C21.8038 7.18356 21.1836 7.80376 20.3902 7.96157C20.2831 7.98287 20.164 7.99236 20 7.9966M10 13H14M4 8H20V16.2C20 17.8802 20 18.7202 19.673 19.362C19.3854 19.9265 18.9265 20.3854 18.362 20.673C17.7202 21 16.8802 21 15.2 21H8.8C7.11984 21 6.27976 21 5.63803 20.673C5.07354 20.3854 4.6146 19.9265 4.32698 19.362C4 18.7202 4 17.8802 4 16.2V8Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+																</svg>
+														</div>
+														<div>
+																Usar depois
+														</div>
+													</button>
+													{% endif %}
+													{% if user_type != 'teacher' or user.inspector.can_fail %}
+													<button type="button" class="tw-group tw-shadow-sm tw-w-fit tw-p-2 tw-flex tw-gap-2 tw-items-center tw-justify-center tw-rounded-xl tw-text-[#101928] hover:tw-bg-[#FBEAE9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600" v-if="examQuestion.lastStatus !== 'Reprovada'" @click="openDialog(examQuestion, 1)">
+														<div class="tw-rounded-full tw-bg-[#FBEAE9] tw-p-2 tw-text-[#D92D20] group-hover:tw-text-white group-hover:tw-bg-[#D92D20]">
+																<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+																<path d="M16 6V5.2C16 4.0799 16 3.51984 15.782 3.09202C15.5903 2.71569 15.2843 2.40973 14.908 2.21799C14.4802 2 13.9201 2 12.8 2H11.2C10.0799 2 9.51984 2 9.09202 2.21799C8.71569 2.40973 8.40973 2.71569 8.21799 3.09202C8 3.51984 8 4.0799 8 5.2V6M10 11.5V16.5M14 11.5V16.5M3 6H21M19 6V17.2C19 18.8802 19 19.7202 18.673 20.362C18.3854 20.9265 17.9265 21.3854 17.362 21.673C16.7202 22 15.8802 22 14.2 22H9.8C8.11984 22 7.27976 22 6.63803 21.673C6.07354 21.3854 5.6146 20.9265 5.32698 20.362C5 19.7202 5 18.8802 5 17.2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+																</svg>
+														</div>
+														<div>
+																Reprovar
+														</div>
+													</button>
+													{% endif %}
+													</template>
+													{% if can_null_questions_answer_sheet  %}
+															{% if user_type != 'teacher' or user.inspector.can_annul %}
+																	<button type="button" v-if="examQuestion.lastStatus != 'Anulada'" class="tw-group tw-shadow-sm tw-w-fit tw-p-2 tw-flex tw-gap-2 tw-items-center tw-justify-center tw-rounded-xl tw-text-[#101928] hover:tw-bg-[#FBEAE9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600" @click="openDialog(examQuestion, 6)">
+																			<div class="tw-rounded-full tw-bg-[#FBEAE9] tw-p-2 tw-text-[#D92D20] group-hover:tw-text-white group-hover:tw-bg-[#D92D20]">
+																					<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+																							<path d="M16 6V5.2C16 4.0799 16 3.51984 15.782 3.09202C15.5903 2.71569 15.2843 2.40973 14.908 2.21799C14.4802 2 13.9201 2 12.8 2H11.2C10.0799 2 9.51984 2 9.09202 2.21799C8.71569 2.40973 8.40973 2.71569 8.21799 3.09202C8 3.51984 8 4.0799 8 5.2V6M10 11.5V16.5M14 11.5V16.5M3 6H21M19 6V17.2C19 18.8802 19 19.7202 18.673 20.362C18.3854 20.9265 17.9265 21.3854 17.362 21.673C16.7202 22 15.8802 22 14.2 22H9.8C8.11984 22 7.27976 22 6.63803 21.673C6.07354 21.3854 5.6146 20.9265 5.32698 20.362C5 19.7202 5 18.8802 5 17.2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+																					</svg>
+																			</div>
+																			<div>
+																					Anular
+																			</div>
+																	</button>
+															{% endif %}
+													{% endif %} 
+													<!-- a para ir pra tela de revisão completa -->
+													<button @click="openModal('{% url 'exams:exam_review' object.pk %}?is_popup=1&exam_teacher_subject='+examQuestion.examTeacherSubject+'&exam_question='+examQuestion.id);" class="tw-group tw-shadow-sm tw-w-fit tw-p-2 tw-flex tw-gap-2 tw-items-center tw-justify-center tw-rounded-xl tw-text-[#101928] hover:tw-bg-[#ebebeb] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+															<div class="tw-rounded-full tw-bg-gray-200 tw-p-2 tw-text-gray-700 group-hover:tw-text-white group-hover:tw-bg-gray-600">
+																	<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+															</div>
+															<div class="tw-whitespace-nowrap">
+																	Revisão completa
+															</div>
+													</button>
+												</div>
+										</div>
+										{% endif %}
+										{% if user.client_can_request_ai_questions or user.can_request_ai_questions %}
+												<button id="change-question-with-ia-button" 
+														@click="openChangeQuestionWithIaModal(examQuestion)" class="tw-rounded-full tw-p-2 tw-w-fit tw-h-fit tw-border-2 tw-border-orange-400 tw-m-2 tw-cursor-pointer tw-text-orange-400 hover:tw-border-orange-400 hover:tw-bg-orange-400 hover:tw-text-white tw-transition-colors">
+														<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"  class="bi bi-stars">
+																<path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828l.645-1.937zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.734 1.734 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.734 1.734 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.734 1.734 0 0 0 3.407 2.31l.387-1.162zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732L10.863.1z"></path>
+														</svg>
+												</button>
+										{% endif %}
+									</div>
+								</div>
+        		</div>
+     	 		</div>
+    </div>
+    {% include "dashboard/exams/includes/exam/status_dialog.html" with include_question_fragment=True %}
+</div>
+<dialog id="copyQuestionDialog" class="tw-p-4 tw-px-8 tw-rounded-lg tw-w-1/3 tw-h-fit tw-overflow-visible">
+    <form onsubmit="return false" @submit="submitCopyQuestion()" class="tw-flex tw-flex-col tw-gap-4">
+      <div v-if="!examQuestionsToCopy.length">
+        <h3 class="tw-mb-0">Copiar questão</h3>
+        <small>Copie essa questão para um outro caderno</small>
+      </div>
+      <div v-else>
+        <h3 class="tw-mb-0">Copiar múltiplas questões</h3>
+        <small>Copiar ${examQuestionsToCopy.length} ${examQuestionsToCopy.length > 1 ? 'questões' : 'questão'} para um outro caderno</small>
+      </div>
+      <div>
+        <label for="destinationExam" class="tw-block tw-mb-2 tw-text-sm tw-font-medium tw-text-gray-900">Caderno de destino</label>
+        <select id="availableExams" name="destinationExam" required class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6">
+          <option value="">Selecione o caderno de destino</option>
+        </select>
+      </div>
+      <div>
+        <label for="destinationExamTeacherSubject" class="tw-block tw-mb-2 tw-text-sm tw-font-medium tw-text-gray-900">Solicitação de destino</label>
+        <select id="availableExamTeacherSubjects" name="destinationExamTeacherSubject" required class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6">
+          <option value="">Selecione a solicitação de destino</option>
+          <option v-for="examTeacherSubject in availableExamTeacherSubjects" :value="examTeacherSubject.id" v-html="examTeacherSubject.name"></option>
+        </select>
+      </div>
+      <div class="tw-flex tw-items-start tw-gap-1">
+        <div class="tw-flex tw-items-center tw-h-5">
+          <input id="duplicateQuestion" type="checkbox" v-model="copyQuestionData.duplicateQuestion" class="tw-w-4 tw-h-4 tw-border tw-border-gray-300 tw-rounded tw-bg-gray-50 tw-focus:tw-ring-3 tw-focus:tw-ring-blue-300" />
+        </div>
+        <label for="duplicateQuestion" class="tw-ms-2 tw-text-sm tw-font-medium tw-text-gray-900 tw-flex tw-flex-col">Duplicar Questão no banco<small>Duplique a questão caso queira fazer alterações sem afetar a original</small></label>
+      </div>
+      <div v-if="copyQuestionData.duplicateQuestion" class="tw-flex tw-items-start tw-gap-1">
+        <div class="tw-flex tw-items-center tw-h-5">
+          <input id="keepQuestionData" type="checkbox" v-model="copyQuestionData.keepQuestionData" class="tw-w-4 tw-h-4 tw-border tw-border-gray-300 tw-rounded tw-bg-gray-50 tw-focus:tw-ring-3 tw-focus:tw-ring-blue-300" />
+        </div>
+        <label for="keepQuestionData" class="tw-ms-2 tw-text-sm tw-font-medium tw-text-gray-900 tw-flex tw-flex-col">Manter dados da questão<small>Manter dados da questão (nota, dados pedagógicos...) na questão duplicada</small></label>
+      </div>
+      <div class="tw-flex tw-gap-3 tw-mt-5">
+        <button type="submit" :disabled="copyStatus == 'loading'" class="tw-flex tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-lg tw-bg-primary-600 tw-px-9 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-primary-500 hover:tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600">
+          <template v-if="copyStatus == 'loading'">
+            Enviando <i class="fas fa-spinner fa-spin"></i>
+          </template>
+          <template v-else>
+            Enviar
+          </template>
+        </button>
+        <button @click="closeCopyModal()" type="button" class="tw-flex tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-lg tw-bg-primary-600 tw-px-9 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-primary-500 hover:tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600">
+          Cancelar
+        </button>
+      </div>
+      <div v-if="errorsWithCopyQuestions.length" class="tw-mt-4">
+        <h5>Erros com a última cópia</h5>
+        <ul>
+            <li v-for="question in errorsWithCopyQuestions" class="tw-flex tw-flex-col tw-gap-1 tw-text-red-400">
+                <span class="tw-font-bold">Questão ${question.index}:</span>
+                <small>${question.error}</small>
+            </li>
+        </ul>
+      </div>
+
+      <div v-if="nonQuestionErrors.length > 0">
+        <span class="tw-mb-3 tw-text-sm tw-font-medium tw-text-gray-500">
+          Erros ao tentar copiar
+        </span>
+        <ul class="tw-list-inside tw-list-disc tw-text-red-500">
+          <li v-for="error in nonQuestionErrors">
+            ${error}
+          </li>
+        </ul>
+      </div>
+
+      <div v-if="successWithCopyQuestions">
+        <h6 class="text-success">Operação realizada com sucesso.</h6>
+      </div>
+    </form>
+</dialog>
+
+<dialog id="changeQuestionWithIaDialog" class="tw-p-10 tw-px-12 tw-rounded-lg tw-p-10 tw-h-fit tw-overflow-visible">
+  <form  onsubmit="return false" @submit="submitChangeQuestionWithIa('{{ csrf_token }}')" class="tw-flex tw-flex-col tw-gap-4">
+      <div>
+          <div class="tw-flex tw-items-center tw-justify-content-between">
+              <h3 class="tw-mb-0 tw-mr-3">Transforme sua questão com a ajuda da IA</h3>
+              <span data-toggle="tooltip" data-placement="top" title="" class="lize-bg-warning-light rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; color: rgb(255, 143, 61);" data-original-title="Existem questões nesse caderno que foram geradas por IA."><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="bi bi-stars"><path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828l.645-1.937zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.734 1.734 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.734 1.734 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.734 1.734 0 0 0 3.407 2.31l.387-1.162zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732L10.863.1z"></path></svg></span>
+          </div>
+          <p class="text-muted tw-mb-6">Otimize a mudança das suas questões com nossa inteligência artificial.</p>
+
+          <div class="tw-mb-3">
+              <label>
+                  <input type="checkbox" v-model="changeType"  class="tw-w-4 tw-h-4 tw-border tw-border-gray-300 tw-rounded tw-bg-gray-50 tw-focus:tw-ring-3 tw-focus:tw-ring-blue-300"/>
+                  Trocar <strong v-if="selectedExamQuestion?.question?.categoryDisplay === 'Objetiva'">Objetiva</strong>
+                  <strong v-else>Discursiva</strong> por 
+                  <strong v-if="selectedExamQuestion?.question?.categoryDisplay === 'Objetiva'">Discursiva</strong>
+                  <strong v-else>Objetiva</strong>
+              </label>
+          </div>
+
+          <div class="tw-mb-3">
+                <label><input type="checkbox" v-model="reduceStatement"   class="tw-w-4 tw-h-4 tw-border tw-border-gray-300 tw-rounded tw-bg-gray-50 tw-focus:tw-ring-3 tw-focus:tw-ring-blue-300"/> Reduzir enunciado da questão</label>
+          </div>
+					<div  v-if="selectedExamQuestion?.question?.categoryDisplay === 'Objetiva'" class="tw-mb-3">
+							<label><input type="checkbox" v-model="reduceAlternatives"  class="tw-w-4 tw-h-4 tw-border tw-border-gray-300 tw-rounded tw-bg-gray-50 tw-focus:tw:ring-3 tw-focus:tw-ring-blue-300"/> Diminuir alternativas</label>
+							<div v-if="reduceAlternatives" class="tw-inline-block tw-ml-4">
+								<select v-model="reduceAlternativesCount" class="tw-border tw-border-gray-300 tw-rounded tw-bg-white tw-px-0 tw-py-0">
+									<option value="1">1 alternativa</option>
+									<option value="2">2 alternativas</option>
+								</select>
+							</div>
+					</div>
+          <div  v-if="selectedExamQuestion?.question?.categoryDisplay === 'Objetiva'" class="tw-mb-3">
+                <label><input type="checkbox" v-model="reduceTextsAlternatives" class="tw-w-4 tw-h-4 tw-border tw-border-gray-300 tw-rounded tw-bg-gray-50 tw-focus:tw:ring-3 tw-focus:tw:ring-blue-300" /> Reduzir textos das alternativas</label>
+          </div>
+					<div class="tw-mb-3">
+							<label>
+							<input type="checkbox" v-model="insertContext" class="tw-w-4 tw-h-4 tw-border tw-border-gray-300 tw-rounded tw-bg-gray-50 tw-focus:tw:ring-3 tw-focus:tw:ring-blue-300" />
+							Inserir um novo contexto para a questão
+							</label>
+							<div v-if="insertContext" class="tw-mb-3 tw-ml-6">
+							<textarea v-model="contextText" class="form-control" placeholder="Digite o novo contexto aqui..."></textarea>
+							</div>
+					</div>  
+          <div class="tw-flex tw-justify-end tw-gap-3">
+            <button type="submit" id="changeQuestionWithIaSubmitButton" :disabled="!checkFormCompletion()" class="tw-flex tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-lg tw-bg-primary-600 tw-px-9 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-primary-500 hover:tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600">Sim</button>
+            <button @click="closeChangeQuestionWithIAModal" type="button" class="tw-flex tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-lg tw-bg-primary-600 tw-px-9 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-primary-500 hover:tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600">Cancelar</button>
+        	</div>
+    	</div>
+	</form>
+</dialog>
+
+<div v-show="showMovableWindow" class="card" id="movableWindow" style="clear:both; float:left; position: absolute; z-index: 10000 !important;">
+    <div class="card-header py-1">
+        <div class="d-flex justify-content-between align-items-center">
+            <span>Caderno de Questões</span> 
+            <i class="fas fa-times-circle text-danger cp tx-18" @click="showMovableWindow = false, selectedError = ''"></i>
+        </div>
+    </div>
+    <div class="card-body py-0" style="overflow-y: scroll; height: 500px;"> <!-- Define uma altura fixa para o modal -->
+        <template v-if="pdfLoading">
+            <div class="row">
+                <div class="col-12 text-center mt-3">
+                    <h4>Carregando, aguarde...</h4>
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </template>
+        
+        <!-- Use iframe para exibir o PDF -->
+        <iframe v-show="!pdfLoading" :src="selectedPdf" style="width: 100%; height: 100%; border: none;" @load="pdfLoading = false"></iframe>
+    </div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+<!-- Modal para exibir a questão -->
+<div id="questionGenerateIaModal" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+			<div class="modal-content tx-14" style="border-radius: 12px; z-index: 1;">
+				<div class="modal-body tw-p-3">
+					<div class="row tw-m-0">
+							<div class="col-12 tw-flex  tw-justify-between tw-mb-3">
+									<h4 class="text tx-20">Questão gerada por IA</h4>
+									 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#D0D3D9" class="bi bi-x-lg mt-2 cp" viewBox="0 0 16 16"  data-dismiss="modal">
+											<path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+									</svg> 
+							</div>
+					</div>
+					<div class="lize-card" style="max-height: 850px; overflow-y: scroll;">
+						<div class="card-body">
+							<div v-if="questionData.enunciation">
+									<div class="col-12">
+											<h3 style="font-size: 16pt !important;">Enunciado</h3>
+											<h6 class="text-5 tw-mt-2" v-html="questionData.enunciation"></h6>
+									</div>
+							</div>
+							<br>
+				
+							<div v-if="questionData.commented_answer && selectedExamQuestion.question.categoryDisplay === 'Objetiva'">
+								<div class="col-12 mt-3">
+									<h3 style="font-size: 16pt !important; ">Resposta Comentada</h3>
+										<h6 class="text-5 tw-mt-2" v-html="questionData.commented_answer"></h6>
+								</div>
+							</div>
+							<div v-if="questionData.alternatives && questionData.alternatives.length > 0">
+							<h4 style="font-size: 14pt !important;" class="tw-mt-3">Alternativas:</h4>
+								<div class="row" v-for="(alternative, alternativeIndex) in questionData.alternatives" :key="alternativeIndex" class="col-12">
+									<div class="tw-flex tw-p-2 tw-items-center " :style="{ backgroundColor: alternative.is_correct ? '#41C58814' : '' }">
+										<span class="rounded-circle tw-flex tw-items-center tw-justify-center" :style="{ color: alternative.is_correct ? '#41C588' : '#E6E8EC' }">
+										<template v-if="alternative.is_correct">
+												<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
+												<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+												<path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05"/>
+												</svg>
+										</template>
+										<template v-else>
+												<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
+												<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+												<path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+												</svg>
+										</template>
+										</span>
+										<!-- Texto da alternativa -->
+										<div class="tw-ml-2">
+												<span class="tw-mr-2 text-uppercase">${ String.fromCharCode(65 + alternativeIndex) }</span>
+                                                <span  style="line-height: 1.4;" v-html="alternative.text">  <span v-if="alternative.is_correct"></span></span>
+
+                                            </div>
+									</div>
+								</div>
+						</div>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer px-4 pb-4border-0">
+					<button class="btn btn-block lize-btn-primary m-1" @click="confirmChangeQuestion('{{ csrf_token }}')">
+						Adicionar à prova 
+						<svg xmlns="http://www.w3.org/2000/svg" style="font-size: 2rem !important;" width="24" height="24" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
+							<path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+						</svg>
+					</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<div v-show="isGenerating" class="modal fade show" id="generatingQuestionModal" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+			<div class="modal-content tx-14" style="border-radius: 12px; z-index: 1;">
+					<div class="col-12 tw-flex tw-items-center tw-justify-center" style="min-height: 360px;">
+							<div>
+									<p class="tw-flex tw-justify-center">
+											<img src="{% static 'assets/img/gifs/stars.gif' %}" style="max-height: 120px;" class="img-fluid">
+									</p>
+									<h5 class="text text-muted text-center">Estamos gerando sua nova questão...</h5>
+									<p class="text text-muted text-center">Isso pode levar alguns instantes.</p>
+							</div>
+					</div>
+			</div>
+	</div>
+</div>
+
+<div class="modal fade show" id="errorModal" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+			<div class="modal-content tx-14" style="border-radius: 12px; z-index: 1;">
+					<div class="col-12 tw-flex tw-items-center tw-justify-center" style="min-height: 360px;">
+							<div>
+									<h5 class= "tw-text-center">Erro ao gerar a questão!</h5>
+									<p class="text text-muted text-center">Houve um erro ao tentar transformar a questão. Tente novamente.</p>
+							</div>
+					</div>
+			</div>
+	</div>
+</div>
+
+{% endblock extra-modal %}
+{% block js-additional %}
+<script src="{% static 'js/tippy/popper.min.js' %}"></script>
+<script src="{% static 'js/tippy/tippy.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'administration/assets/vendor/jquery-ui.min.js' %}"></script>
+<script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<script type="text/javascript">
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+            selectedContent:'',
+						isGenerating: false,
+						isButtonDisabled: false,
+            questionData: {
+                enunciation: '',
+								commented_answer: '',
+                alternatives: []
+            },
+            newStatusQuestion: {
+                status: "",
+                note: "",
+                give_score: false,
+                distributeInExamTeacherSubject: false,
+                question_fragment: "",
+            },
+            applicationIsFinished: {{ application_is_finished|lower }},
+            statusDialogElement: null,
+            clientTags: [
+                {% for tag in client_tags %}
+                {
+                    id: "{{ tag.pk }}",
+                    name: "{{ tag.name }}",
+                },
+                {% endfor %}
+            ],
+            examQuestions: [
+                {% for exam_question in exam_questions %}
+                    {
+                        id: "{{ exam_question.id }}",
+                        lastStatus: "{{ exam_question.last_status }}",
+                        hasAnswer: {{ exam_question.has_answer|lower }},
+                        hasAlternativeDuplicate: {{exam_question.has_alternative_duplicate|lower}},
+                        examTeacherSubject: "{{ exam_question.exam_teacher_subject.pk }}",
+                        isQuestionCreateInspectorIa: {{ exam_question.exam_teacher_subject.teacher_subject.teacher.is_inspector_ia|yesno:"true,false" }},
+                        question: {
+                            id: "{{ exam_question.question.id }}",
+                            canBeUpdate: {{exam_question.question|check_can_be_updated:user|lower}},
+                            numberPrint: "{% call_method object 'number_print_question' exam_question.question %}",
+                            enunciation: "{{ exam_question.question.enunciation_escaped|remove_line_break|safe }}",
+                            commentedAwnser: "{% if exam_question.question.commented_awnser_escaped %}{{ exam_question.question.commented_awnser_escaped|remove_line_break|safe }}{% else %}Nenhuma resposta foi adicionada.{% endif %}",
+                            feedback: "{% if exam_question.question.feedback_escaped %}{{ exam_question.question.feedback_escaped|remove_line_break|safe }}{% else %}Nenhum feedback foi adicionado.{% endif %}",
+                            answerVideo: "{% if exam_question.question.answer_video %}{{ exam_question.question.answer_video|remove_line_break|safe }}{% else %}Nenhuma resposta em vídeo foi adicionado.{% endif %}",
+                            answerVideoType: "{% if exam_question.question.answer_video_type is not none %}{{ exam_question.question.get_answer_video_type_display }}{% else %}Nenhuma fonte de vídeo foi selecionado.{% endif %}",
+                            clozeContent: "{{ exam_question.question.cloze_content|default_if_none:""|remove_line_break|safe }}",
+                            incorrectClozeAlternatives: "{{ exam_question.question.incorrect_cloze_alternatives|remove_line_break|safe }}",
+                            alternatives: [
+                                {% for alternative in exam_question.question.alternatives.all %}
+                                    {
+                                        text: "{{ alternative.text_escaped|remove_line_break|safe }}",
+                                        is_correct: {{ alternative.is_correct|lower }},
+                                    },
+                                {% endfor %}
+                            ],
+                            topics: [
+                                {% for topic in exam_question.question.topics.all %}
+                                    {
+                                        text: "{{ topic.name_escaped|remove_line_break|safe }}",
+                                    },
+                                {% endfor %}
+                            ],
+                            competences: [
+                                {% for competence in exam_question.question.competences.all %}
+                                    {
+                                        code: "{{ competence.code|default:''|safe }}",
+                                        text: "{{ competence.text_escaped|remove_line_break|safe }}",
+                                    },
+                                {% endfor %}
+                            ],
+                            createWithIA: {{ exam_question.question.created_with_ai|yesno:"true,false" }},
+                            categoryDisplay: "{{ exam_question.question.get_category_display }}",
+                            level: "{{ exam_question.question.level }}",
+                            subject: '{{ exam_question.question.subject.name|default_if_none:"Sem disciplina cadastrada" }}',
+                            baseTexts: [
+                                {% for base_text in exam_question.question.base_texts.all %}
+                                    {
+                                        id: "{{base_text.id}}",
+                                        title: "{{base_text.title}}",
+                                        text: "{{base_text.text_escaped|remove_line_break|safe}}",
+                                    },
+                                {% endfor %}
+                            ],
+                            pedagogicalData: {
+                                subject: '{{ exam_question.question.subject.name }}',
+                                levelDisplay: "{{ exam_question.question.get_level_display }}",
+                                segment: "{{ exam_question.question.grade.get_level_display }}",
+                            },
+                            abilities: [
+                                {% for ability in exam_question.question.abilities.all %}
+                                    {
+                                        code: "{{ ability.code }}",
+                                        text: "{{ ability.text|remove_line_break|safe }}",
+                                    },
+                                {% endfor %}
+                            ]
+                        },
+                        examsUrls: {
+                            print_exam_with_print_service: "{{ exam_question.exam.urls.print_exam_with_print_service|safe }}",
+                        },                        
+                        examPrintParamsUrl:  "{{ exam_question.exam.get_printing_params|safe }}",
+                        examPk:  "{{ exam_question.exam.pk|safe }}",
+                        examQuantityAlternatives: "{% if exam_question.exam.quantity_alternatives %}{{exam_question.exam.quantity_alternatives}}{% else %}null{% endif %}",
+                        examUseQuantityAlternatives: {{ exam_question.exam.quantity_alternatives|yesno:"true,false" }},
+                        has_duplicate_enunciation: {{exam_question.has_duplicate_enunciation|lower}},
+                    },
+                {% endfor %}
+            ],
+            selectedExamQuestion: null,
+            statusMap: [
+                "Aprovada",
+                "Reprovada",
+                "Em aberto",
+                "Aguardando correção",
+                "Corrigido",
+                "Visto",
+                "Anulada",
+                "Usar depois",
+                "Rascunho"
+            ],
+            currentYear: new Date().getFullYear(),
+            availableExams: [],
+            availableExamTeacherSubjects: [],
+            copyQuestionData: {
+              examQuestionToCopy: "",
+              destinationExam: "",
+              destinationExamTeacherSubject: "",
+              duplicateQuestion: false,
+              keepQuestionData: false,
+            },
+            examQuestionsToCopy: [],
+            errorsWithCopyQuestions: [],
+            nonQuestionErrors: [],
+            successWithCopyQuestions: false,
+            copyStatus: 'idle',
+            changeType: false, 
+            reduceStatement: false,
+            reduceAlternatives: false,
+            reduceTextsAlternatives: false,
+            contextText: '', 
+            insertContext: false,
+            questionSugestion: false,
+            showMovableWindow: false,
+            selectedPdf: false,
+            pdfLoading: false,
+			reduceAlternativesCount: "1",
+            selectedTab:  {},
+        },
+        watch: {
+            copyStatus: function(val) {
+                if(val == 'success') {
+                    this.copyStatus = 'idle'
+                    setTimeout(() => {
+                        document.getElementById("copyQuestionDialog").close()
+                    }, 800)
+                }
+            },
+            'copyQuestionData.destinationExam': function(newVal, oldVal) {
+                this.availableExamTeacherSubjects = []
+                this.copyQuestionData.destinationExamTeacherSubject = ""
+                
+                let url = '{% url "exams:exam_teacher_subjects_from_exam" %}' + `?exam_pk=${newVal}`
+                axios.get(`${url}`).then((res) => {
+                  this.availableExamTeacherSubjects = res.data
+                })
+          
+            },
+        },
+        methods: {
+            getLevelLabel(level) {
+                labels = {
+                        0: "Fácil",
+                        1: "Médio",
+                        2: "Difícil",
+                        3: "Indefinido",
+                }
+                return labels[level]
+            },
+            setActiveTab(id, tab) {
+                    this.$set(this.selectedTab, id, tab);
+            },
+            getLevelLabel(level) {
+                    labels = {
+                            0: "Fácil",
+                            1: "Médio",
+                            2: "Difícil",
+                            3: "Indefinido",
+                    }
+                    return labels[level]
+            },
+            setActiveTab(id, tab) {
+                    this.$set(this.selectedTab, id, tab);
+            },
+            hasMultipleCorrectOptions(question) {
+                if (question.categoryDisplay === "Objetiva") {
+                    return question.alternatives.filter((alt) => alt.is_correct === true).length > 1;
+                }
+                return false
+            },
+            isOptionCountIncorrect(examQuestion){
+                if (examQuestion.question.categoryDisplay === "Objetiva" && examQuestion.examUseQuantityAlternatives){
+                    return examQuestion.question.alternatives.length != examQuestion.examQuantityAlternatives
+                }
+                return false
+            },
+            checkNoCorrectOption(question){
+                if (question.categoryDisplay === "Objetiva"){
+                    return question.alternatives.every((alt) => alt.is_correct === false)
+                }
+                return false
+            },
+            async showExam() {
+                printUrl = "{{object.urls.print_exam_with_print_service}}"
+                const params = $("#configure_print_form_id").serialize();
+                const url = printUrl; 
+                const filename = `{{object.name}}.pdf`;
+                this.pdfLoading = true; 
+                try {
+                    this.startMovableWindow();
+                    const pdfBlob = await this.downloadFile(url, filename); 
+                    this.selectedPdf = URL.createObjectURL(pdfBlob); 
+
+                } catch (error) {
+                    console.error('Erro durante o download ou exibição do PDF:', error);
+                    this.alertTop('Ocorreu um erro durante a exibição do arquivo. Por favor, tente novamente.', 'error');
+                } finally {
+                    this.pdfLoading = false
+                }
+            },
+            async downloadFile(url, filename) {
+                return await axios({
+                    url: url,
+                    method: 'GET',
+                    responseType: 'blob'
+                }).then(response => {
+                    return new Blob([response.data], { type: 'application/pdf' });
+                }).catch(error => {
+                    console.error('Erro ao baixar o arquivo:', error);
+                });
+            },
+            startMovableWindow() {
+                let movableWindowConfigs = JSON.parse(localStorage.getItem('movableWindowConfigs'))
+                $("#movableWindow").draggable({
+                    stop: () => {
+                        this.movableWindowSaveData()
+                    }
+                }).resizable({
+                    stop: () => {
+                        this.movableWindowSaveData()
+                    }
+                });
+                if(movableWindowConfigs) {
+                    $("#movableWindow").css({ ...movableWindowConfigs })
+                } else {
+                    $("#movableWindow").css({ 
+                        'height': '600px', 
+                        'width': '600px',
+                        'top': 100,
+                        'left': 100,
+                    })
+                }
+                this.showMovableWindow = true
+            },
+            movableWindowSaveData() {
+                object = {
+                    top: $("#movableWindow").css('top'),
+                    left: $("#movableWindow").css('left'),
+                    width: $("#movableWindow").css('width'),
+                    height: $("#movableWindow").css('height'),
+                }
+                localStorage.setItem('movableWindowConfigs', JSON.stringify(object))
+            },
+            cleanHtml(content) {
+                let cleanedContent = content.replace(/src="(.*?\.png)\\/, 'src="$1"');
+                cleanedContent = cleanedContent.replace(/data-mce-src="(.*?\.png)\\/, 'data-mce-src="$1"');
+                return cleanedContent;
+            },
+            openChangeQuestionWithIaModal(examQuestion) {
+                this.selectedExamQuestion = examQuestion
+								const submitButton = document.getElementById('changeQuestionWithIaSubmitButton');
+								submitButton.disabled = false
+                document.getElementById("changeQuestionWithIaDialog").showModal()
+            },
+            generateAlternativeSum(index){
+                return String(2 ** index)
+            },
+            addExamQuestionToCopy(examQuestion, index) {
+                const foundQuestion = this.examQuestionsToCopy.findIndex((q) => q.id == examQuestion.id)
+                if(foundQuestion == -1){
+                    this.examQuestionsToCopy.push({...examQuestion, displayIndex: index})
+                }else{
+                    this.examQuestionsToCopy.splice(foundQuestion, 1)
+                }
+            },
+            handleCopyMultipleQuestions() {
+                this.openCopyModal(this.selectedExamQuestion)
+            },
+            openCopyModal(examQuestion) {
+                this.selectedExamQuestion = examQuestion
+                document.getElementById("copyQuestionDialog").showModal()
+            },
+            closeChangeQuestionWithIAModal() {
+                let dialogEl = document.getElementById("changeQuestionWithIaDialog")
+                dialogEl.close()
+								const submitButton = document.getElementById('changeQuestionWithIaSubmitButton');
+								submitButton.disabled = false
+            },
+            closeCopyModal() {
+                let dialogEl = document.getElementById("copyQuestionDialog")
+                dialogEl.close()
+                dialogEl.querySelectorAll("button").forEach((btn) => btn.disabled = false)
+            },
+            checkFormCompletion() {
+              const isAnyOptionSelected = 
+                  this.changeType || 
+                  this.reduceStatement || 
+                  this.reduceAlternatives || 
+                  this.reduceTextsAlternatives || 
+                  this.contextText.trim() !== '';
+          
+              return isAnyOptionSelected;
+            },
+            async submitChangeQuestionWithIa(csrfToken) {
+              questionID = this.selectedExamQuestion.question.id;
+              this.showGeneratingQuestionModal();
+              this.closeChangeQuestionWithIAModal();
+							console.log("aaaaaaaaaaaaaaaaaaaaaa")
+              self = this
+              try {
+                  if (!questionID) {
+                      alert('ID da questão e tipo da questão são obrigatórios.');
+                      return;
+                  }
+      
+                  let url = "{% url 'questions:change_question_ia' %}";
+      
+                  const dataToSend = {
+                    question_id: questionID,
+                    change_type: this.changeType,  
+                    reduce_statement: this.reduceStatement,  
+                    reduce_alternatives: this.reduceAlternatives,  
+										reduce_alternatives_count: this.reduceAlternativesCount,  
+                    reduce_texts_in_alternatives: this.reduceTextsAlternatives,  
+                    context: this.contextText 
+                  };
+
+                  const response = await axios.post(url, dataToSend, {
+                      headers: {
+                          'X-CSRFToken': csrfToken
+                      }
+                  });
+      
+                  this.questionData = response.data;
+                  const { enunciation, image_tags } = response.data;
+                  const finalEnunciation = self.formatEnunciation(enunciation, image_tags);
+                  this.questionData.enunciation = finalEnunciation;
+                  if  (this.questionData.alternatives) {
+                   this.questionData.alternatives = self.questionData.alternatives.map(alternative => {      
+                    return {
+                        ...alternative,
+                        text: self.cleanHtml(alternative.text) 
+                        };
+                     });
+                  }
+                 
+      
+                  this.closeGeneratingQuestionModal();
+                  $('#questionGenerateIaModal').modal('show');
+              } catch (error) {
+                  this.isGenerating = false;
+                  this.closeGeneratingQuestionModal();
+                  $('#errorModal').modal('show');
+                  console.error('Erro ao transformar a questão:', error);
+              }
+            },
+            showGeneratingQuestionModal() {
+							console.log("showGeneratingQuestionModal", this.isGenerating)
+                this.isGenerating = true;
+								console.log("showGeneratingQuestionModal", this.isGenerating)
+
+                $('#generatingQuestionModal').modal('show');					
+            },
+            closeGeneratingQuestionModal() {
+                this.isGenerating = false;
+                $('#generatingQuestionModal').modal('hide');
+            },
+            async confirmChangeQuestion(csrfToken) {
+                if (this.selectedExamQuestion.question.categoryDisplay == "Discursiva")
+                    category = "Objetiva"
+                else
+                    category = "Discursiva"
+                keepChangeType = false
+                if (this.reduceAlternatives || this.reduceTextsAlternatives && category != "Discursiva")
+                  keepChangeType = true
+                try {
+                    let url = "{% url 'questions:confirm_change_question_type' %}";
+                    const response = await axios.post(url, {
+                        question_id: this.selectedExamQuestion.question.id,
+                        enunciation: this.questionData.enunciation,
+                        category: category,
+                        alternatives: this.questionData.alternatives, 
+                        keep_change_type: keepChangeType, 
+                    }, {
+                        headers: {
+                            'X-CSRFToken': csrfToken
+                        }
+                    });
+					window.location.reload();
+                } catch (error) {
+                    console.error('Erro ao atualizar a questão e alternativas:', error);
+                }
+            },
+            formatEnunciation(enunciation, imageTags) {
+                if (imageTags && imageTags.length > 0) {
+                        const imageHtml = imageTags.join('');
+                        return `<div>${imageHtml}</div><div style="text-align: justify;">${enunciation}</div>`;
+                } else {
+                        return `<div style="text-align: justify;"><br>${enunciation}</div>`;
+                }
+            },
+            async submitCopyQuestion() {
+                if (this.copyStatus != 'loading') {
+                    this.copyStatus = 'loading'
+                    this.errorsWithCopyQuestions = []
+                    this.nonQuestionErrors = []
+                    try {
+                        if (this.examQuestionsToCopy.length) {
+                            await this.copyQuestionsRecursively(0);
+                            this.copyStatus = 'idle'
+                            this.closeCopyModal()
+                        } else{
+                            this.copyQuestionData.examQuestionToCopy = this.selectedExamQuestion.id;
+                            await this.callCopyQuestionApi(this.copyQuestionData);
+                            this.copyStatus = 'idle'
+                            this.closeCopyModal()
+                        }
+                    } catch (error) {
+                        console.log(error)
+                        this.copyStatus = 'error'
+                        this.nonQuestionErrors.push(error.response.data)
+                    }
+                }
+            },
+            async copyQuestionsRecursively(index) {
+                if (index >= this.examQuestionsToCopy.length) {
+                    if(this.errorsWithCopyQuestions.length == 0){
+                        this.examQuestionsToCopy = []
+                    }
+                    return; // Parar a recursão
+                }
+            
+                const examQuestion = this.examQuestionsToCopy[index];
+                const copyQuestionData = {...this.copyQuestionData, examQuestionToCopy: examQuestion.id};
+            
+                try {
+                    await this.callCopyQuestionApi(copyQuestionData);
+                    this.successWithCopyQuestions = true
+                    this.copyStatus = 'success'
+                    await this.copyQuestionsRecursively(index + 1); 
+                } catch (error) {
+                    this.successWithCopyQuestions = false
+                    this.copyStatus = 'error'
+                    this.errorsWithCopyQuestions.push({
+                        index: examQuestion.displayIndex,
+                        error: error.response.data
+                    })
+                    await this.copyQuestionsRecursively(index + 1); 
+                }
+            },
+            async callCopyQuestionApi(copyQuestionData) {
+                let url = '{% url "exams:exam_question_copy" %}';
+                let dialogEl = document.getElementById("copyQuestionDialog");
+            
+                try {
+                    await axios.post(url, copyQuestionData);
+                    dialogEl.querySelectorAll("button").forEach((btn) => btn.disabled = false);
+                    this.alertTop('Questão copiada com sucesso!');
+                } catch (error) {
+                    dialogEl.querySelectorAll("button").forEach((btn) => btn.disabled = false);
+                    throw error;
+                }
+            },
+            call(result) {
+                if(result){
+                    let questionId = result.pk ? result.pk : result.id
+                    var question = this.findQuestion(questionId).question
+                    question.enunciation = result.enunciation_html
+                    question.grade = result.grade
+                    question.subject = result.subject
+                    question.knowledgeArea = result.knowledgeArea
+                    question.alternatives = JSON.parse(result.alternatives)
+                }else{
+                    window.location.reload()
+                }
+            },
+            // Este método é necessário para o popup de revisão, que atualiza examQuestion (uma ou mais) em vez de question
+            callExamQuestions(result) {
+                // result é um array de examQuestions para atualizar somente o last_status
+                if(result){
+                    result.forEach((examQuestion) => {
+                        if(examQuestion.last_status.status != 1){
+                            let questionToUpdate = this.findExamQuestion(examQuestion.id)
+                            questionToUpdate.lastStatus = examQuestion.last_status.status_display
+                        }
+                    })
+                }else{
+                    window.location.reload()
+                }
+            },
+            findQuestion(id) {
+                return this.examQuestions.find((examQuestion) => examQuestion.question.id == id)
+            },
+            findExamQuestion(id) {
+                return this.examQuestions.find((examQuestion) => examQuestion.id == id)
+            },
+            openModal(url) {
+                window.open(
+                    url,
+                    "DescriptiveWindowName",
+                    "resizable,scrollbars,status"
+                )
+            },
+            showReviewOptions(id) {
+                let element = document.querySelector(`#review-${id}`)
+                element.classList.toggle("tw-hidden")
+            },
+            submitNewStatus() {
+                // criação de status
+                if (!this.questionSugestion && !this.newStatusQuestion.note && this.newStatusQuestion.status == 5){
+                    this.newStatusQuestion.note = "Estou de acordo com a questão"
+                    this.questionSugestion = false 
+                }
+                let url = "{% url 'exams:exams_status_question_api_create'  pk='00000000-0000-0000-0000-000000000000' %}"
+                url = url.replace('00000000-0000-0000-0000-000000000000', this.selectedExamQuestion.id)
+                axios.post(url, this.newStatusQuestion).then((response) => {
+                    if(this.newStatusQuestion.status != 0 && this.newStatusQuestion.status != 5){
+                        this.createStatusTags(response.data.id)
+                    }
+                    
+                    let updateQuestion = this.examQuestions.find((question) => question.id == this.selectedExamQuestion.id)
+                    updateQuestion.lastStatus = this.statusMap[this.newStatusQuestion.status]
+
+                    this.resetNewStatusObject()
+                    this.alertTop('Situação da questão atualizada')
+                    this.statusDialogElement.close()
+                })
+            },
+            createStatusTags(statusPk) {
+                // tags de status
+                let tagsInputs = document.querySelectorAll(".status-tags")
+                let values = []
+                tagsInputs.forEach((input) => {
+                    values.push(input.value)
+                })
+                newStatusTagsRecord = {
+                    status: statusPk,
+                    tags: values
+                }
+                let url = "{% url 'exams:exams_status_tags_api_create'  pk='00000000-0000-0000-0000-000000000000' %}"
+                url = url.replace('00000000-0000-0000-0000-000000000000', statusPk)
+        
+                axios.post(url, newStatusTagsRecord).then((response)=>{
+                })
+            },
+            openDialog(examQuestion, status) {
+                
+                this.newStatusQuestion.status = status
+                this.selectedExamQuestion = examQuestion
+
+                if(status != 0){
+                    this.newStatusQuestion.question_fragment = window.getSelection().toString()
+                    this.statusDialogElement.showModal()
+                }else{
+                    this.newStatusQuestion.question_fragment = ''
+                    this.submitNewStatus()
+                }
+            },
+            closeDialog() {
+                let buttons = this.statusDialogElement.querySelectorAll("button")
+                buttons.forEach((b) => b.disabled = false)
+                this.resetNewStatusObject()
+                this.statusDialogElement.close()
+                this.questionSugestion = false
+            },
+            resetNewStatusObject(){
+                this.newStatusQuestion = {
+                    status: "",
+                    note: "",
+                    give_score: false,
+                    question_fragment:""
+                }
+            },
+            alertTop(text, icon = 'success', timer = 2000) {
+                Swal.fire({
+                    position: 'top-end',
+                    text: text,
+                    icon: icon,
+                    showConfirmButton: false,
+                    timer: timer,
+                    timerProgressBar: true,
+                    toast: true,
+                })
+            },
+            generateAlternativeLetter(index){
+                return "abcdefghij"[index]
+            },
+            goTo(url) {
+                window.location.href = url
+            },
+            goToExamQuestion(examQuestion) {
+                this.selectedExamQuestion = examQuestion
+                this.goTo('#examQuestion-' + this.selectedExamQuestion.id)
+            },
+            getExamQuestionStatus(examQuestion, iconSize = 16) {
+                let statusObject = {
+                  "Em aberto": {
+                    "label": "Em aberto",
+                    "bgColor": "#0C7BDB10",
+                    "icon": `
+                      <svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill="#0C7BDB" class="bi bi-eye" viewBox="0 0 16 16">
+                        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                        <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                      </svg>
+                    `
+                  },
+                  "Aprovada": {
+                    "label": "Aprovada",
+                    "bgColor": "#41C58810",
+                    "icon": `
+                      <svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill="#41C588" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                        <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05"/>
+                      </svg>
+                    `
+                  },
+                  "Reprovada": {
+                    "label": "Reprovada",
+                    "bgColor": "#FF000010",
+                    "icon": `
+                      <svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill="#FF0000" class="bi bi-x-circle" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                      </svg>
+                    `
+                  },
+                  "Anulada": {
+                    "label": "Anulada",
+                    "bgColor": "#FF000010",
+                    "icon": `
+                      <svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill="#FF0000" class="bi bi-x-circle" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                      </svg>
+                    `
+                  },
+                  "Usar depois": {
+                    "label": "Usar depois",
+                    "bgColor": "#00b8d410",
+                    "icon": `
+                      <svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill="#00b8d4" class="bi bi-clock-history" viewBox="0 0 16 16">
+                        <path d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022l-.074.997zm2.004.45a7.003 7.003 0 0 0-.985-.299l.219-.976c.383.086.76.2 1.126.342l-.36.933zm1.37.71a7.01 7.01 0 0 0-.439-.27l.493-.87a8.025 8.025 0 0 1 .979.654l-.615.789a6.996 6.996 0 0 0-.418-.302zm1.834 1.79a6.99 6.99 0 0 0-.653-.796l.724-.69c.27.285.52.59.747.91l-.818.576zm.744 1.352a7.08 7.08 0 0 0-.214-.468l.893-.45a7.976 7.976 0 0 1 .45 1.088l-.95.313a7.023 7.023 0 0 0-.179-.483zm.53 2.507a6.991 6.991 0 0 0-.1-1.025l.985-.17c.067.386.106.778.116 1.17l-1 .025zm-.131 1.538c.033-.17.06-.339.081-.51l.993.123a7.957 7.957 0 0 1-.23 1.155l-.964-.267c.046-.165.086-.332.12-.501zm-.952 2.379c.184-.29.346-.594.486-.908l.914.405c-.16.36-.345.706-.555 1.038l-.845-.535zm-.964 1.205c.122-.122.239-.248.35-.378l.758.653a8.073 8.073 0 0 1-.401.432l-.707-.707z"/>
+                        <path d="M8 1a7 7 0 1 0 4.95 11.95l.707.707A8.001 8.001 0 1 1 8 0v1z"/>
+                        <path d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5z"/>
+                      </svg>
+                    `
+                  },
+                  "Aguardando correção": {
+                    "label": "Aguardando correção",
+                    "bgColor": "#FF8F3D10",
+                    "icon": `
+                      <svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill="#FF8F3D" class="bi bi-stopwatch" viewBox="0 0 16 16">
+                        <path d="M8.5 5.6a.5.5 0 1 0-1 0v2.9h-3a.5.5 0 0 0 0 1H8a.5.5 0 0 0 .5-.5V5.6z"/>
+                        <path d="M6.5 1A.5.5 0 0 1 7 .5h2a.5.5 0 0 1 0 1v.57c1.36.196 2.594.78 3.584 1.64a.715.715 0 0 1 .012-.013l.354-.354-.354-.353a.5.5 0 0 1 .707-.708l1.414 1.415a.5.5 0 1 1-.707.707l-.353-.354-.354.354a.512.512 0 0 1-.013.012A7 7 0 1 1 7 2.071V1.5a.5.5 0 0 1-.5-.5zM8 3a6 6 0 1 0 .001 12A6 6 0 0 0 8 3z"/>
+                      </svg>
+                    `
+                  },
+                  "Corrigido": {
+                    "label": "Corrigido",
+                    "bgColor": "#ffc10710",
+                    "icon": `
+                      <svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill="#ffc107" class="bi bi-check" viewBox="0 0 16 16">
+                        <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                      </svg>
+                    `
+                  },
+                  "Rascunho": {
+                    "label": "Rascunho",
+                    "icon": `
+                      <svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
+                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                      </svg>
+                    `
+                  },
+                  "Incompleta": {
+                    "label": "Questão incompleta",
+                    "bgColor": "#FF000010",
+                    "icon": `
+                      <svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill="#FF0000" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                        <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                        <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
+                      </svg>
+                    `
+                  },
+                }
+                
+                if(statusObject[examQuestion.lastStatus]) {
+                  return statusObject[examQuestion.lastStatus]
+                }
+    
+                return statusObject["Em aberto"]
+            },
+            progressPercent() {
+                if(this.examQuestions) {
+                  return {{ object.percentage_questions_status }}
+                }
+                return 0
+            },
+        },
+        mounted(){
+            this.examQuestions.forEach(question => {
+                this.$set(this.selectedTab, question.id, 'questoes');
+            });
+
+            this.selectedExamQuestion = this.examQuestions[0]
+            this.statusDialogElement = document.querySelector("#status-dialog")
+
+            tippy('#change-question-with-ia-button', {
+                placement: 'right',
+                content: 'Criar uma nova versão da questão com IA'
+            })
+            tippy('#edit-button', {
+                placement: 'right',
+                content: 'Editar questão'
+            })
+            tippy('#reviews-button', {
+                placement: 'right',
+                content: 'Revisar questão'
+            })
+            tippy('#copy-button', {
+                placement: 'right',
+                content: 'Copiar questão'
+            })
+            $("#availableExams").select2({
+                width: '100%',
+                placeholder: 'Selecione', 
+                dropdownParent: $('#copyQuestionDialog'),
+                ajax: {
+                  url: '{% url "exams:exams_api_list" %}',
+                  delay: 250,
+                  data: function (params) {
+                      return {
+                          search: params.term
+                      }
+                  },
+                  processResults: function(results) {
+                      let new_results = $.map(results, function(element) {
+                        element.text = element.name
+                        return element
+                      })
+                      
+                      return {
+                          results: new_results,
+                      }
+                  }
+                },
+            })
+            $("#availableExamTeacherSubjects").select2({width: '100%', placeholder: 'Selecione', dropdownParent: $('#copyQuestionDialog'),})
+
+            $('#availableExams').on('select2:select', (e) => {
+                id = e.params.data.id
+                if (id) {
+                    this.copyQuestionData.destinationExam = id
+                }
+            })
+            $('#availableExamTeacherSubjects').on('select2:select', (e) => {
+                id = e.params.data.id
+                if (id) {
+                    this.copyQuestionData.destinationExamTeacherSubject = id
+                }
+            })
+            $('[data-toggle="tooltip"]').tooltip()
+
+        }
+    })
+</script>
+{% endblock %}

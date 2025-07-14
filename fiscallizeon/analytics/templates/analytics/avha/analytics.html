@@ -1,0 +1,111 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+
+{% block title %}Análise de performance (AVHA) - Lize{% endblock title %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10 performance-content">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">COORDENAÇÃO</a></li>
+          <li class="breadcrumb-item active" aria-current="page">ANALÍTICO - AVHA</li>
+        </ol>
+      </nav> 
+    </div>    
+  </div>
+  <div class="row">
+    <div class="col-12 d-flex justify-content-between">
+      <h4>Análise de Performance AVHA</h4>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block css-additional %}
+  <link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+{% endblock css-additional %}
+
+{% block content-fixed %}
+<div class="ard cex ddc">
+<div class="ls" style="margin-top: 0.625rem; margin-bottom: 1rem; justify-content: space-between;"></div>
+<h4>Análise de performance (AVHA)</h4>
+<div class="performance-content">
+  <div class="row">
+      <div class="col-12">
+          <div class="card">
+            <div class="card-body pd-y-20">
+                <ul class="nav nav-tabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-toggle="tab" href="#centers">Distribuição de Alunos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#unities">Ranking por Escola</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#topics">Descritores</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#compares">Comparativos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#ausentes">Ausentes</a>
+                    </li>
+                </ul>
+                
+                <div class="tab-content">
+                    <div class="tab-pane active p-0" id="centers">
+                        <iframe
+                          src="https://data.queiroz.dev.br/public/dashboard/177d9500-d972-47f4-9e00-5bedadeee2af"
+                          frameborder="0"
+                          width="100%"
+                          height="1400"
+                          allowtransparency
+                      ></iframe>
+                    </div>
+                    <div class="tab-pane fade p-0" id="unities">
+                        <iframe
+                          src="https://data.queiroz.dev.br/public/dashboard/055080a2-de76-449e-9d75-a10249041081"
+                          frameborder="0"
+                          width="100%"
+                          height="1400"
+                          allowtransparency
+                      ></iframe>
+                    </div>
+                    <div class="tab-pane fade p-0" id="topics">
+                        <iframe
+                          src="https://data.queiroz.dev.br/public/dashboard/01539eed-b770-4ff8-9fcb-de5e11986112"
+                          frameborder="0"
+                          width="100%"
+                          height="1400"
+                          allowtransparency
+                        ></iframe>
+                    </div>
+                    <div class="tab-pane fade p-0" id="ausentes">
+                       <iframe
+                        src="https://data.queiroz.dev.br/public/dashboard/9809ac97-4a4d-477e-ab42-6337bd932fdf"
+                        frameborder="0"
+                        width="100%"
+                        height="1400"
+                        allowtransparency
+                    ></iframe>
+                    </div>
+                    <div class="tab-pane fade p-0" id="compares">
+                       <iframe
+                        src="https://data.queiroz.dev.br/public/dashboard/90791b06-72d9-4ccb-9a2c-c963a7c9387a"
+                        frameborder="0"
+                        width="100%"
+                        height="1400"
+                        allowtransparency
+                    ></iframe>
+                    </div>
+                </div>
+            </div>
+          </div>
+      </div>
+  </div>
+</div>
+</div>
+{% endblock content-fixed %}

@@ -1,0 +1,696 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+{% if not object %}
+Adicionar ensalamento - Lize
+{% else %}
+Alteração de ensalamento - Lize
+{% endif %}
+{% endblock title %}
+
+{% block css-additional %}
+
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+<div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                <li class="breadcrumb-item"><a href="#">ENSALAMENTOS</a></li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    {% if not object %}
+                    CADASTRAR
+                    {% else %}
+                    ATUALIZAR
+                    {% endif %}
+                </li>
+            </ol>
+        </nav>
+        <h4>
+            {% if not object %}
+            Cadastrar ensalamento
+            {% else %}
+            Atualizar ensalamento
+            {% endif %}
+        </h4>
+    </div>
+    <div class="d-none d-md-block">
+        <button class="btn btn-sm pd-x-15 btn-white btn-uppercase" onclick="history.back();">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </button>
+    </div>
+</div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+      <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+        <nav class="ls" aria-label="Breadcrumb">
+          <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+            <li>
+              <div>
+                <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                    <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+                </a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="{% url 'distribution:distribution_list' %}" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Ensalamentos</a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">{% if not object %}Cadastrar{% else %}Editar{% endif %}</a>
+              </div>
+            </li>
+          </ol>
+        </nav>
+        <div class="d-none d-md-block">
+          <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+          </a>
+        </div>
+      </div>
+<form method="POST">
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card mg-b-10">
+                <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+                    <div>
+                        <h6 class="mg-b-5">{% if not object %}Cadastrar um novo{% else %}Editar o{% endif %} ensalamento</h6>
+                  <p class="tx-13 tx-color-03 mg-b-5">Informe os dados abaixo e {% if not object %}cadastre um novo{% else %}edite o{% endif %} ensalamento</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-row">
+                                <div class="form-group col-md-4">
+                                    <label for="date">Data do Ensalamento</label>
+                                    <input type="date" v-model="selectedDate" id="id_date" name="date" class="form-control form-control-sm">
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <label for="{{form.category.auto_id}}">Tipo de Ensalamento</label>
+                                    {% render_field form.category class="form-control" %}
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <div class="custom-control custom-switch">
+                                      <input type="checkbox" class="custom-control-input" name="{{ form.shuffle_students.html_name }}" v-model="shuffleStudents" id="{{form.shuffle_students.auto_id}}">
+                                      <label class="custom-control-label tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900" for="{{form.shuffle_students.auto_id}}">
+                                        {{form.shuffle_students.label}}
+                                        <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                            {{form.shuffle_students.help_text}}
+                                        </small>
+                                      </label>
+                                    </div>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <div class="custom-control custom-switch" v-show="selectedCategory && selectedCategory == 2">
+                                      <input type="checkbox" class="custom-control-input" name="{{ form.balance_rooms.html_name }}" v-model="balanceRooms" id="{{form.balance_rooms.auto_id}}">
+                                      <label class="custom-control-label tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900" for="{{form.balance_rooms.auto_id}}">
+                                        {{form.balance_rooms.label}}
+                                        <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                            {{form.balance_rooms.help_text}}
+                                        </small>
+                                      </label>
+                                    </div>
+                                </div>
+                                <div class="col-12 p-0">
+                                    <div class="alert alert-secondary text-justify" v-show="selectedCategory && selectedCategory == 0">
+                                        <span class="font-weight-bold">
+                                            <i class="fas fa-sort-alpha-down"></i> Por nome e série</label>:
+                                        </span>
+                                        Os alunos de uma mesma série serão alocados nas salas selecionadas<template v-if="!shuffleStudents"> em ordem alfabética e</template> desconsiderando a turma de cada um.
+                                    </div>
+                                    <div class="alert alert-secondary text-justify" v-show="selectedCategory && selectedCategory == 1">
+                                        <span class="font-weight-bold">
+                                            <i class="fas fa-users"></i> Por nome e turma</label>:
+                                        </span>
+                                        Os alunos de uma mesma turma serão alocados nas salas selecionadas<template v-if="!shuffleStudents"> em ordem alfabética</template>.
+                                    </div>
+                                    <div class="alert alert-secondary text-justify" v-show="selectedCategory && selectedCategory == 2">
+                                        <span class="font-weight-bold">
+                                            <i class="fas fa-sort-alpha-down"></i> Por nome e coordenação</label>:
+                                        </span>
+                                        Os alunos de uma mesma coordenação serão alocados nas salas selecionadas <template v-if="!shuffleStudents">em ordem alfabética e</template> desconsiderando a turma e série de cada um.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-8">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card w-100">
+                        <div class="card-body">
+                            <p class="tx-medium">
+                                Filtro de aplicações
+                                <br>
+                                <span class="text-muted">Você pode filtrar aplicações envolvidas alterando este filtro</span>
+                            </p>
+                            <div class="row">
+                                <div class="form-group col-5">
+                                    <label for="id_school_classes">Turmas</label>
+                                    <select 
+                                        id="id_school_classes"
+                                        name="school_classes" 
+                                        class="form-control form-control-sm m-1"
+                                        multiple
+                                    ></select>
+                                </div>
+                                <div class="form-group col-5">
+                                    <label for="id_grades">Séries</label>
+                                    <select id="id_grades" name="grades" class="form-control form-control-sm m-1" multiple>
+                                        <option value=""></option>
+                                        {% for grade in grades %}
+                                            <option value="{{grade.pk}}">{{grade}}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group col-2 d-flex align-self-end">
+                                    <button class="btn btn-success btn-block" :disabled="!selectedDate" @click="APIFilters('applications')" type="button"><i class="fas fa-search"></i></button>
+                                </div>
+                            </div>
+                            <div class="form-row" v-if="applications.length > 0">
+                                <div class="form-group col-12 py-2">
+                                    <p class="tx-medium mb-0">Aplicações Envolvidas</p>
+                                    <div class="d-flex flex-wrap">
+                                        <div class="form-check m-2" data-applications="" :data-start="application.start.slice(0, 5)" :data-end="application.end.slice(0, 5)" v-for="application in applications" >
+                                            <input class="form-check-input text-truncate" :disabled="application.has_distribution" name="applications" @change="selectApplication(application)" :data-application="application.id" type="checkbox" :id="'application-'+application.id" :value="application.id">
+                                            <label class="form-check-label" :for="'application-'+application.id" style="cursor: pointer;">
+                                                <span>${application.exam_name}</span>
+                                                <span class="badge badge-primary mx-1">${application.students_count} aluno(s)</span>
+                                                <span class="badge badge-success" v-if="application.has_distribution">Esta aplicação já foi utilizada</span>
+                                            </label>
+                                            <br>
+                                            <span class="text-muted tx-11">De ${application.start.slice(0, 5)} até ${application.end.slice(0, 5)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="alert alert-warning" v-if="!selectedDate">
+                                <p>Selecione a data do ensalamento para visualizar a lista de aplicações envolvidas</p>
+                            </div>
+                            <div class="alert alert-warning" v-if="selectedDate && applications.length == 0">
+                                <p>Não foi encontrada aplicações com o filtro aplicado.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="card w-100 mt-2">
+                        <div class="card-body">
+                            <p class="tx-medium">
+                                Filtro de Salas
+                                <br>
+                                <span class="text-muted">Você pode filtrar as salas envolvidas alterando este filtro</span>
+                            </p>
+                            <div class="row">
+
+                                <div class="form-group col-5">
+                                    <label for="id_unitys">Unidades</label>
+                                    <select id="id_unitys" name="unitys" class="form-control form-control-sm m-1" multiple>
+                                        <option value=""></option>
+                                        {% for unity in unitys %}
+                                            <option value="{{unity.pk}}">{{unity}}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group col-5">
+                                    <label for="id_school_coordination">Coordenações</label>
+                                    <select 
+                                        name="school_coordination" 
+                                        id="id_school_coordination"
+                                        class="form-control form-control-sm m-1"
+                                        multiple
+                                    >
+                                        <option value=""></option>
+                                        {% for coordination in school_coordinations %}
+                                            <option value="{{coordination.pk}}">{{coordination}}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group col-2 d-flex align-self-end">
+                                    <button  :disabled="!selectedDate" @click="APIFilters('rooms')" class="btn btn-success btn-block" type="button"><i class="fas fa-search"></i></button>
+                                </div>
+                            </div>
+                            <div class="form-row" v-if="coordinations.length > 0">
+                                <div class="form-group col-12">
+                                    <p class="tx-medium mb-0">Salas Envolvidas</p>
+                                    <template v-for="coordination in coordinations">
+                                        <p class="mb-0 mt-3 d-flex align-items-center">${coordination.name} <span class="text-muted ml-1">- ${coordination.unity_name}</span> <span class="badge badge-primary mx-1">${coordination.rooms.length} sala(s)</span></p>
+                                        <div class="d-flex flex-wrap">
+                                            <div class="form-check m-2" v-for="room in coordination.rooms">
+                                                <input class="form-check-input text-truncate" :disabled="!room.number_vacancies_available > 0" name="rooms" @change="selectRoom(room)" :data-room="room.id" type="checkbox" :id="'room-'+room.id" :value="room.id">
+                                                <label class="form-check-label" :for="'room-'+room.id" style="cursor: pointer;">${room.name}</label>
+                                                <br>
+                                                <span class="text-muted tx-11">Capacidade: ${room.capacity} alunos</span> <br>
+                                                <span class="tx-11" :class="room.number_vacancies_available > 0 ? 'text-success' : 'badge badge-primary'">${room.number_vacancies_available > 0 ? 'Disponíveis: ' + room.number_vacancies_available+ ' vagas':'Sala já utilizada' }</span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="alert alert-warning" v-if="!selectedDate">
+                                <p>Selecione a data do ensalamento para visualizar a lista de salas envolvidas</p>
+                            </div>
+                            <div class="alert alert-warning" v-if="selectedDate && coordinations.length == 0">
+                                <p>Não foi possível encontrar salas com o filtro aplicado.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-xl-4">
+            <div style="position: -webkit-sticky; position: sticky; top: 100px;" v-if="selectedApplications.length > 0">
+                <div class="card">
+                    <div class="card-body pt-3 px-3 pb-0">
+                        <template v-if="!calculate">
+                            <div class="row">
+                                <div class="col-12 align-center">
+                                    <p class="tx-medium mb-1">Data da aplicação</p>
+                                    <h5 class="text-muted">${momentRef(selectedApplications[0].date).format('DD/MM/YYYY')}</h5>
+                                </div>
+                                <div class="col-12 align-center mt-4" v-for="(coordination, index) in coordinations">
+                                    <div class="d-inline-flex">
+                                        <h5 class="tx-medium mb-1 text-truncate text-uppercase">${coordination.name}</h5><span class="text-muted ml-2">${coordination.unity_name}</span>
+                                    </div>
+                                    <div class="">
+                                        <table class="table mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Alunos</th>
+                                                    <th>Vagas disponíveis</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td class="pb-0">
+                                                        <h5 class="text-muted mb-0">${coordination.students ? coordination.students.length : 0}</h5>
+                                                    </td>
+                                                    <td class="pb-0">
+                                                        <h5 class="text-muted mb-0">${getVacanciesAvailable(coordination)}</h5>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <hr v-if="index > 0 && index != coordinations.length - 1" class="my-0">
+                                </div>
+                            </div>
+                        </template>
+                        <template v-else>
+                            <div class="row">
+                                <div class="col-12 align-center d-flex align-items-center">
+                                    <h5 class="text-muted">Calculando, Aguarde...</h5>
+                                    <div class="spinner-border text-info m-2 tx-10" role="status">
+                                        <span class="sr-only">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="card-footer border-top-0">
+                        <template v-if="selectedRooms.length > 0 && validValue()">
+                            <button type="submit" class="btn btn-primary m-1 btn-block">Salvar Ensalamento</button>
+                        </template>
+                        <template v-else>
+                            <div class="col-12 p-0 mb-2">
+                                <div class="alert alert-warning mb-0">
+                                    <strong>Atenção:</strong> você não pode criar o ensalamento, pois o número de vagas disponíveis nas salas selecionadas foi excedido.
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-danger m-1 btn-block" disabled>Salvar Ensalamento</button>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/typeahead.js/typeahead.bundle.min.js' %}"></script>
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'administration/assets/vendor/moment.min.js' %}"></script>
+<script src="{% static 'administration/assets/vendor/jquery.mask.min.js' %}"></script>
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"></script>
+
+<script>
+    
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+            selectedDate: '{{q_date|safe}}',
+            selectedCategory: $('#{{form.category.auto_id}}').val(),
+            selectedSchoolClasses: [],
+            selectedGrades: [],
+            selectedUnitys: [],
+            selectedSchoolCoordinations: [],
+            applications: [],
+            selectedRooms: [],
+            selectedApplications: [],
+            coordinations: [],
+            studentsDistinctCount: [],
+            studentsAgrupateByCoordinations: [],
+            calculate: false,
+            shuffleStudents: false,
+            balanceRooms: false,
+        },
+        watch: {
+            selectedDate: function(e) {
+                this.reset()
+                if(e) {
+                    axios.get(`{% url 'applications:api_applications_list' %}?date=${this.selectedDate}`).then((response) => {
+                        this.applications = response.data
+                    })
+                }
+            },
+            selectedApplications: function(e) {
+                if(e.length > 0) {
+                    let coordinationsOnApplications = []
+                    e.map((application) => application.coordinations.map((coordination) => coordinationsOnApplications.push(coordination)))
+                    axios.get(`{% url 'distribution:rooms_list' %}?coordinations=${coordinationsOnApplications.join('&coordinations=')}&date=${this.selectedDate}&start=${e[0].start}&end=${e[0].end}`).then((response) => {
+                        this.agrupateRooms(response.data)
+                    }).finally(() => {
+                        this.calculate = true
+                        axios.get(`{% url 'applications:api_applications_students_coordination' %}?id__in=${e.map((_e) => _e.id).join(',')}`).then((response) => this.agrupateStudentsByCoordinations(response.data))
+                    })
+                } else {
+                    this.coordinations = []
+                    this.agrupateStudentsByCoordinations([])
+                }
+            },
+            selectedCategory: function(e) {
+                if (e !== 2) {
+                    this.balanceRooms = false
+                }
+            }
+        },
+        methods: {
+            momentRef(args) {
+              return moment(args)
+            },
+            initialize() {
+                {% if params %}
+                    axios.get(`{% url 'applications:api_applications_list' %}?{{params|safe}}`).then((response) => {
+                        this.applications = response.data
+                    })
+                    axios.get(`{% url 'distribution:rooms_list' %}?{{params|safe}}`).then((response) => {
+                        this.agrupateRooms(response.data)
+                    })
+                {% endif %}
+
+                {% if application %}
+                    this.selectedDate = '{{application.date|safe}}'
+                    setTimeout(() => {
+                        $(`[data-application="{{application.id}}"]`).click()
+                    }, 600)
+                {% endif %}                
+            },
+            populateDate() {
+                let url = "{% url 'distribution:api_roomdistribution_detail' pk='00000000-0000-0000-0000-000000000000' %}"
+                axios.get(url.replace('00000000-0000-0000-0000-000000000000', '{{object.pk}}')).then((response) => {
+                    roomdistribution = response.data
+                    this.selectedDate = roomdistribution.date
+                    $('#form.category.auto_id').val(roomdistribution.category)
+                    setTimeout(() => {
+                        roomdistribution.applications.forEach((application) => $(`#application-${application}`).click())
+                        roomdistribution.rooms.forEach((room) => $(`#room-${room}`).click())
+                    }, 500)
+                })
+            },
+            agrupateRooms(rooms) {
+                this.coordinations = []
+                rooms.forEach((room, index) => {
+                    let coordination = this.coordinations.find((_coordination) => _coordination.id == room.coordination.id)
+                    if(coordination) {
+                        coordination.rooms.push(room)
+                    } else {
+                        this.coordinations.push({
+                            id: room.coordination.id,
+                            name: room.coordination.name,
+                            unity_name: room.coordination.unity_name,
+                            rooms: [room]
+                        })
+                    }
+                })
+            },
+            selectApplication(application) {
+                $(`[data-applications]`).hide()
+                $(`[data-start="${application.start.slice(0, 5)}"][data-end="${application.end.slice(0, 5)}"]`).show()
+
+                if(this.selectedApplications.length > 0) {
+                    if(this.selectedApplications.find(_application => _application.id == application.id)) {
+                        this.selectedApplications.splice(this.selectedApplications.indexOf(application), 1)
+                    } else {
+                        if(this.selectedApplications.find(_application => _application.start.slice(0, 5) == application.start.slice(0, 5) && _application.end.slice(0, 5) == application.end.slice(0, 5))) {
+                            this.selectedApplications.push(application)
+                        } else {
+                            $(`[data-application="${application.id}"]`).prop('checked', false)
+                            return Swal.fire({
+                                title: 'Atenção',
+                                text: 'Você não pode selecionar aplicações com horários diferentes',
+                                icon: 'warning',
+                                confirmButtonText: 'Ok, entendi'
+                            })
+                        }
+                    }
+                    if(this.selectedApplications.length == 0) {
+                        $(`[data-applications]`).show()
+                    } 
+                } else {
+                    this.selectedApplications.push(application)
+                }
+            },
+            selectRoom(room) {
+                if(this.selectedRooms.length > 0) {
+                    if(this.selectedRooms.find(_room => _room.id == room.id)) {
+                        this.selectedRooms.splice(this.selectedRooms.indexOf(room), 1)
+                    } else {
+                        this.selectedRooms.push(room)
+                    }
+                } else {
+                    this.selectedRooms.push(room)
+                }
+            },
+            APIFilters(api) {
+                window.history.replaceState(null, null, `?${this.paramsConstructor()}`)
+                if(api == 'applications') {
+                    axios.get(`{% url 'applications:api_applications_list' %}?${this.paramsConstructor()}`).then((response) => {
+                        this.applications = response.data
+                    })
+                }
+                if(api == 'rooms') {
+                    axios.get(`{% url 'distribution:rooms_list' %}?${this.paramsConstructor()}`).then((response) => {
+                        this.agrupateRooms(response.data)
+                    })
+                }
+            },
+            paramsConstructor() {
+                let params = ''
+                params += `date=${this.selectedDate}`
+                this.selectedSchoolClasses.forEach((_params) => params += _params)
+                this.selectedGrades.forEach((_params) => params += _params)
+                this.selectedUnitys.forEach((_params) => params += _params)
+                this.selectedSchoolCoordinations.forEach((_params) => params += _params)
+                return params
+            },
+            agrupateStudentsByCoordinations(data) {
+                let students = []
+                this.coordinations.forEach((coordination) => coordination.students = [])
+                data.forEach((application, index) => {
+                    application.students.forEach((student, studentIndex) => {
+                        student.classes.forEach((classe) => {
+                            if(!students.find((_student) => _student.id == student.id) && student.classes.length > 0) {
+                                students.push(student)
+                                let coordinationFound = this.coordinations.find((coordination) => classe.coordination.id == coordination.id)
+                                if(coordinationFound) {
+                                    coordinationFound.students ? coordinationFound.students.push(student) : coordinationFound.students = [student]
+                                }
+                            }
+                        })
+                        if(application.students.length == studentIndex+1) {
+                            this.calculate = false
+                        }
+                    })
+                })
+                this.$forceUpdate()
+            },
+            getVacanciesAvailable(coordination) {
+                return _.reduce(coordination.rooms.filter((room) => this.selectedRooms.find((_room) => _room.id == room.id)), function(sum, room) { 
+                    return sum += room.number_vacancies_available 
+                }, 0)
+            },
+            validValue() {
+                result = this.coordinations.map((coordination) => {
+                    let vacancies = coordination.rooms.filter((room) => this.selectedRooms.find((_room) => _room.id == room.id)).map((room) => room.number_vacancies_available)
+                    object = {
+                        students_count: coordination.students ? coordination.students.length : 0,
+                        vacancies: _.reduce(vacancies, function(sum, vacancie) { return sum += vacancie }, 0)
+                    }
+                    return object
+                })
+                return result.every((values) => values.vacancies >= values.students_count)
+            },
+            reset() {
+                this.selectedApplications = []
+                this.selectedUnitys = []
+                this.selectedGrades = []
+                this.selectedSchoolCoordinations = []
+                this.selectedUnitys = []
+                this.selectedRooms = []
+                $('[name="applications"]').prop('checked', false)
+                $('[name="rooms"]').prop('checked', false)
+            },
+        },
+        mounted: function () {
+            this.initialize()
+            {% if object %}
+                this.populateDate()
+            {% endif %}
+            var self = this
+            inputSchoolClass = $('#id_school_classes').select2({
+                closeOnSelect: false
+            })
+            inputGrades = $('#id_grades').select2({ placeholder: "Selecione uma série", allowClear: true, width: '100%', closeOnSelect: false})
+            inputUnitys = $('#id_unitys').select2({ placeholder: "Selecione uma unidade", allowClear: true, width: '100%', closeOnSelect: false})
+            inputSchoolCoordination = $('#id_school_coordination').select2({ placeholder: "Selecione uma coordenação", allowClear: true, width: '100%', closeOnSelect: false})
+            
+            inputSchoolClass.select2({
+                placeholder: 'Buscar pelo nome da turma...',
+                minimumInputLength: 1,
+                allowClear: true,
+                width: '100%', 
+                closeOnSelect: false,
+                escapeMarkup: function (text) {
+                    return text;
+                },
+                ajax: {
+                    url: function (params) {
+                        return `{% url "classes:classes_list_api" %}?year=${new Date().getFullYear()}`;
+                    },
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            search: params.term
+                        }
+                    },
+                    processResults: function (results) {
+                        let new_results = $.map(results, function (element) {
+                            element.text = element.name + " - " + element.unity_name
+                            return element
+                        })
+                        return {
+                            results: new_results,
+                        }
+                    }
+                },
+                templateSelection: (data) => {
+                    if (data.text && data.students_count) {
+                        return `<span class="font-weight-bold">
+                        <span class="mr-1">${data.text}</span>
+                        <span class="badge badge-primary font-weight-bold">${data.students_count} Alunos</span>
+                        </span>`
+                    } else {
+                        return "Buscar pelo nome da turma..."
+                    }
+                },
+                templateResult: (data) => {
+                    if (data.text) {
+                        return `
+                        <div class="row mb-0">
+                            <div class="col-12 mb-0">
+                            <div class="font-weight-bold">
+                                ${data.text}
+                                <span class="badge badge-primary font-weight-bold">${data.students_count} Alunos</span>
+                                <p class="text-muted mb-0">${data.unity_name}</p>
+                            </div>
+                        </div>
+                        `
+                    } else {
+                        return "Buscando..."
+                    }
+                }
+            })
+
+            //SchoolClasses
+            $('#id_school_classes').on('select2:select', (e) => {
+                self.selectedSchoolClasses.push(`&school_classes=${e.params.data.id}`)
+            })
+            $('#id_school_classes').on('select2:unselect', (e) => {
+                self.selectedSchoolClasses.splice(self.selectedSchoolClasses.indexOf(self.selectedSchoolClasses.find(classe => classe.id == e.params.data.id)), 1)                
+            })
+            $('#id_school_classes').on('select2:clear', (e) => {
+                self.selectedSchoolClasses = []
+            })
+
+            //Grades
+            $('#id_grades').on('select2:select', (e) => {
+                self.selectedGrades.push(`&grades=${e.params.data.id}`)
+            })
+            $('#id_grades').on('select2:unselect', (e) => {
+                self.selectedGrades.splice(self.selectedGrades.indexOf(self.selectedGrades.find(classe => classe.id == e.params.data.id)), 1)                
+            })
+            $('#id_grades').on('select2:clear', (e) => {
+                self.selectedGrades = []
+            })  
+            
+            //Unitys
+            $('#id_unitys').on('select2:select', (e) => {
+                self.selectedUnitys.push(`&unitys=${e.params.data.id}`)
+            })
+            $('#id_unitys').on('select2:unselect', (e) => {
+                self.selectedUnitys.splice(self.selectedUnitys.indexOf(self.selectedUnitys.find(classe => classe.id == e.params.data.id)), 1)                
+            })
+            $('#id_unitys').on('select2:clear', (e) => {
+                self.selectedUnitys = []
+            })
+            
+            //Unitys
+            $('#id_school_coordination').on('select2:select', (e) => {
+                self.selectedSchoolCoordinations.push(`&coordinations=${e.params.data.id}`)
+            })
+            $('#id_school_coordination').on('select2:unselect', (e) => {
+                self.selectedSchoolCoordinations.splice(self.selectedSchoolCoordinations.indexOf(self.selectedSchoolCoordinations.find(classe => classe.id == e.params.data.id)), 1)                
+            })
+            $('#id_school_coordination').on('select2:clear', (e) => {
+                self.selectedSchoolCoordinations = []
+            })
+
+            $('#{{form.category.auto_id}}').on('change', (e) => {
+                self.selectedCategory = e.target.value
+            })
+        },
+    })
+</script>
+{% endblock js-additional %}

@@ -1,0 +1,417 @@
+'search-subjects-component': Vue.component('search-subjects-component', {
+    delimiters: ["#{", "}"],
+    props: ['coordinations','grades', 'classes','subjectsSelected'],
+    data() {
+        return {
+            treeselectSubjects: null,
+            allSubjectsClient: [],
+            selectedGrades: [],
+            selectedSubject: "",
+            selectedSubjectName: "",
+            selectedSubjectsElementCurrent: "",
+            selectedClasses: [],
+            subjectsFilter: [],
+            classesFilter: [],
+            url_subjects: "{% url 'api2:subjects' %}",
+            buttonsGroupGrades: [],
+        };
+    },
+    watch: {
+        
+    },
+    methods: {
+        findNameByValue (value, options) {
+            for (const option of options) {
+                if (option.value === value) return option.completeName;
+                if (option.children) {
+                    const childResult = this.findNameByValue(value, option.children);
+                    if (childResult) return childResult;
+                }
+            }
+            return null;
+        },
+        teacherFetchSubjects() {
+            this.selectedSubjects = this.treeselectSubjects.value;
+            this.selectedSubjectNames = this.selectedSubjects.map(value => 
+                this.findNameByValue(value, this.treeselectSubjects.options)
+            );
+        },
+        allSelect(reset) {
+            this.classesFilter.forEach(classe => {
+                if (!this.selectedClasses.includes(classe.id)) {
+                    this.selectedClasses.push(classe.id)
+                }
+            })
+            if (reset == true) {
+                this.selectedClasses = []
+            }
+        },
+        generateUniqueId() {
+            // Gerar um ID usando a data atual e um valor aleatório
+            return 'id_' +  Math.random().toString(36).substring(2, 15) + '_' + Date.now();
+        },
+        markClass(classId) {
+            const index = this.selectedClasses.indexOf(classId);
+            if (index > -1) {
+              this.selectedClasses.splice(index, 1);
+            } else {
+              this.selectedClasses.push(classId);
+            }
+        },
+        saveSubjectTeacher() {
+            for (let i = 0; i < this.selectedSubjects.length; i++) {
+              let currentSubjectId = this.selectedSubjects[i];
+              let currentSubjectName = this.selectedSubjectNames[i];
+          
+              let slicedName = currentSubjectName.split(" - ");
+              let gradeName = slicedName[0] + " - " + slicedName[1];
+              let nameReal = slicedName[2];
+          
+              if (this.selectedSubjectsElementCurrent === "") {
+                this.selectedSubjectsElementCurrent = this.generateUniqueId();
+              }
+          
+              let subjectBody = {
+                elementId: this.selectedSubjectsElementCurrent,
+                id: currentSubjectId,
+                name: nameReal,
+                grade: gradeName,
+                classes: this.selectedClasses,
+              };
+          
+              this.selectedSubjectsElementCurrent = "";
+          
+              this.$emit("add-subject-teachers", subjectBody);
+            }
+        },
+        editSubject(subject) {
+            this.selectedSubjectsElementCurrent = subject.elementId 
+            this.addGroupGrades('reset')
+            if (subject.grade == "Ensino Fundamental") {
+                this.addGroupGrades("elementarySchool")
+                this.addGroupGrades("elementarySchool2")
+            } else if (subject.grade == "Ensino Médio") {
+                this.addGroupGrades("highSchool")
+            } else {
+                this.addGroupGrades("all")
+            }
+            
+            this.selectedSubject = subject.id
+            this.treeselectSubjects.updateValue([this.selectedSubject])
+            setTimeout(() => {
+                $('#select-subject').val(this.selectedSubject).change();
+            }, 1000);        
+
+            this.selectedSubjectName = subject.grade + " - " + subject.name
+
+            this.selectedClasses = subject.classes
+            this.fetchSubjects();
+
+        },
+        addGroupGrades(type) {
+
+            if (this.buttonsGroupGrades.includes(type)) {
+
+                if (type == 'elementarySchool') {
+                    this.grades.filter(grade => grade.level == 1).map(grade => grade.id).forEach(grade => {
+                        let index = this.selectedGrades.indexOf(grade)
+                        if (index > -1) {
+                            this.selectedGrades.splice(index, 1)
+                        }
+                    })
+                }
+
+                if (type == 'elementarySchool2') {
+                    this.grades.filter(grade => grade.level == 2).map(grade => grade.id).forEach(grade => {
+                        let index = this.selectedGrades.indexOf(grade)
+                        if (index > -1) {
+                            this.selectedGrades.splice(index, 1)
+                        }
+                    })
+                }
+
+                if (type == 'highSchool') {
+                    this.grades.filter(grade => grade.level == 0).map(grade => grade.id).forEach(grade => {
+                        let index = this.selectedGrades.indexOf(grade)
+                        if (index > -1) {
+                            this.selectedGrades.splice(index, 1)
+                        }
+                    })
+                }
+
+                this.buttonsGroupGrades = this.buttonsGroupGrades.filter(button => button != type)
+                $('#select-classes').val(this.selectedGrades).trigger('change');
+                return
+
+            } else {
+                this.buttonsGroupGrades.push(type)
+            }
+
+            if (type == 'elementarySchool') {
+                this.grades.forEach(grade => {
+                    if (grade.level == 1) {
+                        this.selectedGrades.push(grade.id)
+                    }
+                })
+            }
+
+            if (type == 'elementarySchool2') {
+                this.grades.forEach(grade => {
+                    if (grade.level == 2) {
+                        this.selectedGrades.push(grade.id)
+                    }
+                })
+            }
+
+            if (type == 'highSchool') {
+                this.grades.forEach(grade => {
+                    if (grade.level == 0) {
+                        this.selectedGrades.push(grade.id)
+                    }
+                })
+            }
+            
+            $('#select-classes').val(this.selectedGrades).trigger('change');
+            this.fetchSubjects();
+        },
+        async fetchSubjects(call) {
+            try {
+
+                this.classesFilter = [];
+                for (let i = 0; i < this.classes.length; i++) {
+                    let classe = this.classes[i];
+                    if (this.selectedClasses.includes(classe.id)) {
+                        this.classesFilter.unshift(classe);
+                        continue;
+                    }
+                    if (this.selectedGrades.includes(classe.grade) && this.coordinations.includes(classe.coordination)) {
+                        this.classesFilter.push(classe);
+                    }
+                }
+
+            } catch (error) {
+              console.error('Error fetching classes:', error);
+            }
+        },
+    },
+    template: `
+    <div>
+
+        <div>
+            <button @click="fetchSubjects();treeselectSubjects.updateValue([])" type="button" data-select-classes data-toggle="modal" data-target="#modalSearchSubjects" class="tw-flex tw-w-full tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 py-2 my-4 tw-text-sm tw-font-semibold tw-shadow-sm tw-mt-4 hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600">
+                Adicionar as disciplinas deste professor 
+                <svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12.5 5V19M5.5 12H19.5" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="modal fade" id="modalSearchSubjects" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content tw-rounded-xl">
+                    <div class="modal-body">
+                        <div class="tw-flex tw-items-center tw-justify-between p-3">
+                            <h5 class="modal-title">Adicionar Disciplina</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true" style="font-size: 28pt;">&times;</span>
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group row">
+                                <div class="col-md-12">
+                                    <label for="select-classes">Segmentos de turmas</label>
+                                    <select id="select-classes" class="js-example-basic-multiple" name="states[]" multiple="multiple">
+                                        <option v-for="grade in grades" :value="grade.id">#{ grade.name }</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-12 tw-flex tw-mt-3 tw-gap-2">
+                                      <div>
+                                        <button 
+                                            type="button" 
+                                            @click="addGroupGrades('elementarySchool')"
+                                            class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-px-3 tw-py-1.5 tw-text-xs tw-font-medium tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2" 
+                                            :class="[buttonsGroupGrades.includes('elementarySchool') ? 'tw-text-primary-600 tw-border tw-border-primary-600 hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline-primary-600' : 'tw-text-[#384250] tw-bg-[#F9FAFA] hover:tw-bg-[#ececec] focus-visible:tw-outline-gray-600']">
+                                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                            <path d="M8.00001 3.33331V12.6666M3.33334 7.99998H12.6667" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                            Ensino fundamental 1
+                                        </button>
+                                      </div>
+                                      <div>
+                                        <button 
+                                            type="button" 
+                                            @click="addGroupGrades('elementarySchool2')"
+                                            class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-px-3 tw-py-1.5 tw-text-xs tw-font-medium tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2" 
+                                            :class="[buttonsGroupGrades.includes('elementarySchool2') ? 'tw-text-primary-600 tw-border tw-border-primary-600 hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline-primary-600' : 'tw-text-[#384250] tw-bg-[#F9FAFA] hover:tw-bg-[#ececec] focus-visible:tw-outline-gray-600']">
+                                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                            <path d="M8.00001 3.33331V12.6666M3.33334 7.99998H12.6667" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                            Ensino fundamental 2
+                                        </button>
+                                      </div>
+                                      <div>
+                                        <button 
+                                            type="button" 
+                                            @click="addGroupGrades('highSchool')"
+                                            class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-px-3 tw-py-1.5 tw-text-xs tw-font-medium tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2" 
+                                            :class="[buttonsGroupGrades.includes('highSchool') ? 'tw-text-primary-600 tw-border tw-border-primary-600 hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline-primary-600' : 'tw-text-[#384250] tw-bg-[#F9FAFA] hover:tw-bg-[#ececec] focus-visible:tw-outline-gray-600']">
+                                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                            <path d="M8.00001 3.33331V12.6666M3.33334 7.99998H12.6667" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                            Ensino médio
+                                        </button>
+                                      </div>
+                                  </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-md-12">
+                                    <label for="select-subject">Escolha uma disciplina</label>
+                                    <div v-if id="select-subject"></div>
+                                </div>
+                            </div>
+                            <div class="form-group row checkbox-container">
+                                <div class="col-md-12" id="checkbox-contents">
+                                    <div class="elements-auto">
+                                        <div class="tw-flex tw-items-center tw-justify-center">
+                                            <p class="m-auto" v-if="classesFilter.length > 0" id="initial-select">Turma das disciplinas</p>
+                                            <p class="m-auto" v-else>Verifique os segmentos e as coordenações</p>
+                                        </div>
+                                        <div v-if="classesFilter.length > 0" class="tw-flex tw-gap-4">
+                                            <button @click="allSelect()" type="button" class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-px-3 tw-py-1.5 tw-text-xs tw-font-medium tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2">
+                                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                                  <path d="M8.00001 3.33331V12.6666M3.33334 7.99998H12.6667" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                                Marcar todos
+                                            </button>
+                                            <button @click="allSelect(reset=true)" type="button" class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-px-3 tw-py-1.5 tw-text-xs tw-font-medium tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2">
+                                                Desmarcar todos
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div v-for="classe in this.classesFilter" class="col-md-6 mb-3">
+                                          <div class="checkbox-element">
+                                            <div class="checkbox-classes">
+                                                <input 
+                                                :checked="selectedClasses.includes(classe.id)"
+                                                v-model="selectedClasses" 
+                                                :value="classe.id" 
+                                                class="custom-checkbox-modal" 
+                                                type="checkbox" 
+                                                :id="'checkbox' + classe.id">                                                
+                                                <label class="checkbox-label-modal" :for="'checkbox' + classe.id">
+                                                #{ classe.full_name }
+                                                </label>
+                                            </div>
+                                            <div class="description-classes">
+                                                <span class="" :for="'checkbox' + classe.id">
+                                                    #{ classe.grade_name }
+                                                </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-md-12">
+                                  <button @click="teacherFetchSubjects();saveSubjectTeacher()" type="button" class="btn btn-primary btn-lg btn-block" data-dismiss="modal" style="background-color: #0C7BDB;">Salvar disciplina</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    `,
+    mounted() {
+
+        async function fetchAllSubjects() {
+            try {
+                let response = await axios.get(`${this.url_subjects}?limit=1000`);
+                this.allSubjectsClient = response.data.results;
+            } catch (error) {
+                console.error('Error fetching subjects:', error);
+            }
+
+            // Criar o select de disciplinas
+            const options = [
+                {
+                    name: 'Ensino Fundamental',
+                    value: 0,
+                    children: this.allSubjectsClient.filter(subject => !subject.grades_code.includes(0)).map(subject => {
+                        return {
+                            name: subject.name + " - " + subject.knowledge_area.split('-')[0],
+                            value: subject.id,
+                            completeName: subject.knowledge_area + " - " + subject.name,
+                        }
+                    })
+                },
+                {
+                    name: 'Ensino Médio',
+                    value: 1,
+                    children: this.allSubjectsClient.filter(subject => subject.grades_code.includes(0)).map(subject => {
+                        return {
+                            name: subject.name + " - " + subject.knowledge_area.split('-')[0] ,
+                            value: subject.id,
+                            completeName: subject.knowledge_area + " - " + subject.name,
+                        }
+                    })
+                }
+            ]
+    
+            const domElement = document.getElementById('select-subject')
+            this.treeselectSubjects = new Treeselect({
+              parentHtmlContainer: domElement,
+              options: options,
+              showTags: false,
+              showCount: true,
+              showItemIfOnlyOneSelected: false,
+              showSelectedItemsCount: true,
+              tagsCountText: 'selecionada(s)',
+              placeholder: 'Selecione as disciplinas',
+              clearable: false,
+              emptyText: 'Nenhum resultado encontrado...',
+              searchable: false,
+              grouped: false,
+            })
+
+        }
+        fetchAllSubjects.call(this);
+
+        <!-- Criar ligações biderecionais entre os selects e as suas variáveis -->
+        $('#select-classes').on('select2:select', (e) => {
+            let data = e.params.data
+            this.selectedGrades.push(data.id)
+            this.fetchSubjects();
+          });
+
+        $('#select-classes').on('select2:unselect', (e) => {
+            let data = e.params.data
+            let index = this.selectedGrades.indexOf(data.id)
+            if (index > -1) {
+                this.selectedGrades.splice(index, 1)
+            }
+            this.fetchSubjects();
+        });
+
+        $('#select-subject').on('change', (e) => {
+            let selectedOption = $(e.target).find('option:selected');
+            this.selectedSubject = selectedOption.val();
+            this.selectedSubjectName = selectedOption.text();
+          });
+
+        this.$nextTick(() => {
+
+            $('#select-classes').select2({
+                width: '100%', closeOnSelect: false,
+                language: {
+                    noResults: function() {
+                      return "Nenhum resultado encontrado";
+                    },},
+            })
+
+        })
+    },
+})

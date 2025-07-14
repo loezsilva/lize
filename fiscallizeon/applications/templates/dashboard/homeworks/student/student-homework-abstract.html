@@ -1,0 +1,561 @@
+{% extends 'dashboard/base_without_header.html' %}
+{% load static %}
+{% load cache %}
+{% load compress %}
+{% load remove_line_break %}
+
+{% block title %}Ambiente de prova - Lize{% endblock title %}
+
+{% block css-additional %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+
+{% cache 600 application_style object.application.pk %}
+{% compress css %}
+<style>
+
+    body{
+        font-family: "IBM Plex Sans", sans-serif !important;
+    }
+
+  *::-webkit-media-controls-panel {
+    display: none!important;
+    -webkit-appearance: none;
+  }
+
+  /* Old shadow dom for play button */
+
+  *::-webkit-media-controls-play-button {
+    display: none!important;
+    -webkit-appearance: none;
+  }
+
+  /* New shadow dom for play button */
+
+  /* This one works! */
+
+  *::-webkit-media-controls-start-playback-button {
+    display: none!important;
+    -webkit-appearance: none;
+  }
+
+    /* #local-stream {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        min-width: 100%;
+        min-height: 100%;
+        max-width: 100%;
+    } */
+    .content {
+        bottom: 0;
+        color: #f1f1f1;
+        width: 100%;
+        padding: 20px;
+    }
+    .btn-circle {
+        width: 60px;
+        height: 60px;
+        padding: 6px 0px;
+        border-radius: 30px;
+        text-align: center;
+        font-size: 12px;
+        line-height: 1.42857;
+        margin: 2px;
+    }
+
+    .modal-body{
+      max-height: 70vh;
+      height: 70vh;
+      overflow: auto;
+    }
+
+    @media (max-width: 767px) {
+  
+      .modal-dialog {
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        margin: 0;
+        padding: 0;
+        max-width: inherit !important; 
+    }
+
+    .modal-content {
+        height: auto;
+        min-height: 100%;
+        max-height: 100%;
+        overflow: auto;
+        border-radius: 0;
+        background: white;
+        border: 0;
+    }
+    
+    .modal-body{
+        padding: 5px;
+        padding-top: 65px;
+        padding-bottom: 100px;
+
+        max-height: inherit;
+        height: inherit;
+        overflow: auto;
+    } 
+
+    .modal-header{
+      position: fixed;
+      top: 0;
+      right: 0;
+      left: 0;
+      z-index: 1030;
+    }
+
+    .modal-footer{
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1030;
+    }
+  
+  }
+
+    
+    @keyframes fa-blink {
+        0% { opacity: 1; }
+        50% { opacity: 0.75; }
+        100% { opacity: 0.4; }
+    }
+    .fa-blink {
+        -webkit-animation: fa-blink 1.05s linear infinite;
+        -moz-animation: fa-blink 1.05s linear infinite;
+        -ms-animation: fa-blink 1.05s linear infinite;
+        -o-animation: fa-blink 1.05s linear infinite;
+        animation: fa-blink 1.05s linear infinite;
+    }
+    
+  .notification {
+    position: relative;
+  }
+
+  .notification .badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    border-radius: 100%;
+    background: red;
+    color: white;
+    font-weight: bold;
+  }
+  .opacity{
+    background-color: rgba(256, 256, 256, 0.5)  
+  }
+
+@media only screen and (max-width: 850px) {
+  .df-settings-body{
+    width: 290px;
+  }
+  .df-settings.show{
+    right: 244px;
+  }
+}
+.modal{
+  z-index: 9999 !important;
+}
+
+</style>
+
+<style>
+  #loading{
+    width: 100%;
+    background-color:#FF8F3E;
+    z-index: 999;
+    width: 100%;
+    display: none;
+    height: 100%;
+    top: 0;
+    left: 0;
+    position: fixed;
+    display: flex;
+    align-items: center;
+    vertical-align: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  .loading-enter,
+  .loading-leave-to {
+    visibility: hidden;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    opacity: 0;
+  }
+
+  .loading-enter-active,
+  .loading-leave-active {
+    transition: all 0.3s;
+  }
+
+  .gap-question {
+    gap: 0.5rem;
+  }
+
+  .gap-alternatives {
+    gap: 0.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .gap-question {
+      gap: 1rem;
+    }
+
+    .gap-alternatives {
+      gap: 2rem;
+    }
+  }
+
+
+</style>
+{% endcompress %}
+
+{% endcache %}
+{% endblock %}
+
+{% block content %}
+{% cache 600 application_content object.application.pk %}
+<transition name="loading">
+  <div id="loading" v-show="false">
+    <i class="fas fa-spinner fa-spin text-white mb-3" style="font-size:35px"></i>
+    {% include 'redesign/includes/logo.html' with width="120" height="72" fill="white" %}
+  </div>
+</transition>
+
+<div class="content content-fixed p-1 p-md-3" style="background-color: #f5f6fa; min-height: calc(100vh - 110px); margin-top: 10px;">
+  <div class="container pd-x-0 pd-lg-x-10 pd-xl-x-0">
+    <div class="p-1 p-md-3 pt-4" style="background-color: #ffffff; border-radius: 0.375rem; border: 1px solid rgba(72, 94, 144, 0.16);">
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        {% if object.application.exam.coordinations.all.0.unity.client.logo %}
+          <img
+            src="{{ object.application.exam.coordinations.all.0.unity.client.logo.url }}"
+            class="mb-3"
+            alt="Logo"
+            style="max-height: 10rem; width: 200px;"
+          />
+        {% endif %}
+        <h1 class="text-bold title mb-0" style="font-size: 1.875rem; line-height: 2.25rem;">
+          {{ object.application.exam.name }} {{ iterator.count }}
+        </h1>
+      </div>
+      <hr style="width: 50%;" />
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;" :style="{ 'background-color': contrast ? '#000000' : '#ffffff' }" v-show="!needChooseLanguage">
+        <div v-for="(question, index) in questions" class="gap-question" style="display: flex; padding: 1rem; border-radius: 0.375rem;" :style="{ 'background-color': index % 2 === 0 ? 'unset' : contrast ? '#202020' : '#f3f4f7' }">
+          <div style="display: flex; justify-content: center; align-items: center; min-width: 44px;">
+            <h4 class="tx-normal tx-rubik tx-spacing--1 mb-0" style="font-variant-numeric: tabular-nums;" :style="{'color': contrast ? '#ffffff' : '#000000'}">
+              ${ question.number_print }.
+            </h4>
+          </div>
+          <template v-if="question.category == 'Objetiva'">
+            <div class="gap-alternatives" style="display: flex;">
+              <button v-for="(alternative, index) in question.alternatives" type="button" style="-webkit-appearance: button; background-color: transparent; background-image: none; border: 0; padding: 0;" v-on:click="saveAnswers(question, alternative.id, index, new Date().getTime())">
+                <div class="avatar">
+                  <span 
+                    class="avatar-initial rounded-circle"
+                    :class="fontSize"
+                    :style="{
+                      'background-color': alternative.id === question.answerId && contrast ? '#ffffff' : alternative.id === question.answerId ? '#019edf' : 'transparent',
+                      'color': alternative.id === question.answerId && contrast ? '#000000' : alternative.id === question.answerId ? '#ffffff' : contrast ? '#ffffff' : '#8392a5',
+                      'border': alternative.id === question.answerId && contrast ? '#ffffff' : alternative.id === question.answerId ? '2px solid #019edf' : contrast ? '2px solid #ffffff' : '2px solid #8392a5'
+                    }"
+                  >
+                    ${generateAlternativeOrder(index)}
+                  </span>
+                </div>
+              </button>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="col-12 text-center">
+  <div class="pd-md-l-110 pd-md-r-110 pd-l-10 pd-r-10">
+    <button
+      v-if="state == 'started'"
+      type="button"
+      class="btn btn-danger font-weight-bold btn-lg mb-5"
+      @click="finishApplication()"
+    >
+      <i class="fas fa-times-circle"></i> Encerrar prova
+    </button>
+  </div>
+</div>
+
+<div class="df-settings" style="z-index: 998;">
+  <a
+    id="dfSettingsShow"
+    href=""
+    class="df-settings-link"
+    style="font-size: 25px;"
+    @click="configOpened=!configOpened"
+  >
+    <i class="fas" :class="configOpened ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
+    <span class="badge badge-danger ml-1" v-if="chatNotificationCount > 0">
+      ${chatNotificationCount}
+    </span>
+  </a>
+  <div class="df-settings-body">
+    <div class="pd-t-20 pd-b-10 bd-t">
+      <label class="tx-sans tx-10 tx-uppercase tx-bold tx-spacing-1 tx-color-02 mg-b-15">
+        Acessibilidade
+      </label>
+      <div class="row mb-0">
+        <div class="col-12">
+          <div class="btn-toolbar">
+            <div class="btn-group mr-2">
+              <button type="button" class="btn font-weight-bold" :class="fontSize=='tx-13-f' ? 'btn-primary' : 'btn-secondary'" @click="fontSize='tx-13-f'">
+                <p class="h6 m-0 text-white">A</p>
+              </button>
+              <button type="button" class="btn btn-primary font-weight-bold" :class="fontSize=='tx-16-f' ? 'btn-primary' : 'btn-secondary'" @click="fontSize='tx-16-f'">
+                <p class="h5 m-0 text-white">A</p>
+              </button>
+              <button type="button" class="btn font-weight-bold" :class="fontSize=='tx-19-f' ? 'btn-primary' : 'btn-secondary'" @click="fontSize='tx-19-f'">
+                <p class="h4 m-0 text-white">A</p>
+              </button>
+              <button type="button" class="btn font-weight-bold" :class="fontSize=='tx-22-f' ? 'btn-primary' : 'btn-secondary'" @click="fontSize='tx-22-f'">
+                <p class="h3 m-0 text-white">A</p>
+              </button>
+            </div>
+            <div class="btn-group">
+              <button @click="contrast=!contrast" type="button" class="btn font-weight-bold" :class="contrast == true ? 'btn-primary' : 'btn-secondary'">
+                <p class="h4 text-white m-0">
+                  <i class="fas fa-adjust"></i>
+                </p>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pd-t-20 pd-b-10 bd-t">
+      <label class="tx-sans tx-10 tx-uppercase tx-bold tx-spacing-1 tx-color-02 mg-b-15">
+        Tempo restante de prova
+      </label>
+      <div class="row mb-0">
+        <div class="col-12" v-if="state == 'started' || state == 'paused'">
+          <h1 id="countDown" class="font-weight-bold mb-0">
+            ${ time }
+          </h1>
+        </div>
+      </div>
+    </div>
+    <div class="pd-t-20 pd-b-10 bd-t">
+      <label class="tx-sans tx-10 tx-uppercase tx-bold tx-spacing-1 tx-color-02 mg-b-15">
+        Opções
+      </label>
+      <div class="row mb-0">
+        <div class="col-12">
+          <button
+            v-if="state == 'waiting'"
+            class="btn btn-circle btn-primary font-weight-bold mt-1"
+            @click="startApplication()"
+          >
+            <span class="fas fa-play" style="font-size:20px;"></span> 
+            <p class="m-0 p-0">Iniciar</p>
+          </button>
+          <a
+            v-if="state == 'waiting'"
+            href="{% url 'core:redirect_dashboard' %}"
+            class="btn btn-circle btn-danger font-weight-bold mt-1"
+          >
+            <span class="fas fa-times-circle mt-1" style="font-size:20px;"></span> 
+            <p class="m-0 p-0">Sair</p>
+          </a>
+          <button
+            v-if="state == 'started'"
+            class="btn btn-circle btn-danger font-weight-bold mt-1"
+            @click="finishApplication()"
+          >
+            <span class="fas fa-times-circle" style="font-size:20px;"></span> 
+            <p class="m-0 p-0">Encerrar</p>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="d-none" data-toggle="modal" data-backdrop="static" data-keyboard="false" data-target="#chooseLanguage" id="openChooseLanguage"></button>
+<div class="modal fade show" id="chooseLanguage" tabindex="-1" role="dialog" aria-hidden="true" v-if="needChooseLanguage">
+    <div class="modal-dialog modal-dialog-centered mx-wd-sm-650" role="document">
+        <div class="modal-content bd-0 bg-transparent">
+            <div class="modal-body pd-0">
+                <button type="button" class="close" class="d-none" id="chooseLanguageClose" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+                <div class="row no-gutters">
+                    <div class="col-3 col-sm-5 col-md-6 col-lg-5 rounded-left" style="background-color: #FF8F3D !important;">
+                        <div class="wd-100p ht-100p">
+                        </div>
+                    </div>
+                    <div class="col-9 col-sm-7 col-md-6 col-lg-7 bg-white rounded-right">
+                        <div class="ht-100p d-flex flex-column justify-content-center pd-20 pd-sm-30 pd-md-40">
+                            <span class="tx-color-04">
+                                <i data-feather="bar-chart-2" class="wd-40 ht-40 stroke-wd-3 mg-b-20"></i>
+                            </span>
+                            <h3 class="tx-16 tx-sm-20 tx-md-24 mg-b-15 mg-md-b-20">Selecione uma lingua</h3>
+                            <p class="tx-14 tx-md-16 tx-color-02">
+                                Escolha a língua estrangeira desejada com <strong>cuidado</strong>, pois após a confirmação, <strong>a sua opção não poderá ser modificada</strong>.
+                            </p>
+                            <p class="tx-12 tx-md-13 tx-color-03 mg-b-25">
+                                
+                            </p>
+                            <button type="button" :class="selectedLanguage === 0 ? 'btn-primary':'btn-outline-primary'" class="btn btn-block btn-uppercase" @click="selectedLanguage = 0">Inglês</button>
+                            <button type="button" :class="selectedLanguage === 1 ? 'btn-primary':'btn-outline-primary'" class="btn btn-block btn-uppercase" @click="selectedLanguage = 1">Espanhol</button>
+                            <hr>
+                            <button type="button" :disabled="selectedLanguage == null" class="btn btn-block btn-uppercase text-white rounded shadow" style="background-color: #FF8F3D !important" @click="chooseLanguage()">Confirmar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endcache %}
+
+{% endblock content %}
+
+
+{% block js-additional %}
+{% cache 600 application_js_additional object.application.pk %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.3.5/split.min.js"></script>
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.20/lodash.min.js"></script>
+
+{% endcache %}
+
+<script type="application/javascript">
+
+
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {
+      file: '',
+      baseURL: '{{BASE_URL}}',
+      {% include 'dashboard/monitoring/student/includes/student-new-data.js' with object=object %},
+      {% include 'dashboard/monitoring/student/includes/student-data-exam.js' with object=object iterator=iterator %},
+      baseTexts: [],
+      questions: [],
+      selectedBaseText: '',
+    },
+    watch:{
+      sfutest: function(val){
+        if (!this.registred)
+          this.registerUsername()
+      }
+    },
+    methods: {
+      chooseLanguage() {
+        url = `{% url 'applications:api-applicationstudent-choose-language' object.id %}`
+        axios.patch(url, { foreign_language: this.selectedLanguage }).then((response) => {
+            this.needChooseLanguage = false
+            $("#chooseLanguageClose").click()
+            this.handlerQuestions()
+        })
+      },
+      getQuestions() {
+        if (this.knowledgeAreas.length) {
+          this.knowledgeAreas.forEach((area) => area.subjects.forEach((subject) => subject.questions.forEach((question) => this.questions.push(question))))
+        }
+      },
+      handlerQuestions() {
+        let english_questions = this.questions.slice(0, 5)
+        let espanhol_questions = this.questions.slice(5, 10)
+        let another_questions = this.questions.slice(10, this.questions.length)
+        
+        if (this.selectedLanguage === 0) {
+          this.questions = english_questions.concat(another_questions)
+        } else {
+          this.questions = espanhol_questions.concat(another_questions)
+        }
+        this.handlerNumberPrint()
+      },
+      handlerNumberPrint() {
+        let firstNumber = this.questions[0].number_print
+        
+        if (this.selectedLanguage === 1) {
+          firstNumber = this.questions[0].number_print - 5
+        }
+
+        this.questions.forEach((question, index) => {
+          question.number_print = firstNumber + index
+        })
+      },
+      {% include 'dashboard/monitoring/student/includes/student-new-function-general.js' with object=object %},
+      {% include 'dashboard/monitoring/student/includes/student-new-function-action.js' with object=object %},
+      {% include 'dashboard/monitoring/student/includes/student-function-exam.js' with object=object %}
+      {% include 'dashboard/monitoring/student/includes/student-new-function-error-report.js' with object=object %}
+    },
+    mounted: function(){
+      var self = this;
+
+      // self.regroupQuestions()
+      {% if object.application_state == 'finished' %}
+        window.location.href = "/painel/aluno"
+        return
+      {% endif %}
+
+      if(this.needChooseLanguage) {
+        $('#openChooseLanguage').trigger('click')
+      }
+      
+      this.getQuestions()
+
+      if(this.selectedLanguage != null) {
+        this.handlerQuestions()
+      }
+      
+      self.checkPendingRequest()
+      self.checkPendingAnswers()
+
+      if({{is_late|lower}})
+        this.beforeStartApplication();
+
+      $(document).ready(function(){
+
+        $('[data-toggle="tooltip"]').tooltip()
+        
+        if (self.state == "waiting")
+          $('.df-settings').toggleClass('show');
+        else
+          self.configOpened = false;
+
+        $('.exam-content').click(function(){
+          self.configOpened = false;
+          $('.df-settings').removeClass('show');
+        })
+
+        $(window).blur(function() {
+          self.alertLeavePage()
+        });
+
+        if (self.leaveEventPending)
+          self.alertLeavePage()
+
+        
+      })
+      
+      self.countDown()
+    
+    }
+  })
+
+  
+
+  </script>
+
+
+{% endblock js-additional %}

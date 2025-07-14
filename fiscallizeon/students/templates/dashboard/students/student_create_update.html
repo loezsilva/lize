@@ -1,0 +1,516 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+{% load students_tags %}
+
+{% block title %}
+  {% if not object %}
+    Adicionar aluno - Lize
+  {% else %}
+    Alteração de aluno - Lize
+  {% endif %}
+{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<link rel="stylesheet" href="{% static 'administration/lib/quill/quill.snow.css' %}">
+<link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+<style>
+  .select2-selection--multiple {
+    border-radius: 8px !important;
+  }
+</style>
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="{% url 'students:students_list' %}">ALUNOS</a></li>
+          <li class="breadcrumb-item active" aria-current="page">GERENCIAR</li>
+        </ol>
+      </nav> 
+      <h4>Gerenciamento de aluno</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+      <nav class="ls" aria-label="Breadcrumb">
+        <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+          <li>
+            <div>
+              <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                  <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+              </a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="{% url 'students:students_list' %}" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Alunos</a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">{% if not object %}Cadastrar{% else %}Editar{% endif %}</a>
+            </div>
+          </li>
+        </ol>
+      </nav>
+      <div class="d-none d-md-block">
+        <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+          <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+      </div>
+    </div>
+<div class="row">
+  <div class="col-md-8">
+    <div class="card mg-b-10">
+      <div class="card-body">
+        <ul class="nav nav-tabs mb-4">
+          <li class="nav-item">
+            <a class="{% if form.password.errors or form.username.errors %}nav-link{% else %}nav-link active{% endif %}"
+              data-toggle="tab" href="#student-data" aria-current="page">
+              <i class="fas fa-align-right mr-1"></i>
+              Dados do aluno</a>
+          </li>
+          <li class="nav-item">
+            <a class="{% if form.password.errors or form.username.errors %}nav-link active{% else %}nav-link{% endif %}" data-toggle="tab" href="#user-data">
+              <i class="fas fa-user mr-1"></i> Dados de usuário
+            </a>
+          </li>
+        </ul>
+        <form method="POST" class="not-disable">
+          {% csrf_token %}
+          <div class="tab-content">
+            <div class="{% if form.password.errors or form.username.errors %}tab-pane fade{% else %}tab-pane fade show active{% endif %}" id="student-data" role="tabpanel" aria-labelledby="student-data">
+                <div>
+                  <h5 class="mg-b-5">Dados do aluno</h5>
+                  <p class="tx-13 tx-color-03 mg-b-5">Informe os dados do aluno abaixo</p>
+                </div><hr>
+              <div class="form-group">
+                {{ form.name.label }}
+                <div class="df-example demo-forms">
+                  {% render_field form.name class="form-control col-xl-6" %}
+                  <small class="form-text text-muted">
+                    {{ form.name.help_text }}
+                  </small>
+                  {% if form.name.errors %}
+                  <label class="text-danger">
+                    {{ form.name.errors.0 }}</label>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="form-group">
+                {{ form.enrollment_number.label }}
+                <div class="df-example demo-forms">
+                  {% render_field form.enrollment_number class="form-control col-xl-4" %}
+                  <small class="form-text text-muted">
+                    {{ form.enrollment_number.help_text }}
+                  </small>
+                  {% if form.enrollment_number.errors %}
+                  <label class="text-danger">
+                    {{ form.enrollment_number.errors.0 }}</label>
+                  {% endif %}
+                  <small>O número da matrícula do aluno será a senha de acesso ao painel.</small>
+                </div>
+              </div>
+
+              <div class="form-group">
+                {{ form.birth_of_date.label }}
+                <div class="df-example demo-forms">
+                  {% render_field form.birth_of_date type="date" class="form-control col-xl-4" %}
+                  <small class="form-text text-muted">
+                    {{ form.birth_of_date.help_text }}
+                  </small>
+                  {% if form.birth_of_date.errors %}
+                  <label class="text-danger">
+                    {{ form.birth_of_date.errors.0 }}</label>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="form-group">
+                {{ form.email.label }}
+                <div class="df-example demo-forms">
+                  {% render_field form.email class="form-control col-xl-4" %}
+                  <small class="form-text text-muted">
+                    {{ form.email.help_text }}
+                  </small>
+                  {% if form.email.errors %}
+                  <label class="text-danger">
+                    {{ form.email.errors.0 }}</label>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="form-group">
+                {{ form.responsible_email.label }}
+                <div class="df-example demo-forms">
+                  <div class="d-flex">
+                    {%if form.responsible_email.value == "nan"%}
+                      <input type="email" id="responsible_email" name="responsible_email" value=""  class="form-control col-xl-4">
+                    {% else %}
+                      {% render_field form.responsible_email class="form-control col-xl-4" v-model="responsibleEmail" %}
+                    {%endif%}                          
+                    {% if object.responsible_email %}
+                      {% if not object|get_parent_user:object.responsible_email %}
+                        <button type="button" :disabled="sending || responsibleEmail != initialResponsibleEmail" @click="sendEmailToParent('{{object.responsible_email}}')" class="btn btn-primary mx-1" title="Enviar e-mail para criação de conta"><i class="fas fa-envelope"></i></button>
+                      {% else %}
+                        <button type="button" class="btn btn-success mx-1" title="O usuário do responsável foi criado"><i class="fas fa-user"></i></button>
+                      {% endif %}
+                    {% endif %}
+                  </div>
+                  {% if object %}
+                    <small v-if="responsibleEmail != initialResponsibleEmail" class="text-info">Você precisa salvar as alterações para caso deseje enviar um e-mail para o responsável</small>
+                  {% endif %}
+                  <small class="form-text text-muted">
+                    {{ form.responsible_email.help_text }}
+                  </small>
+                  {% if form.responsible_email.errors %}
+                  <label class="text-danger">
+                    {{ form.responsible_email.errors.0 }}</label>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="form-group">
+                {{ form.responsible_email_two.label }}
+                <div class="df-example demo-forms">
+                  <div class="d-flex">
+                    {%if form.responsible_email_two.value == "nan"%}
+                      <input type="email" id="responsible_email_two" name="responsible_email_two" value=""  class="form-control col-xl-4">
+                    {% else %}
+                      {% render_field form.responsible_email_two class="form-control col-xl-4" v-model="responsibleEmailTwo" %}
+                    {%endif%}                    
+                    {% if object.responsible_email_two %}
+                      {% if not object|get_parent_user:object.responsible_email_two %}
+                        <button type="button" :disabled="sending || responsibleEmailTwo != initialResponsibleEmailTwo" @click="sendEmailToParent('{{object.responsible_email_two}}')" class="btn btn-primary mx-1" title="Enviar e-mail para criação de conta"><i class="fas fa-envelope"></i></button>
+                      {% else %}
+                        <button type="button" class="btn btn-success mx-1" title="O usuário do responsável foi criado"><i class="fas fa-user"></i></button>
+                      {% endif %}
+                    {% endif %}
+                  </div>
+                  {% if object %}
+                    <small v-if="responsibleEmailTwo != initialResponsibleEmailTwo" class="text-info">Você precisa salvar as alterações para caso deseje enviar um e-mail para o responsável</small>
+                  {% endif %}
+                  <small class="form-text text-muted">
+                    {{ form.responsible_email_two.help_text }}
+                  </small>
+                  {% for error in form.responsible_email_two.errors %}
+                    <label class="text-danger">{{error}}</label>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="form-group">
+                {{ form.responsible_email_three.label }}
+                <div class="df-example demo-forms">
+                  <div class="d-flex">
+                    {%if form.responsible_email_three.value == "nan"%}
+                      <input type="email" id="responsible_email_three" name="responsible_email_three" value=""  class="form-control col-xl-4">
+                    {% else %}
+                      {% render_field form.responsible_email_three class="form-control col-xl-4" v-model="responsibleEmailThree" %}
+                    {%endif%}
+                    {% if object.responsible_email_three %}
+                      {% if not object|get_parent_user:object.responsible_email_three %}
+                        <button type="button" :disabled="sending || responsibleEmailThree != initialResponsibleEmailThree" @click="sendEmailToParent('{{object.responsible_email_three}}')" class="btn btn-primary mx-1" title="Enviar e-mail para criação de conta"><i class="fas fa-envelope"></i></button>
+                      {% else %}
+                        <button type="button" class="btn btn-success mx-1" title="O usuário do responsável foi criado"><i class="fas fa-user"></i></button>
+                      {% endif %}
+                    {% endif %}
+                  </div>
+                  {% if object %}
+                    <small v-if="responsibleEmailThree != initialResponsibleEmailThree" class="text-info">Você precisa salvar as alterações para caso deseje enviar um e-mail para o responsável</small>
+                  {% endif %}
+                  <small class="form-text text-muted">
+                    {{ form.responsible_email_three.help_text }}
+                  </small>
+                  {% for error in form.responsible_email_three.errors %}
+                    <label class="text-danger">{{error}}</label>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="form-group">
+                {{ form.responsible_email_four.label }}
+                <div class="df-example demo-forms">
+                  <div class="d-flex">
+                  {%if form.responsible_email_four.value == "nan"%}
+                      <input type="email" id="responsible_email_four" name="responsible_email_four" value=""  class="form-control col-xl-4">
+                  {% else %}
+                    {% render_field form.responsible_email_four class="form-control col-xl-4" v-model="responsibleEmailFour" %}
+                  {%endif%}   
+                    {% if object.responsible_email_four %}
+                      {% if not object|get_parent_user:object.responsible_email_four %}
+                        <button type="button" :disabled="sending || responsibleEmailFour != initialResponsibleEmailFour" @click="sendEmailToParent('{{object.responsible_email_four}}')" class="btn btn-primary mx-1" title="Enviar e-mail para criação de conta"><i class="fas fa-envelope"></i></button>
+                      {% else %}
+                        <button type="button" class="btn btn-success mx-1" title="O usuário do responsável foi criado"><i class="fas fa-user"></i></button>
+                      {% endif %}
+                    {% endif %}
+                  </div>
+                  {% if object %}
+                    <small v-if="responsibleEmailFour != initialResponsibleEmailFour" class="text-info">Você precisa salvar as alterações para caso deseje enviar um e-mail para o responsável</small>
+                  {% endif %}
+                  <small class="form-text text-muted">
+                    {{ form.responsible_email_four.help_text }}
+                  </small>
+                  {% for error in form.responsible_email_four.errors %}
+                    <label class="text-danger">{{error}}</label>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="custom-control custom-switch">
+                <input 
+                  type="checkbox" 
+                  name="{{ form.is_atypical.name }}" 
+                  id="{{ form.is_atypical.auto_id }}" 
+                  class="custom-control-input" 
+                  {% if form.is_atypical.value %}checked{% endif %} 
+                >
+                <label for="{{form.is_atypical.auto_id}}" class="custom-control-label tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                  {{ form.is_atypical.label }}
+                  <small class="form-text text-muted mt-0" style="line-height: initial;">
+                    {{ form.is_atypical.help_text }}
+                  </small>
+                </label>
+
+                {% for error in form.is_atypical.errors %}
+                  <div class="text-danger">{{ error }}</div>
+                {% endfor %}
+
+              </div>
+              <div class="form-group">
+                <label for="classe_id">Turmas</label>
+                <select name="classe" id="classe_id" class="form-control" multiple="multiple">
+                  {% for classe in classes %}
+                  <option value="{{classe.pk}}" {% if classe.pk|stringformat:'s' in p_classe or classe.pk in p_classe %} selected="selected" {% endif %}>
+                    {{classe.name}} - {{ classe.coordination.unity.name }} - {{classe.school_year|force_escape}}
+                  </option>
+                  {% endfor %}
+                </select>
+                <small>Escolha uma turma para o aluno.</small>
+              </div>
+            </div>
+            <div class="{% if form.password.errors or form.username.errors %}tab-pane fade show active{% else %}tab-pane fade{% endif %}" id="user-data" role="tabpanel" aria-labelledby="contact-tab">
+              <h5>Dados de usuário</h5>
+              <p class="tx-13 tx-color-03 mg-b-5">Informe os dados do usuário abaixo</p><hr>
+              <div class="row">
+                <div class="col-sm-7">
+                  <div class="form-group">
+                    <label for="{{form.username.auto_id}}">{{ form.username.label }}</label>
+                    <div class="input-group mb-2">
+                      <div class="input-group-prepend">
+                        <div class="input-group-text"><i class="fas fa-user mr-1"></i></div>
+                      </div>
+                      <input class="form-control" autocomplete="new-password"  type="text" name="{{form.username.name}}" id="{{form.username.auto_id}}" placeholder="{{object.user.username}}">
+                    </div>
+                    {% if form.username.errors %}
+                    {% for error in form.username.errors %}
+                    <small class="text-danger">{{error}}</small>
+                    {% endfor %}
+                    {% endif %}
+                  </div>
+                  <div class="form-group">
+                    <label for="{{form.password.auto_id}}">{{ form.password.label }}</label>
+                    <div class="input-group mb-2">
+                      <div class="input-group-prepend">
+                        <div class="input-group-text"><i class="fas fa-key mr-1"></i></div>
+                      </div>
+                      <input class="form-control" autocomplete="new-password"  name="{{form.password.name}}" type="password" id="{{form.password.auto_id}}">
+                    </div>
+                    <div class="invalid-feedback">{{ form.errors.old_password }}</div>
+                    {% if form.password.errors %}
+                    {% for error in form.password.errors %}
+                    <small class="text-danger">
+                      <li>{{error}}</li>
+                    </small>
+                    {% endfor %}
+                    {% endif %}
+                  </div>
+                  <div class="form-group">
+                    <label for="{{form.confirmation_password.auto_id}}">{{ form.confirmation_password.label }}</label>
+                    <div class="input-group mb-2">
+                      <div class="input-group-prepend">
+                        <div class="input-group-text"><i class="fas fa-key mr-1"></i></div>
+                      </div>
+                      <input class="form-control" autocomplete="new-password"  name="{{form.confirmation_password.name}}" type="password" id="{{form.confirmation_password.auto_id}}">
+                    </div>
+                    <div class="invalid-feedback">{{ form.errors.old_password }}</div>
+                    {% if form.confirmation_password.errors %}
+                    {% for error in form.confirmation_password.errors %}
+                    <small class="text-danger">
+                      <li>{{error}}</li>
+                    </small>
+                    {% endfor %}
+                    {% endif %}
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      {% render_field form.must_change_password class="custom-control-input" %}
+                      <label class="custom-control-label" for="{{form.must_change_password.auto_id}}">
+                        {{ form.must_change_password.label }}</label>
+                      <small class="form-text text-muted mt-0" style="line-height: initial;">
+                        {{ form.must_change_password.help_text }}
+                      </small>
+                      {% if form.must_change_password.errors %}
+                      <label class="text-danger">
+                        {{ form.must_change_password.errors.0 }}
+                      </label>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button @click="submitForm('redirect')" class="btn btn-primary float-right not-disable">Salvar Aluno</button>
+          <button @click="submitForm('keep')" class="btn btn-secondary float-right not-disable mr-1">Salvar e continuar editando</button>
+          <input v-if="redirectAfterSave" type="hidden" name="redirect" value="true">
+        </form>
+      </div>
+    </div>
+  </div>
+  {% if object %}
+  <div class="col-md-4">
+    <div style="position: -webkit-sticky; position: sticky; top: 100px;">
+      <div class="card mg-b-10">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h6 class="mg-b-0">Dados do usuário</h6>
+        </div>
+        <div class="form-row">
+          <div class="col-12">
+            <ul class="list-group list-group-flush tx-13">
+              <li class="list-group-item d-flex pd-sm-x-20">
+                <div class="avatar d-none d-sm-block"><span class="avatar-initial rounded-circle bg-teal op-5">
+                  <i class="icon ion-md-person"></i></span></div>
+                <div class="pd-sm-l-10">
+                  <p class="tx-medium mg-b-2">Usuário</p>
+                  <small class="tx-12 tx-color-03 mg-b-0">{{ object.user.username }}</small>
+                </div>
+              </li>
+              <li class="list-group-item d-flex pd-sm-x-20">
+                <div class="avatar d-none d-sm-block"><span class="avatar-initial rounded-circle bg-orange op-5">
+                  <i class="icon ion-md-mail"></i></span></div>
+                <div class="pd-sm-l-10">
+                  <p class="tx-medium mg-b-2">E-mail</p>
+                  <small class="tx-12 tx-color-03 mg-b-0">{{ object.user.email }}</small>
+                </div>
+              </li>
+              <li class="list-group-item d-flex pd-sm-x-20">
+                <div class="avatar d-none d-sm-block"><span class="avatar-initial rounded-circle bg-indigo op-5">
+                  <i class="icon ion-md-tv"></i></span></div>
+                <div class="pd-sm-l-10">
+                  <p class="tx-medium mg-b-2">Último Acesso</p>
+                  <small class="tx-12 tx-color-03 mg-b-0">{{ object.user.last_login|default:'Nenhum Acesso' }}</small>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+<script>
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {
+      redirectAfterSave: false,
+      sending: false,
+      responsibleEmail: "{{object.responsible_email|default:''}}",
+      responsibleEmailTwo: "{{object.responsible_email_two|default:''}}",
+      responsibleEmailThree: "{{object.responsible_email_three|default:''}}",
+      responsibleEmailFour: "{{object.responsible_email_four|default:''}}",
+      
+      initialResponsibleEmail: "{{object.responsible_email|default:''}}",
+      initialResponsibleEmailTwo: "{{object.responsible_email_two|default:''}}",
+      initialResponsibleEmailThree: "{{object.responsible_email_three|default:''}}",
+      initialResponsibleEmailFour: "{{object.responsible_email_four|default:''}}",
+      isAtipical: {{object.is_atypical|yesno:"true,false"}},
+
+    },
+    methods: {
+      submitForm(action) {
+        action == 'redirect' ? this.redirectAfterSave = true : this.redirectAfterSave = false
+      },
+      sendEmailToParent(email) {
+        this.sending = true
+        axios.post("{% url 'students:send-email-to-parent' %}", { responsible_email: email }).then((response) => {
+          Swal.fire({
+            title: 'E-mail enviado',
+            text: `O e-mail foi enviado para o responsável ${email}`,
+            icon: 'success',
+          })
+        }).catch(() => {
+          Swal.fire({
+            title: 'E-mail não enviado',
+            text: `Ocorreu um erro ao tentar enviar o e-mail para o responsável ${email}, tente novamente e caso o erro persista entre em contato com o suporte.`,
+            icon: 'error',
+          })
+        }).finally(() => {
+          this.sending = false
+        })
+      },
+    },
+    mounted() {
+      $('#classe_id').select2({
+        placeholder: "Selecione uma opção",
+        width: '100%',
+        closeOnSelect: false
+      });
+      $('#{{form.birth_of_date.auto_id}}').val('{{form.birth_of_date.value|safe}}')
+      $('#{{form.custom_groups.auto_id}}').select2({closeOnSelect: false})
+      if(!Boolean('{{is_update}}')) {
+        $('form').submit(function(event) {
+          event.preventDefault();
+            Swal.fire({
+              title: 'Informação importante!',
+              html: `O aluno poderá acessar o painel com os seguintes dados <br /> <br />
+                    <strong>Usuário:</strong> ${$('#id_email').val()} ${$('#id_username').val() ? '<br /> <strong>Usuário Opcional:</strong> ' + $('#id_username').val():''}   
+                    <br /><strong>Senha:</strong> ${$('#id_password').val() ? $('#id_password').val(): $('#id_birth_of_date').val() ? moment($('#id_birth_of_date').val()).format('DDMMYYYY') : $('#id_enrollment_number').val()}`,
+              icon: 'info',
+              showCancelButton: false,
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Ok, Salvar Aluno!'
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  $(this).unbind().submit();
+                }
+            })
+        })
+      }
+    }
+  })
+
+</script>
+
+
+{% endblock %}

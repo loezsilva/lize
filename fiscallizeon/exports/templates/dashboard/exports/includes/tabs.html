@@ -1,0 +1,18 @@
+{% load exclude_especific_params %}
+<ul class="nav nav-tabs" id="myTab" role="tablist">
+    <li class="nav-item">
+        <a class="nav-link {% if active_tab == 'erp' %}active{% endif %}" href="{% url 'exports:exams_export_erp' %}?{{request|exclude_especific_params:'export_id'}}" role="tab" aria-controls="export-exams" aria-selected="true">
+            Resumido (para ERPs)
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if active_tab == 'answers' %}active{% endif %}" href="{% url 'exports:exams_export_answers' %}?{{request|exclude_especific_params:'export_id'}}" role="tab" aria-controls="export-exams" aria-selected="true">
+            Respostas detalhadas
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if active_tab == 'hits' %}active{% endif %}" href="{% url 'exports:exams_export_simple_report' %}?{{request|exclude_especific_params:'export_id'}}" role="tab" aria-controls="export-exams" aria-selected="true">
+            Acertos e erros
+        </a>
+    </li>
+</ul>

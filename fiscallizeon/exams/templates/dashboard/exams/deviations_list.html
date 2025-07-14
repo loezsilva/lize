@@ -1,0 +1,158 @@
+{% extends 'redesign/base.html' %}
+{% load permissions %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Listagem de desvios de correção - Lize{% endblock title %}
+
+{% block css-additional %}
+
+{% endblock css-additional %}
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+      <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1rem; justify-content: space-between;">
+        <div style="flex: 1;">
+          <!-- Empty -->
+        </div>
+          <div>
+            <a href="{% url 'exams:deviations_create' %}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+                <i data-feather="plus" class="wd-10 mg-r-5"></i> Cadastrar novo desvio
+            </a>
+          </div>
+      </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card mg-b-10">
+                <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+                    <div>
+                        <h6 class="mg-b-5">
+                            Desvios cadastrados
+                        </h6>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dashboard mg-b-1">
+                            <thead>
+                                <tr>
+                                    <th>Critério</th>
+                                    <th>Nome curto</th>
+                                    <th>Descrição</th>
+                                    <th>Pontos</th>
+                                    <th class="text-wrap text-right"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for deviation in object_list %}
+                                <tr>
+                                    <td class="tx-medium">
+                                        <span style="width: 2px; height: 20px; background-color: {{deviation.criterion.color}}; margin-right: 4px;">&nbsp;</span>{{deviation.criterion}}
+                                    </td>
+                                    <td class="tx-medium">
+                                      {{deviation.short_name}}
+                                    </td>
+                                    <td class="text-wrap">
+                                      {{deviation.description}}
+                                    </td>
+                                    <td class="text-wrap">
+                                      {{deviation.score}}
+                                    </td>
+                                    <td class="text-wrap">
+                                        
+                                        {% comment %}
+                                        {% if user|has_perm:'clients.change_questiontag' or user|has_perm:'clients.delete_questiontag' %}
+                                            
+                                        {% endcomment %}
+                                            
+                                            <div class="d-flex float-right">
+                                                <div class="dropdown">
+                                                    <button class="btn btn-secondary dropdown-toggle" type="button"
+                                                        id="dropdownMenuButtonReport" data-toggle="dropdown"
+                                                        aria-haspopup="true" aria-expanded="false">
+                                                        Opções
+                                                    </button>
+                                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButtonReport">
+                                                        
+                                                        {% comment %}
+                                                        {% if user|has_perm:'clients.change_questiontag' %}
+                                                        {% endcomment %}
+                                                            
+                                                            <a href="{% url 'exams:deviations_update' deviation.pk %}" class="dropdown-item nav-link">
+                                                                <i class="fas fa-edit"></i>
+                                                                Editar
+                                                            </a>
+
+                                                        
+                                                        {% comment %}
+                                                        {% endif %}
+                                                        {% endcomment %}
+                                                        
+                                                        {% comment %}
+                                                        {% if user|has_perm:'clients.delete_questiontag' %}    
+                                                        {% endcomment %}
+                                                            
+                                                            <a href="javascript:void(0)" class="dropdown-item nav-link" onClick="confirmCancel('{% url "exams:deviations_delete" deviation.pk %}')" data-toggle="tooltip" data-placement="top" title="Deletar">
+                                                                <i class="fas fa-trash"></i> Deletar
+                                                            </a>
+                                                        {% comment %}
+                                                        {% endif %}
+                                                        {% endcomment %}
+                                                            
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        
+                                        {% comment %}
+                                        {% endif %}
+                                            
+                                        {% endcomment %}
+                                            
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4">
+                                        Você ainda não cadastrou nenhum desvio de correção.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div><!-- table-responsive -->
+                </div>
+                
+            </div>
+            {% include 'includes/pagination.html' with objects=object_list %}
+        </div>
+    </div>
+  </div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+{% include 'includes/confirm_modal.html' %}
+{% endblock extra-modal %}
+
+{% block js-additional %}
+
+<script type="text/javascript" src="{% static 'tinymce/tinymce.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.20/lodash.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    var app = new Vue({
+        el: '#app',
+        delimiters: ['${', '}'],
+        data: {
+        },
+        watch:{
+        },
+        methods: {
+        },
+        mounted() {
+            
+        }
+    });
+</script>
+{% endblock js-additional %}

@@ -1,0 +1,1728 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+
+{% block title %}Modificar caderno de prova - Lize{% endblock title %}
+
+{% load static %}
+{% load widget_tweaks %}
+{% load insert_field %}
+{% load insert_decimal %}
+{% load insert_key %}
+{% load insert_last_status %}
+{% load insert_status_list %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<link rel="stylesheet" href="{% static 'administration/lib/quill/quill.snow.css' %}">
+<link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+
+<style>
+    .list-group-item:hover {
+        background-color: #f3f3f3;
+        cursor: move;
+    }
+    .list-group-item .btn:hover {
+        cursor: pointer;
+    }
+    .line-through {
+        text-decoration: line-through;
+    }
+    .btn-group-justified {
+        display: flex;
+    }
+    .btn {
+        flex-grow: 1;
+    }
+    .container-card {
+      width: 100%;
+      height: auto;
+      position: relative;
+      overflow: hidden;
+    }
+    .blur-add-question-card{
+      -webkit-filter: blur(5px);
+      -moz-filter: blur(5px);
+      -o-filter: blur(5px);
+      -ms-filter: blur(5px);
+      filter: blur(5px);
+      pointer-events: none;
+    }
+    .overlay {
+      background: rgba(204, 204, 204, 0.1);
+      width: 60%;
+      height: fit-content;
+      position: absolute;
+      top: 25%;
+      left: 25%;
+      font-size:20px;
+      font-weight:bold;
+      text-align:center;
+      box-sizing:border-box;
+    }
+    .overlay-content {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      left: 40%;
+      transform: translate(-50%);
+      border-radius: 10px;
+      padding: 20px;
+    }
+</style>
+
+<style>
+    hr.style-eight {
+        overflow: visible;
+        /* For IE */
+        padding: 0;
+        border: none;
+        border-top: 1px solid #ccc;
+        color: #ccc;
+        text-align: center;
+    }
+
+    hr.style-eight:after {
+        content: "ou";
+        display: inline-block;
+        position: relative;
+        top: -0.8em;
+        font-size: 1em;
+        padding: 0 0.25em;
+        background: white;
+    }
+</style>
+
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+<div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                <li class="breadcrumb-item"><a href="{% url 'applications:applications_list' %}">PROVA</a></li>
+                <li class="breadcrumb-item active" aria-current="page">GERENCIAR</li>
+            </ol>
+        </nav>
+        <h4>Gerenciar caderno: {{object.exam.name}}</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <a href="{% url 'exams:exams_preview' object.exam.pk %}" target="_blank" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+            <i data-feather="book" class="wd-10 mg-r-5"></i> VISUALIZAR CADERNO
+        </a>
+        <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+    </div>
+</div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+      <nav class="ls" aria-label="Breadcrumb">
+        <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+          <li>
+            <div>
+              <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                  <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+              </a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="{% url 'exams:exams_list' %}" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Cadernos</a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Gerenciar</a>
+            </div>
+          </li>
+        </ol>
+      </nav>
+      <div class="d-none d-md-block">
+        <a href="{% url 'exams:exams_preview' object.exam.pk %}" target="_blank" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+          <i data-feather="book" class="wd-10 mg-r-5"></i> VISUALIZAR CADERNO
+        </a>
+        <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+          <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+      </div>
+    </div>
+    <form method="POST">
+<div class="row">
+    <div class="col-md-7">  
+        <div class="card mg-b-10">
+            <div class="card-body">
+                
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-toggle="tab" href="#questions-elaboration" role="tab">
+                            Questões
+                        </a>
+                    </li>
+                    <li class="nav-item" v-if="baseTexts.length">
+                        <a class="nav-link" data-toggle="tab" href="#questions-base-texts" role="tab">
+                            Textos Base
+                        </a>
+                    </li>
+                    <li class="nav-item" v-if="questionsFailed().length">
+                        <a class="nav-link" data-toggle="tab" href="#questions-failed" role="tab">
+                            Apenas questões reprovadas 
+                            <span class="badge badge-danger ml-1">${questionsFailed().length}</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" v-if="questionsUseLater().length">
+                        <a class="nav-link" data-toggle="tab" href="#questions-use-later" role="tab">
+                            Usar depois
+                            <span class="badge bg-warning-light ml-1">${questionsUseLater().length}</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="tab-content bd bd-gray-300 bd-t-0 pd-20" id="myTabContent">
+                    <div class="tab-pane fade show active" id="questions-elaboration" role="tabpanel" aria-labelledby="home-tab">
+                        {% csrf_token %}
+                        <div class="col-md-12 p-0" id="question-container">
+                            <span class="badge badge-primary tx-12 m-1">{{object.quantity}} Questões</span>
+                            <span class="badge badge-primary tx-12 m-1">{{object.grade}}</span>
+                            <span class="badge badge-primary tx-12 m-1">{{object.teacher_subject.subject.name}}</span>
+                            {% if object.block_questions_quantity %}
+                              <div>
+                                <h6 class="mb-0 mt-2">Questões solicitadas:</h6>
+                                <span class="badge badge-primary tx-12 m-1">{{object.objective_quantity}} Questões Objetivas</span>
+                                <span class="badge badge-primary tx-12 m-1">{{object.discursive_quantity}} Questões Discursivas</span>
+                              </div>
+                            {% endif %}
+                            {% if object.note %}
+                                <p class="mt-1">
+                                    <span class="font-weight-bold">Observações:</span> 
+                                    {{object.note}}
+                                </p>
+                            {% endif %}
+                            <h6 class="text-muted mt-3">
+                                Altere a ordem das questões ou remova-as da prova na listagem abaixo
+                            </h6>
+                            {% if not object.subject_note and not object.exam.total_grade %}
+                                <div class="row">
+                                    <div class="col-12 col-lg-4">
+                                        <div class="form-group">
+                                            <div class="input-group mg-b-10">
+                                                <input class="form-control form-control-sm" type="number" min="0" step="any" placeholder="Distribuir pesos" v-model="selectedTeacherSubject.weights">
+                                                <div class="input-group-append tooltips" data-tippy-content="Utilize para distribuir pesos igualmente entre as questões selecionadas">
+                                                    <button type="button" class="btn btn-success btn-sm" @click="distributeWeights(selectedTeacherSubject)"><i class="fas fa-sync"></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            <draggable :list="selectedTeacherSubject.questions" @change="changeObjectsOrder('', selectedTeacherSubject.questions, true)" class="list-group" ghost-class="ghost" @start="dragging = true" @end="dragging = false" :disabled="swaping">
+                                <div class="list-group-item" v-for="(examQuestion, index) in selectedTeacherSubject.questions" :key="examQuestion.order" :style="{ backgroundColor: getBackgroundColor(examQuestion) }">
+                                    <span class="float-right text-right">
+                                      <button type="button" @click="openModal('/questoes/'+examQuestion.question.id+'/editar/?is_popup=1');" class="btn btn-xs btn-link m-0 p-0 " v-if="!['Reprovada', 'Usar depois'].includes(examQuestion.last_status.status_display)"> 
+                                        <i class="fas fa-edit" aria-hidden="true"></i> 
+                                      </button>
+                                      <button type="button" v-if="!['Reprovada', 'Usar depois'].includes(examQuestion.question.last_status)" class="btn btn-xs btn-link text-danger m-0 p-0"
+                                          @click="removeExamQuestion(examQuestion, index), $forceUpdate();" :disabled="!examQuestion.can_be_remove">
+                                          <i class="fas fa-trash" aria-hidden="true"></i>
+                                      </button>
+                                      {% if object.subject_note or object.exam.total_grade %}
+                                          <input v-if="!['Reprovada', 'Usar depois'].includes(examQuestion.last_status.status_display)" v-model="examQuestion.weight" maxlength="6" class="form-control weight-input" style="width: 70px;" disabled>     
+                                      {% else %}
+                                          <input v-show="!['Reprovada', 'Usar depois'].includes(examQuestion.last_status.status_display)" v-model="examQuestion.weight" @change="distributeWeights(selectedTeacherSubject, examQuestion)" placeholder="Nota" type="number" style="width: 70px;" step="any" class="form-control weight-input" required>     
+                                      {% endif %}
+                                    </span>
+                                    <div>
+                                        <div class="w-100">
+                                            <span class="badge badge-dark">
+                                                ${generateQuestionOrder(examQuestion.question, index + 1)}
+                                            </span>
+                                            <template v-if="getStatusBadgeClass(examQuestion.last_status.status_display && examQuestion.last_status.status_display != 'Visto' ? examQuestion.last_status.status_display:'Em aberto')"> 
+                                              <span class="badge mb-2" :class="getStatusBadgeClass(examQuestion.last_status.status_display && examQuestion.last_status.status_display != 'Visto' ? examQuestion.last_status.status_display:'Em aberto').class"> <i class="fas" class="getStatusBadgeClass(examQuestion.last_status.status_display && examQuestion.last_status.status_display != 'Visto' ? examQuestion.last_status.status_display:'Em aberto').icon"></i>  ${examQuestion.last_status.status_display && examQuestion.last_status.status_display != 'Visto' ? examQuestion.last_status.status_display:'Em aberto'}
+                                              </span>
+                                            </template>
+                                            <span v-if="examQuestion.question.adapted" class="badge badge-dark">
+                                                Questão adaptada
+                                            </span>
+                                            <button @click.prevent="openModalQuestionHistory(examQuestion)"
+                                              v-if="examQuestion.status_list && examQuestion.status_list.length" type="button" class="btn btn-xs btn-outline-primary p-0 pr-1 pl-1 m-0"><span  aria-hidden="true" class="fas fa-history"></span> ${examQuestion.status_list.length}
+                                              Histórico</b>
+                                            </button>
+                                            <h6 class="mb-1">
+                                                ${examQuestion.question.enunciation}
+                                            </h6>
+                                            <h6 class="text-muted mt-3"
+                                                v-if="examQuestion.last_status && examQuestion.last_status.note">
+                                                <span class="font-weight-bold">Última anotação:</span>
+                                                ${examQuestion.last_status.note}
+                                            </h6>                                        
+                                        </div>
+                                        <p class="mb-1">
+                                            <span class="badge badge-secondary" v-if="examQuestion.question.topic_name">
+                                                ${examQuestion.question.topic_name}
+                                            </span>
+                                            <span class="badge badge-secondary">Utilizada
+                                                ${examQuestion.question.used_times} Vez(es)
+                                            </span>
+                                            <span class="badge badge-secondary">${examQuestion.question.get_level_display}</span>
+                                            {% comment %}
+                                            <span class="badge bg-danger text-white" v-if="examQuestion.question.get_category_display == 'Objetiva' && examQuestion.question.has_feedback == 'false'">
+                                                Sem Gabarito
+                                            </span>
+                                            {% endcomment %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </draggable>
+                        </div>
+                        
+                        <div class="col-12 p-2 text-right">
+                            <h5>
+                                Nota total: 
+                                <template v-if="recalculateWeights">
+                                  Recalculando... 
+                                <div class="spinner-border text-primary" style="width: .8rem; height: .8rem;" role="status">
+                                  <span class="sr-only">Loading...</span>
+                                </div>
+                                </template>
+                                <template v-else>
+                                  {% if object.subject_note %}
+                                      {{object.subject_note}}
+                                  {% else %}
+                                      ${sumWeight(selectedTeacherSubject.questions).toFixed(4)}
+                                  {% endif %}   
+                                </template>
+                            </h5>
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <label for="teacherNote">
+                                Deseja enviar alguma anotação para a coordenação?
+                        </label><br />
+                        
+                        {% render_field form.teacher_note class="form-control" rows="3"  placeholder="Digite aqui alguma informação importante para sua coordenação" %}
+
+                        </div>
+                        <div class=" d-flex flex-row align-items-baseline align-self-center justify-content-end">
+                            <p class="text-danger mr-2" v-if="quantityRequest > countActiveQuestions()">
+                                Faltam ${quantityRequest - countActiveQuestions()} questões
+                            </p>
+                            <div class="btn-group" role="group" aria-label="Basic example">
+                                <button @click="save()" type="button" class="btn btn-outline-success mt-2">
+                                    <i class="fas fa-save"></i> Salvar parcialmente
+                                </button>
+                                <button @click="save()" type="button" class="btn btn-success mt-2 ">
+                                    <i class="fas fa-save"></i> Concluir elaboração
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="questions-base-texts">
+                        <template v-if="baseTexts.length">
+                            <div class="col-md-12 p-0" id="question-container">
+                                
+                                <h6 class="text-muted mt-3">
+                                    Lista com todos os textos associados a esta prova
+                                </h6>
+
+                                <div class="mt-4" v-for="(baseText, index) in baseTexts" :key="baseText.pk">
+                                    <span class="float-right text-right">
+                                        <button type="button" class="btn btn-xs btn-link m-0 p-0" @click="selectBaseText(baseText)" data-toggle="modal" data-target="#modalBaseTextDetail"> <span class="fas fa-eye" aria-hidden="true"></span></button>
+                                    </span>
+                                    <div>
+                                        <div class="w-100">
+                                            <h6 class="badge badge-dark" :id="baseText.id">TEXTO BASE ${generateBaseTextOrder(baseText, index + 1)}</h5>
+                                            <h6 class="my-1">${baseText.short_text}</h6>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col d-flex align-items-center">
+                                                Utilizado na(s) questão(ões): 
+                                                <span class="badge badge-secondary m-1" v-for="examQuestion in getQuestionsRelationBaseText(baseText)">Questão ${examQuestion.question.number}</span>
+                                            </div>
+                                        </div>
+                                        {% comment %}
+                                        <p class="mb-1">
+                                            <span class="badge bg-danger text-white">
+                                                SPAN LIMPO
+                                            </span>
+                                        </p>
+                                        {% endcomment %}
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                        <template v-else>
+                            <div class="col-12 p-2">
+                                <h6>
+                                    Essa prova ainda não tem texto base associado. 
+                                </h6>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="tab-pane fade" id="questions-failed" role="tabpanel" aria-labelledby="home-tab">
+                        <div class="col-md-12 p-0" id="question-container">
+
+                            <span class="badge badge-primary">{{object.quantity}} Questões</span>
+                            <span class="badge badge-primary">{{object.grade}}</span>
+                            <span class="badge badge-primary">{{object.teacher_subject.subject.name}}</span>
+                            
+                            {% if object.note %}
+                            <p class="mt-1">
+                                <span class="font-weight-bold">Observações:</span> 
+                                {{object.note}}
+                            </p>
+                            {% endif %}
+                            
+                            <h6 class="text-muted mt-3">
+                                Questões reprovadas não podem ser editadas nem excluídas do exame.
+                            </h6>
+
+                            <div class="list-group-item" v-if="examQuestion.last_status.status_display == 'Reprovada'" v-for="(examQuestion, index) in selectedTeacherSubject.questions">
+                                <div>
+                                    <div class="w-100">
+                                        <span class="badge badge-dark">
+                                            ${index + 1}
+                                        </span>
+                                        <template v-if="getStatusBadgeClass(examQuestion.last_status.status_display && examQuestion.last_status.status_display != 'Visto' ? examQuestion.last_status.status_display:'Em aberto')">
+                                          <span class="badge mb-2" :class="getStatusBadgeClass(examQuestion.last_status.status_display && examQuestion.last_status.status_display != 'Visto' ? examQuestion.last_status.status_display:'Em aberto').class"> <i class="fas" :class="getStatusBadgeClass(examQuestion.last_status.status_display && examQuestion.last_status.status_display != 'Visto' ? examQuestion.last_status.status_display:'Em aberto').icon"></i>
+                                            ${examQuestion.last_status.status_display && examQuestion.last_status.status_display != 'Visto' ? examQuestion.last_status.status_display:'Em aberto'}
+                                          </span>
+                                        </template>
+                                        <button @click.prevent="openModalQuestionHistory(examQuestion)" v-if="examQuestion.status_list && examQuestion.status_list.length > 0" type="button" class="btn btn-xs btn-outline-primary p-0 pr-1 pl-1 m-0"><span  aria-hidden="true" class="fas fa-history"></span> ${examQuestion.status_list.length}
+                                            Histórico</b>
+                                        </button>
+                                        <h6 class="mb-1">
+                                            ${examQuestion.question.enunciation}
+                                        </h6>
+                                        <h6 class="text-muted mt-3" v-if="examQuestion.last_status && examQuestion.last_status.note">
+                                            <span class="font-weight-bold">Última anotação:</span>
+                                            ${examQuestion.last_status.note}
+                                        </h6>  
+                                    </div>
+                                    <p class="mb-1">
+                                        <span class="badge badge-secondary" v-if="examQuestion.question.topic_name">
+                                            ${examQuestion.question.topic_name}
+                                        </span>
+                                        
+                                        <span class="badge badge-secondary">Utilizada
+                                            ${examQuestion.question.used_times} Vez(es)
+                                        </span>
+                                        <span class="badge badge-secondary">${examQuestion.question.get_level_display}</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="questions-use-later" role="tabpanel" aria-labelledby="home-tab">
+                        <div class="col-md-12 p-0" id="question-container">
+
+                            <span class="badge badge-primary">{{object.quantity}} Questões</span>
+                            <span class="badge badge-primary">{{object.grade}}</span>
+                            <span class="badge badge-primary">{{object.teacher_subject.subject.name}}</span>
+                            
+                            {% if object.note %}
+                              <p class="mt-1">
+                                  <span class="font-weight-bold">Observações:</span> 
+                                  {{object.note}}
+                              </p>
+                            {% endif %}
+                            
+                            <h6 class="text-muted mt-3">
+                              As questões foram marcadas para uso posterior, o que indica que elas poderão ser utilizadas posteriormente em outro caderno.
+                            </h6>
+
+                            <div class="list-group-item" v-if="examQuestion.last_status.status_display == 'Usar depois'" v-for="(examQuestion, index) in selectedTeacherSubject.questions">
+                                <div>
+                                    <div class="w-100">
+                                        <span class="badge badge-dark">
+                                            ${index + 1}
+                                        </span>
+                                        <template v-if="getStatusBadgeClass(examQuestion.last_status.status_display && examQuestion.last_status.status_display != 'Visto' ? examQuestion.last_status.status_display:'Em aberto')">
+                                          <span class="badge mb-2" :class="getStatusBadgeClass(examQuestion.last_status.status_display && examQuestion.last_status.status_display != 'Visto' ? examQuestion.last_status.status_display:'Em aberto').class"> <i class="fas" :class="getStatusBadgeClass(examQuestion.last_status.status_display && examQuestion.last_status.status_display != 'Visto' ? examQuestion.last_status.status_display:'Em aberto').icon"></i>
+                                            ${examQuestion.last_status.status_display && examQuestion.last_status.status_display != 'Visto' ? examQuestion.last_status.status_display:'Em aberto'}
+                                          </span>
+                                        </template>
+                                        <button @click.prevent="openModalQuestionHistory(examQuestion)" v-if="examQuestion.status_list && examQuestion.status_list.length > 0" type="button" class="btn btn-xs btn-outline-primary p-0 pr-1 pl-1 m-0"><span  aria-hidden="true" class="fas fa-history"></span> ${examQuestion.status_list.length}
+                                            Histórico</b>
+                                        </button>
+                                        <h6 class="mb-1">
+                                            ${examQuestion.question.enunciation}
+                                        </h6>
+                                        <h6 class="text-muted mt-3" v-if="examQuestion.last_status && examQuestion.last_status.note">
+                                            <span class="font-weight-bold">Última anotação:</span>
+                                            ${examQuestion.last_status.note}
+                                        </h6>  
+                                    </div>
+                                    <p class="mb-1">
+                                        <span class="badge badge-secondary" v-if="examQuestion.question.topic_name">
+                                            ${examQuestion.question.topic_name}
+                                        </span>
+                                        
+                                        <span class="badge badge-secondary">Utilizada
+                                            ${examQuestion.question.used_times} Vez(es)
+                                        </span>
+                                        <span class="badge badge-secondary">${examQuestion.question.get_level_display}</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% if object.subject_note %}
+                    <input type="hidden" name="subject_note" value="{{object.subject_note|safe}}"> 
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5">
+      {% if late_questions_permit %}<span class="text-danger">Solicitação de questões atrasada!</span>{% endif %}
+      <div style="position: -webkit-sticky; position: sticky; top: 100px;">
+        <div v-if="!confirmationLateQuestions" class="container-card">
+          <div class="card mg-b-10 {% if late_questions_permit %}blur-add-question-card{% endif %}">
+            <div class="card-body">
+              {% if object.can_add_questions %}
+                <h5>Adicione as questões na prova</h5>
+                <div class="form-group mb-2">
+                    Procure a questão abaixo
+                    <select name="search-question" id="search-question" class="form-control question"></select>
+                    <p class="text-muted" style="font-size: 13px; line-height: 13px;">
+                        O texto pesquisado acima será procurado apenas no enunciado de cada questão em seu banco de questões. Para uma busca mais detalhada utilze o botão abaixo.
+                    </p>
+                </div>
+                <hr class="style-eight">
+                <a href="javascript:;" @click='openModal("{% url "questions:questions_list" %}?is_popup=1&exam={{object.exam.id}}")' class="btn btn-primary btn-block">
+                  <i class="fas fa-search"></i>
+                  Buscar questão autoral
+                </a>
+  
+                <hr class="style-eight">
+                <a :href="questionsBankUrl()" class="btn btn-primary btn-block ">
+                  <i class="fas fa-book"></i>
+                  Buscar no banco de questões
+                </a>
+                <hr class="style-eight">
+                <button type="button" class="btn btn-primary btn-block" @click='openModal("{% url "questions:questions_create" %}?is_popup=1&exam_teacher={{object.pk}}")'>
+                    <i class="fas fa-plus"></i>
+                    Criar e adicionar nova questão
+                </button>
+                {% comment %}
+                {% if user.client_has_superpro_integration or user.superprofintegration_set.exists or user.inspector.enable_integration_superpro_via_file %}
+                {% endcomment %}
+                    <hr class="style-eight" />
+                    <button
+                        type="button"
+                        class="btn btn-primary btn-block"
+                        @click="handleSuperProfImportViaFile()"
+                    >
+                        <i class="fas fa-file-import"></i>
+                        Importar do Super Professor via arquivo
+                    </button>
+                {% comment %}
+                {% endif %}
+                {% endcomment %}
+                  <hr class="style-eight">
+                  {% comment %} <button type="button" class="btn btn-primary btn-block" data-toggle="modal" data-target="#importQuestionsModal">
+                      <i class="fas fa-upload"></i> 
+                      Importar de modelo docx
+                  </button>
+                  <hr class="style-eight"> {% endcomment %}
+                  <button type="button" class="btn btn-primary btn-block" data-toggle="modal" data-target="#importQuestionsModalV2">
+                      <i class="fas fa-upload"></i> 
+                      Importar de modelo docx (Simplificado) <span class="badge badge-danger">Novo</span>
+                  </button>
+                  <hr>
+              {% else %}
+                <h5 class="mb-3">Você atingiu o limite de {{object.quantity}} questões para esta solicitação</h5>
+                <a href="javascript:;" class="btn btn-primary btn-block disabled tooltips" data-tippy-content="Você já adicionou todas as questões necessárias para esta solicitação">
+                  <i class="fas fa-search"></i>
+                  Buscar questão autoral
+                </a>
+                <hr class="style-eight">
+                <button type="button" class="btn btn-primary btn-block disabled tooltips" data-tippy-content="Você já adicionou todas as questões necessárias para esta solicitação">
+                  <i class="fas fa-book"></i>
+                  Buscar no banco de questões
+                </button>
+                <hr class="style-eight">
+                <button type="button" class="btn btn-primary btn-block disabled tooltips" data-tippy-content="Você já adicionou todas as questões necessárias para esta solicitação">
+                    <i class="fas fa-plus"></i>
+                    Criar e adicionar nova questão
+                </button>
+                {% if user.client_has_superpro_integration or user.superprofintegration_set.exists or user.inspector.enable_integration_superpro_via_file %}
+                    <hr class="style-eight" />
+                    <button
+                        type="button"
+                        class="btn btn-primary btn-block disabled tooltips" 
+                        data-tippy-content="Você já adicionou todas as questões necessárias para esta solicitação"
+                    >
+                        <i class="fas fa-file-import"></i>
+                        Importar do Super Professor via arquivo
+                    </button>
+                {% endif %}
+                <hr class="style-eight">
+                <button type="button" class="btn btn-primary btn-block disabled tooltips" data-tippy-content="Você já adicionou todas as questões necessárias para esta solicitação">
+                    <i class="fas fa-upload"></i> 
+                    Importar de modelo docx
+                </button>
+                <hr>
+              {% endif %}
+              <div class="btn-group btn-group-justified" role="group" aria-label="Basic example">
+                  <button @click="save()" type="button" class="btn btn-outline-success mt-2">
+                      <i class="fas fa-save"></i> Salvar parcialmente
+                  </button>
+                  <button @click="save()" type="button" class="btn btn-success mt-2 ">
+                      <i class="fas fa-save"></i> Concluir elaboração 
+                  </button>
+              </div>
+            </div>
+          </div>
+          {% if late_questions_permit %}
+            <div class="overlay">
+              <div class="overlay-content">
+                <button type="button" class="btn btn-warning btn-md mt-3" @click="alertLateExam()">Liberar adição de questões</button>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+        <div v-else class="card mg-b-10">
+          <div class="card-body">
+            {% if object.can_add_questions %}
+              <h5>Adicione as questões na prova</h5>
+              <div class="form-group mb-2">
+                  Procure a questão abaixo
+                  <select name="search-question" id="search-question" class="form-control question"></select>
+                  <p class="text-muted" style="font-size: 13px; line-height: 13px;">
+                      O texto pesquisado acima será procurado apenas no enunciado de cada questão em seu banco de questões. Para uma busca mais detalhada utilze o botão abaixo.
+                  </p>
+              </div>
+              <hr class="style-eight">
+              <a href="javascript:;" @click='openModal("{% url "questions:questions_list" %}?is_popup=1&exam={{object.exam.id}}")' class="btn btn-primary btn-block">
+                <i class="fas fa-search"></i>
+                Buscar questão autoral
+              </a>
+
+              <hr class="style-eight">
+              <a :href="questionsBankUrl()" class="btn btn-primary btn-block ">
+                <i class="fas fa-book"></i>
+                Buscar no banco de questões
+              </a>
+              <hr class="style-eight">
+              <button type="button" class="btn btn-primary btn-block" @click='openModal("{% url "questions:questions_create" %}?is_popup=1&exam_teacher={{object.pk}}")'>
+                  <i class="fas fa-plus"></i>
+                  Criar e adicionar nova questão
+              </button>
+              {% comment %}
+              {% if user.client_has_superpro_integration or user.superprofintegration_set.exists or user.inspector.enable_integration_superpro_via_file %}
+              {% endcomment %}
+                  <hr class="style-eight" />
+                  <button
+                      type="button"
+                      class="btn btn-primary btn-block"
+                      @click="handleSuperProfImportViaFile()"
+                  >
+                      <i class="fas fa-file-import"></i>
+                      Importar do Super Professor via arquivo
+                  </button>
+              {% comment %}
+              {% endif %}
+              {% endcomment %}
+                <hr class="style-eight">
+                {% comment %} <button type="button" class="btn btn-primary btn-block" data-toggle="modal" data-target="#importQuestionsModal">
+                    <i class="fas fa-upload"></i> 
+                    Importar de modelo docx
+                </button>
+                <hr class="style-eight"> {% endcomment %}
+                <button type="button" class="btn btn-primary btn-block" data-toggle="modal" data-target="#importQuestionsModalV2">
+                    <i class="fas fa-upload"></i> 
+                    Importar de modelo docx (Simplificado) <span class="badge badge-danger">Novo</span>
+                </button>
+                <hr>
+            {% else %}
+              <h5 class="mb-3">Você atingiu o limite de {{object.quantity}} questões para esta solicitação</h5>
+              <a href="javascript:;" class="btn btn-primary btn-block disabled tooltips" data-tippy-content="Você já adicionou todas as questões necessárias para esta solicitação">
+                <i class="fas fa-search"></i>
+                Buscar questão autoral
+              </a>
+              <hr class="style-eight">
+              <button type="button" class="btn btn-primary btn-block disabled tooltips" data-tippy-content="Você já adicionou todas as questões necessárias para esta solicitação">
+                <i class="fas fa-book"></i>
+                Buscar no banco de questões
+              </button>
+              <hr class="style-eight">
+              <button type="button" class="btn btn-primary btn-block disabled tooltips" data-tippy-content="Você já adicionou todas as questões necessárias para esta solicitação">
+                  <i class="fas fa-plus"></i>
+                  Criar e adicionar nova questão
+              </button>
+              {% if user.client_has_superpro_integration or user.superprofintegration_set.exists or user.inspector.enable_integration_superpro_via_file %}
+                  <hr class="style-eight" />
+                  <button
+                      type="button"
+                      class="btn btn-primary btn-block disabled tooltips" 
+                      data-tippy-content="Você já adicionou todas as questões necessárias para esta solicitação"
+                  >
+                      <i class="fas fa-file-import"></i>
+                      Importar do Super Professor via arquivo
+                  </button>
+              {% endif %}
+              <hr class="style-eight">
+              <button type="button" class="btn btn-primary btn-block disabled tooltips" data-tippy-content="Você já adicionou todas as questões necessárias para esta solicitação">
+                  <i class="fas fa-upload"></i> 
+                  Importar de modelo docx
+              </button>
+              <hr>
+            {% endif %}
+            <div class="btn-group btn-group-justified" role="group" aria-label="Basic example">
+                <button @click="save()" type="button" class="btn btn-outline-success mt-2">
+                    <i class="fas fa-save"></i> Salvar parcialmente
+                </button>
+                <button @click="save()" type="button" class="btn btn-success mt-2 ">
+                    <i class="fas fa-save"></i> Concluir elaboração 
+                </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
+</form>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+<div class="modal fade pr-0" tabindex="-1" role="dialog" id="modalQuestionHistory">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-history mr-2"></i>
+                    Histórico dessa questão
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row" v-if="selectedQuestion.status_list">
+                    <div class="col-12 mb-4">
+                        <h6>Resumo do enunciado:</h6>
+                        ${selectedQuestion.question.enunciation}
+                    </div>
+                    <div class="col-12" v-if="selectedQuestion.status_list.length">
+                        <template v-for="note in selectedQuestion.status_list">
+                            <div class="row mb-1">
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-header p-2 font-weight-bold">
+                                            <span class="float-right text-right">
+                                            <template v-if="getStatusBadgeClass(note.status_display)">
+                                              <span class="badge  mr-1 " :class="getStatusBadgeClass(note.status_display).class">
+                                                <i class="fas"
+                                                :class="getStatusBadgeClass(note.status_display).icon"></i>
+                                                ${note.status_display}
+                                              </span>
+                                            </template>
+                                                <p class="text-muted m-0" v-if="note.user_name">por ${note.user_name}
+                                                </p>
+                                            </span>
+
+
+                                            <span class="">
+                                                ${momentRef(note.created_at).fromNow()}<br />
+                                                <small class="text-muted p-0">
+                                                    ${momentRef(note.created_at).format('L')} às
+                                                    ${momentRef(note.created_at).format('LT')}
+                                                </small>
+                                            </span>
+
+                                        </div>
+                                        <ul class="list-group list-group-flush">
+                                            <li class="list-group-item p-2" v-if="note.note">
+                                                <template><b>Anotação: </b>${note.note}</template>
+                                            </li>
+                                            <li class="list-group-item p-2" v-if="note.question_fragment">
+                                                <template ><b>Fragmento da questão: </b>${note.question_fragment}</template>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="col-12" v-else>
+                      <h6>Nenhum status foi encontrado!</h6>
+                    </div>
+                </div>               
+            </div>
+        </div>
+    </div>
+</div>
+<div aria-hidden="true" class="modal fade" id="importQuestionsModal" role="dialog" tabindex="-1">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Importar questões do Word (.docx)</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="max-height: fit-content; height: fit-content;">
+                <h6>Você pode importar questões para a prova a partir de um documento Word.</h6>
+                <p>
+                    Informações importantes:
+                    <ul>
+                        <li>O documento deve seguir o modelo de importação que <a class="font-weight-bold" href="{% static 'modelo_importacao_fiscallize.docx' %}">pode ser baixado aqui</a>.</li>
+                        <li>Confira atentamente as instruções contidas no modelo disponibilizado acima.</li>
+                        <li>As questões importadas aparecerão nesta página e ficarão disponíveis no seu banco de questões.</li>
+                    </ul>
+                </p>
+                <hr>
+                <form action="{% url 'exams:exam_questions_import' pk=object.pk %}" method="POST" enctype='multipart/form-data'>
+                    {% csrf_token %}
+                    <div class="form-row">                         
+                        <div class="col-12">
+                            <div class="form-group mb-2">
+                                <label for="" class="mb-0 mt-1">Escolher arquivo com as questões</label>
+                                <input type="file" name="questions_doc" class="form-control-file" accept=".docx" required="required">
+                                <p class="text-muted"><b>Tipos permitidos:</b> .docx</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer pb-0">
+                        {% csrf_token %}
+                        <div class="form-buttons-w text-right">
+                            <button class="btn btn-secondary" data-dismiss="modal" type="button">
+                                <i class="os-icon os-icon-cancel-circle"></i>
+                                <span>Cancelar</span>
+                            </button>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-upload"></i>
+                                <span>Importar questões</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div aria-hidden="true" class="modal fade" id="importQuestionsModalV2" data-backdrop="static" data-keyboard="false" role="dialog" tabindex="-1">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title">Importar questões do Word (.docx) (Simplificado)</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+              </button>
+          </div>
+          <div class="modal-body" style="max-height: fit-content; height: fit-content;">
+              <h6 class="text-center mg-b-20">
+                <a href="javascript:;" v-if="acceptTerms" @click="showOrientations = !showOrientations">Ver orientações novamente <i class="fas" :class="showOrientations ? 'fa-chevron-up':'fa-chevron-down'"></i></a>
+              </h6>
+              <div v-show="!acceptTerms || showOrientations">
+                <video width="920" height="540" class="img-thumbnail" controls>
+                    <source src="{% static 'importacao_questao.mp4' %}" type="video/mp4">
+                    Seu browser não suporta o conteúdo do vídeo
+                </video>
+                <hr class="style-eight">
+                <h5 class="font-weight-bold">Informações importantes:</h5>
+                <ul>
+                    <li>
+                      1. Os trechos destacados em <span class="badge badge-warning tx-14">amarelo</span> são os identicadores que a plataforma detecta para ler a questão. Não remova-os.
+                    </li>
+                    <li>
+                      2. Questões diferentes PODEM estar na mesma página, desde que obdeçam a estrutura correta de cada modelo de questão. 
+                    </li>
+                </ul>
+                <hr>
+                <div class="custom-control custom-checkbox mb-3" >
+                  <h6>
+                  <input type="checkbox" v-model="acceptTerms" class="custom-control-input" id="checkAcceptTerms">
+                  <label class="custom-control-label cp font-weight-bold" for="checkAcceptTerms">Eu assisti o vídeo, li as orientações e entendi como funciona a importação de questões.</label>
+                  </h6>
+                </div>
+              </div>              
+              <form @submit.prevent="submitFormIntegrationSuperProViaFile" method="post" v-if="acceptTerms">
+                <a download href="{% static 'importacao_questoes_lize.docx' %}" class="btn btn-secondary btn-block mb-3">
+                    <i class="fas fa-download"></i> 
+                    Baixe o modelo para importação
+                </a>
+
+                <hr class="style-eight">
+
+                <template v-if="formIntegrationSuperProViaFile.status !== 'submitting'">
+                  <div class="form-group">
+                    <input type="file" id="superProViaFileInputFile" @change="onChangeFormIntegrationSuperProViaFileFile" required />
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-block" :disabled="formIntegrationSuperProViaFile.status === 'submitting'" @click="simpleImport = true">
+                    ${ formIntegrationSuperProViaFile.status === 'submitting' ? 'Enviando...' : 'Enviar arquivo' }
+                  </button>
+                </template>
+                <template v-else-if="formIntegrationSuperProViaFile.status === 'submitting'">
+                  <div class="mg-t-40">
+                    <div class="alert alert-outline alert-warning d-flex align-items-center" role="alert">
+                      <i class="fas fa-exclamation-triangle mg-r-10"></i> Esse processo pode demorar um pouco, aguarde enquanto convertemos o caderno do Super Professor para o nosso sistema.
+                    </div>
+                    <div class="text-center">
+                      <p class="tx-13 tx-lg-12 tx-xl-13 tx-color-03 mg-b-2">
+                        Importando o caderno:
+                      </p>
+                    </div>
+                    <div class="text-center">
+                      <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Carregando...</span>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+                <template v-if="formIntegrationSuperProViaFile.status === 'error-uploading'">
+                  <p class="tx-danger tx-12 mt-2">Ocorreu um erro ao tentar enviar o arquivo para nossos servidores. Por favor, tente novamente em alguns instantes.</p>
+                </template>
+                <template v-if="formIntegrationSuperProViaFile.status === 'error-converting'">
+                  <p class="tx-danger tx-12 mt-2">Ocorreu um erro ao tentar converter o arquivo. Por favor, tente novamente em alguns instantes.</p>
+                </template>
+                <template v-if="formIntegrationSuperProViaFile.status === 'error-importing'">
+                  <p class="tx-danger tx-12 mt-2">Ocorreu um erro ao tentar importar o arquivo. Por favor, tente novamente em alguns instantes.</p>
+                </template>
+              </form>
+          </div>
+      </div>
+    </div>
+</div>
+{% include "dashboard/exams/includes/base_texts/modals/detail.html" %}
+<div id="modalSuperProfImportViaFile" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+    <div class="modal-content">
+      <div class="modal-body pd-20 pd-sm-40 h-100">
+        <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Fechar">
+          <span aria-hidden="true">&times;</span>
+        </a>
+        <div>
+          <div class="d-sm-flex align-items-center justify-content-between">
+            <div>
+              <h4 class="mg-b-5">Importar caderno</h4>
+              <p class="mg-b-0 tx-color-03">Adicione o arquivo de um caderno criado anteriormente na plataforma do Super Professor</p>
+            </div>
+          </div>
+          <div>
+            <div class="mt-3">
+              <form @submit.prevent="submitFormIntegrationSuperProViaFile" method="post">
+                <template v-if="formIntegrationSuperProViaFile.status !== 'submitting'">
+                  <div class="form-group">
+                    <input type="file" id="superProViaFileInputFile" @change="onChangeFormIntegrationSuperProViaFileFile" required />
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-block" :disabled="formIntegrationSuperProViaFile.status === 'submitting'" @click="simpleImport = false">
+                    ${ formIntegrationSuperProViaFile.status === 'submitting' ? 'Enviando...' : 'Enviar arquivo' }
+                  </button>
+                </template>
+                <template v-else-if="formIntegrationSuperProViaFile.status === 'submitting'">
+                  <div class="mg-t-40">
+                    <div class="alert alert-outline alert-warning d-flex align-items-center" role="alert">
+                      <i class="fas fa-exclamation-triangle mg-r-10"></i> Esse processo pode demorar um pouco, aguarde enquanto convertemos o caderno do Super Professor para o nosso sistema.
+                    </div>
+                    <div class="text-center">
+                      <p class="tx-13 tx-lg-12 tx-xl-13 tx-color-03 mg-b-2">
+                        Importando o caderno:
+                      </p>
+                    </div>
+                    <div class="text-center">
+                      <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Carregando...</span>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+                <template v-if="formIntegrationSuperProViaFile.status === 'error-uploading'">
+                  <p class="tx-danger tx-12 mt-2">Ocorreu um erro ao tentar enviar o arquivo para nossos servidores. Por favor, tente novamente em alguns instantes.</p>
+                </template>
+                <template v-if="formIntegrationSuperProViaFile.status === 'error-converting'">
+                  <p class="tx-danger tx-12 mt-2">Ocorreu um erro ao tentar converter o arquivo. Por favor, tente novamente em alguns instantes.</p>
+                </template>
+                <template v-if="formIntegrationSuperProViaFile.status === 'error-importing'">
+                  <p class="tx-danger tx-12 mt-2">Ocorreu um erro ao tentar importar o arquivo. Por favor, tente novamente em alguns instantes.</p>
+                </template>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="modalSuperProfImport" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-body pd-x-25 pd-sm-x-30 pd-t-40 pd-sm-t-20 pd-b-15 pd-sm-b-20">
+        <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </a>
+        <template v-if="superProModal === 'initial-loading'">
+          <div class="d-flex justify-content-center align-items-center">
+            <div class="spinner-border text-primary" role="status">
+              <span class="sr-only">Carregando...</span>
+            </div>
+          </div>
+        </template>
+        <template v-else-if="superProModal === 'login'">
+          <div>
+            <div class="d-flex flex-column align-items-center justify-content-center">
+              <div class="wd-300 wd-sm-500 mg-b-30 d-flex align-items-center" style="min-height: 150px;">
+                <img src="{% static 'superprofessor-integration-fiscallize.png' %}" class="img-fluid" alt="" />
+              </div>
+              <h4 class="tx-20 tx-sm-24">Entre na sua conta do Super Professor</h4>
+              <p class="tx-color-03 mg-b-40">Adicione abaixo seus dados de acesso do Super Professor para continuar.</p>
+            </div>
+            <form @submit.prevent="submitFormIntegrationSuperPro" method="post">
+              <fieldset :disabled="formIntegrationSuperPro.status === 'submitting'">
+                <div class="form-group">
+                  <label for="exampleInputEmail1">Endereço de e-mail</label>
+                  <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" v-model="formIntegrationSuperPro.email" placeholder="seunome@seuemail.com" required />
+                </div>
+                <div class="form-group">
+                  <div class="d-flex justify-content-between mg-b-5">
+                    <label for="exampleInputPassword1" class="mg-b-0-f">Senha</label>
+                    <!-- <a href="" class="tx-13">Forgot password?</a> -->
+                  </div>
+                  <input type="password" class="form-control" id="exampleInputPassword1" v-model="formIntegrationSuperPro.password" placeholder="Digite sua senha" required />
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">
+                  ${ formIntegrationSuperPro.status === 'submitting' ? 'Entrando...' : 'Entrar' }
+                </button>
+                <template v-if="formIntegrationSuperPro.status === 'error'">
+                  <p class="tx-danger tx-12 mt-2">Ocorreu um erro ao tentar conectar com o SuperProfessor. Por favor, tente novamente em alguns instantes.</p>
+                </template>
+                <template v-if="formIntegrationSuperPro.status === 'invalid-credentials'">
+                  <p class="tx-danger tx-12 mt-2">Essas credenciais não correspondem aos registros do SuperProfessor. Verifique as credenciais e tente novamente.</p>
+                </template>
+              </fieldset>
+            </form>
+          </div>
+        </template>
+        <template v-else-if="superProModal === 'exams'">
+          <div>
+            <div class="d-sm-flex align-items-center justify-content-between">
+              <div>
+                <h4 class="mg-b-5">Seus cadernos</h4>
+                <p class="mg-b-0 tx-color-03">Veja todos os seus cadernos criados anteriormente na plataforma do Super Professor</p>
+              </div>
+            </div>
+            <div>
+              <template v-if="superProData.status === 'loading'">
+                <div
+                  class="d-flex justify-content-center align-items-center"
+                  style="height: 300px;"
+                >
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Carregando...</span>
+                  </div>
+                </div>
+              </template>
+              <template v-else>
+                <div class="mt-3">
+                  <div class="d-sm-flex align-items-center justify-content-between mb-2">
+                    <div class="media align-items-center mb-2">
+                      <div class="tx-30 lh-0 tx-primary">
+                        <i class="fas fa-file-invoice"></i>
+                      </div>
+                      <div class="media-body">
+                        <h6 class="tx-14 tx-semibold tx-uppercase mb-0">
+                          Cadernos elaborados <span class="tx-normal tx-color-03"></span>
+                        </h6>
+                        <div class="d-flex align-items-baseline">
+                          <p class="tx-14 tx-normal tx-rubik mg-b-0">
+                            ${ superProData.exams.length }
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="d-flex mg-t-20 mg-sm-t-0">
+                      <template v-if="superProData.status === 'refresh-exams'">
+                        <div class="d-flex justify-content-center align-items-center">
+                          <div class="spinner-grow spinner-grow-sm text-primary" role="status">
+                            <span class="sr-only">Carregando...</span>
+                          </div>
+                        </div>
+                      </template>
+                      <button
+                        class="btn btn-sm pd-x-15 btn-white btn-uppercase mg-l-10"
+                        @click="refreshExams()"
+                        :disabled="superProData.status === 'refresh-exams'"
+                      >
+                        <i class="fas fa-sync wd-10 mg-r-5"></i> Atualizar
+                      </button>
+                      <a
+                        href="https://superprofessor.com.br"
+                        target="_blank"
+                        class="btn btn-sm pd-x-15 btn-white btn-uppercase mg-l-5"
+                      >
+                        <i class="fas fa-external-link-alt wd-10 mg-r-5"></i> Ir para o Super Pro
+                      </a>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-3 gap-2">
+                    <div v-for="exam in superProData.exams">
+                      <div
+                        class="card card-widget card-events shadow-none"
+                        style="border: 1px dashed #b4bdce; border-radius: 0;"
+                      >
+                        <div class="card-body p-0">
+                          <ul class="list-unstyled media-list mg-b-0">
+                            <li class="media">
+                              <div
+                                class="media-body event-panel-primary ml-0"
+                                style="background-color: unset; border: unset;"
+                              >
+                                <div class="d-flex justify-content-between">
+                                  <div>
+                                    <span
+                                      class="event-time"
+                                      style="margin-left: -0.25rem; opacity: 1;"
+                                    >
+                                      <span
+                                        v-for="(key, value) in exam.questoes"
+                                        class="badge m-1"
+                                        :class="'badge-' + classColors[Math.floor(7 * Math.random())]"
+                                      >
+                                        ${ value }
+                                      </span>
+                                    </span>
+                                    <h6 class="event-title" :title="exam.nomeArquivo">
+                                      ${ exam.nomeArquivo }
+                                    </h6>
+                                  </div>
+                                  <div>
+                                    <div class="media-left">
+                                      <p style="color: #001737; font-size: 20px;">
+                                        ${ exam.totalQuestoes }
+                                      </p>
+                                      <label style="font-size: 8px;">Questões</label>
+                                    </div>
+                                  </div>
+                                </div>
+                                <p class="event-desc tx-color-02">
+                                  Elaborado em: ${ momentRef(exam.data).format('LLL') }
+                                </p>
+                                <button
+                                  type="button"
+                                  class="btn btn-outline-primary btn-block mt-2"
+                                  style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; line-height: 1.454; border-width: 2px;"
+                                  @click="getExamSuperPro(exam)"
+                                >
+                                  <span class="far fa-share-square" style="font-weight: 600; transform: scaleX(-1);"></span>
+                                  <span>Importar</span>
+                                </button>
+                              </div>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+        <template v-else-if="superProModal === 'converting'">
+          <div class="mg-t-40">
+            <div class="alert alert-outline alert-warning d-flex align-items-center" role="alert">
+              <i class="fas fa-exclamation-triangle mg-r-10"></i> Esse processo pode demorar um pouco, aguarde enquanto convertemos o caderno do Super Professor para o nosso sistema.
+            </div>
+            <div class="text-center">
+              <p class="tx-13 tx-lg-12 tx-xl-13 tx-color-03 mg-b-2">
+                Importando o caderno:
+              </p>
+              <h5 class="tx-18 tx-xl-20 mg-b-20">
+                ${ superProData.selectedExam.data.nomeArquivo }
+              </h5>
+            </div>
+            <div class="text-center">
+              <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Carregando...</span>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+</div>  
+{% endblock extra-modal %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/typeahead.js/typeahead.bundle.min.js' %}"></script>
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'administration/assets/vendor/jquery.mask.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="{% static 'js/numeric.js' %}"></script>
+
+<script src="{% static 'js/tippy/popper.min.js' %}"></script>
+<script src="{% static 'js/tippy/tippy.min.js' %}"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cleave.js/1.6.0/cleave.min.js"
+    integrity="sha512-KaIyHb30iXTXfGyI9cyKFUIRSSuekJt6/vqXtyQKhQP6ozZEGY8nOtRS6fExqE4+RbYHus2yGyYg1BrqxzV6YA=="
+    crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+
+<script type="text/javascript">
+    moment.locale('pt-br');
+
+    var app_question = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+            confirmationLateQuestions: false,
+            dragging: false,
+            quantityRequest: {{object.quantity|default:0}},
+            amount: {{object.subject_note|default:0|safe}},
+            selectedQuestion: {},
+            selectedQuestions: [],
+            examQuestionsAnotherTeachers: [],
+            baseTexts: [],
+            selectedBaseText: '',
+            selectedTeacherSubject: '',
+            formIntegrationSuperProViaFile: {
+              status: 'idle',
+              file: '',
+            },
+            superProModal: 'initial-loading',
+            formIntegrationSuperPro: {
+              status: 'idle',
+              email: '',
+              password: '',
+              code: '',
+            },
+            superProData: {
+              user: null,
+              alreadyIntegratedWithSuperpro: false,
+              status: 'idle',
+              exams: [],
+              selectedExam: {
+                status: 'idle',
+                data: null,
+                dataConvert: null,
+              },
+            },
+            classColors: ['warning', 'info', 'danger', 'primary', 'light', 'secondary', 'dark'],
+            recalculateWeights: false,
+            simpleImport: false,
+            swaping: false,
+            acceptTerms: {{user.accept_terms_of_question_import|default:False|lower}},
+            showOrientations: false,
+        },
+        watch: {
+            'selectedTeacherSubject.weights': function(newValue) {
+                if(newValue && newValue < 0) {
+                    this.selectedTeacherSubject.weights = 1
+                }
+            },
+            acceptTerms: function(val) {
+              this.showOrientations = !val
+              if(val) {
+                this.acceptTermsQuestionImport()
+              }
+            }
+        },
+        methods: {
+            alertLateExam() {
+              Swal.fire({
+                icon: 'warning',
+                title: 'Solicitação atrasada',
+                html: 'O período de adição de questões para essa solicitação terminou. Questões adicionadas a partir de agora serão marcadas como atrasadas para essa solicitação. <br/>Tem certeza que deseja continuar?',
+                showConfirmButton: true,
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-check"></i> Sim, continuar para adição de questões',
+                cancelButtonText: 'Voltar',
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  this.confirmationLateQuestions = !this.confirmationLateQuestions
+                  localStorage.setItem("agreedLateQuestions_{{ object.id }}", true);
+                }
+              });
+            },
+            getBackgroundColor(examQuestion) {
+              if (examQuestion.last_status.status_display == "Reprovada") {
+                return 'rgb(255, 0, 0, 0.2)'
+              } 
+              if (examQuestion.last_status.status_display == "Usar depois") {
+                return 'rgb(255, 165, 0, 0.2)'
+              } 
+              return 'transparent'
+            },
+            momentRef(args) {
+              return moment(args)
+            },
+            openModalQuestionHistory(question){
+                this.selectedQuestion = question
+                $('#modalQuestionHistory').modal('toggle');
+            },
+            countActiveQuestions(){
+                if(this.selectedTeacherSubject.questions && this.selectedTeacherSubject.questions.length) {
+                    return this.selectedTeacherSubject.questions.filter(elem => elem.last_status.status_display != 'Reprovada').length
+                }
+                return 0;
+            },
+            createStatusQuestion(examQuestion, status){
+                newStatusQuestion = {
+                    status: status,
+                    note: ''
+                }
+                let url = "{% url 'exams:exams_status_question_api_create' pk='00000000-0000-0000-0000-000000000000' %}"
+                axios.post(url.replace('00000000-0000-0000-0000-000000000000', examQuestion.id), newStatusQuestion).then((response) => {
+                    examQuestion.last_status = response.data
+                    
+                })
+            },
+            getStatusBadgeClass(status){
+                statusList = {
+                    "Em aberto": {class: "badge-warning", icon: "fa-eye"},
+                    "Aprovada": {class: "badge-success", icon: "fa-check"},
+                    "Reprovada": {class: "badge-danger", icon: "fa-times"},
+                    "Aguardando correção": {class: "badge-info", icon: "fa-clock"},
+                    "Corrigido": {class: "badge-warning", icon: "fa-edit"},
+                    "Visto": {class: "badge-primary", icon: "fa-eye"},
+                    "Usar depois": {class: "badge-warning", icon: "fa-clock"},
+                }
+
+                return statusList[status]
+            },
+            questionsFailed(){
+                if(this.selectedTeacherSubject.questions && this.selectedTeacherSubject.questions.length) {
+                  return this.selectedTeacherSubject.questions.filter(examQuestion => ['Reprovada'].includes(examQuestion.last_status.status_display))
+                }
+                return 0
+            },
+            questionsUseLater() {
+              if(this.selectedTeacherSubject.questions && this.selectedTeacherSubject.questions.length) {
+                return this.selectedTeacherSubject.questions.filter(examQuestion => ['Usar depois'].includes(examQuestion.last_status.status_display))
+              }
+              return 0
+            },
+            selectBaseText(baseText) {
+                this.selectedBaseText = baseText
+            },
+            getBaseTextsExam(exam) {
+                let url = "{% url 'questions:base_text_exam' pk='00000000-0000-0000-0000-000000000000' %}"
+                return axios.get(url.replace('00000000-0000-0000-0000-000000000000', exam)).then((response) => {
+                    this.baseTexts = response.data.base_texts
+                })
+            },
+            generateBaseTextOrder(baseText, number) {
+                baseText['number'] = number
+                return baseText['number']
+            },
+            generateQuestionOrder(question, number) {
+                question['number'] = number
+                return question['number']
+            },
+            getQuestionsRelationBaseText(baseText) {
+                return this.selectedTeacherSubject.questions.filter(examQuestion => examQuestion.question.base_texts.find(_baseText => _baseText.id == baseText.id))
+            },
+            getExamQuestionsAnotherTeachers() {
+                const url = `{% url 'exams:api-exam-get-exam-questions' object.exam.pk %}?exclude_teacher=${this.selectedTeacherSubject ? this.selectedTeacherSubject.id:''}`
+                axios.get(url).then((response) => {
+                    this.examQuestionsAnotherTeachers = response.data.map((examQuestion) => examQuestion.question.id)
+                })
+            },
+
+            async clientSuperPro(method, path, headers = {}, body) {
+              const isFormData = headers['Content-Type'] === 'application/x-www-form-urlencoded'
+              if (isFormData) {
+                body = Object.keys(body).map(key => encodeURIComponent(key) + '=' + encodeURIComponent(body[key])).join('&')
+              } else {
+                body = JSON.stringify(body)
+              }
+              // ^^^^^^^
+              const defaultHeaders = {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+              }
+              // ---
+          
+              const url = new URL(path, '{{ SUPER_PROFESSOR_URL }}').toString();
+              const response = await fetch(url, {
+                method,
+                body,
+                headers: {...defaultHeaders, ...headers},
+                mode: 'cors',
+                // credentials: 'same-origin',
+                redirect: 'follow',
+                referrerPolicy: 'no-referrer',
+              })
+              if (!response.ok) {
+                throw response;
+              }
+              const data = await response.json();
+              return data;
+            },
+            async signUpSuperPro() {
+              return await this.clientSuperPro(
+                'POST',
+                'signup',
+                {},
+                {
+                  email: this.formIntegrationSuperPro.email,
+                  nome: 'empty',
+                  cpf_cnpj: 'empty',
+                  senha: 'empty',
+                  data_nascimento: '1900-01-01',
+                  genero: 'OUTRO',
+                  client_id: {{ SUPER_PROFESSOR_CLIENT_ID|default:'null' }},
+                }
+              )
+            },
+            async authorizeSuperPro() {
+              return await this.clientSuperPro(
+                'POST',
+                'oauth/authorize',
+                { 'Content-Type': 'application/x-www-form-urlencoded' },
+                {
+                  response_type: 'code',
+                  redirect_uri: 'http://localhost/oauth/callback',
+                  username: this.formIntegrationSuperPro.email,
+                  password: this.formIntegrationSuperPro.password,
+                  client_id: {{ SUPER_PROFESSOR_CLIENT_ID|default:'null' }},
+                }
+              )
+            },
+            async tokenSuperPro(code) {
+              return await this.clientSuperPro(
+                'POST',
+                'oauth/token',
+                {
+                  'Authorization': `Basic ${btoa('{{ SUPER_PROFESSOR_CLIENT_ID}}:{{ SUPER_PROFESSOR_SECRET }}')}`,
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                {
+                  grant_type: 'authorization_code',
+                  redirect_uri: 'http://localhost/oauth/callback',
+                  code,
+                }
+              )
+            },
+            async getExamsSuperPro() {
+              return await this.clientSuperPro(
+                'GET',
+                'provas',
+                { 'Authorization': `Bearer ${this.superProData.user.accessToken}` }
+              )
+            },
+            async getExamSuperPro(exam) {
+              this.superProModal = 'converting';
+              this.superProData.status = 'selected-exam';
+          
+              this.superProData.selectedExam.data = exam;
+              this.superProData.selectedExam.status = 'loading';
+          
+              const data = await this.clientSuperPro(
+                'GET',
+                `provas/${exam.idProva}`,
+                { 'Authorization': `Bearer ${this.superProData.user.accessToken}` }
+              )
+          
+              const responseConvert = await fetch('https://docx2html-u6ntwlygbq-ue.a.run.app/convert/', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url: exam.urlS3 }),
+              });
+              const dataConvert = await responseConvert.json();
+          
+              // console.log({ dataConvert })
+              // console.log({ data })
+              const fullQuestions = dataConvert.map((question, index) => {
+                return {...question, ...data.questoes[index]}
+              })
+              // console.log({ fullQuestions }); // TODO: REMOVE
+              // this.selectedExam.questoes = 
+              // console.log({ questoes: this.selectedExam.questoes });
+              await this.importAllQuestions(fullQuestions);
+          
+              this.superProData.selectedExam.dataConvert = dataConvert;
+              this.superProData.selectedExam.data = data;
+              this.superProModal = 'exams';
+              this.superProData.selectedExam.status = 'idle';
+            },
+            async refreshExams() {
+              this.superProData.status = 'refresh-exams';
+              const response = await this.getExamsSuperPro();
+              this.superProData.exams = response.responseList;
+              this.superProData.status = 'idle';
+            },
+            async handleLoginSuperPro() {
+              try {
+                const data = await this.authorizeSuperPro();
+                return await this.tokenSuperPro(data.authorizationCode);
+              } catch(error) {
+                if (error.body) {
+                  const errorData = await error.json();
+                  if (errorData.error.code === 100) {
+                    this.formIntegrationSuperPro.status = 'invalid-credentials';
+                  } else {
+                    this.formIntegrationSuperPro.status = 'error';
+                  }
+                } else {
+                  this.formIntegrationSuperPro.status = 'error';
+                }
+              }
+            },
+            async submitFormIntegrationSuperPro() {
+              this.formIntegrationSuperPro.status = 'submitting';
+          
+              let superProDataUser;
+              if (this.superProData.alreadyIntegratedWithSuperpro) {
+                console.log('Already Sync') // TODO: REMOVE
+                superProDataUser = await this.handleLoginSuperPro();
+              } else {
+                console.log('Sign Up') // TODO: REMOVE
+                await this.signUpSuperPro();
+          
+                superProDataUser = await this.handleLoginSuperPro();
+              }
+              if (this.formIntegrationSuperPro.status !== 'error' && this.formIntegrationSuperPro.status !== 'invalid-credentials') {
+                await this.patchTeacherSuperProfData({ superpro_data: superProDataUser });
+                this.superProData.user = superProDataUser;
+          
+                this.formIntegrationSuperPro.status = 'idle';
+          
+                this.superProData.status = 'loading';
+                this.superProModal = 'exams';
+                const response = await this.getExamsSuperPro();
+                this.superProData.exams = response.responseList;
+                this.superProData.status = 'idle';
+              }
+          
+              // this.signUpSuperPro();
+              // this.authorizeSuperPro();
+              // this.tokenSuperPro();
+              // this.getExamsSuperPro();
+              // this.getExamSuperPro('7397359');
+            },
+            async getTeacherSuperProfData() {
+              const url = '{% url "api:user:teacher-super-prof-data" %}';
+          
+              const response = await fetch(url);
+              const data = await response.json();
+          
+              return data;
+            },
+            async patchTeacherSuperProfData(formData) {
+              const url = '{% url "api:user:teacher-super-prof-data" %}';
+          
+              const response = await fetch(url, {
+                method: 'PATCH', // *GET, POST, PUT, DELETE, etc.
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData) // body data type must match "Content-Type" header
+              });
+              const data = await response.json();
+          
+              return data;
+            },
+            lessThanADay(firstDate, secondDate) {
+              const differenceInDays = secondDate.getTime() - firstDate.getTime()
+              const difference = differenceInDays / (1000 * 3600 * 24);
+              return difference < 1;
+            },
+            async handleSuperProfImportViaFile() {
+              $('#modalSuperProfImportViaFile').modal('show');
+            },
+            onChangeFormIntegrationSuperProViaFileFile(event) {
+              this.formIntegrationSuperProViaFile.file = event.target.files[0];
+            },
+            async submitFormIntegrationSuperProViaFile() {
+              let examTeacherSubjectFile;
+              let questions;
+
+              this.formIntegrationSuperProViaFile.status = 'submitting';
+
+              try {
+                examTeacherSubjectFile = await this.uploadExamTeacherSubjectFile(
+                  this.formIntegrationSuperProViaFile.file,
+                  this.selectedTeacherSubject.id,
+                );
+              } catch(error) {
+                console.error({ error });
+                this.formIntegrationSuperProViaFile.status = 'error-uploading';
+              }
+
+              try {
+                questions = await this.convertDocx2Html(examTeacherSubjectFile.file);
+              } catch(error) {
+                console.error({ error });
+                this.formIntegrationSuperProViaFile.status = 'error-converting';
+              }
+
+              try {
+                await this.importAllQuestions(questions);
+                this.formIntegrationSuperProViaFile.status = 'success';
+              } catch(error) {
+                console.error({ error });
+                this.formIntegrationSuperProViaFile.status = 'error-importing';
+              }
+            },
+            async uploadExamTeacherSubjectFile(file, examTeacherSubject) {
+              const formData = new FormData();
+              formData.append('file', file);
+              formData.append('exam_teacher_subject', examTeacherSubject);
+
+              const response = await fetch('{% url "api:exam-teacher-subject-file-upload" %}', {
+                method: 'POST',
+                headers: {
+                  // 'Content-Type': 'multipart/form-data'
+                },
+                body: formData,
+              });
+              if (!response.ok) {
+                throw response;
+              }
+              const data = await response.json();
+              return data;
+            },
+            async convertDocx2Html(url) {
+              const response = await fetch(`{{ SUPER_PROFESSOR_URL_DOCX2HTML_SERVICE }}?simple_import=${this.simpleImport}`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url }),
+              });
+              if (!response.ok) {
+                throw response;
+              }
+              const data = await response.json();
+              return data;
+            },
+            async handleSuperProfImport() {
+              $('#modalSuperProfImport').modal('show');
+              const data = await this.getTeacherSuperProfData();
+              this.superProData.alreadyIntegratedWithSuperpro = data.already_integrated_with_superpro;
+              if (data.superpro_data) {
+                this.superProData.user = data.superpro_data;
+          
+                // console.log({
+                //  accessTokenExpiresAt: this.superProData.user.accessTokenExpiresAt
+                // })
+                // console.log({
+                //  refreshTokenExpiresAt: this.superProData.user.refreshTokenExpiresAt
+                // })
+          
+                if (this.lessThanADay(new Date(), new Date(this.superProData.user.accessTokenExpiresAt))) {
+                  console.log('accessToken expired')
+                  if (this.lessThanADay(new Date(), new Date(this.superProData.user.refreshTokenExpiresAt))) {
+                    this.superProModal = 'login';
+                  } else {
+                    console.log('renew accessToken')
+                  }
+                } else {
+                  this.superProData.status = 'loading';
+                  this.superProModal = 'exams';
+                  try {
+                    const response = await this.getExamsSuperPro();
+                    this.superProData.exams = response.responseList;
+                    this.superProData.status = 'idle';
+                  } catch (error) {
+                    console.log({ error });
+                    this.superProData.exams = [];
+                    this.superProData.status = 'failed';
+          
+                    this.superProModal = 'login';
+                    this.formIntegrationSuperPro.status = 'idle';
+                  }
+                }
+              } else {
+                this.superProModal = 'login';
+              }
+            },
+            async importQuestion(question) {
+              const url = `{% url 'api:superprof-import-questions-and-create-exam-question' %}?simple_import=${this.simpleImport}`;
+          
+              try {
+                const response = await fetch(url, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    question: question,
+                    exam_teacher_subject_id: this.selectedTeacherSubject.id,
+                  }),
+                });
+                if (!response.ok) {
+                  throw response;
+                }
+                const data = await response.json();
+          
+                this.selectedTeacherSubject.questions.push(data);
+                this.alertTop('A questão foi adicionada com sucesso');
+                // this.$forceUpdate();
+              } catch (error) {
+                console.log({ error });
+                if (error.status == 302) {
+                  this.alertTop('A questão já foi utilizada no caderno', 'info');
+                } else {
+                  this.alertTop('Ocorreu um erro ao tentar adicionar a questão.', 'error');
+                }
+              }
+            },
+            async importAllQuestions(fullQuestions) {
+              for (const question of fullQuestions) {
+                await this.importQuestion(question);
+              }
+            },
+            backToListQuestions() {
+              this.superProData.status = 'idle';
+            },
+            questionsBankUrl() {
+              {% if user.inspector.skip_introduction_questions_bank %}
+                return "{% url 'exams:exam_teacher_subject_add_questions' object.id %}"
+              {% else %}
+                return "{% url 'exams:teacher-questions-bank-introduction' object.id %}"
+              {% endif %}
+            },
+            getExamTeacherSubjectData() {
+              axios.get("{% url 'exams:api-exam-subject-detail' object.pk %}").then((response) => {
+                this.selectedTeacherSubject = response.data
+              }).finally(() =>{
+                  this.getBaseTextsExam('{{object.exam.pk}}')
+                  this.getExamQuestionsAnotherTeachers()
+                  this.recalculateWeights = false
+              })
+            },
+            acceptTermsQuestionImport() {
+              axios.patch("{% url 'api2:users-accept-terms-question-import' %}")
+            },
+            {% include "dashboard/exams/includes/exam-teacher-create-functions.js" %}
+        },
+        updated: function() {
+          tippy('.tooltips', {
+            placement: 'bottom',
+            allowHTML: true,
+            theme: 'custom',
+          })
+        },
+        mounted: function() {
+            {% include "dashboard/exams/includes/exam-teacher-create-mounted.js" %}
+            this.showOrientations = !this.acceptTerms
+            this.getExamTeacherSubjectData()
+
+            localStorage.getItem("agreedLateQuestions_{{ object.id }}") ? this.confirmationLateQuestions = true : this.confirmationLateQuestions = false
+        }
+    })
+</script>
+{% endblock %}

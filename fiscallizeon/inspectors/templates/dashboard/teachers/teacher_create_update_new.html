@@ -1,0 +1,1561 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+  {% if not object %}
+    Adicionar professor - Lize
+  {% else %}
+    Alteração de professor - Lize
+  {% endif %}
+{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<script src="{% static 'js/treeselectjs-new-version.umd.js' %}"></script>
+<link rel="stylesheet" href="{% static 'css/treeselectjs.css' %}" />
+<style>
+  .select2-selection--multiple {
+    border-radius: 8px !important;
+  }
+  .accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .card-header {
+    font-size: 1.5em
+    font-weight: 1200;
+    font-size: 18px;
+    line-height: 24px;
+  }
+
+  .badge-number{
+    margin-right: 1.2rem;
+    font-size: 1em;
+    width: 32px;
+    height: 32px;
+    background: #F9FAFA;
+    border-radius: 200px;
+    {% comment %} border: 1px solid black; {% endcomment %}
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .input-group-append .btn {
+    background: none;
+    border: none; 
+    outline: none;
+    box-shadow: none;
+  }
+
+  .select2-selection__choice {
+    background-color: #FFF2E9 !important;
+    color: black !important;
+  }
+
+  .select2-results__option--highlighted {
+    background-color: #0C7BDB !important;
+  }
+
+
+  .checkbox-container {
+    max-height: 225px; /* Altura máxima da div */
+    overflow-y: auto; /* Habilita a rolagem vertical */
+    padding: 10px; /* Espaçamento interno para os checkboxes */
+    border-radius: 5px; 
+  }
+
+  .subject-teacher {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: solid 1px #E5E7EB;
+    border-radius: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .texts {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .icons {
+    display: flex;
+    justify-content: end;
+    align-items: center;
+    padding: 2rem;
+    gap: 1rem;
+  }
+
+  .icons svg:hover {
+    cursor: pointer;
+    filter: brightness(0.8);
+  }
+
+  /* Estilização dos checkboxs das classes */
+
+
+  .checkbox-element {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .checkbox-label-modal {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 8px 0;
+    user-select: none; /* Impede a seleção de texto ao clicar */
+  }
+
+  .checkbox-label-modal::before {
+    content: "";
+    display: inline-flex;
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+    border: 2px solid #ccc; /* Borda inicial */
+    border-radius: 4px; /* Bordas arredondadas */
+    background-color: #fff; /* Fundo inicial */
+    transition: all 0.3s ease; /* Suaviza as mudanças */
+    flex-shrink: 0; /* Garante que o quadrado não deforme */
+  }
+
+  .custom-checkbox-modal:checked + .checkbox-label-modal::before {
+    background-color: #FF8F3D; /* Cor de fundo quando marcado */
+    border-color: #fb812a; /* Cor da borda quando marcado */
+    background-image: url('data:image/svg+xml;utf8,<svg width="12" height="9" viewBox="0 0 12 9" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M10.6663 1.5L4.24967 7.91667L1.33301 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> </svg>');
+    background-size: 60%; /* Ajusta o tamanho do SVG */
+    background-repeat: no-repeat;
+    background-position: center;
+    content: ""; /* Necessário para exibir o ::before */
+  }
+
+  .custom-checkbox-modal {
+    display: none; /* Oculta o input padrão */
+  }
+  
+  .elements-auto {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 5px;
+    width: 100%;
+    position: sticky;
+    z-index: 10;
+    top: 0;
+    background-color: white;
+  }
+
+  .elements-auto button {
+    border: solid 1px white;
+    border-radius: 8px;
+  }
+
+  .elements-auto button:hover {
+    color: #FF8F3D;
+    border: solid 1px #FF8F3D; 
+  }
+</style>
+{% endblock css-additional %}
+
+
+{% block content-fixed %}
+  <div class="tw-flex tw-justify-center">
+    <div class="ard cer dcv tw-flex-1" style="max-width: calc(100vw);">
+      <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1.5rem; justify-content: space-between;">
+        <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-8 sm:tw-flex-nowrap tw-w-full">
+          <div class="tw-flex tw-justify-between {% if only_review %}tw-w-full{% endif %}">
+            <h1 class="tw-text-xl tw-font-semibold tw-leading-7 tw-text-[#374151] sm:tw-truncate sm:tw-text-2xl sm:tw-tracking-tight tw-mb-0">
+              {% if object %}
+                Editar professor
+              {% else %}
+                Cadastrar professor
+              {% endif %}
+            </h1>
+          </div>
+          <div class="tw-ml-auto tw-flex tw-gap-4">
+            {% if object %}
+            <button type="button" style="margin-top: 21px;" @click="openModal('modalPassword')" class="tw-flex tw-w-full tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 py-2 tw-text-sm tw-font-semibold tw-shadow-sm hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600">
+              Alterar senha
+            </button>
+            {% endif %}
+            <button type="submit" :disabled="saving" style="margin-top: 21px;" form="form-professor-create-update" class="tw-whitespace-nowrap tw-flex tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 hover:tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600">
+              Finalizar cadastro
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+          <div class="col-md-12">
+            <form method="POST" id="form-professor-create-update" onsubmit="return false" @submit="submitForm()">
+              {% csrf_token %}
+              <div class="accordion" id="accordionProfessor">
+                <div class="card border-bottom">
+                  <div class="card-header d-flex justify-content-between align-items-center" id="headingOne" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                    <div class="d-flex justify-content-between align-items-center" >     
+                      <span v-if="this.registerDataValid.one" class="badge-number rounded-circle bg-success me-3">
+                        <i class="fas fa-check text-white"></i>
+                      </span>
+                      <span v-else class="badge-number rounded-circle">
+                        1
+                      </span>
+                      <div>
+                        Dados do Professor<br>
+                      </div>
+                    </div>
+                    <button class="btn btn-link" type="button">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 5V19M5 12H19" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+              
+                  <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordionProfessor">
+                    <div class="card-body">
+                      <div class="form-group row">
+                        <div class="col-md-6">
+                          <label for="{{ form.name.auto_id }}">{{ form.name.label }}</label>
+                          <input type="name" id="{{form.name.auto_id}}" v-model="teacher.name" class="form-control" required>
+                          <small class="form-text text-muted">
+                              {{ form.name.help_text }}
+                          </small>
+                          <template v-if="teacher.errors && teacher.errors.name">
+                            <label class="text-danger" v-for="error in teacher.errors.name">
+                              ${error}
+                            </label>
+                          </template>
+                        </div>
+                        <div class="col-md-6">
+                          <label for="{{ form.email.auto_id }}">{{ form.email.label }}</label>
+                          <input type="email" id="{{form.email.auto_id}}" v-model="teacher.email" class="form-control" required>
+                          <small class="form-text text-muted">
+                              {{ form.email.help_text }}
+                          </small>
+                          <template v-if="teacher.errors && teacher.errors.email">
+                            <label class="text-danger" v-for="error in teacher.errors.email">
+                              ${error}
+                            </label>
+                          </template>
+                          {% if form.email.errors %}
+                          {% endif %}
+                        </div>  
+                      </div>
+                      <div class="form-group row">
+                        <div class="col-md-12">
+                          <button :disabled="false" @click="toggleCollapses('first')" type="button" class="btn btn-primary btn-lg btn-block disable" style="background-color: #0C7BDB;">Salvar e continuar</button>
+                        </div>
+                        <div class="modal fade" id="modalPassword" aria-labelledby="modalPasswordLabel" aria-hidden="true">
+                          <div class="modal-dialog modal-lg modal-dialog-centered">
+                              <div class="modal-content tw-rounded-xl">
+                                  <div class="modal-body p-3" style="height: fit-content; max-height: fit-content">
+                                      <div class="tw-flex tw-items-center tw-justify-between">
+                                          <h5 class="modal-title" id="modalPasswordLabel">Alterar senha</h5>
+                                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                              <span aria-hidden="true" style="font-size: 28pt;">&times;</span>
+                                          </button>
+                                      </div>
+                                      <div>
+                                        <div class="form-group row">
+                                          <div class="col-md-6">                                          
+                                            <label for="{{form.password.auto_id}}">{{ form.password.label }}</label>
+                                            <div class="input-group mb-2">
+
+                                              <input v-model="teacher.password" class="form-control" autocomplete="new-password"  name="{{form.password.name}}" type="password" id="{{form.password.auto_id}}">
+                                            </div>
+                                            <div class="invalid-feedback">{{ form.errors.old_password }}</div>
+                                            <template v-if="teacher.errors && teacher.errors.password">
+                                              <label class="text-danger" v-for="error in teacher.errors.password">
+                                                ${error}
+                                              </label>
+                                            </template>
+                                          </div>
+                                          <div class="col-md-6">                                          
+                                            <label for="{{form.confirmation_password.auto_id}}">{{ form.confirmation_password.label }}</label>
+                                            <div class="input-group mb-2">
+                                              <input v-model="teacher.confirmation_password" class="form-control" autocomplete="new-password"  name="{{form.confirmation_password.name}}" type="password" id="{{form.confirmation_password.auto_id}}">
+                                            </div>
+                                            <div class="invalid-feedback">{{ form.errors.old_password }}</div>
+                                            <template v-if="teacher.errors && teacher.errors.confirmation_password">
+                                              <label class="text-danger" v-for="error in teacher.errors.confirmation_password">
+                                                ${error}
+                                              </label>
+                                            </template>
+                                          </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                          <div class="custom-control custom-switch">
+                                            {% render_field form.must_change_password class="custom-control-input" v-model="teacher.must_change_password" %}
+                                            <label class="custom-control-label" for="{{form.must_change_password.auto_id}}">
+                                              {{ form.must_change_password.label }}</label>
+                                            <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                              {{ form.must_change_password.help_text }}
+                                            </small>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <button @click="updateObject" type="button" class="tw-flex tw-w-full tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 py-2 my-4 tw-text-sm tw-font-semibold tw-shadow-sm tw-mt-4 hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600">
+                                        Alterar senha
+                                      </button>
+                                  </div>
+                              </div>
+                          </div>
+                        </div>
+                      </div>
+                  
+                    </div>
+                  </div>
+                </div>
+                <div class="border-bottom" style="border: 1px solid rgba(72, 94, 144, 0.16); background-color: white;" id="toggle-coordinations">
+                  <div class="card-header d-flex justify-content-between align-items-center" id="headingTwo" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+                    <div class="d-flex justify-content-between align-items-center" >
+                      <span v-if="this.registerDataValid.two" class="badge-number rounded-circle bg-success me-3">
+                        <i class="fas fa-check text-white"></i>
+                      </span>
+                      <span v-else class="badge-number rounded-circle">
+                        2
+                      </span>
+                      <div>
+                        Coordenação<br>
+                      </div>
+                    </div>
+                    <button class="btn btn-link" type="button">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 5V19M5 12H19" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionProfessor">
+                    <div class="card-body">
+                      <div class="form-group row">
+                    
+                        <div class="col-md-12">
+                          <label for="select-for-coordinations">Coordenações relacionadas a esse professor</label>
+                          <div id="select-for-coordinations"></div>
+                          <small class="form-text text-muted">{{form.coordinations.help_text}}</small>
+                          <template v-if="teacher.errors && teacher.errors.coordinations">
+                            <label class="text-danger" v-for="error in teacher.errors.coordinations">
+                              ${error}
+                            </label>
+                          </template>
+                        </div>
+
+                        <div id="btns-groups-category" class="col-md-12 tw-flex tw-gap-2 tw-mt-3">
+                          <button 
+                            type="button" 
+                            @click="addCoordinationsToTreeSelect('all') ; buttonsGroupCoordinations('all')"
+                            class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-px-3 tw-py-1.5 tw-text-xs tw-font-medium tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2" 
+                            :class="[buttonsGroupCoordinationsSelected.includes('all') ? 'tw-text-primary-600 tw-border tw-border-primary-600 hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline-primary-600' : 'tw-text-[#384250] tw-bg-[#F9FAFA] hover:tw-bg-[#ececec] focus-visible:tw-outline-gray-600']" @click="addCoordinationsToSelect2('elementarySchool')">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                              <path d="M8.00001 3.33331V12.6666M3.33334 7.99998H12.6667" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Todas
+                          </button>
+                          <button 
+                            type="button" 
+                            @click="addCoordinationsToTreeSelect('elementarySchool') ; buttonsGroupCoordinations('elementarySchool')"
+                            class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-px-3 tw-py-1.5 tw-text-xs tw-font-medium tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2" 
+                            :class="[buttonsGroupCoordinationsSelected.includes('elementarySchool') ? 'tw-text-primary-600 tw-border tw-border-primary-600 hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline-primary-600' : 'tw-text-[#384250] tw-bg-[#F9FAFA] hover:tw-bg-[#ececec] focus-visible:tw-outline-gray-600']" @click="addCoordinationsToSelect2('elementarySchool')">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                              <path d="M8.00001 3.33331V12.6666M3.33334 7.99998H12.6667" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Ensino fundamental 1
+                          </button>
+                          <button 
+                            type="button" 
+                            @click="addCoordinationsToTreeSelect('elementarySchool2') ; buttonsGroupCoordinations('elementarySchool2')"
+                            class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-px-3 tw-py-1.5 tw-text-xs tw-font-medium tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2" 
+                            :class="[buttonsGroupCoordinationsSelected.includes('elementarySchool2') ? 'tw-text-primary-600 tw-border tw-border-primary-600 hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline-primary-600' : 'tw-text-[#384250] tw-bg-[#F9FAFA] hover:tw-bg-[#ececec] focus-visible:tw-outline-gray-600']" @click="addCoordinationsToSelect2('elementarySchool')">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                              <path d="M8.00001 3.33331V12.6666M3.33334 7.99998H12.6667" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Ensino fundamental 2
+                          </button>
+                          <button 
+                            type="button" 
+                            @click="addCoordinationsToTreeSelect('highSchool') ; buttonsGroupCoordinations('highSchool')"
+                            class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-px-3 tw-py-1.5 tw-text-xs tw-font-medium tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2" 
+                            :class="[buttonsGroupCoordinationsSelected.includes('highSchool') ? 'tw-text-primary-600 tw-border tw-border-primary-600 hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline-primary-600' : 'tw-text-[#384250] tw-bg-[#F9FAFA] hover:tw-bg-[#ececec] focus-visible:tw-outline-gray-600']" @click="addCoordinationsToSelect2('elementarySchool')">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                              <path d="M8.00001 3.33331V12.6666M3.33334 7.99998H12.6667" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Ensino médio
+                          </button>
+                        </div>
+
+                      </div>
+
+                      <div class="form-group row">
+                        <div class="col-md-12">
+                          <button @click="toggleCollapses('second')" type="button" class="btn btn-primary btn-lg btn-block" style="background-color: #0C7BDB;">Salvar e continuar</button>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+                <div class="card border-bottom">
+                  <div class="card-header d-flex justify-content-between align-items-center" id="headingThree" data-toggle="collapse" data-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
+                    <div class="d-flex justify-content-between align-items-center" >
+                      <span v-if="this.registerDataValid.three" class="badge-number rounded-circle bg-success me-3">
+                        <i class="fas fa-check text-white"></i>
+                      </span>
+                      <span v-else class="badge-number rounded-circle">
+                        3
+                      </span>
+                      <div>
+                        Disciplinas<br>
+                      </div>
+                    </div>
+                    <button class="btn btn-link" type="button">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 5V19M5 12H19" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordionProfessor">
+                    <div class="card-body">
+                      <div class="form-group row">
+                        <div id="search-subjects-component" class="col-md-12">
+                          <div>
+                            <button @click="cleanElementsModal()" type="button" data-select-classes data-toggle="modal" data-target="#modalSearchSubjects" class="tw-flex tw-w-full tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 py-2 my-4 tw-text-sm tw-font-semibold tw-shadow-sm tw-mt-4 hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600">
+                                Adicionar as disciplinas deste professor 
+                                <svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12.5 5V19M5.5 12H19.5" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                          </div>
+                        </div>
+                        <div class="col-md-12 tw-flex tw-justify-end tw-gap-4">
+                          <button 
+                            @click="subjectsSelected = [];alertTop('Disciplinas removidas com sucesso');" 
+                            type="button" 
+                            class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-px-3 tw-py-1.5 tw-text-xs tw-font-medium tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 tw-text-[#384250] tw-bg-[#F9FAFA] hover:tw-bg-[#ececec] focus-visible:tw-outline-gray-600">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                              <path d="M8.00001 3.33331V12.6666M3.33334 7.99998H12.6667" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Remover todas as disciplinas
+                          </button>
+                          
+                          {% if object %}
+                          <button 
+                            v-if="!_.isEqual(this.subjectsSaveThisTeacher, this.subjectsSelected)"
+                            id="btn-reset-questions"
+                            @click="fetchSubjectsTeacher()"
+                            type="button" 
+                            class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-px-3 tw-py-1.5 tw-text-xs tw-font-medium tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 tw-text-primary-600 tw-border tw-border-primary-600 hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline-primary-600">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                              <path d="M8.00001 3.33331V12.6666M3.33334 7.99998H12.6667" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Desfazer alterações
+                          </button>
+                          {% endif %}
+
+                        </div>
+                      </div>
+                      <div class="form-group row">
+                        <div class="col-md-12">
+                          <div class="subject-teacher" v-for="subject in this.subjectsSelected">
+                            <div class="texts">
+                              <h5>${subject.name}</h5>
+                              <span>${subject.grade} - ${subject.classes.length} turmas</span>
+                            </div>
+                            <div class="icons">
+                              <svg @click="editSubject(subject)" data-toggle="modal" data-target="#modalSearchSubjects" width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="44" height="44" rx="22" fill="#9BA3AF"/>
+                                <path d="M31 31.0003H23M12.5 31.5003L18.0493 29.366C18.4042 29.2295 18.5817 29.1612 18.7477 29.0721C18.8952 28.9929 19.0358 28.9015 19.168 28.7989C19.3169 28.6834 19.4514 28.5489 19.7203 28.28L31 17.0003C32.1046 15.8957 32.1046 14.1049 31 13.0003C29.8955 11.8957 28.1046 11.8957 27 13.0003L15.7203 24.28C15.4514 24.5489 15.3169 24.6834 15.2014 24.8323C15.0988 24.9645 15.0074 25.1051 14.9282 25.2526C14.8391 25.4186 14.7708 25.5961 14.6343 25.951L12.5 31.5003ZM12.5 31.5003L14.5581 26.1493C14.7054 25.7663 14.779 25.5749 14.9053 25.4872C15.0157 25.4105 15.1523 25.3816 15.2843 25.4068C15.4353 25.4356 15.5804 25.5807 15.8705 25.8708L18.1296 28.1299C18.4197 28.4199 18.5647 28.565 18.5936 28.716C18.6188 28.848 18.5898 28.9846 18.5131 29.095C18.4254 29.2213 18.234 29.2949 17.8511 29.4422L12.5 31.5003Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                              </svg>
+                              <svg @click="deleteSubject(subject)" width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="44" height="44" rx="22" fill="#9BA3AF"/>
+                                <path d="M26 16V15.2C26 14.0799 26 13.5198 25.782 13.092C25.5903 12.7157 25.2843 12.4097 24.908 12.218C24.4802 12 23.9201 12 22.8 12H21.2C20.0799 12 19.5198 12 19.092 12.218C18.7157 12.4097 18.4097 12.7157 18.218 13.092C18 13.5198 18 14.0799 18 15.2V16M20 21.5V26.5M24 21.5V26.5M13 16H31M29 16V27.2C29 28.8802 29 29.7202 28.673 30.362C28.3854 30.9265 27.9265 31.3854 27.362 31.673C26.7202 32 25.8802 32 24.2 32H19.8C18.1198 32 17.2798 32 16.638 31.673C16.0735 31.3854 15.6146 30.9265 15.327 30.362C15 29.7202 15 28.8802 15 27.2V16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="form-group row">
+                        <div class="col-md-12">
+                          <button @click="toggleCollapses('third')" type="button" class="btn btn-primary btn-lg btn-block" style="background-color: #0C7BDB;">Salvar e continuar</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card border-bottom">
+                  <div class="card-header d-flex justify-content-between align-items-center" id="headingThree" data-toggle="collapse" data-target="#collapseFour" aria-expanded="true" aria-controls="collapseFour">
+                    <div class="d-flex justify-content-between align-items-center" >
+                      <span v-if="this.registerDataValid.four" class="badge-number rounded-circle bg-success me-3">
+                        <i class="fas fa-check text-white"></i>
+                      </span>
+                      <span v-else class="badge-number rounded-circle">
+                        4
+                      </span>
+                      <div>
+                        Permissões<br>
+                      </div>
+                    </div>
+                    <button class="btn btn-link" type="button">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 5V19M5 12H19" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <div id="collapseFour" class="collapse" aria-labelledby="headingThree" data-parent="#accordionProfessor">
+                    <div class="card-body">
+                      <div class="form-group row">
+                        <div id="provisório">
+
+                          <div class="col-md-12">
+                            <div class="custom-control custom-switch">
+                              {% render_field form.can_elaborate_questions v-model="teacher.can_elaborate_questions" class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.can_elaborate_questions.auto_id}}">
+                                {{ form.can_elaborate_questions.label }}</label>
+                              <p class="text-muted">
+                                O professor poderá elaborar questões.
+                              </p>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.can_elaborate_questions.help_text }}
+                              </small>
+                              <template v-if="teacher.errors && teacher.errors.can_elaborate_questions">
+                                <label class="text-danger" v-for="error in teacher.errors.can_elaborate_questions">
+                                  ${error}
+                                </label>
+                              </template>
+                            </div>
+                          </div>
+          
+                          <div class="col-md-12">
+                            <div class="custom-control custom-switch">
+                              {% render_field form.can_correct_questions_other_teachers v-model="teacher.can_correct_questions_other_teachers" class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.can_correct_questions_other_teachers.auto_id}}">
+                                {{ form.can_correct_questions_other_teachers.label }}</label>
+                              <p class="text-muted">
+                                O professor poderá corrigir questões de outros professores que sejam da mesma disciplina.
+                              </p>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.can_correct_questions_other_teachers.help_text }}
+                              </small>
+                              <template v-if="teacher.errors && teacher.errors.can_correct_questions_other_teachers">
+                                <label class="text-danger" v-for="error in teacher.errors.can_correct_questions_other_teachers">
+                                  ${error}
+                                </label>
+                              </template>
+                            </div>
+                          </div>
+          
+                          <div class="col-md-12">
+                            <div class="custom-control custom-switch">
+                              {% render_field form.can_response_wrongs v-model="teacher.can_response_wrongs" class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.can_response_wrongs.auto_id}}">
+                                {{ form.can_response_wrongs.label }}</label>
+                              <p class="text-muted">
+                                O professor poderá responder erratas.
+                              </p>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.can_response_wrongs.help_text }}
+                              </small>
+                              <template v-if="teacher.errors && teacher.errors.can_response_wrongs">
+                                <label class="text-danger" v-for="error in teacher.errors.can_response_wrongs">
+                                  ${error}
+                                </label>
+                              </template>
+                            </div>
+                          </div>
+          
+                          <div class="col-md-12" v-if="canResponseWrongs">
+                            <div class="custom-control custom-switch">
+                              {% render_field form.can_answer_wrongs_others_teachers v-model="teacher.can_answer_wrongs_others_teachers" class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.can_answer_wrongs_others_teachers.auto_id}}">
+                                {{ form.can_answer_wrongs_others_teachers.label }}</label>
+                              <p class="text-muted">
+                                O professor poderá responder erratas de outros professores da mesma disciplina.
+                              </p>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.can_answer_wrongs_others_teachers.help_text }}
+                              </small>
+                              <template v-if="teacher.errors && teacher.errors.can_answer_wrongs_others_teachers">
+                                <label class="text-danger" v-for="error in teacher.errors.can_answer_wrongs_others_teachers">
+                                  ${error}
+                                </label>
+                              </template>
+                            </div>
+                          </div>
+          
+                          <div class="col-md-6">
+                            <div class="custom-control custom-switch">
+                              {% render_field form.is_discipline_coordinator v-model="teacher.is_discipline_coordinator" class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.is_discipline_coordinator.auto_id}}">
+                                {{ form.is_discipline_coordinator.label }}</label>
+                              <p class="text-muted">
+                                O professor poderá analisar todos os cadernos de sua disciplina, aprovando ou sugerindo correção aos professores que estão elaborando.
+                              </p>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.is_discipline_coordinator.help_text }}
+                              </small>
+                              <template v-if="teacher.errors && teacher.errors.is_discipline_coordinator">
+                                <label class="text-danger" v-for="error in teacher.errors.is_discipline_coordinator">
+                                  ${error}
+                                </label>
+                              </template>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div v-if="teacher.is_discipline_coordinator" class="form-group">
+                        <div>
+                          <label class="form-control-label">Defina as permissões deste professor</label>
+                        </div>
+                        <div class="col-md-12">
+                          <div>
+                            <div class="row">
+
+                              <div class="custom-control custom-checkbox m-1">
+                                <input id="can-viewed" type="checkbox" v-model="teacher.can_viewed" class="custom-control-input">
+                                <label for="can-viewed" class="custom-control-label">{{ form.can_viewed.label }}</label>
+                              </div>
+                              
+                              <div class="custom-control custom-checkbox m-1">
+                                <input id="can-approve" type="checkbox" v-model="teacher.can_approve" class="custom-control-input">
+                                <label for="can-approve" class="custom-control-label">{{ form.can_approve.label }}</label>
+                              </div>
+                              
+                              <div class="custom-control custom-checkbox m-1">
+                                <input id="can-fail" type="checkbox" v-model="teacher.can_fail" class="custom-control-input">
+                                <label for="can-fail" class="custom-control-label">{{ form.can_fail.label }}</label>
+                              </div>
+                              
+                              <div class="custom-control custom-checkbox m-1">
+                                <input id="can-update-note" type="checkbox" v-model="teacher.can_update_note" class="custom-control-input">
+                                <label for="can-update-note" class="custom-control-label">{{ form.can_update_note.label }}</label>
+                              </div>
+                              
+                              <div class="custom-control custom-checkbox m-1">
+                                <input id="can-suggest-correction" type="checkbox" v-model="teacher.can_suggest_correction" class="custom-control-input">
+                                <label for="can-suggest-correction" class="custom-control-label">{{ form.can_suggest_correction.label }}</label>
+                              </div>
+                              
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="form-group row">
+                        <div class="col-md-12">
+                          <button type="submit" form="form-professor-create-update" class="btn btn-primary btn-lg btn-block" style="margin-top: 21px;">
+                            Finalizar cadastro
+                          </button>
+                          {% comment %} <button @click="toggleCollapses('four')" type="button" class="btn btn-primary btn-lg btn-block" style="background-color: #0C7BDB;">Salvar e continuar</button> {% endcomment %}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>                
+              </div>  
+              </div>
+            </form>
+            
+            <!-- Modal de selecionar disciplinas -->
+            <div class="modal fade" id="modalSearchSubjects" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-lg">
+                <div class="modal-content tw-rounded-xl tw-flex" style="height: calc(100vh - 58px);">
+                  <div class="h-100 tw-max-h-full tw-overflow-hidden">
+                    <div class="tw-flex tw-items-center tw-justify-between p-3" style="height: 6%;">
+                      <h5 class="modal-title tw-pt-2">Adicionar Disciplina</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true" style="font-size: 28pt;">&times;</span>
+                      </button>
+                    </div>
+                    <div class="card-body tw-flex tw-flex-col" style="height: 98%;">
+                      <div class="form-group row tw-mb-2">
+                        <div class="col-md-12">
+                          <label for="select-grades">Segmentos de turmas</label>
+                          <select id="select-grades" class="js-example-basic-multiple" name="states[]" multiple="multiple">
+                            <option v-for="grade in grades" :value="grade.id">${ grade.name }</option>
+                          </select>
+                        </div>
+                        <div class="col-md-12 tw-flex tw-mt-3 tw-gap-2">
+                          <div>
+                            <button type="button" @click="addGroupGrades('elementarySchool')"
+                              class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-px-3 tw-py-1.5 tw-text-xs tw-font-medium tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2"
+                              :class="[buttonsGroupGrades.includes('elementarySchool') ? 'tw-text-primary-600 tw-border tw-border-primary-600 hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline-primary-600' : 'tw-text-[#384250] tw-bg-[#F9FAFA] hover:tw-bg-[#ececec] focus-visible:tw-outline-gray-600']">
+                              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                <path d="M8.00001 3.33331V12.6666M3.33334 7.99998H12.6667" stroke="currentColor" stroke-width="2"
+                                  stroke-linecap="round" stroke-linejoin="round" />
+                              </svg>
+                              Ensino fundamental 1
+                            </button>
+                          </div>
+                          <div>
+                            <button type="button" @click="addGroupGrades('elementarySchool2')"
+                              class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-px-3 tw-py-1.5 tw-text-xs tw-font-medium tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2"
+                              :class="[buttonsGroupGrades.includes('elementarySchool2') ? 'tw-text-primary-600 tw-border tw-border-primary-600 hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline-primary-600' : 'tw-text-[#384250] tw-bg-[#F9FAFA] hover:tw-bg-[#ececec] focus-visible:tw-outline-gray-600']">
+                              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                <path d="M8.00001 3.33331V12.6666M3.33334 7.99998H12.6667" stroke="currentColor" stroke-width="2"
+                                  stroke-linecap="round" stroke-linejoin="round" />
+                              </svg>
+                              Ensino fundamental 2
+                            </button>
+                          </div>
+                          <div>
+                            <button type="button" @click="addGroupGrades('highSchool')"
+                              class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-px-3 tw-py-1.5 tw-text-xs tw-font-medium tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2"
+                              :class="[buttonsGroupGrades.includes('highSchool') ? 'tw-text-primary-600 tw-border tw-border-primary-600 hover:tw-text-white hover:tw-bg-primary-600 focus-visible:tw-outline-primary-600' : 'tw-text-[#384250] tw-bg-[#F9FAFA] hover:tw-bg-[#ececec] focus-visible:tw-outline-gray-600']">
+                              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                <path d="M8.00001 3.33331V12.6666M3.33334 7.99998H12.6667" stroke="currentColor" stroke-width="2"
+                                  stroke-linecap="round" stroke-linejoin="round" />
+                              </svg>
+                              Ensino médio
+                            </button>
+                          </div>
+                          <div>
+                            <button type="button" @click="addGroupGrades('reset')"
+                              class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-px-3 tw-py-1.5 tw-text-xs tw-font-medium tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 tw-text-[#384250] tw-bg-[#F9FAFA] hover:tw-bg-[#ececec] focus-visible:tw-outline-gray-600">
+                              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                <path d="M8.00001 3.33331V12.6666M3.33334 7.99998H12.6667" stroke="currentColor" stroke-width="2"
+                                  stroke-linecap="round" stroke-linejoin="round" />
+                              </svg>
+                              Limpar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="form-group row tw-mb-2">
+                        <div class="col-md-12">
+                          <label for="select-subject">Escolha uma disciplina</label>
+                          <div v-if id="select-subject"></div>
+                        </div>
+                      </div>
+                      <div class="form-group row checkbox-container tw-mb-0 tw-max-h-full tw-pt-0">
+                        <div class="elements-auto">
+                          <div>
+                            <div class="tw-flex tw-items-center tw-justify-center">
+                              <p class="m-auto tw-text-sm tw-font-medium tw-text-gray-700" v-if="classesFilter.length > 0" id="initial-select">
+                                <span class="tw-text-primary-600">Turmas disponíveis:</span> 
+                                <small class="tw-text-gray-500">${selectedClasses.length} selecionadas</small>
+                              </p>
+                              <p class="m-auto tw-text-sm tw-font-medium tw-text-red-500" v-else>
+                                Nenhuma turma disponível. Verifique os segmentos e as coordenações.
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div v-if="classesFilter.length > 0" class="tw-flex tw-gap-4">
+                            <button @click="allSelect()" type="button"
+                              class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-px-3 tw-py-1.5 tw-text-xs tw-font-medium tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2">
+                              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                <path d="M8.00001 3.33331V12.6666M3.33334 7.99998H12.6667" stroke="currentColor" stroke-width="2"
+                                  stroke-linecap="round" stroke-linejoin="round" />
+                              </svg>
+                              Marcar todos
+                            </button>
+                            <button @click="allSelect(reset=true)" type="button"
+                              class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-px-3 tw-py-1.5 tw-text-xs tw-font-medium tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2">
+                              Desmarcar todos
+                            </button>
+                          </div>
+                        </div>
+                        <div class="col-md-12 tw-mt-1" id="checkbox-contents">
+                          <div class="row">
+                            <div v-for="classe in classesFilter" class="col-md-4 mb-2">
+                              <div class="checkbox-element">
+                                <div class="checkbox-classes">
+                                  <input :checked="selectedClasses.includes(classe.id)" v-model="selectedClasses" :value="classe.id"
+                                    class="custom-checkbox-modal" type="checkbox" :id="'checkbox' + classe.id">
+                                  <label class="checkbox-label-modal" :for="'checkbox' + classe.id">
+                                    ${ classe.full_name }
+                                  </label>
+                                </div>
+                                <div class="description-classes">
+                                  <span class="" :for="'checkbox' + classe.id">
+                                    ${ classe.grade_name }
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="form-group row" style="margin-top: auto;">
+                        <div class="col-md-12">
+                          <button @click="saveSubjectTeacher()" type="button" class="btn btn-primary btn-lg btn-block"
+                            data-dismiss="modal" style="background-color: #0C7BDB;">Salvar disciplina</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+      </div>
+    </div>
+  </div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+
+<script type="text/javascript">
+  moment.locale('pt-br');
+  var app_question = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {
+      subjectsSaveThisTeacher: [],
+      treeselectSubjects: null,
+      allSubjectsClient: [],
+      selectedGrades: [],
+      selectedSubject: "",
+      selectedSubjectsElementCurrent: "",
+      selectedClasses: [],
+      subjectsFilter: [],
+      classesFilter: [],
+      url_subjects: "{% url 'api2:subjects' %}",
+      buttonsGroupGrades: [],
+      originalEmail: '{{object.email}}',
+      buttonsGroupCoordinationsSelected: [],
+      registerDataValid: {
+        one: false,
+        two: false,
+        three: false,
+      },
+      subjectsSelected: [],
+      passwordVisible: false,
+      canResponseWrongs: {{form.can_response_wrongs.value|safe|default:"False"|lower}},
+      coordinations: [
+        {% for coordination in form.coordinations.field.queryset.all %}
+          {
+            pk: '{{coordination.pk}}',  
+            highSchool: {{coordination.high_school|lower}}, 
+            elementarySchool: {{coordination.elementary_school|lower}}, 
+            elementarySchool2: {{coordination.elementary_school2|lower}}, 
+            name: '{{coordination}}',
+          },
+        {% endfor %}
+      ],
+      classes: [
+        {% for classe in classes %}
+          {
+            id: '{{classe.id}}',  
+            name: '{{classe.name}}',
+            full_name: '{{classe}}',
+            grade: '{{classe.grade.id}}',
+            grade_name: '{{classe.grade}}',
+            coordination: '{{classe.coordination.pk}}'
+          },
+        {% endfor %}
+      ],
+      grades: [
+        {% for grade in grades %}
+          {
+            id: '{{grade.id}}',  
+            name: '{{grade}}',
+            level: '{{grade.level}}',
+          },
+        {% endfor %}
+      ],
+      availableSubjects: [
+        {% for subject in form.subjects.field.queryset.all %}
+          {
+            id: '{{subject.id}}',
+            name: '{{subject}}',
+            grades: [
+              {% for grade in subject.knowledge_area.grades.all %}
+                '{{grade.id}}',
+              {% endfor %}
+            ]
+          },
+        {% endfor %}
+      ],
+      teacher: {
+        name: '',
+        email: '',
+        subjects: [],
+        can_annul: false,
+        can_answer_wrongs_others_teachers: false,
+        can_approve: false,
+        can_correct_questions_other_teachers: false,
+        can_elaborate_questions: false,
+        can_fail: false,
+        can_response_wrongs: false,
+        can_suggest_correction: false,
+        can_update_note: false,
+        can_viewed: false,
+        inspector_type: 0,
+        is_discipline_coordinator: false,  
+        is_discipline_coordinator: false,
+        coordinations: [],
+        custom_groups: [],
+        new_username: '',
+        must_change_password: false,
+      },
+      foundClasses: [],
+      saving: false,
+      saveAndChangePermissions: false,
+    },
+    methods: {
+      allSelect(reset) {
+        if (reset == true) {
+            this.selectedClasses = []
+        }
+        else {
+            this.selectedClasses = this.classesFilter.map(classe => classe.id);
+        }
+      },
+      cleanElementsModal() {
+        this.selectedSubject = []
+        this.treeselectSubjects.updateValue(this.selectedSubject)
+
+        this.selectedGrades = []
+        $('#select-grades').val(this.selectedGrades).trigger('change');
+        
+        this.selectedClasses = []
+        this.classesFilter = []
+
+        this.buttonsGroupCoordinationsSelected = []
+        this.buttonsGroupGrades = []
+
+      },
+      findNameByValue (value, options) {
+        for (const option of options) {
+          if (option.value === value) return option.completeName;
+          if (option.children) {
+              const childResult = this.findNameByValue(value, option.children);
+              if (childResult) return childResult;
+          }
+        }
+        return null;
+      },
+      markClass(classId) {
+        const index = this.selectedClasses.indexOf(classId);
+        if (index > -1) {
+          this.selectedClasses.splice(index, 1);
+        } else {
+          this.selectedClasses.push(classId);
+        }
+      },
+      saveSubjectTeacher() {
+        this.selectedSubject.forEach(subject => {
+
+          // this.subjectsSelected é as disciplinas que já estão selecionadas 
+          const indexToUpdate = this.subjectsSelected.findIndex(subjectData => subjectData.id == subject)
+          if (indexToUpdate !== -1) {
+            // Se a disciplina já existe, atualiza as turmas usando a reatividade do vue
+            this.$set(this.subjectsSelected, indexToUpdate, {
+              ...this.subjectsSelected[indexToUpdate],
+              classes: this.selectedClasses,
+            });
+          }
+          else {
+            // Encontra os dados daquela disciplina, e adiciona ela ao primeiro elementos da listagem 
+            const subjectData = this.allSubjectsClient.find(subjectClient => subjectClient.id == subject)
+            this.subjectsSelected.unshift({
+              id: subject,
+              classes: this.selectedClasses,
+              grade: subjectData.knowledge_area,
+              name: subjectData.name,
+              grades_id: this.grades.filter(grade => subjectData.grades_code.includes(parseInt(grade.level))).map(grade => grade.id),
+            })
+          }
+        })
+        this.alertTop("Disciplina(s) salva(s) com sucesso!")
+      },
+      editSubject(subject) {
+
+        // Seleciona os segmentos daquela disciplina
+        this.buttonsGroupGrades = [];
+        this.selectedGrades = subject.grades_id
+        $('#select-grades').val(this.selectedGrades).trigger('change');
+            
+        // Seleciona a disciplina no select do modal
+        this.selectedSubject = [subject.id];
+        this.treeselectSubjects.updateValue(this.selectedSubject);
+
+        // Mantém as turmas selecionadas no início da listagem
+        this.selectedClasses = subject.classes;
+        this.classesFilter = this.classes.filter(classe => !this.selectedClasses.includes(classe.id));
+        this.selectedClasses.forEach(classeId => {
+          const classe = this.classes.find(classeData => classeData.id === classeId);
+          if (classe) {
+            this.classesFilter.unshift(classe);
+          }
+        });
+        
+      },
+      addGroupGrades(type) {
+        if (type === 'reset') {
+          // Limpa os segmentos selecionados e os botões
+          this.selectedGrades = [];
+          this.buttonsGroupGrades = [];
+          $('#select-grades').val(this.selectedGrades).trigger('change');
+          return;
+        }
+
+        if (this.buttonsGroupGrades.includes(type)) {
+            if (type == 'elementarySchool') {
+                this.grades.filter(grade => grade.level == 1).map(grade => grade.id).forEach(grade => {
+                    let index = this.selectedGrades.indexOf(grade);
+                    if (index > -1) {
+                        this.selectedGrades.splice(index, 1);
+                    }
+                });
+            }
+
+            if (type == 'elementarySchool2') {
+                this.grades.filter(grade => grade.level == 2).map(grade => grade.id).forEach(grade => {
+                    let index = this.selectedGrades.indexOf(grade);
+                    if (index > -1) {
+                        this.selectedGrades.splice(index, 1);
+                    }
+                });
+            }
+
+            if (type == 'highSchool') {
+                this.grades.filter(grade => grade.level == 0).map(grade => grade.id).forEach(grade => {
+                    let index = this.selectedGrades.indexOf(grade);
+                    if (index > -1) {
+                        this.selectedGrades.splice(index, 1);
+                    }
+                });
+            }
+
+            this.buttonsGroupGrades = this.buttonsGroupGrades.filter(button => button != type);
+            $('#select-grades').val(this.selectedGrades).trigger('change');
+            return;
+        } else {
+            this.buttonsGroupGrades.push(type);
+        }
+
+        if (type == 'elementarySchool') {
+            this.grades.forEach(grade => {
+                if (grade.level == 1) {
+                    this.selectedGrades.push(grade.id);
+                }
+            });
+        }
+
+        if (type == 'elementarySchool2') {
+            this.grades.forEach(grade => {
+                if (grade.level == 2) {
+                    this.selectedGrades.push(grade.id);
+                }
+            });
+        }
+
+        if (type == 'highSchool') {
+            this.grades.forEach(grade => {
+                if (grade.level == 0) {
+                    this.selectedGrades.push(grade.id);
+                }
+            });
+        }
+
+        $('#select-grades').val(this.selectedGrades).trigger('change');
+      },
+      async fetchSubjectsTeacher() {
+        try {
+          const response = await axios.get(`/api/v1/inspectors/${this.teacher.id}/subjects_data`);
+          this.subjectsSelected = response.data
+          this.subjectsSaveThisTeacher = [...response.data]
+        } catch (error) {
+          console.error('Erro ao buscar disciplinas do professor:', error);
+        }
+      },
+      buttonsGroupCoordinations(type) {
+        if (this.teacher.coordinations.length == 0) {
+          this.buttonsGroupCoordinationsSelected = []
+          return
+        }
+        if (this.buttonsGroupCoordinationsSelected.includes(type)) {
+          this.buttonsGroupCoordinationsSelected = this.buttonsGroupCoordinationsSelected.filter(item => item !== type)
+        } else {
+          this.buttonsGroupCoordinationsSelected.push(type)
+        }
+        if (this.buttonsGroupCoordinationsSelected.includes('all') && type == 'all') {
+          this.buttonsGroupCoordinationsSelected.push('elementarySchool')
+          this.buttonsGroupCoordinationsSelected.push('elementarySchool2')
+          this.buttonsGroupCoordinationsSelected.push('highSchool')
+          return
+        }
+      },
+      sucessAlert(action) {
+        Swal.fire({
+          position: "center",
+          icon: "success",
+          title: "Professor " + action + " com sucesso!",
+          showConfirmButton: false,
+          timer: 2000,
+        });
+      },
+      relatedSubjects() {
+
+        if (this.subjectsSelected.length == 0) {
+          this.teacher.subjects = []
+          return
+        }
+
+        const subjectsNews = this.subjectsSelected.map(subject => subject.id)
+        const subjectsOld = this.teacher.subjects.map(subject => subject.subject.id)
+        const subjectsToDelete = subjectsOld.filter(subject => !subjectsNews.includes(subject))
+
+        subjectsToDelete.forEach(subjectId => {
+          this.teacher.subjects = this.teacher.subjects.filter(subjectData => subjectData.subject.id != subjectId)
+        })
+
+        this.subjectsSelected.forEach((subject, index) => {
+          let foundedSubject = this.teacher.subjects.find(teacherSubject => teacherSubject.subject.id == subject.id)
+          
+          if (foundedSubject) {
+            
+            this.teacher.subjects[this.teacher.subjects.indexOf(foundedSubject)] = {
+              teacher: {
+                id: this.teacher.id,
+                name: this.teacher.name,
+              },
+              classes: subject.classes,
+              grades: [],
+              show_all: false,
+              subject: {
+                id: subject.id,
+                name: subject.name,
+              }
+            }
+          } else {
+            this.teacher.subjects.push({
+              teacher: { 
+                id: this.teacher.id,
+                name: this.teacher.name,
+              },
+              classes: subject.classes,
+              grades: [],
+              show_all: false,
+              subject: {
+                id: subject.id,
+                name: subject.name,
+              }
+            })
+          }
+        })
+      },
+      relatedFields() {
+
+        const currentValue = this.treeSelectCoordination.value
+        this.treeSelectCoordination.updateValue(this.teacher.coordinations.concat(currentValue))
+        this.fetchSubjectsTeacher()
+      },
+      submitForm() {
+
+        if (this.teacher.coordinations.length == 0) {
+          this.alertTop('Selecione ao menos uma coordenação!', 'error')
+          return
+        }
+        this.$nextTick().then(() => {
+          this.relatedSubjects()
+        }).then(() => {
+          {% if object %}
+            this.updateObject()
+          {% else %}
+            this.createTeacher()
+          {% endif %}
+        })
+
+      },
+      createTeacher(){
+        axios.post("{% url 'api:inspectors-list' %}", this.teacher).then((response) => {
+          axios.post("{% url 'notifications:api-check-notification' %}", { viewType: 'create', appLabel: 'inspectors.Inspector' })
+          this.sucessAlert("criado")
+          window.location.href = "{% url 'inspectors:teachers_list' %}"
+        }).catch((error) => {
+          this.teacher.errors = error.response.data
+          if (error.response.data.detail) {
+            Swal.fire({
+              title: 'Erro',
+              text: error.response.data.detail,
+              icon: 'error',
+              confirmButtonText: 'Ok'
+            })
+          } else {
+            this.alertTop('Ocorreu um erro ao tentar adicionar o professor!', 'error')
+          }
+        }).finally(() => {
+          this.saving = false
+        })
+      },
+      deleteSubject(subject) {
+        this.subjectsSelected.splice(this.subjectsSelected.indexOf(subject), 1)
+      },
+      addSubjectTeacher(subjectBody) {
+
+        // Para quando foram adicionadas turmas sem disciplinas
+        let subjectUpdated = false;
+
+        this.subjectsSelected.forEach(subject => {
+            if (subject.elementId == subjectBody.elementId) {
+                this.subjectsSelected.splice(this.subjectsSelected.indexOf(subject), 1)
+                this.subjectsSelected.push(subjectBody)
+                subjectUpdated = true;
+            }
+        })
+
+        if (!subjectUpdated) {
+            let allSubjectsSelectedsIds = this.subjectsSelected.map(subject => subject.id);
+            if (allSubjectsSelectedsIds.includes(subjectBody.id)) {
+                this.alertTop('Disciplina já adicionada!', 'error');
+                return;
+            }
+        }
+
+        // Possibilita alterações na div do front
+        let flag = false
+        this.subjectsSelected.forEach((subject,index) => {
+          if(subject.elementId == subjectBody.elementId) {
+            this.$set(this.subjectsSelected, index, subjectBody);
+            flag = true
+          }
+        })
+        if(!flag) {
+          this.subjectsSelected.push(subjectBody)
+        }
+      },
+      updateObject(){
+        {% if object %}
+          if((this.teacher.password != '' && this.teacher.confirmation_password != '') || this.teacher.must_change_password) {
+            this.saving = true
+            axios.patch("{% url 'api:inspectors-update-teacher-user' object.pk %}", this.teacher).then((res) => {
+              if(res.status == 206){
+                Swal.fire({
+                  icon: "error",
+                  title: "Erro na alteração de senha!",
+                  html: res.data.errors.replace("\n", "<br>"),
+                });
+              }else{
+                axios.put("{% url 'api:inspectors-detail' object.pk %}", this.teacher).then((response) => {
+                  axios.post("{% url 'notifications:api-check-notification' %}", { viewType: 'update', appLabel: 'inspectors.Inspector' })
+                  this.sucessAlert("atualizado")
+                  window.location.href = "{% url 'inspectors:teachers_list' %}"
+                }).catch((error) => {
+                  this.teacher.errors = error.response.data
+                  this.alertTop('Ocorreu um erro ao tentar atualizar o professor!', 'error')
+                })
+              }
+            }).finally(() => {
+              this.saving = false
+            })
+          } else {
+            this.saving = true
+            axios.put("{% url 'api:inspectors-detail' object.pk %}", this.teacher).then((response) => {
+              axios.post("{% url 'notifications:api-check-notification' %}", { viewType: 'update', appLabel: 'inspectors.Inspector' })
+              this.sucessAlert("atualizado")
+              window.location.href = "{% url 'inspectors:teachers_list' %}"
+            }).catch((error) => {
+              this.teacher.errors = error.response.data
+              if (error.response.data.detail) {
+                Swal.fire({
+                  title: 'Erro',
+                  text: error.response.data.detail,
+                  icon: 'error',
+                  confirmButtonText: 'Ok'
+                })
+              } else {
+                this.alertTop('Ocorreu um erro ao tentar atualizar o professor!', 'error')
+              }
+            }).finally(() => {
+              this.saving = false
+            })
+          }
+          {% endif %}
+      },
+      async toggleCollapses(element) {
+        try {
+          switch (element) {
+            case "first":
+              await this.handleFirstStep();
+              break;
+
+            case "second":
+              await this.handleSecondStep();
+              break;
+
+            case "third":
+              this.handleThirdStep();
+              break;
+            
+            default:
+              console.error("Elemento inválido");
+              break;
+          }
+        } catch (error) {
+          console.error('Erro inesperado:', error);
+          this.alertTop("Ocorreu um erro inesperado!", "error");
+        }
+      },
+      async handleFirstStep() {
+        const { name, email } = this.teacher;
+
+        if (!name || !email || !email.includes("@")) {
+          this.registerDataValid.one = false;
+          this.alertTop("Preencha os campos de nome e email corretamente!", "error");
+          return;
+        }
+
+        try {
+          if (email !== this.originalEmail) {
+            const response = await this.checkEmailExistence(email);
+            if (response.data.email_already_exists) {
+              this.alertTop(" Já existe um professor com o Email informado!", "error"); 
+              return;
+            }
+          }
+
+          this.toggleCollapse('collapseOne', 'collapseTwo');
+          this.registerDataValid.one = true;
+        } catch (error) {
+          console.error('Erro ao verificar o email:', error);
+          this.alertTop("Erro ao verificar o email!", "error");
+        }
+      },
+      async handleSecondStep() {
+        // Gambiarra para corrigir atualização do v-model
+        this.teacher.coordinations = this.treeSelectCoordination.value;
+
+        if (this.teacher.coordinations.length > 0) {
+          this.toggleCollapse('collapseTwo', 'collapseThree');
+          this.registerDataValid.two = true;
+        } else {
+          this.registerDataValid.two = false;
+          this.alertTop("Selecione ao menos uma coordenação!", "error");
+        }
+      },
+      handleThirdStep() {
+        this.toggleCollapse('collapseThree', null);
+        this.registerDataValid.three = true;
+      },
+      async checkEmailExistence(email) {
+        return axios.post("{% url 'api2:users-inspector-email-already-exists' %}", { email });
+      },
+      toggleCollapse(hideId, showId) {
+        $(`#${hideId}`).collapse('hide');
+        if (showId) {
+          setTimeout(() => {
+            $(`#${showId}`).collapse('show');
+          }, 500);
+        }
+      },
+      togglePasswordVisibility() {
+        const passwordInput = document.getElementById('passwordInput');
+        if (this.passwordVisible) {
+          passwordInput.type = 'password';
+        } else {
+          passwordInput.type = 'text';
+        }
+        this.passwordVisible = !this.passwordVisible;
+      },
+      addCoordinationsToTreeSelect(type) {
+        let coordinationsPkList = [];
+        const currentValue = this.treeSelectCoordination.value;
+
+        // Verifica se o tipo já foi aplicado (se os PKs correspondentes já estão na lista)
+        const alreadyApplied = this.coordinations.some(coordination => {
+          if (type === 'all') {
+            return currentValue.includes(coordination.pk);
+          } else if (type === 'highSchool') {
+            return coordination.highSchool && currentValue.includes(coordination.pk);
+          } else if (type === 'elementarySchool') {
+            return coordination.elementarySchool && currentValue.includes(coordination.pk);
+          } else if (type === 'elementarySchool2') {
+            return coordination.elementarySchool2 && currentValue.includes(coordination.pk);
+          }
+          return false;
+        });
+
+        // Se já foi aplicado, remove os elementos correspondentes
+        if (alreadyApplied) {
+          coordinationsPkList = currentValue.filter(pk => {
+            const coordination = this.coordinations.find(c => c.pk === pk);
+            if (type === 'all') return false; // Remove todos
+            if (type === 'highSchool') return !coordination.highSchool;
+            if (type === 'elementarySchool') return !coordination.elementarySchool;
+            if (type === 'elementarySchool2') return !coordination.elementarySchool2;
+            return true;
+          });
+        } else {
+          // Se não foi aplicado, adiciona os elementos correspondentes
+          for (const coordination of this.coordinations) {
+            if (type === 'all') {
+              coordinationsPkList.push(coordination.pk);
+            } else if (type === 'highSchool' && coordination.highSchool) {
+              coordinationsPkList.push(coordination.pk);
+            } else if (type === 'elementarySchool' && coordination.elementarySchool) {
+              coordinationsPkList.push(coordination.pk);
+            } else if (type === 'elementarySchool2' && coordination.elementarySchool2) {
+              coordinationsPkList.push(coordination.pk);
+            }
+          }
+          coordinationsPkList = coordinationsPkList.concat(currentValue);
+        }
+
+        this.treeSelectCoordination.updateValue(coordinationsPkList);
+        this.teacher.coordinations = coordinationsPkList;
+      },
+      alertTop(text, icon = 'success') {
+        Swal.fire({
+          position: 'top-end',
+          text: text,
+          icon: icon,
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+          toast: true,
+        })
+      },
+      openModal(modalName) {
+        $('#'+ modalName).modal('show')
+        setTimeout(() => {
+            $('#inputSearch').focus()
+        }, 500)
+    },
+    },
+    mounted() {
+
+      async function fetchAllSubjects() {
+        try {
+            let response = await axios.get(`${this.url_subjects}?limit=1000`);
+            this.allSubjectsClient = response.data.results;
+        } catch (error) {
+            console.error('Error fetching subjects:', error);
+        }
+
+        // Criar o select de disciplinas
+        const options = [
+          {
+            name: 'Ensino Fundamental',
+            value: 0,
+            children: this.allSubjectsClient.filter(subject => !subject.grades_code.includes(0)).map(subject => {
+                return {
+                    name: subject.name + " - " + subject.knowledge_area.split('-')[0],
+                    value: subject.id,
+                    completeName: subject.knowledge_area + " - " + subject.name,
+                }
+            })
+          },
+          {
+            name: 'Ensino Médio',
+            value: 1,
+            children: this.allSubjectsClient.filter(subject => subject.grades_code.includes(0)).map(subject => {
+                return {
+                    name: subject.name + " - " + subject.knowledge_area.split('-')[0] ,
+                    value: subject.id,
+                    completeName: subject.knowledge_area + " - " + subject.name,
+                }
+            })
+          }
+        ]
+    
+        const domElement = document.getElementById('select-subject')
+        this.treeselectSubjects = new Treeselect({
+          parentHtmlContainer: domElement,
+          options: options,
+          showTags: false,
+          showCount: true,
+          showItemIfOnlyOneSelected: false,
+          showSelectedItemsCount: true,
+          tagsCountText: 'selecionada(s)',
+          placeholder: 'Selecione as disciplinas',
+          clearable: false,
+          emptyText: 'Nenhum resultado encontrado...',
+          searchable: false,
+          grouped: false,
+
+          // Função para criar a ligação do select com o valor de subjects
+          inputCallback: (selectedValues) => this.selectedSubject = selectedValues,
+        })
+
+      }
+      fetchAllSubjects.call(this);
+
+      $('#select-grades').on('change', (e) => {
+        // Imprima um array com os valores selecionados
+        const selectedValuesGrades = $(e.target).val();
+        this.classesFilter = this.classes.filter((classe) => {
+          return selectedValuesGrades.includes(classe.grade) || this.selectedClasses.includes(classe.id);
+        });
+      });
+
+      $('#select-grades').on('select2:select', (e) => {
+        let data = e.params.data
+        this.selectedGrades.push(data.id)
+      });
+
+      $('#select-grades').on('select2:unselect', (e) => {
+        let data = e.params.data
+        let index = this.selectedGrades.indexOf(data.id)
+        if (index > -1) {
+            this.selectedGrades.splice(index, 1)
+        }
+      });
+
+
+      $('#select-grades').select2({
+        width: '100%', closeOnSelect: false,
+        language: {
+        noResults: function() {
+          return "Nenhum resultado encontrado";
+        },},
+      })
+
+      const options = []
+      this.coordinations.forEach((coordination) => {
+        options.push({
+            name: coordination.name,
+          value: coordination.pk,
+          })
+      })
+      const elementSelectCoordination = document.getElementById('select-for-coordinations')
+      this.treeSelectCoordination = new Treeselect({
+        parentHtmlContainer: elementSelectCoordination,
+        options: options,
+        value: this.teacher.coordinations,
+        showTags: false,
+        showCount: true,
+        showItemIfOnlyOneSelected: false,
+        showSelectedItemsCount: true,
+        tagsCountText: 'selecionada(s)',
+        placeholder: 'Selecione as coordenações',
+        clearable: false,
+        emptyText: 'Nenhum resultado encontrado...',
+        selectedName: 'Clique para adicionar coordenações',
+        searchable: false,
+
+        inputCallback: (selectedValues) => {
+          this.teacher.coordinations = selectedValues
+        }
+      })
+
+      this.treeSelectCoordination.selectedName = 'Clique para adicionar coordenações'
+      this.treeSelectCoordination.mount()
+
+      {% if object %}
+        axios.get("{% url 'api:inspectors-detail' object.pk %}").then((response) => {
+          this.teacher = response.data
+          this.teacher.password = ""
+          this.teacher.confirmation_password = ""
+          this.relatedFields()
+        })
+      {% endif %}
+    },
+  })
+
+
+</script>
+{% endblock %}

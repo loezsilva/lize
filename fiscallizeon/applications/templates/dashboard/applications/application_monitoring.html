@@ -1,0 +1,27 @@
+{% extends 'redesign/base.html' %}
+
+{% load static %}
+
+{% block title %}Monitoramento de aplicações - Lize{% endblock title %}
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1rem; justify-content: space-between;">
+      <!-- Empty -->
+    </div>
+    <div class="row">
+      <div class="col-12">
+        <h4 class="mb-3">Aplicações agendadas para hoje</h4>
+      </div>
+      {% for application in applications_today %}
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+        {% include 'includes/card_application_coordination.html' with application=application %}
+      </div>
+      {% empty %}
+      <div class="col-12">
+          Não há provas agendadas para hoje.
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock content-fixed %}

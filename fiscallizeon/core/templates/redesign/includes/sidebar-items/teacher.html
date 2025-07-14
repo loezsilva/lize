@@ -1,0 +1,292 @@
+{% load permissions %}
+<li>
+  <ul role="list" class="abj" style="list-style: none; margin: 0; padding: 0; margin-left: -0.5rem; margin-right: -0.5rem;">
+    <li>
+      <a href="{% url 'core:redirect_dashboard' %}" class="navbar-item{% if request.resolver_match.url_name == 'dashboard_coordination' or request.resolver_match.url_name == 'dashboard_student' or request.resolver_match.url_name == 'dashboard_teacher' %} navbar-item-active{% endif %}">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="navbar-icon{% if request.resolver_match.url_name == 'dashboard_coordination' or request.resolver_match.url_name == 'dashboard_student' or request.resolver_match.url_name == 'dashboard_teacher' %} navbar-icon-active{% endif %}">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+        </svg>
+        <span class="navbar-name">Painel</span>
+      </a>
+    </li>
+    {% if not user.must_change_password %}
+      {% if user.client_has_exam_elaboration %}
+        {% if user|has_module_perms:'exams' %}
+          <li>
+            <div data-headlessui-state="open">
+              <button
+                class="navbar-item sidebar-menu-item{% if request.resolver_match.url_name == 'exams_list' or request.resolver_match.url_name == 'exams_create' or request.resolver_match.url_name == 'exams_update' or request.resolver_match.url_name == 'exam-teacher-subject-list' or request.resolver_match.url_name == 'study_material_update' or request.resolver_match.url_name == 'study_material_list' or request.resolver_match.url_name == 'study_material_create' or request.resolver_match.url_name == 'study_material_update' or request.resolver_match.url_name == 'wrongs_student_detail' or request.resolver_match.url_name == 'exam-teacher-subject-to-review-list' or request.resolver_match.url_name == 'exam_teacher_subject_edit_questions' or request.resolver_match.url_name == 'teacher-questions-bank-introduction' or request.resolver_match.url_name == 'exam_teacher_subject_add_questions' %} sidebar-menu-item-active{% endif %}"
+                id="headlessui-disclosure-button-1"
+                type="button"
+                aria-expanded="{% if request.resolver_match.url_name == 'exams_list' or request.resolver_match.url_name == 'exams_create' or request.resolver_match.url_name == 'exams_update' or request.resolver_match.url_name == 'exam-teacher-subject-list' or request.resolver_match.url_name == 'study_material_update' or request.resolver_match.url_name == 'study_material_list' or request.resolver_match.url_name == 'study_material_create' or request.resolver_match.url_name == 'study_material_update' or request.resolver_match.url_name == 'wrongs_student_detail' or request.resolver_match.url_name == 'exam-teacher-subject-to-review-list' or request.resolver_match.url_name == 'exam_teacher_subject_edit_questions' or request.resolver_match.url_name == 'teacher-questions-bank-introduction' or request.resolver_match.url_name == 'exam_teacher_subject_add_questions' %}true{% else %}false{% endif %}"
+                data-headlessui-state
+                aria-controls="headlessui-disclosure-panel-1"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                  class="navbar-icon sidebar-menu-item-icon{% if request.resolver_match.url_name == 'exams_list' or request.resolver_match.url_name == 'exams_create' or request.resolver_match.url_name == 'exams_update' or request.resolver_match.url_name == 'exam-teacher-subject-list' or request.resolver_match.url_name == 'study_material_update' or request.resolver_match.url_name == 'study_material_list' or request.resolver_match.url_name == 'study_material_create' or request.resolver_match.url_name == 'study_material_update' or request.resolver_match.url_name == 'wrongs_student_detail' or request.resolver_match.url_name == 'exam-teacher-subject-to-review-list' or request.resolver_match.url_name == 'exam_teacher_subject_edit_questions' or request.resolver_match.url_name == 'teacher-questions-bank-introduction' or request.resolver_match.url_name == 'exam_teacher_subject_add_questions' %} sidebar-menu-item-icon-active{% endif %}"
+                >
+                  <path d="M12 6.04201C10.3516 4.56337 8.2144 3.74695 6 3.75001C4.948 3.75001 3.938 3.93001 3 4.26201V18.512C3.96362 18.172 4.97816 17.9989 6 18C8.305 18 10.408 18.867 12 20.292M12 6.04201C13.6483 4.56328 15.7856 3.74686 18 3.75001C19.052 3.75001 20.062 3.93001 21 4.26201V18.512C20.0364 18.172 19.0218 17.9989 18 18C15.7856 17.997 13.6484 18.8134 12 20.292M12 6.04201V20.292" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <span class="navbar-name">Cadernos</span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="navbar-submenu-expand-icon{% if request.resolver_match.url_name == 'exams_list' or request.resolver_match.url_name == 'exams_create' or request.resolver_match.url_name == 'exams_update' or request.resolver_match.url_name == 'exam-teacher-subject-list' or request.resolver_match.url_name == 'study_material_update' or request.resolver_match.url_name == 'wrongs_student_detail' or request.resolver_match.url_name == 'exam-teacher-subject-to-review-list' or request.resolver_match.url_name == 'exam_teacher_subject_edit_questions' or request.resolver_match.url_name == 'teacher-questions-bank-introduction' or request.resolver_match.url_name == 'exam_teacher_subject_add_questions' %} navbar-submenu-expand-icon-active{% endif %}"{% if request.resolver_match.url_name == 'exams_list' or request.resolver_match.url_name == 'exams_create' or request.resolver_match.url_name == 'exams_update' or request.resolver_match.url_name == 'exam-teacher-subject-list' or request.resolver_match.url_name == 'study_material_update' or request.resolver_match.url_name == 'wrongs_student_detail' or request.resolver_match.url_name == 'exam-teacher-subject-to-review-list' or request.resolver_match.url_name == 'exam_teacher_subject_edit_questions' or request.resolver_match.url_name == 'teacher-questions-bank-introduction' or request.resolver_match.url_name == 'exam_teacher_subject_add_questions' %}style="transform: rotate(90deg);"{% endif %}>
+                  <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                </svg>
+              </button>
+              <ul class="navbar-submenu" id="headlessui-disclosure-panel-1" data-headlessui-state="open"{% if request.resolver_match.url_name == 'exams_list' or request.resolver_match.url_name == 'exams_create' or request.resolver_match.url_name == 'exams_update' or request.resolver_match.url_name == 'exam-teacher-subject-list' or request.resolver_match.url_name == 'study_material_update' or request.resolver_match.url_name == 'study_material_list' or request.resolver_match.url_name == 'study_material_create' or request.resolver_match.url_name == 'study_material_update' or request.resolver_match.url_name == 'wrongs_student_detail' or request.resolver_match.url_name == 'exam-teacher-subject-to-review-list' or request.resolver_match.url_name == 'exam_teacher_subject_edit_questions' or request.resolver_match.url_name == 'teacher-questions-bank-introduction' or request.resolver_match.url_name == 'exam_teacher_subject_add_questions' %}style="display: block;"{% endif %}>
+                {% if user|has_perm:'exams.view_exam' %}
+                  <li>
+                    <a 
+                        href="{% url 'exams:exams_list' %}?category=exam" 
+                        class="sidebar-menu-submenu-item
+                        {% if request.GET.category and request.resolver_match.url_name == 'exams_list' %}
+                          {% if request.GET.category == 'exam' %}sidebar-menu-submenu-item-active{% endif %} 
+                        {% else %}  
+                          {% if request.resolver_match.url_name == 'study_material_create' or request.resolver_match.url_name == 'study_material_update' %}sidebar-menu-submenu-item-active{% endif %} 
+                        {% endif %}
+                        "
+                        data-headlessui-state="open">
+                        Todos os cadernos
+                      </a>
+                  </li>
+                {% endif %}
+                {% if user.client_teachers_can_elaborate_exam %}
+                  {% if user|has_perm:'inspectors.can_add_exercice_list' %}
+                    <li>
+                      <a 
+                        href="{% url 'exams:exams_list' %}?category=homework" 
+                        class="sidebar-menu-submenu-item
+                        {% if request.GET.category and request.resolver_match.url_name == 'exams_list' %}
+                          {% if request.GET.category == 'homework' %}sidebar-menu-submenu-item-active{% endif %} 
+                        {% else %}  
+                          {% if request.resolver_match.url_name == 'study_material_create' or request.resolver_match.url_name == 'study_material_update' %}sidebar-menu-submenu-item-active{% endif %} 
+                        {% endif %}
+                        "
+                        data-headlessui-state="open">
+                        Listas de exercícios
+                      </a>
+                    </li>
+                  {% endif %}
+                {% endif %}
+                {% if user|has_perm:'materials.view_studymaterial' %}
+                  {% if user.client_has_study_material %}
+                    <li>
+                      <a href="{% url 'materials:study_material_list' %}" class="sidebar-menu-submenu-item{% if request.resolver_match.url_name == 'study_material_list' or request.resolver_match.url_name == 'study_material_create' or request.resolver_match.url_name == 'study_material_update' %} sidebar-menu-submenu-item-active{% endif %}" data-headlessui-state="open">
+                        Materiais
+                      </a>
+                    </li>
+                  {% endif %}
+                {% endif %}
+                {% if user.inspector.can_elaborate_questions %}
+                  <li>
+                    <a href="{% url 'exams:exam-teacher-subject-list' %}" class="sidebar-menu-submenu-item{% if request.resolver_match.url_name == 'exam-teacher-subject-list' %} sidebar-menu-submenu-item-active{% endif %}" data-headlessui-state="open">
+                      Solicitações de elaboração
+                    </a>
+                  </li>
+                {% endif %}
+                {% if user.inspector.is_discipline_coordinator and user|has_perm:'exams.can_review_questions_exam' %}
+                  {% if user|has_perm:'exams.view_exam' %}
+                    <li>
+                      <a href="{% url 'exams:exam-teacher-subject-to-review-list' %}" class="sidebar-menu-submenu-item{% if request.resolver_match.url_name == 'exam-teacher-subject-to-review-list' %} sidebar-menu-submenu-item-active{% endif %}" data-headlessui-state="open">
+                        Para você revisar
+                      </a>
+                    </li>
+                  {% endif %}
+                {% endif %}
+                {% if user|has_perm:'exams.can_review_questions_exam' %}
+                  <li>
+                    <a href="{% url 'exams:reviews' %}" class="sidebar-menu-submenu-item{% if request.resolver_match.url_name == 'reviews' %} sidebar-menu-submenu-item-active{% endif %}" data-headlessui-state="open">
+                      Revisões
+                    </a>
+                  </li>
+                {% endif %}
+              </ul>
+            </div>
+          </li>
+        {% endif %}
+      {% endif %}
+      {% if user.inspector.can_elaborate_questions %}
+        {% if user|has_module_perms:'questions' %}
+          <li>
+            <div data-headlessui-state="open">
+              <button
+                class="navbar-item sidebar-menu-item{% if request.resolver_match.url_name == 'questions_list' or request.resolver_match.url_name == 'questions_create' %} sidebar-menu-item-active{% endif %}"
+                id="headlessui-disclosure-button-2"
+                type="button"
+                aria-expanded="{% if request.resolver_match.url_name == 'questions_list' or request.resolver_match.url_name == 'questions_create' %}true{% else %}false{% endif %}"
+                data-headlessui-state
+                aria-controls="headlessui-disclosure-panel-2"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                  class="navbar-icon sidebar-menu-item-icon{% if request.resolver_match.url_name == 'questions_list' or request.resolver_match.url_name == 'questions_create' %} sidebar-menu-item-icon-active{% endif %}"
+                >
+                  <path d="M19.5 14.25V11.625C19.5 10.7299 19.1444 9.87145 18.5115 9.23851C17.8786 8.60558 17.0201 8.25 16.125 8.25H14.625C14.3266 8.25 14.0405 8.13147 13.8295 7.9205C13.6185 7.70952 13.5 7.42337 13.5 7.125V5.625C13.5 4.72989 13.1444 3.87145 12.5115 3.23851C11.8785 2.60558 11.0201 2.25 10.125 2.25H8.25M8.25 15H15.75M8.25 18H12M10.5 2.25H5.625C5.004 2.25 4.5 2.754 4.5 3.375V20.625C4.5 21.246 5.004 21.75 5.625 21.75H18.375C18.996 21.75 19.5 21.246 19.5 20.625V11.25C19.5 8.86305 18.5518 6.57387 16.864 4.88604C15.1761 3.19821 12.8869 2.25 10.5 2.25Z" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <span class="navbar-name">Questões</span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="navbar-submenu-expand-icon{% if request.resolver_match.url_name == 'questions_list' or request.resolver_match.url_name == 'questions_create' %} navbar-submenu-expand-icon-active{% endif %}"{% if request.resolver_match.url_name == 'questions_list' or request.resolver_match.url_name == 'questions_create' %}style="transform: rotate(90deg);"{% endif %}>
+                  <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                </svg>
+              </button>
+              <ul class="navbar-submenu" id="headlessui-disclosure-panel-2" data-headlessui-state="open"{% if request.resolver_match.url_name == 'questions_list' or request.resolver_match.url_name == 'questions_create' %}style="display: block;"{% endif %}>
+                {% if user|has_perm:'questions.view_question' %}
+                  <li>
+                    <a href="{% url 'questions:questions_list' %}" class="sidebar-menu-submenu-item{% if request.resolver_match.url_name == 'questions_list' %} sidebar-menu-submenu-item-active{% endif %}" data-headlessui-state="open">
+                      Questões autorais
+                    </a>
+                  </li>
+                {% endif %}
+                {% if user|has_perm:'questions.add_question' %}
+                  <li>
+                    <a href="{% url 'questions:questions_create' %}" class="sidebar-menu-submenu-item{% if request.resolver_match.url_name == 'questions_create' %} sidebar-menu-submenu-item-active{% endif %}" data-headlessui-state="open">
+                      Crie uma questão
+                    </a>
+                  </li>
+                {% endif %}
+              </ul>
+            </div>
+          </li>
+        {% endif %}
+      {% endif %}
+      
+      {% if user.client_has_omr %}
+        {% if user|has_perm:'omr.view_omrupload' %}
+          <li>
+            <div data-headlessui-state="open">
+              <button
+                class="navbar-item sidebar-menu-item{% if request.resolver_match.url_name == 'template_list' or request.resolver_match.url_name == 'template_create' or request.resolver_match.url_name == 'template_update' or request.resolver_match.url_name == 'dash_exam_teacher_detail_questions' or request.resolver_match.url_name == 'omr_upload_list' or request.resolver_match.url_name == 'omr_upload_detail' or request.resolver_match.url_name == 'omr_correction_detail' %} sidebar-menu-item-active{% endif %}"
+                id="headlessui-disclosure-button-3"
+                type="button"
+                aria-expanded="{% if request.resolver_match.url_name == 'template_list' or request.resolver_match.url_name == 'template_create' or request.resolver_match.url_name == 'template_update' or request.resolver_match.url_name == 'dash_exam_teacher_detail_questions' or request.resolver_match.url_name == 'omr_upload_list' or request.resolver_match.url_name == 'omr_upload_detail' or request.resolver_match.url_name == 'omr_correction_detail' %}true{% else %}false{% endif %}"
+                data-headlessui-state
+                aria-controls="headlessui-disclosure-panel-3"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                  class="navbar-icon sidebar-menu-item-icon{% if request.resolver_match.url_name == 'template_list' or request.resolver_match.url_name == 'template_create' or request.resolver_match.url_name == 'template_update' or request.resolver_match.url_name == 'dash_exam_teacher_detail_questions' or request.resolver_match.url_name == 'omr_upload_list' or request.resolver_match.url_name == 'omr_upload_detail' or request.resolver_match.url_name == 'omr_correction_detail' %} sidebar-menu-item-icon-active{% endif %}"
+                >
+                  <path d="M19.5 14.25V11.625C19.5 10.7299 19.1444 9.87145 18.5115 9.23852C17.8786 8.60558 17.0201 8.25 16.125 8.25H14.625C14.3266 8.25 14.0405 8.13147 13.8295 7.9205C13.6185 7.70952 13.5 7.42337 13.5 7.125V5.625C13.5 4.72989 13.1444 3.87145 12.5115 3.23851C11.8786 2.60558 11.0201 2.25 10.125 2.25H8.25M10.5 2.25H5.625C5.004 2.25 4.5 2.754 4.5 3.375V20.625C4.5 21.246 5.004 21.75 5.625 21.75H18.375C18.996 21.75 19.5 21.246 19.5 20.625V11.25C19.5 8.86305 18.5518 6.57387 16.864 4.88604C15.1761 3.19821 12.8869 2.25 10.5 2.25Z" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M8.40009 11.9926H8.39209V12.0006H8.40009V11.9926Z" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M10.8 11.9999H10.792V12.0079H10.8V11.9999Z" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M8.40809 17.9999H8.40009V18.0079H8.40809V17.9999Z" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M15.6 17.9919H15.592V17.9999H15.6V17.9919Z" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M15.6 11.992H15.592V12H15.6V11.992Z" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M15.608 14.9921H15.6V15.0001H15.608V14.9921Z" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M8.408 15.0001H8.4V15.0081H8.408V15.0001Z" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M10.808 14.9921H10.8V15.0001H10.808V14.9921Z" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M10.8 17.9921H10.792V18.0001H10.8V17.9921Z" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M13.2 18.0001H13.192V18.0081H13.2V18.0001Z" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M13.2 14.9921H13.192V15.0001H13.2V14.9921Z" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M13.2 12.0001H13.192V12.0081H13.2V12.0001Z" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <span class="navbar-name">Gabaritos</span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="navbar-submenu-expand-icon{% if request.resolver_match.url_name == 'template_list' or request.resolver_match.url_name == 'template_create' or request.resolver_match.url_name == 'template_update' or request.resolver_match.url_name == 'dash_exam_teacher_detail_questions' or request.resolver_match.url_name == 'omr_upload_list' or request.resolver_match.url_name == 'omr_upload_detail' or request.resolver_match.url_name == 'omr_correction_detail' %} navbar-submenu-expand-icon-active{% endif %}"{% if request.resolver_match.url_name == 'template_list' or request.resolver_match.url_name == 'template_create' or request.resolver_match.url_name == 'template_update' or request.resolver_match.url_name == 'dash_exam_teacher_detail_questions' or request.resolver_match.url_name == 'omr_upload_list' or request.resolver_match.url_name == 'omr_upload_detail' or request.resolver_match.url_name == 'omr_correction_detail' %}style="transform: rotate(90deg);"{% endif %}>
+                  <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                </svg>
+              </button>
+              <ul class="navbar-submenu" id="headlessui-disclosure-panel-3" data-headlessui-state="open"{% if request.resolver_match.url_name == 'template_list' or request.resolver_match.url_name == 'template_create' or request.resolver_match.url_name == 'template_update' or request.resolver_match.url_name == 'dash_exam_teacher_detail_questions' or request.resolver_match.url_name == 'omr_upload_list' or request.resolver_match.url_name == 'omr_upload_detail' or request.resolver_match.url_name == 'omr_correction_detail' %}style="display: block;"{% endif %}>
+                {% if user.client_has_template %}
+                  {% if user|has_perm:'exams.view_template_exam' %}
+                    <li>
+                      <a href="{% url 'omr:template_list' %}" class="sidebar-menu-submenu-item{% if request.resolver_match.url_name == 'template_list' or request.resolver_match.url_name == 'template_create' or request.resolver_match.url_name == 'template_update' or request.resolver_match.url_name == 'dash_exam_teacher_detail_questions' or request.resolver_match.url_name == 'omr_upload_detail' or request.resolver_match.url_name == 'omr_correction_detail' %} sidebar-menu-submenu-item-active{% endif %}" data-headlessui-state="open">
+                        Gabaritos
+                      </a>
+                    </li>
+                  {% endif %}
+                {% endif %}
+                {% if user|has_perm:'omr.view_omrupload' %}
+                  <li>
+                    <a href="{% url 'omr:omr_upload_list' %}" class="sidebar-menu-submenu-item{% if request.resolver_match.url_name == 'omr_upload_list' %} sidebar-menu-submenu-item-active{% endif %}" data-headlessui-state="open">
+                      Enviar respostas
+                    </a>
+                  </li>
+                {% endif %}
+                {% if user.client_has_offset_answer_sheet and user|has_perm:'omr.export_offset_answer_sheet' %}
+                <li>
+                  <a href="{% url 'omr:export_offset_answer_sheet' %}" class="sidebar-menu-submenu-item" data-headlessui-state="open">
+                    Exportar folha offset
+                  </a>
+                </li>
+                {% endif %}
+              </ul>
+            </div>
+          </li>
+        {% endif %}
+      {% endif %}
+      
+      {% if user|has_module_perms:'applications' %}
+        <li>
+          <div data-headlessui-state="open">
+            <button
+              class="navbar-item sidebar-menu-item{% if application_active or request.resolver_match.url_name == 'wrongs_list' %} sidebar-menu-item-active{% endif %}"
+              id="headlessui-disclosure-button-4"
+              type="button"
+              aria-expanded="{% if application_active or request.resolver_match.url_name == 'wrongs_list' %}true{% else %}false{% endif %}"
+              data-headlessui-state
+              aria-controls="headlessui-disclosure-panel-4"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                aria-hidden="true"
+                class="navbar-icon sidebar-menu-item-icon{% if application_active or request.resolver_match.url_name == 'wrongs_list' %} sidebar-menu-item-icon-active{% endif %}"
+              >
+                <path d="M9 12H12.75M9 15H12.75M9 18H12.75M15.75 18.75H18C18.5967 18.75 19.169 18.5129 19.591 18.091C20.0129 17.669 20.25 17.0967 20.25 16.5V6.108C20.25 4.973 19.405 4.01 18.274 3.916C17.9 3.88498 17.5256 3.85831 17.151 3.836M17.151 3.836C17.2174 4.05109 17.2501 4.27491 17.25 4.5C17.25 4.69891 17.171 4.88968 17.0303 5.03033C16.8897 5.17098 16.6989 5.25 16.5 5.25H12C11.586 5.25 11.25 4.914 11.25 4.5C11.25 4.269 11.285 4.046 11.35 3.836M17.151 3.836C16.868 2.918 16.012 2.25 15 2.25H13.5C13.0192 2.25011 12.5511 2.40414 12.1643 2.68954C11.7774 2.97493 11.492 3.3767 11.35 3.836M11.35 3.836C10.974 3.859 10.6 3.886 10.226 3.916C9.095 4.01 8.25 4.973 8.25 6.108V8.25M8.25 8.25H4.875C4.254 8.25 3.75 8.754 3.75 9.375V20.625C3.75 21.246 4.254 21.75 4.875 21.75H14.625C15.246 21.75 15.75 21.246 15.75 20.625V9.375C15.75 8.754 15.246 8.25 14.625 8.25H8.25ZM6.75 12H6.758V12.008H6.75V12ZM6.75 15H6.758V15.008H6.75V15ZM6.75 18H6.758V18.008H6.75V18Z" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="navbar-name">Aplicações</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="navbar-submenu-expand-icon{% if application_active or request.resolver_match.url_name == 'wrongs_list' %} navbar-submenu-expand-icon-active{% endif %}"{% if application_active or request.resolver_match.url_name == 'wrongs_list' %}style="transform: rotate(90deg);"{% endif %}>
+                <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+              </svg>
+            </button>
+            <ul class="navbar-submenu" id="headlessui-disclosure-panel-4" data-headlessui-state="open"{% if application_active or request.resolver_match.url_name == 'wrongs_list' %}style="display: block;"{% endif %}>
+              {% if user|has_perm:'applications.view_application' %}
+                <li>
+                  <a href="{% url 'applications:applications_list' %}?category=online" class="sidebar-menu-submenu-item{% if application_online_or_homework_active %} sidebar-menu-submenu-item-active{% endif %}" data-headlessui-state="open">
+                    Gestão de aplicações
+                  </a>
+                </li>
+              {% endif %}
+              {% if user|has_perm:'applications.add_application' %}
+                <li>
+                  <a href="{% url 'applications:applications_create' %}" class="sidebar-menu-submenu-item{% if request.resolver_match.url_name == 'applications_create' %} sidebar-menu-submenu-item-active{% endif %}" data-headlessui-state="open">
+                    Aplicar lista de exercício
+                  </a>
+                </li>
+              {% endif %}
+              {% if user|has_perm:'exams.view_wrong' %}
+                {% if user.client_has_wrongs %}
+                  <li>
+                    <a href="{% url 'exams:wrongs_list' %}" class="sidebar-menu-submenu-item{% if request.resolver_match.url_name == 'wrongs_list' %} sidebar-menu-submenu-item-active{% endif %}" data-headlessui-state="open">
+                      Erratas
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
+            </ul>
+          </div>
+        </li>
+      {% endif %}
+    {% endif %} 
+  </ul>
+</li>
+<div style="margin-top: auto;">
+  {% include 'redesign/includes/sidebar-items/common.html' %}
+</div>

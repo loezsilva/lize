@@ -1,0 +1,233 @@
+{% extends 'redesign/base.html' %}
+{% load permissions %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+
+{% block title %}Listagem de Salas - Lize{% endblock title %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+<div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                <li class="breadcrumb-item"><a href="#">SALAS</a></li>
+                <li class="breadcrumb-item active" aria-current="page">LISTAGEM</li>
+            </ol>
+        </nav>
+        <h4>Suas Salas</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <a href="{% url 'distribution:room_create' %}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+            <i data-feather="plus" class="wd-10 mg-r-5"></i> Cadastrar Sala
+        </a>
+    </div>
+</div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+{% endblock css-additional %}
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1rem; justify-content: space-between;">
+      <div><!-- Empty --></div>
+      
+      {% if user|has_perm:'distribution.add_room' %}
+        <div>
+          <a href="{% url 'distribution:room_create' %}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+            <i data-feather="plus" class="wd-10 mg-r-5"></i> Cadastrar Sala
+          </a>
+        </div>
+      {% endif %}
+        
+    </div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+                <div>
+                    <h6 class="mg-b-5">Salas</h6>
+                    <p class="tx-13 tx-color-03 mg-b-5">Gerencie todas salas listadas abaixo</p>
+                </div>
+                <div class="float-right text-right">
+                    <button data-toggle-off-canvas="#right-off-canvas"
+                      class="btn btn-sm btn-info btn-icon rounded-pill off-canvas-menu  mb-2">
+                      <i class="fas fa-search"></i> Filtrar listagem
+                      {% if count_filters > 0 %}
+                      <span class="badge badge-danger">{{count_filters}} Aplicado(s)</span>
+                      {% endif %}
+                    </button>
+                    {% if count_filters > 0 %}
+                    <a href="{% url 'distribution:room_list' %}" class="btn btn-sm btn-info btn-icon rounded-pill mb-2">
+                      <i class="fas fa-eraser"></i> Apagar filtro(s)
+                    </a>
+                    {% endif %}
+                  </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table mg-b-1">
+                    <thead>
+                        <tr>
+                            <th>Sala</th>
+                            <th>Coordenação</th>
+                            <th>Capacidade</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for room in object_list %}
+                            <tr>
+                                <td class="tx-medium align-middle">{{room.name}}</td>
+                                <td class="tx-medium align-middle">
+                                    {{room.coordination}}
+                                </td>
+                                <td class="tx-medium align-middle">
+                                    {{room.capacity}} alunos
+                                </td>
+                                <td class="d-flex">
+                                  {% if user|has_perm:'distribution.change_room' or user|has_perm:'distribution.delete_room' %}
+                                    <div class="dropdown m-1">
+                                        <button class="btn btn-secondary dropdown-toggle btn-xs" type="button"
+                                            data-toggle="dropdown" aria-expanded="false">
+                                            Opções
+                                        </button>
+                                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                          {% if user|has_perm:'distribution.change_room' %}
+                                            <a class="dropdown-item" href="{% url 'distribution:room_update' room.pk %}">Editar Sala</a>
+                                          {% endif %}
+                                          {% if user|has_perm:'distribution.delete_room' %}
+                                            <a class="dropdown-item" href="javascript:void(0)" onClick="confirmCancel('{% url "distribution:room_delete" room.pk %}')" data-toggle="tooltip" data-placement="top" title="Deletar">Excluir Sala</a>
+                                          {% endif %}
+                                        </div>
+                                    </div>
+                                  {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4">
+                                    Não há salas cadastrados até o momento.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div><!-- table-responsive -->
+        </div><!-- card -->
+        {% include 'includes/pagination.html' with objects=object_list %}
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block off-canvas %}
+<div id="right-off-canvas" class="off-canvas off-canvas-right wd-400 bg-white" style="overflow-y: auto; overflow-x: hidden;">
+  <form action="" method="GET">
+    <div class="row p-3">
+      <div class="col-12">
+        <h5>Filtrar Cadastro de Salas</h5>
+        <p>Adiciona abaixo os filtros que você deseja aplicar na listagem abaixo</p>
+        <hr />
+      </div>
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="rooms_name_id" class="mb-1">Nome</label>
+          <input type="text" value="{{name}}" id="rooms_name_id" name="name" class="form-control" placeholder="Digite o Nome">
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="rooms_larger_id" class="mb-1">Maior que (capacidade)</label>
+          <input type="number" value="{{larger}}" id="rooms_larger_id" name="larger" class="form-control" placeholder="Digite um Valor">
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="rooms_smaller_id" class="mb-1">Menos que (capacidade)</label>
+          <input type="number" value="{{smaller}}" id="rooms_smaller_id" name="smaller" class="form-control" placeholder="Digite um Valor">
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="form-group mb-3">
+          <label for="rooms_coordination_id" class="mb-1">Coordenação</label>
+          <select name="q_coordination" id="rooms_coordination_id" class="form-control" multiple="multiple">
+            {% for coordinations in coordination %}
+            <option value="{{coordinations.pk}}" {% if coordinations.pk|stringformat:'s' in q_coordination %}selected="selected" {% endif %}>
+              {{coordinations.name}}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="col-12 mt-3">
+        <button type="submit" class="btn btn-primary btn-block">
+          <i class="fas fa-search"></i>
+          Aplicar filtro
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra-modal %}
+    {% include 'includes/confirm_modal.html' %}
+{% endblock extra-modal %}
+
+{% block js-additional %}
+  <script src="{% static 'js/tippy/popper.min.js' %}"></script>
+  <script src="{% static 'js/tippy/tippy.min.js' %}"></script>
+
+  <script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+  <script>
+    tippy('.tooltips', {
+      placement: 'bottom',
+      followCursor: true,
+      followCursor: 'horizontal',
+      allowHTML: true,
+      theme: 'custom',
+    })
+   
+    $('#rooms_coordination_id').select2({
+      placeholder: "Selecione uma opção",
+      closeOnSelect: false
+    });
+
+    $(function () {
+      'use strict'
+  
+      $('.off-canvas-menu').on('click', function (e) {
+        e.preventDefault();
+        var target = $(this).attr('data-toggle-off-canvas');
+        $(target).addClass('show');
+      });
+  
+      $('.off-canvas .close').on('click', function (e) {
+        e.preventDefault();
+        $(this).closest('.off-canvas').removeClass('show');
+      })
+  
+      $(document).on('click touchstart', function (e) {
+        if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+          return
+        }
+        e.stopPropagation();
+  
+        if (!$(e.target).closest('.off-canvas-menu').length) {
+          var offCanvas = $(e.target).closest('.off-canvas').length;
+          if (!offCanvas) {
+            $('.off-canvas.show').removeClass('show');
+          }
+        }
+      });
+    });
+
+  </script>  
+ 
+{% endblock js-additional %}

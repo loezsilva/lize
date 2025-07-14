@@ -1,0 +1,58 @@
+{% load split %}
+<div style="background-color: #fff; border-bottom: 1px solid #E5E7EA; height: 60px; top:0; position: fixed; width: 100%; z-index: 99999;">
+  <div class="row d-flex align-items-center px-4">
+    <div class="col">
+      {% if elaborated_by_me %}
+        <a href="{% url 'exams:exam_teacher_update' object.exam.id %}?v=2" class="text-muted"><i class="fas fa-arrow-left"></i> 
+          Configuração de lista
+        </a>
+      {% else %}
+        <a href="{% url 'core:redirect_dashboard' %}" class="text-muted"><i class="fas fa-arrow-left"></i>
+          {% if user.is_freemium %}
+            Meu painel
+          {% else %}
+            Painel de solicitações
+          {% endif %}
+        </a>
+      {% endif %}
+    </div>
+    {% if DEBUG %}
+      <div class="col">
+        <div class="tw-rounded-lg d-flex" style="background-color: #FEF0C7;">
+          <p class="mb-0 px-3 py-2 d-flex tw-text-sm tw-leading-6 tw-font-semibold" style="color: #D67B05;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#ffc107" stroke="#ffc107" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+              <path stroke-width="0.8" d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+              <path stroke-width="0.8" d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
+            </svg>
+            <span class="mx-2 align-self-end">Você está no ambiente de testes</span>
+          </p>
+        </div>
+      </div>
+    {% endif %}
+    <div class="col d-flex justify-content-end align-items-center">
+      <div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" style="color: #E5E7EA !important;" class="mx-2 bi bi-magic" viewBox="0 0 16 16">
+          <path d="M9.5 2.672a.5.5 0 1 0 1 0V.843a.5.5 0 0 0-1 0v1.829Zm4.5.035A.5.5 0 0 0 13.293 2L12 3.293a.5.5 0 1 0 .707.707L14 2.707ZM7.293 4A.5.5 0 1 0 8 3.293L6.707 2A.5.5 0 0 0 6 2.707L7.293 4Zm-.621 2.5a.5.5 0 1 0 0-1H4.843a.5.5 0 1 0 0 1h1.829Zm8.485 0a.5.5 0 1 0 0-1h-1.829a.5.5 0 0 0 0 1h1.829ZM13.293 10A.5.5 0 1 0 14 9.293L12.707 8a.5.5 0 1 0-.707.707L13.293 10ZM9.5 11.157a.5.5 0 0 0 1 0V9.328a.5.5 0 0 0-1 0v1.829Zm1.854-5.097a.5.5 0 0 0 0-.706l-.708-.708a.5.5 0 0 0-.707 0L8.646 5.94a.5.5 0 0 0 0 .707l.708.708a.5.5 0 0 0 .707 0l1.293-1.293Zm-3 3a.5.5 0 0 0 0-.706l-.708-.708a.5.5 0 0 0-.707 0L.646 13.94a.5.5 0 0 0 0 .707l.708.708a.5.5 0 0 0 .707 0L8.354 9.06Z"/>
+        </svg>
+      </div>
+      <div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" style="color: #E5E7EA !important;" class="mx-2 bi bi-eye" viewBox="0 0 16 16">
+          <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+          <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+        </svg>
+      </div>
+      <div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" style="color: #E5E7EA !important;" class="mx-2 bi bi-printer" viewBox="0 0 16 16">
+          <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+          <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+        </svg>
+      </div>
+      <div>
+        <button class="btn lz-btn-outline-warning mx-2" style="border-color: #E5E7EA !important; color: #E5E7EA !important;" disabled>Salvar Rascunho</button>
+      </div>
+      <div>
+        <button class="btn lize-btn-primary" style="background-color: #E5E7EA !important;" disabled>Concluir</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,975 @@
+{% extends 'dashboard/base_fixed.html' %}
+{% load static %}
+{% load compress %}
+
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">FISCAL</a></li>
+          <li class="breadcrumb-item active" aria-current="page">REALIZAR PROVA</li>
+        </ol>
+      </nav> 
+      <h4>Realizar prova</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <h3 class="tx-normal tx-rubik mg-b-0"><small class="tx-color-04 display-6">10/10/2020</small> 10:10 </h3>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+
+{% block content-fixed %}
+
+<div class="row row-xs">
+    <div  class="col-12 col-md-6 col-lg-4  mb-2">
+     <div class="pos-relative off-canvas-menu bg-dark" data-toggle-off-canvas="#left-off-canvas">
+          <div class="marker-icon marker-danger marker-top-right pos-absolute t-0 r-0">
+            <i data-feather="video-off"></i>
+          </div>
+          <div class="marker pos-absolute b-5 l-0 p-1">
+            <span class="fas fa-microphone"></span>
+            Sua câmera
+          </div>
+          <video style="max-width: 100%; width: 100%;" id="local-stream" autoplay playsinline />
+      </div>
+    </div>
+    
+    <div  class="col-12 col-md-6 col-lg-4 bg-white mb-2">
+        <h4 class="p-2 pb-0 mb-0">Fale com o fiscal</h4>
+        <hr class="m-0">
+        <template v-for="message in messages">
+            <div class="text-left  p-2" v-if="message.function == 'Aluno'">
+                <p class="mb-0">
+                  <span class="font-weight-bold">${message.name} (Aluno)</span>
+                  <span class="text-muted">${message.date_time}</span>
+                </p>
+                  <p class="p-2 bg-light mr-3">
+                      ${message.message}
+                  </p>
+            </div>
+            <div class="text-right  p-2" v-else>
+                <p class="mb-0">
+                  <span class="text-muted"> ${message.date_time}</span>
+                  <span class="font-weight-bold"> ${message.name} (${message.function})</span>
+                </p>
+                <p class="p-2 bg-light ml-3 text-left">
+                    ${message.message}
+                </p>
+            </div>
+        </template>
+        <div class="input-group p-2">
+            <textarea v-model="textMessage" type="text" class="form-control" placeholder="Escreva sua mensagem" rows="2" maxlength="255"></textarea>
+            <div class="input-group-prepend">
+              <div class="input-group-text border-0 bg-white">
+                <button class="btn btn-primary" v-on:click="sendMessage()" :disabled="textMessage == '' || sendingMessage">
+                  <i v-if="sendingMessage" class="fas fa-spinner fa-spin"></i>
+                  <i v-else class="fas fa-paper-plane"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-4  mb-2">
+      <h4>Fiscais disponíveis</h4>
+      <div class="row">
+        <template v-if="inspectors.length">
+        <div class="col-12 col-md-12 col-lg-6">
+            <div class="pos-relative off-canvas-menu" v-for="inspector in inspectors">
+              <div class="marker pos-absolute b-5 l-0 p-1">
+                <span class="fas fa-microphone"></span>
+                ${inspector.displayName}
+              </div>
+              <video  style="max-width: 100%; width: 100%; background-image: url('{% static 'administration/assets/img/cam-off-bg.png' %}'); background-size: cover; background-position: center;" :id="'remote-video-'+inspector.id" autoplay playsinline />
+            </div>
+          </div>
+        </template>
+        <div class="col-12" v-else>
+          <p>Não há fiscais disponíveis no momento!</p>
+        </div>
+      </div>
+     </div>
+</div>
+
+<nav class="navbar fixed-bottom navbar-expand-sm navbar-dark bg-dark">
+    <div class="row" style="margin: 0 auto;">
+        <div class="col-12 text-center">
+
+          <button @click="startApplication()" v-if="state == 'waiting'" class="btn btn-primary btn-sm btn-icon font-weight-bold mt-1">
+            <span class="fas fa-play mb-2 mt-2" style="font-size:20px; vertical-align: middle;"></span> 
+            <br/>Iniciar prova
+          </button>
+
+
+          <button @click="requestApplicationPause()" v-if="state == 'started'" class="btn btn-success btn-sm btn-icon font-weight-bold mt-1">
+            <span class="fas fa-toilet mb-2 mt-2" style="font-size:20px; vertical-align: middle;"></span> 
+            <br/>Ir ao banheiro
+          </button>
+
+
+          <button @click="finishApplication()" v-if="state == 'started'" class="btn btn-danger btn-sm btn-icon font-weight-bold mt-1">
+            <span class="fas fa-stop mb-2 mt-2" style="font-size:20px; vertical-align: middle;"></span> 
+            <br/>Finalizar prova
+          </button>
+
+          <!-- <button class="btn btn-secondary btn-sm btn-icon font-weight-bold mt-1">
+            <span class="fas fa-comments  mb-2 mt-2" style="font-size:20px; vertical-align: middle;"></span> 
+            <br/>Chat com fiscal
+          </button> -->
+
+          <!-- <button class="btn btn-secondary btn-sm btn-icon font-weight-bold mt-1">
+            <span class="fas fa-hand-paper  mb-2 mt-2" style="font-size:20px; vertical-align: middle;"></span> 
+            <br/>Chamar fiscal
+          </button> -->
+          
+      
+        </div>
+      </div>
+  </nav>
+
+{% endblock content-fixed %}
+
+{% block off-canvas %}
+<div id="left-off-canvas" class="off-canvas off-canvas-push wd-400 bg-white">
+  <div class="row p-3">
+    <div class="col-12">
+
+        <figure class="pos-relative mg-b-0 wd-100p wd-100">
+            <div class="pos-relative off-canvas-menu" data-toggle-off-canvas="#left-off-canvas">
+                <div class="marker pos-absolute t-0 l-0">Franklin</div>
+                <video class="wd-100p wd-100" src="https://www.w3schools.com/html/mov_bbb.mp4"></video>
+              </div>
+            <figcaption class="pos-absolute b-5 l-0 wd-100p pd-20 d-flex justify-content-center">
+              <div class="btn-group">
+                <a href="" class="btn btn-success btn-icon">
+                  <i data-feather="video"></i>
+                </a>
+              </div>
+            </figcaption>
+          </figure>
+    </div>
+    <div class="col-12">
+        <ul class="nav nav-line" id="myTab" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Sobre</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">Chat</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="contact-tab" data-toggle="tab" href="#contact" role="tab" aria-controls="contact" aria-selected="false">Anotações</a>
+            </li>
+          </ul>
+          <div class="tab-content bd bd-gray-300 bd-t-0 pd-20" id="myTabContent">
+            <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+              <h6>Sobre o aluno</h6>
+              <p>...</p>
+            </div>
+            <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+              <h6>Chat com o aluno</h6>
+              <p>...</p>
+            </div>
+            <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">
+              <h6>Anotações sobre o aluno</h6>
+              <p>...</p>
+            </div>
+          </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block js-additional %}
+
+<script>
+  
+ $(function(){
+    'use strict'
+
+    $('.off-canvas-menu').on('click', function(e){
+        e.preventDefault();
+        var target = $(this).attr('data-toggle-off-canvas');
+        $(target).addClass('show');
+    });
+
+    $('.off-canvas .close').on('click', function(e){
+        e.preventDefault();
+        $(this).closest('.off-canvas').removeClass('show');
+    })
+
+    $(document).on('click touchstart', function(e){
+      if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+        return
+      }
+        e.stopPropagation();
+
+        if(!$(e.target).closest('.off-canvas-menu').length) {
+            var offCanvas = $(e.target).closest('.off-canvas').length;
+            if(!offCanvas) {
+                $('.off-canvas.show').removeClass('show');
+            }
+        }
+    });
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/6.4.0/adapter.min.js" ></script>
+<script src="{% static 'administration/assets/js/janus/janus.js' %}"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+
+<script>
+  moment.locale('pt-br');
+</script>
+
+{% compress js %}
+<script type="text/javascript">
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {
+      server: "{{object.application.prefix}}.rtc.fiscallize.com.br",
+      janus: null,
+      sfutest: null,
+      mypvtid: null,
+      mystream:null,
+      registred:false,
+      roomId: {{ object.room_id }},
+      studentId: {{object.student_room_id|safe}},
+      roomPin: "{{object.room_pin}}",
+      firstName: "{{user.get_user_first_name}}",
+      functionUser: "{{user.get_user_function}}",
+      notificationSound: new Audio("{% static 'administration/assets/sound/not_sound.mp3' %}"),
+      sendingMessage: false,
+      textMessage:"",
+      inspectors: [],
+      // waiting, started, paused, finished
+      state:"{{object.application_state}}",
+      messages: [
+        {% for message in object.messages.all %}
+          {
+            "name": "{{message.sender.get_user_first_name}}",
+            "function": "{{message.sender.get_user_function}}",
+            "date_time": "{{message.created_at|date:'d/m/Y \à\s H:i'}}",
+            "message": "{{message.content}}",
+          },
+          {% endfor %}
+        ],
+      pendingRequest: 
+      {% if object.pending_event %}
+        {
+          "pk":"{{object.pending_event.pk}}",
+          "get_event_type_display": "{{object.pending_event.get_event_type_display}}",
+          "created_at": "{{object.pending_event.created_at|date:'c'}}",
+          "start": "{{object.pending_event.start}}",
+          "end": "{{object.pending_event.end}}",
+          "inspector_first_name": "{{object.pending_event.inspector.get_user_first_name}}",
+          "get_response_display": "{{object.pending_event.get_response_display}}",
+          "response_datetime": "{{object.pending_event.response_datetime|date:'c'}}",
+        },
+      {% else %}
+      null,
+      {% endif %}
+    },
+    watch:{
+      sfutest: function(val){
+        if (!this.registred)
+          this.registerUsername()
+      }
+    },
+    methods: {
+      checkPendingRequest(){
+        self = this
+
+        if (self.pendingRequest){        
+          switch(self.pendingRequest.get_response_display){
+            case "Aprovado":
+              self.showAnswerRequest("Aprovado")
+              break;
+            case "Pendente":
+              Swal.fire({
+                title: 'Aguarde aprovação de um fiscal!',
+                text: "Te informaremos assim que algum fiscal disponível responda sua solicitação.",
+                icon: 'warning',
+                showConfirmButton: false,
+              })
+              break;
+            default:
+              break;
+          }
+        }
+      },
+      showAnswerRequest(response_display){
+        self = this
+        var response = response_display == "Aprovado";
+
+        if (!response)
+          this.pendingRequest = null
+
+        var title = response ? "aprovada" : "rejeitada";
+        var icon = response ? "success" : "error";
+
+        var text_approved = "Assim que voltar do banheiro aperte no botão abaixo."
+        var text_rejected = "Faça sua solicitação novamente em breve."
+        var text = response ? text_approved : text_rejected
+
+        Swal.fire({
+          title: 'Sua solicitação foi '+ title,
+          text: text,
+          icon: icon,
+          showCancelButton: false,
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'Já voltei do banheiro',
+          showConfirmButton: response,
+          allowEscapeKey : !response,
+          allowOutsideClick: !response,
+          allowEnterKey: !response,
+        }).then((result) => {
+          if (result.value) {
+            if (response){
+              
+              url = "{% url 'events:event_finish' pk='00000000-0000-0000-0000-000000000000'  %}"
+              axios.put(url.replace("00000000-0000-0000-0000-000000000000", self.pendingRequest.pk)).then(function(response){
+
+              self.state = "started"
+              self.pendingRequest = null
+              
+              var message = {
+                "message": self.state,
+                "type":"changeState"
+              }
+
+              self.sfutest.data({
+                text: JSON.stringify(message),
+                error: function(reason) { },
+                success: function() {},
+              });
+
+              Swal.fire(
+                'Ok, volte a fazer a prova!',
+              )
+            }).catch(function(error){
+              Swal.fire(
+                'Ocorreu algum problema!',
+                'Tente novamente mais tarde',
+                'error'
+              )
+            })
+            }
+          }
+        })
+
+      },
+      requestApplicationPause(){
+        self = this
+        if (self.pendingRequest !== null){
+          Swal.fire(
+            'Solicitação em andamento',
+            'Aguarde que um fiscal responda a sua solicitação em andamento',
+            'warning'
+          )
+          return
+        }
+
+
+        data = {
+          "event_type": "1",
+          "student_application": "{{object.pk}}"
+        }
+        
+        axios.post("{% url 'events:event_create'  %}", data
+        ).then(function(response){
+
+          Swal.fire({
+            title: 'Aguarde aprovação de um fiscal!',
+            text: "Te informaremos assim que algum fiscal disponível responda sua solicitação.",
+            icon: 'warning',
+            showConfirmButton: false,
+          })
+
+          var message = {
+            "message": response.data,
+            "type":"requestPause"
+          }
+
+          self.pendingRequest = response.data
+
+          self.sfutest.data({
+            text: JSON.stringify(message),
+            error: function(reason) { },
+            success: function() {},
+          });
+
+
+        }).catch(function(error){
+          Swal.fire(
+            'Horário não permitido',
+            'O início previsto da prova é às {{object.application.start}}',
+            'error'
+          )
+        })
+
+      },
+      startApplication(){
+        self = this
+
+        Swal.fire({
+          title: 'Certeza que deseja iniciar a prova agora?',
+          text: "Certifique-se de estar tudo organizado no seu ambiente de prova!",
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Sim, iniciar prova!'
+        }).then((result) => {
+          if (result.value) {
+            axios.post("{% url 'applications:application_start' pk=object.pk  %}", {}
+            ).then(function(response){
+
+              Swal.fire({
+                icon: 'success',
+                title: 'Prova iniciada. Boa sorte!',
+                text: 'Siga agora para o seu ambiente de prova. Qualquer dúvida volte aqui para falar com o fiscal.',
+                showConfirmButton: true,
+              })
+
+              self.state = 'started'
+
+              var message = {
+                "message": self.state,
+                "type":"changeState"
+              }
+
+              self.sfutest.data({
+                text: JSON.stringify(message),
+                error: function(reason) { },
+                success: function() {},
+              });
+
+            }).catch(function(error){
+              Swal.fire(
+                'Horário não permitido',
+                'O início previsto da prova é às {{object.application.start}}',
+                'error'
+              )
+            })
+          }
+        })
+
+        
+      },
+      finishApplication(){
+        self = this
+
+        Swal.fire({
+          title: 'Certeza que deseja finalizar a prova agora?',
+          text: "Após confirmação não será possível voltar a este ambiente de fiscalização!",
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Sim, finalizar prova!'
+        }).then((result) => {
+          if (result.value) {
+            axios.post("{% url 'applications:application_end' pk=object.pk  %}", {}
+            ).then(function(response){
+
+              Swal.fire({
+                icon: 'success',
+                title: 'Prova finalizada. Boa sorte!',
+                showConfirmButton: true,
+              }).then((result) => {
+                
+              })
+
+              self.state = 'finished'
+
+              var message = {
+                "message": self.state,
+                "type":"changeState"
+              }
+
+              self.sfutest.data({
+                text: JSON.stringify(message),
+                error: function(reason) { },
+                success: function() {},
+              });
+
+            }).catch(function(error){
+              Swal.fire(
+                'Horário não permitido',
+                "Você só pode finalizar a partir das {{object.application.min_time_end|date:'H:i'}} horas",
+                'error'
+              )
+            })
+          }
+        })
+
+        
+      },
+      sendMessage(){
+        self = this
+
+        pluginHandle = self.sfutest
+
+        var newMessage = {
+          "application_student": "{{object.pk}}",
+          "content": self.textMessage
+        }
+
+        var message = {
+          "name": self.firstName,
+          "function": self.functionUser,
+          "date_time": moment().calendar(),
+          "message": self.textMessage,
+          "type":"message"
+        }
+
+        pluginHandle.data({
+          text: JSON.stringify(message),
+          error: function(reason) { alert(reason) },
+          success: function() { 
+              axios.post("{% url 'events:text_message_create'  %}", newMessage).then(function(response){
+                self.messages.push({
+                "name": self.firstName,
+                "function": self.functionUser,
+                "date_time": moment().calendar(),
+                "message": self.textMessage
+              })
+              self.textMessage = ""
+            })
+           },
+        });
+      },
+      removeElement: function(array, element) {
+        const index = array.indexOf(element);
+        array.splice(index, 1);
+      },
+      getInspector: function(inspectorId){
+        return this.inspectors.find(element => element.id == inspectorId)
+      },
+      publishOwnFeed: function(useAudio, useVideo) {
+        var self = this 
+        self.sfutest.createOffer({
+            media: { audioRecv: false, videoRecv: false, audioSend: useAudio, videoSend: useVideo, data: true },
+            simulcast: false,
+            simulcast2: false,
+            success: function(jsep) {
+              Janus.debug("Got publisher SDP!", jsep);
+              var publish = { request: "configure", audio: useAudio, video: useVideo };
+              self.sfutest.send({ message: publish, jsep: jsep });
+            },
+            error: function(error) {
+              Janus.error("WebRTC error:", error);
+              if(useAudio) {
+                self.publishOwnFeed(!useAudio, !useVideo);
+              } else {
+                alert("WebRTC error... " + error.message);
+              }
+            }
+          });
+      },
+      newRemoteFeed: function(id, display, audio, video) {
+        var self = this
+        var remoteFeed = null;
+        var inspector = null
+
+        var length = self.inspectors.length
+        
+        inspector = {
+            "id":id,
+            "pluginHandle":null,
+            "displayName": display,
+            "audio":audio,
+            "video":video
+        }
+
+        self.inspectors.push(inspector)
+
+        self.janus.attach(
+          {
+            plugin: "janus.plugin.videoroom",
+            
+            success: function(pluginHandle) {
+              self.inspectors[length].pluginHandle = pluginHandle
+
+              remoteFeed = pluginHandle;
+              remoteFeed.simulcastStarted = false;
+              Janus.log("Plugin attached! (" + remoteFeed.getPlugin() + ", id=" + remoteFeed.getId() + ")");
+              Janus.log("  -- This is a subscriber");
+              // We wait for the plugin to send us an offer
+              var subscribe = {
+                request: "join",
+                room: self.roomId,
+                ptype: "subscriber",
+                feed: id,
+                private_id: self.mypvtid,
+                pin: self.roomPin,
+              };
+
+              if(Janus.webRTCAdapter.browserDetails.browser === "safari" &&
+                  (video === "vp9" || (video === "vp8" && !Janus.safariVp8))) {
+                if(video)
+                  video = video.toUpperCase()
+                alert("Publisher is using " + video + ", but Safari doesn't support it: disabling video");
+                subscribe["offer_video"] = false;
+              }
+              remoteFeed.videoCodec = video;
+              remoteFeed.send({ message: subscribe });
+            },
+            error: function(error) {
+              Janus.error("  -- Error attaching plugin...", error);
+              alert("Error attaching plugin... " + error);
+            },
+            onmessage: function(msg, jsep) {
+              Janus.debug(" ::: Got a message (subscriber) :::", msg);
+              var event = msg["videoroom"];
+              Janus.debug("Event: " + event);
+              if(msg["error"]) {
+                alert(msg["error"]);
+              } else if(event) {
+                if(event === "attached") {
+                  
+                  remoteFeed.rfid = msg["id"];
+                  remoteFeed.rfdisplay = msg["display"];
+
+                  if(!remoteFeed.spinner) {
+                    var target = document.getElementById('video-'+remoteFeed.rfdisplay);
+                    remoteFeed.spinner = new Spinner({top:100}).spin(target);
+                  } else {
+                    remoteFeed.spinner.spin();
+                  }
+
+                  Janus.log("Successfully attached to feed " + remoteFeed.rfid + " (" + remoteFeed.rfdisplay + ") in room " + msg["room"]);
+                
+                } else if(event === "event") {
+                  // Check if we got an event on a simulcast-related event from this publisher
+                  var substream = msg["substream"];
+                  var temporal = msg["temporal"];
+                  if((substream !== null && substream !== undefined) || (temporal !== null && temporal !== undefined)) {
+                    if(!remoteFeed.simulcastStarted) {
+                      remoteFeed.simulcastStarted = true;}
+                  }
+                } else {
+                  // What has just happened?
+                }
+              }
+              if(jsep !== undefined && jsep !== null) {
+                Janus.debug("Handling SDP as well...", jsep);
+                // Answer and attach
+                remoteFeed.createAnswer(
+                  {
+                    jsep: jsep,
+                    // Add data:true here if you want to subscribe to datachannels as well
+                    // (obviously only works if the publisher offered them in the first place)
+                    media: { audioSend: false, videoSend: true, data:true },	// We want recvonly audio/video
+                    success: function(jsep) {
+                      Janus.debug("Got SDP!", jsep);
+                      var body = { request: "start", room: self.roomId };
+                      remoteFeed.send({ message: body, jsep: jsep });
+                    },
+                    error: function(error) {
+                      Janus.error("WebRTC error:", error);
+                      alert("WebRTC error... " + error.message);
+                    }
+                  });
+              }
+            },
+            iceState: function(state) {
+              Janus.log("ICE state of this WebRTC PeerConnection (feed #" + remoteFeed.rfindex + ") changed to " + state);
+            },
+            webrtcState: function(on) {
+              Janus.log("Janus says this WebRTC PeerConnection (feed #" + remoteFeed.rfindex + ") is " + (on ? "up" : "down") + " now");
+            },
+            onlocalstream: function(stream) {
+              // The subscriber stream is recvonly, we don't expect anything here
+            },
+            onremotestream: function(stream) {
+
+              Janus.debug("Remote feed #" + remoteFeed.rfindex + ", stream:", stream);
+              
+              if($("#remote-video-"+id).length === 0) {
+                $("#remote-video-"+id).bind("playing", function () {
+
+                  if(remoteFeed.spinner)
+                    remoteFeed.spinner.stop();
+                  remoteFeed.spinner = null;
+                });
+              }
+
+              Janus.attachMediaStream($('#remote-video-'+id).get(0), stream);
+
+            },
+            oncleanup: function() {
+              Janus.log(" ::: Got a cleanup notification (remote feed " + id + ") :::");
+              if(remoteFeed.spinner)
+                remoteFeed.spinner.stop();
+              remoteFeed.spinner = null;
+            },
+            ondataopen: function(data) {
+                
+            },
+            ondata: function(data) {
+              message = JSON.parse(data)
+
+              switch(message.type){
+                case "message":
+                  self.notificationSound.play();
+                  self.messages.push(message)
+                  break;
+                case "answerRequest":
+                  self.notificationSound.play();
+                  self.showAnswerRequest(message.message.get_response_display)
+                  break;
+                default:
+                  break;
+              }
+            },
+          });
+      },
+      registerUsername: function() {
+        var username = "aluno"
+        var self = this
+        var register = {
+          request: "join",
+          room: self.roomId,
+          id: self.studentId,
+          ptype: "publisher",
+          display: username,
+          pin: self.roomPin,
+        };
+        
+        try {
+          self.sfutest.send({ message: register });
+          self.registred = true
+        }
+        catch (e) {
+          console.log(e)
+          self.registred = false
+        }
+        
+      }
+    },
+    mounted: function(){
+      var self = this;
+      self.checkPendingRequest()
+      Janus.init({debug: "false", callback: function() {
+          if(!Janus.isWebrtcSupported()) {
+            alert("No WebRTC support... ");
+            return;
+          }
+          // Create session
+          self.janus = new Janus({
+            server: "wss://"+self.server+"/ws",
+            iceServers :[
+              {
+                url: 'turn:'+self.server,
+                username: 'gA42zcNAp8',
+                credential: 'uzQNsqqF8c',
+              },
+              {
+                url: 'stun:stun.fiscallize.com.br'
+              },
+            ],
+            success: function() {
+              self.janus.attach(
+                {
+                  plugin: "janus.plugin.videoroom",
+                  success: function(pluginHandle) {
+                    self.sfutest = pluginHandle;
+                    Janus.log("Plugin attached! (" + self.sfutest.getPlugin() + ", id=" + self.sfutest.getId() + ")");
+                    Janus.log("  -- This is a publisher/manager");
+                  },
+                  error: function(error) {
+                    Janus.error("  -- Error attaching plugin...", error);
+                    alert("Error attaching plugin... " + error);
+                  },
+                  consentDialog: function(on) {
+                    Janus.debug("Consent dialog should be " + (on ? "on" : "off") + " now");
+                    if(on) {
+                      // alert("permita o uso da camera")
+                    } else {
+                      // Restore screen
+                    }
+                  },
+                  iceState: function(state) {
+                    Janus.log("ICE state changed to " + state);
+                  },
+                  mediaState: function(medium, on) {
+                    Janus.log("Janus " + (on ? "started" : "stopped") + " receiving our " + medium);
+                  },
+                  webrtcState: function(on) {
+                    Janus.log("Janus says our WebRTC PeerConnection is " + (on ? "up" : "down") + " now");
+                    if(!on)
+                      return;
+                  },
+                  onmessage: function(msg, jsep) {
+                    Janus.debug(" ::: Got a message (publisher) :::", msg);
+                    var event = msg["videoroom"];
+                    Janus.debug("Event: " + event);
+                    if(event) {
+                      if(event === "joined") {
+                        // Publisher/manager created, negotiate WebRTC and attach to existing feeds, if any
+                        myid = msg["id"];
+                        self.mypvtid = msg["private_id"];
+                        Janus.log("Successfully joined room " + msg["room"] + " with ID " + myid);
+                        self.publishOwnFeed(false, true);
+                        // Any new feed to attach to?
+                        console.log(msg)
+                        if(msg["publishers"]) {
+                          
+
+                          var list = msg["publishers"];
+                          Janus.debug("Got a list of available publishers/feeds:", list);
+                          for(var f in list) {
+                            var id = list[f]["id"];
+                            var display = list[f]["display"];
+                            var audio = list[f]["audio_codec"];
+                            var video = list[f]["video_codec"];
+                            Janus.debug("  >> [" + id + "] " + display + " (audio: " + audio + ", video: " + video + ")");
+                            // alert("entrou alguem")
+                            self.newRemoteFeed(id, display, audio, video);
+                          }
+                        }
+                      } else if(event === "destroyed") {
+                        // The room has been destroyed
+                        Janus.warn("The room has been destroyed!");
+                        alert("The room has been destroyed", function() {
+                          window.location.reload();
+                        });
+                      } else if(event === "event") {
+                        // Any new feed to attach to?
+                        if(msg["publishers"]) {
+                          
+
+                          var list = msg["publishers"];
+                          Janus.debug("Got a list of available publishers/feeds:", list);
+                          for(var f in list) {
+                            var id = list[f]["id"];
+                            var display = list[f]["display"];
+                            var audio = list[f]["audio_codec"];
+                            var video = list[f]["video_codec"];
+                            Janus.debug("  >> [" + id + "] " + display + " (audio: " + audio + ", video: " + video + ")");
+                            
+                            self.newRemoteFeed(id, display, audio, video);
+                          }
+                        } else if(msg["leaving"]) {
+                          // One of the publishers has gone away?
+                          
+
+                          var leaving = msg["leaving"];
+                          Janus.log("Publisher left: " + leaving);
+                          
+                          var remoteFeed = null;
+
+                          inspector = self.getInspector(leaving)
+                          
+                          if (inspector != undefined)
+                            remoteFeed = inspector.pluginHandle
+
+
+                          if(remoteFeed != null) {
+                            Janus.debug("Feed " + remoteFeed.rfid + " (" + remoteFeed.rfdisplay + ") has left the room, detaching");
+                            self.removeElement(self.inspectors, inspector)
+                            remoteFeed.detach();
+                          }
+                        } else if(msg["unpublished"]) {
+                          // One of the publishers has unpublished?
+                          
+
+                          var unpublished = msg["unpublished"];
+                          Janus.log("Publisher left: " + unpublished);
+                          if(unpublished === 'ok') {
+                            // That's us
+                            self.sfutest.hangup();
+                            return;
+                          }
+                          var remoteFeed = null;
+                          inspector = self.getInspector(unpublished)
+
+                          if (inspector != undefined)
+                            remoteFeed = inspector.pluginHandle
+
+                          if(remoteFeed != null) {
+                            Janus.debug("Feed " + remoteFeed.rfid + " (" + remoteFeed.rfdisplay + ") has left the room, detaching");                              
+                            self.removeElement(self.inspectors, inspector)
+                            remoteFeed.detach();
+                          }
+                        } else if(msg["error"]) {
+                          if(msg["error_code"] === 426) {
+                            // This is a "no such room" error: give a more meaningful description
+                            alert(
+                              "<p>Apparently room <code>" + self.roomId + "</code> (the one this demo uses as a test room) " +
+                              "does not exist...</p><p>Do you have an updated <code>janus.plugin.videoroom.jcfg</code> " +
+                              "configuration file? If not, make sure you copy the details of room <code>" + self.roomId + "</code> " +
+                              "from that sample in your current configuration file, then restart Janus and try again."
+                            );
+                          } else {
+                            alert(msg["error"]);
+                          }
+                        }
+                      }
+                    }
+                    if(jsep) {
+                      Janus.debug("Handling SDP as well...", jsep);
+                      self.sfutest.handleRemoteJsep({ jsep: jsep });
+                      // Check if any of the media we wanted to publish has
+                      // been rejected (e.g., wrong or unsupported codec)
+                      var audio = msg["audio_codec"];
+                      if(self.mystream && self.mystream.getAudioTracks() && self.mystream.getAudioTracks().length > 0 && !audio) {
+                        // Audio has been rejected
+                        alert("Our audio stream has been rejected, viewers won't hear us");
+                      }
+                      var video = msg["video_codec"];
+                      if(self.mystream && self.mystream.getVideoTracks() && self.mystream.getVideoTracks().length > 0 && !video) {
+                        // Video has been rejected
+                        alert("Our video stream has been rejected, viewers won't see us");
+                        
+                      }
+                    }
+                  },
+                  onlocalstream: function(stream) {
+                    Janus.debug(" ::: Got a local stream :::", stream);
+                    self.mystream = stream;
+
+                    Janus.attachMediaStream($('#local-stream').get(0), stream);
+
+                    $("#local-stream").get(0).muted = "muted";
+                    
+                    if(self.sfutest.webrtcStuff.pc.iceConnectionState !== "completed" &&
+                        self.sfutest.webrtcStuff.pc.iceConnectionState !== "connected") {}
+                  },
+                  onremotestream: function(stream) {
+                    // The publisher stream is sendonly, we don't expect anything here
+
+                  },
+                  oncleanup: function() {
+                    Janus.log(" ::: Got a cleanup notification: we are unpublished now :::");
+                    self.mystream = null;
+                  },
+                });
+            },
+            error: function(error) {
+              Janus.error(error);
+              alert(error, function() {
+                window.location.reload();
+              });
+            },
+            destroyed: function() {
+              window.location.reload();
+            }
+          });
+      }});
+    
+    }
+  })
+</script>
+{% endcompress %}
+
+{% endblock js-additional %}

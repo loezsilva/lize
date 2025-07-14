@@ -1,0 +1,201 @@
+{% extends 'redesign/base.html' %}
+{% load permissions %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+
+{% block title %}Listagem de tipo de curso - Lize{% endblock title %}
+
+{% block css-additional %}
+
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+
+<link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+
+<style>
+  .select2-selection__choice__remove{
+    display: none !important;
+  }
+</style>
+
+{% endblock %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">TIPOS DE CURSOS</a></li>
+          <li class="breadcrumb-item active" aria-current="page">LISTAGEM</li>
+        </ol>
+      </nav> 
+      <h4>Seus tipos de cursos</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <a href="{% url 'classes:courses_type_create' %}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+            <i data-feather="plus" class="wd-10 mg-r-5"></i> Cadastrar Tipo de Curso
+        </a >
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1rem; justify-content: space-between;">
+      <div style="flex: 1;">
+        <!-- Empty -->
+      </div>
+      {% if user|has_perm:'classes.add_coursetype' %}
+        <div>
+          <a href="{% url 'classes:courses_type_create' %}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+            <i data-feather="plus" class="wd-10 mg-r-5"></i> Cadastrar tipo de curso
+          </a>
+        </div>
+      {% endif %}
+    </div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+              <div>
+                <h6 class="mg-b-5">Tipos de cursos</h6>
+                <p class="tx-13 tx-color-03 mg-b-5">Gerencie todos os seus tipos de cursos listadas abaixo</p>
+              </div>
+              <div class="float-right text-right">
+
+                <button data-toggle-off-canvas="#right-off-canvas"
+                  class="btn btn-sm btn-info btn-icon rounded-pill off-canvas-menu  mb-2">
+                  <i class="fas fa-search"></i> Filtrar listagem 
+                  {% if count_filters > 0 %}
+                  <span class="badge badge-danger">{{count_filters}} Aplicado(s)</span>
+                  {% endif %}
+
+                </button>
+                {% if count_filters > 0 %}
+                <a href="{% url 'classes:courses_type_list' %}" class="btn btn-sm btn-info btn-icon rounded-pill mb-2">
+                  <i class="fas fa-eraser"></i> Apagar filtro(s)
+                </a>
+                {% endif %}
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-dashboard mg-b-1">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>ERP</th>
+                    <th class="text-wrap text-right"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for courses_type in object_list %}
+                  <tr>
+                    <td class="tx-medium">
+                      {{courses_type.name}}
+                    </td>
+                    <td class="tx-medium">
+                      {{courses_type.id_erp|default:''}}
+                    </td>
+                    
+                    <td class="text-wrap ">
+                        <div class="d-flex float-right">
+                            <nav class="nav nav-icon-only float-right">
+                              {% if user|has_perm:'classes.change_coursetype' %}
+                                <a href="{% url 'classes:courses_type_update' courses_type.pk %}" class="nav-link d-none d-sm-block"><i class="fas fa-edit"></i></a>
+                              {% endif %}
+                              {% if user|has_perm:'classes.delete_coursetype' %}
+                                <a href="javascript:void(0)" class="nav-link d-none d-sm-block" onClick="confirmCancel('{% url "classes:courses_type_delete" courses_type.pk %}')" data-toggle="tooltip" data-placement="top" title="Deletar">
+                                  <i class="fas fa-trash"></i>
+                                </a>
+                              {% endif %}
+                            </nav>
+                        </div>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="5">
+                      Não há tipos de cursos cadastrada até o momento.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div><!-- table-responsive -->
+        </div><!-- card -->
+          {% include 'includes/pagination.html' with objects=object_list %}
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block off-canvas %}
+  <div id="right-off-canvas" class="off-canvas off-canvas-right wd-400 bg-white"
+    style="overflow-y: auto; overflow-x: hidden;">
+    <form action="" method="GET">
+    <div class="row p-3">
+      <div class="col-12">
+        <h5>Filtrar tipo de cursos</h5>
+        <p>Adiciona abaixo os filtros que você deseja aplicar na listagem abaixo</p>
+        <hr/>
+      </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="course_type_name_id" class="mb-1">Nome</label>
+            <input type="text" value="{{q_name}}" id="course_type_name_id" name="q_name" class="form-control" placeholder="Digite o nome do tipo de curso aqui">
+          </div>
+        </div>
+        <div class="col-12 mt-5">
+          <button type="submit" class="btn btn-primary btn-block">
+            <i class="fas fa-search"></i>
+            Aplicar filtro
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+{% endblock %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+
+<script>
+
+  $(function () {
+    'use strict'
+
+    $('.off-canvas-menu').on('click', function (e) {
+      e.preventDefault();
+      var target = $(this).attr('data-toggle-off-canvas');
+      $(target).addClass('show');
+    });
+
+    $('.off-canvas .close').on('click', function (e) {
+      e.preventDefault();
+      $(this).closest('.off-canvas').removeClass('show');
+    })
+
+    $(document).on('click touchstart', function (e) {
+      if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+        return
+      }
+      e.stopPropagation();
+
+      if (!$(e.target).closest('.off-canvas-menu').length) {
+        var offCanvas = $(e.target).closest('.off-canvas').length;
+        if (!offCanvas) {
+          $('.off-canvas.show').removeClass('show');
+        }
+      }
+    });
+  });
+
+</script>
+{% endblock %}
+
+{% block extra-modal %}
+  {% include 'includes/confirm_modal.html' %}
+{% endblock extra-modal %}

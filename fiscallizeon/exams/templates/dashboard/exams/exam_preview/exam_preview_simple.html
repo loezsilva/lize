@@ -1,0 +1,83 @@
+{% comment %} {% extends 'redesign/base_without_sidebar.html' %} {% endcomment %}
+{% load alternative_letter %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lize - {{exam.name|upper}}</title>
+</head>
+<style>
+    hr.custom-divider {
+        border: 1px dashed gray;
+    }
+</style>
+
+<body>
+    <br>
+    {% for base_text, question_indices in base_texts_mapping.items %}
+    <br>
+        <strong>Texto base: 
+            {% for index in question_indices %}
+                Questão {{ index }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </strong>
+        <div class="base-text">
+            {{ base_text.title|safe}}
+            {{ base_text.text|safe }}
+        </div>
+    {% endfor %}
+    {% for exam_question in exam_questions %}
+        <div class="question">
+            <span class="number-question">
+            <hr>
+            <strong> Questão {{ forloop.counter }}</strong>
+            </span>
+            <div class="question-enunciation">
+                {{exam_question.question.enunciation|safe}}
+            </div>
+            {% if exam_question.question.category == exam_question.question.CHOICE or exam_question.question.category == exam_question.question.SUM_QUESTION  %}
+                <div class="question-alternatives">
+                    <table class="question-alternatives-table">
+                        {% for alternative in exam_question.question.get_alternatives_ordered %}
+                        <tr>
+                            <td class="alternative-letter">
+                                <strong> {{forloop.counter|alternative_letter}})</strong>
+                            </td>
+                            <td>
+                                {{alternative.text|safe}}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>  
+            {% endif %}
+            {% if exam_question.question.category == exam_question.question.CHOICE or exam_question.question.category == exam_question.question.SUM_QUESTION  %}
+
+                <div class="question-correct-alternatives">
+                    <strong>
+                    <span class="question-correct-alternatives-title">
+                        Gabarito:
+                    </span>
+                    {% for alternative in exam_question.question.get_alternatives_ordered %}
+                        {% if alternative.is_correct %}
+                            {{forloop.counter|alternative_letter}}
+                        {% endif %}
+                    {% endfor %}
+                    </strong>
+                </div>
+            {% endif %}
+
+            {% if exam_question.question.commented_awnser %}
+            <div class="question-commented-answer">
+                <span class="question-commented-answer-title">
+                    <strong>Resposta comentada:</strong>
+                </span>
+                {{exam_question.question.commented_awnser|safe}}
+            </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+</body>
+</html>

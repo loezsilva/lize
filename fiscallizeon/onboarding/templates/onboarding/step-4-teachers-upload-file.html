@@ -1,0 +1,1287 @@
+{% load static %}
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Professores - Enviar arquivo - Lize</title>
+  <link href="{% static 'favicon/favicon.ico' %}" rel="shortcut icon" />
+  <!-- <link rel="preconnect" href="https://fonts.googleapis.com"> -->
+  <!-- <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> -->
+  <!-- <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet"> -->
+  <!-- <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" /> -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script> -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script> -->
+
+  <link href="{% static 'tw/full/output.css' %}" rel="stylesheet">
+  <style>
+    ::backdrop {
+      background-color: #001737;
+      opacity: 0.6;
+    }
+  </style>
+  <style>
+    [data-tooltip] {
+      position: relative;
+    }
+
+    [data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      visibility: visible;
+      /* width: 120px; */
+      background-color: #555;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -60px;
+      opacity: 1;
+      transition: opacity 0.3s;
+      opacity: 1;
+    }
+
+    [data-tooltip]::after {
+      content: attr(data-tooltip);
+      visibility: hidden;
+      /* width: 120px; */
+      background-color: #555;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px 0;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -60px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    [data-tooltip]::before {
+      content: "";
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #555 transparent transparent transparent;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    [data-tooltip]:hover::before {
+      visibility: visible;
+      opacity: 1;
+    }
+  </style>
+  <!-- <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"
+  /> -->
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css"> -->
+  <!-- <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script> -->
+
+  <!-- <link rel="stylesheet" href="https://unpkg.com/vue-select@latest/dist/vue-select.css"> -->
+
+  <!-- <script src="https://unpkg.com/vue@latest"></script> -->
+  <!-- <script src="https://unpkg.com/vue-select@latest"></script> -->
+
+  <!-- <script src="https://unpkg.com/vue-multiselect"></script> -->
+  <!-- <link rel="stylesheet" href="https://unpkg.com/vue-multiselect/dist/vue-multiselect.css"> -->
+
+  <!-- <script src="https://unpkg.com/vue-select@4.0.0-beta.6"></script> -->
+  <!-- <link rel="stylesheet" href="https://unpkg.com/vue-select@4.0.0-beta.6/dist/vue-select.css"> -->
+
+  <!-- <link rel="stylesheet" href="https://unpkg.com/vue-multiselect/dist/vue-multiselect.min.css"> -->
+
+  <!-- <script src="https://unpkg.com/vue@2"></script>
+  <script src="https://unpkg.com/vue-multiselect"></script> -->
+
+  <link rel="stylesheet" href="https://unpkg.com/vue-select@3.20.3/dist/vue-select.css" />
+
+  <style>
+    /* .style-chooser .vs__search::placeholder,
+    .style-chooser .vs__dropdown-toggle,
+    .style-chooser .vs__dropdown-menu {
+      background: #dfe5fb;
+      border: none;
+      color: #394066;
+      text-transform: lowercase;
+      font-variant: small-caps;
+    } */
+    
+    /* .style-chooser .vs__clear,
+    .style-chooser .vs__open-indicator {
+      fill: #394066;
+    } */
+  </style>
+
+  <script src="https://unpkg.com/vue@2"></script>
+  <script src="https://unpkg.com/vue-select@latest"></script>
+
+</head>
+<body>
+  <div id="app" class="flex flex-col h-screen">
+    <header class="flex items-center justify-between border-b border-[#E5E7EA] px-[11.5rem] py-4">
+      <a class="flex-none text-primary-600" href="/">
+        <span class="sr-only">Lize</span>
+        <svg width="52" height="32" viewBox="0 0 52 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M15.362 21.6376C13.5956 20.8193 11.5161 20.3893 9.87081 20.1636C8.22555 19.938 4.7732 19.7265 2.71343 20.1197C3.46911 12.9932 3.92787 4.67531 4.08972 1.44461C4.12465 0.746213 3.64726 0.110763 2.96959 0.0133674C2.19645 -0.0970939 1.5153 0.490845 1.47571 1.26645C1.34879 3.81419 0.417295 15.6561 0.00627239 20.8276C-0.0892059 22.0272 0.919138 23.0131 2.08933 22.8622C2.96261 22.7506 4.05595 22.6556 5.31812 22.6164C6.5803 22.5772 8.11378 22.671 8.60747 22.7173C11.4148 22.981 13.2801 23.601 14.3257 24.0571C14.937 24.3232 15.6449 24.0737 15.9663 23.481C16.3331 22.804 16.0524 21.956 15.362 21.6365V21.6376ZM13.6996 2.87095C14.4286 2.91699 15.0538 2.32674 15.1977 1.61019C15.351 0.849951 14.9971 1.41725e-09 14.0075 1.41725e-09C13.3458 1.41725e-09 12.638 0.495805 12.5507 1.43783C12.4811 2.17564 12.9577 2.82373 13.7008 2.87095H13.6996ZM48.6574 10.4645C48.9523 9.78699 49.7227 9.44167 50.3917 9.72983L50.3905 9.72864C51.07 10.0216 51.38 10.8182 51.0933 11.5029C49.9697 14.1797 47.5595 19.269 41.4359 19.269C40.6561 19.269 39.8904 19.1713 39.1596 18.9725C37.0326 18.3926 35.3449 16.9327 34.6421 14.8274C32.923 17.1447 30.8717 18.982 28.5826 19.8631C28.9987 21.4421 29.1385 23.2866 28.9311 25.3549C28.4847 29.8929 25.8728 32.3482 23.0546 31.96C20.5196 31.6111 18.7107 28.9938 19.3762 25.7681C20.2772 21.4183 22.6898 19.4119 25.015 18.2521C24.7527 17.8996 24.4753 17.6174 24.1921 17.3983C23.8203 17.1101 23.6035 16.66 23.635 16.1849L23.6944 15.2799C23.7481 14.4607 24.1991 13.7153 24.9077 13.3259C26.3157 12.5531 27.8472 11.0647 27.8472 8.24616C27.8472 7.09589 27.4346 6.5279 26.5837 6.32428C25.107 5.96705 23.1839 7.34595 21.8215 10.3002L21.7445 10.2633L21.8226 10.3014C21.7475 10.4614 21.6524 10.6789 21.5381 10.9404C20.4805 13.3593 17.7795 19.5366 14.0487 18.7081C12.5521 18.3795 11.6337 17.1506 11.5358 15.4228C11.4029 13.1044 12.15 5.92895 12.1932 5.54315C12.2771 4.80488 12.9391 4.27261 13.657 4.35358C14.375 4.43455 14.8832 5.11566 14.8261 5.85036C14.721 7.20467 14.6146 8.39185 14.5201 9.446C14.3546 11.2929 14.2256 12.7314 14.2048 13.9451C14.1827 15.2549 15.0615 16.3207 16.3925 14.4333C17.4473 12.9377 18.6967 10.7682 19.452 9.16065C20.9298 5.95515 23.6816 2.87109 27.1851 3.71891C29.4369 4.25951 30.4404 6.26117 30.4707 8.20567C30.5115 10.8349 28.9847 14.0939 26.3308 15.7431C26.8064 16.2087 27.2294 16.7612 27.5872 17.384C29.874 16.5159 32.2679 14.0356 34.1269 10.761C34.5057 10.0942 34.8239 9.39404 35.113 8.68197C35.1444 8.60219 35.1782 8.52241 35.212 8.44263C37.0162 4.24522 40.1258 2.60913 42.6958 3.74868C44.9009 4.72629 45.8928 7.4936 44.7075 10.1811C43.6154 12.6448 40.3414 14.1654 36.881 12.5222C36.8706 15.1085 38.7668 16.5921 41.4382 16.5921C45.8415 16.5921 47.5257 13.0663 48.6574 10.4645ZM41.6527 6.2052C40.9394 5.88965 39.1433 5.95634 37.613 9.51907H37.6142C37.5741 9.61297 37.5695 9.62227 37.5655 9.63178C37.5606 9.643 37.5565 9.65451 37.4953 9.80604C40.0069 11.3254 41.81 10.2252 42.3193 9.07611C43.0023 7.52575 42.359 6.51837 41.6527 6.2052ZM23.4054 29.3082C24.2457 29.4237 25.9555 28.8379 26.325 25.0846C26.4963 23.3747 26.3809 21.897 26.0896 20.7002C24.3599 21.5635 22.6466 22.9281 21.9427 26.323C21.5359 28.2949 22.5487 29.1903 23.4054 29.3082Z" fill="#FF8F3D"/>
+        </svg>
+      </a>
+      <nav aria-label="Progress">
+        <ol role="list" class="space-x-6 divide-y divide-gray-300 md:flex md:divide-y-0">
+          <li class="relative md:flex md:flex-1">
+            <a href="#" class="flex items-center text-sm font-semibold" aria-current="step">
+              <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#FFF2E9] border border-[#FFE0C9]">
+                <span class="text-primary-600">1</span>
+              </span>
+              <span class="ml-3 text-[#384250]">Usuários</span>
+            </a>
+          </li>
+          <li class="relative md:flex md:flex-1">
+            <a href="#" class="group flex items-center">
+              <span class="flex items-center text-sm text-[#667085]">
+                <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#F9FAFA] group-hover:border-gray-400">
+                  <span class="group-hover:text-gray-900">2</span>
+                </span>
+                <span class="ml-3 group-hover:text-gray-900">Segmentos</span>
+              </span>
+            </a>
+          </li>
+          <li class="relative md:flex md:flex-1">
+            <a href="#" class="group flex items-center">
+              <span class="flex items-center text-sm text-[#667085]">
+                <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#F9FAFA] group-hover:border-gray-400">
+                  <span class="group-hover:text-gray-900">3</span>
+                </span>
+                <span class="ml-3 group-hover:text-gray-900">Permissões</span>
+              </span>
+            </a>
+          </li>
+        </ol>
+      </nav>
+    </header>
+    <main ref="mainContent" class="h-full overflow-y-auto">
+      <div class="bg-[#F9FAFA]">
+        <div class="flex flex-col gap-4 px-[11.5rem] py-10">
+          <div class="flex gap-8">
+            <h1 class="text-3xl leading-[2.125rem] font-medium tracking-[-0.01em] text-[#101828]">Professores</h1>
+            <span class="flex items-center gap-2">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g clip-path="url(#clip0_864_1725)">
+                  <path d="M10.0003 4.99999V9.99999L13.3337 11.6667M18.3337 9.99999C18.3337 14.6024 14.6027 18.3333 10.0003 18.3333C5.39795 18.3333 1.66699 14.6024 1.66699 9.99999C1.66699 5.39762 5.39795 1.66666 10.0003 1.66666C14.6027 1.66666 18.3337 5.39762 18.3337 9.99999Z" stroke="#D2D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_864_1725">
+                    <rect width="20" height="20" fill="white"/>
+                  </clipPath>
+                </defs>
+              </svg>
+              <span class="text-sm text-[#9BA3AF]">Tempo médio: </span><span class="text-sm font-semibold text-[#9BA3AF]">3 min</span>
+            </span>
+          </div>
+          <div class="flex justify-between items-center">
+            <p class="text-sm text-[#667085]">
+              Anexe as planilhas que você possui referente aos perfis de usuários abaixo identificados. É importante que a planilha<br /> esteja atualizada para que o sistema possa identificar corretamente os dados. Assista ao vídeo ao lado.
+            </p>
+            <a href="{% static 'modelo_importacao_professores.csv' %}" class="flex items-center gap-3 text-start bg-white rounded-full text-sm font-medium border border-[#E5E7EA] px-4 py-2">
+              <span>
+                <span class="flex items-center">
+                  Baixar modelo
+                  <svg viewBox="0 0 20 20" class="ml-1.5 h-5 w-5 fill-slate-400" fill-rule="evenodd" clip-rule="evenodd">
+                    <path d="M10 2.75a7.25 7.25 0 1 0 0 14.5 7.25 7.25 0 0 0 0-14.5ZM1.25 10a8.75 8.75 0 1 1 17.5 0 8.75 8.75 0 0 1-17.5 0Zm9.5-4.083v5.606l1.917-1.917 1.06 1.06L10 14.395l-3.727-3.727 1.06-1.061 1.917 1.917V5.917h1.5Z"></path>
+                  </svg>
+                </span>
+              </span>
+            </a>
+          </div>
+        </div>
+        <div class="flex justify-between px-[11.5rem]">
+          <div class="flex">
+            <button type="button" class="inline-flex items-center justify-center gap-x-2 whitespace-nowrap border-b-2 border-primary-500 px-1 py-4 text-sm font-semibold text-[#101828]">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="10.8337" y="12.501" width="4.1684" height="2.50104" stroke="#D3D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M7.49894 17.5032H2.08002C1.8498 17.5032 1.66318 17.3166 1.66318 17.0864V16.7479C1.66593 15.7849 2.44591 15.0049 3.4089 15.0022H6.17005C7.13305 15.0049 7.91303 15.7849 7.91578 16.7479V17.0864C7.91578 17.3166 7.72916 17.5032 7.49894 17.5032Z" stroke="#D3D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M4.78949 12.9179C3.86883 12.9161 3.12372 12.1687 3.12463 11.2481C3.12556 10.3274 3.87216 9.58154 4.79283 9.58154C5.7135 9.58154 6.4601 10.3274 6.46102 11.2481C6.46194 12.1687 5.71683 12.9161 4.79616 12.9179H4.78949Z" stroke="#D3D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3.33054 7.49891V4.16419C3.33054 3.24333 4.07704 2.49683 4.9979 2.49683H16.6694C17.5903 2.49683 18.3368 3.24333 18.3368 4.16419V13.3347C18.3368 14.2555 17.5903 15.002 16.6694 15.002H9.99998" stroke="#D3D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Professores
+            </button>
+          </div>
+          <div class="flex items-center gap-5">
+            <div v-if="teachersSpreadsheetFile">
+              <button type="button" class="inline-flex gap-2 text-sm text-[#667085] py-2 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-gray-600" @click="addTeacherToTable">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <g clip-path="url(#clip0_936_3721)">
+                    <path d="M10 6.66675V13.3334M6.66667 10.0001H13.3333M18.3333 10.0001C18.3333 14.6025 14.6024 18.3334 10 18.3334C5.39763 18.3334 1.66667 14.6025 1.66667 10.0001C1.66667 5.39771 5.39763 1.66675 10 1.66675C14.6024 1.66675 18.3333 5.39771 18.3333 10.0001Z" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </g>
+                  <defs>
+                    <clipPath id="clip0_936_3721">
+                      <rect width="20" height="20" fill="white"/>
+                    </clipPath>
+                  </defs>
+                </svg>
+                Adicionar professor
+              </button>
+            </div>
+            <div>
+              <label for="teachersSpreadsheetFile" class="relative inline-flex cursor-pointer text-sm text-[#667085] py-2 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-gray-600">
+                <span class="flex gap-2">
+                  <template v-if="teachersSpreadsheetFile">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M1.66675 8.33333C1.66675 8.33333 3.33757 6.05685 4.69494 4.69854C6.05232 3.34022 7.92808 2.5 10.0001 2.5C14.1422 2.5 17.5001 5.85786 17.5001 10C17.5001 14.1421 14.1422 17.5 10.0001 17.5C6.58084 17.5 3.69601 15.2119 2.79322 12.0833M1.66675 8.33333V3.33333M1.66675 8.33333H6.66675" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    Atualizar planilha
+                  </template>
+                </span>
+                <input id="teachersSpreadsheetFile" name="teachersSpreadsheetFile" type="file" class="sr-only" @change="changeTeachersSpreadsheetFile" />
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="px-[11.5rem] pt-8 pb-10">
+        <template v-if="teachersSpreadsheetFile">
+          <p class="text-xs leading-[1.125rem] text-[#6C727F]">Lista de arquivos para anexar</p>
+          <div class="flex items-center justify-between mt-6">
+            <div class="space-y-6">
+              <div class="relative flex gap-x-3">
+                <div class="flex h-6 items-center">
+                  <input id="replaceCoordination" name="replaceCoordination" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600" v-model="replaceCoordination" />
+                </div>
+                <div class="text-sm leading-6">
+                  <label for="replaceCoordination" class="font-medium text-gray-900">Remover as coordenações anteriores</label>
+                  <p class="text-gray-500">Caso você deseja apenas uma importação incremental deixe essa opção desmarcada.</p>
+                </div>
+              </div>
+              <div class="relative flex gap-x-3">
+                <div class="flex h-6 items-center">
+                  <input id="replaceSubjects" name="replaceSubjects" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600" v-model="replaceSubjects" />
+                </div>
+                <div class="text-sm leading-6">
+                  <label for="replaceSubjects" class="font-medium text-gray-900">Remover as disciplinas anteriores</label>
+                  <p class="text-gray-500">Caso você deseja apenas uma importação incremental deixe essa opção desmarcada.</p>
+                </div>
+              </div>
+              <div class="relative flex gap-x-3">
+                <div class="flex h-6 items-center">
+                  <input id="replacePermissions" name="replacePermissions" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600" v-model="replacePermissions" />
+                </div>
+                <div class="text-sm leading-6">
+                  <label for="replacePermissions" class="font-medium text-gray-900">Remover as permissões anteriores</label>
+                  <p class="text-gray-500">Marque essa opção caso você queria remover as permissões anteriores dessas professores que serão importados ou atualizados.</p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <button type="button" class="relative inline-flex items-center justify-center text-sm font-semibold text-slate-900 hover:text-sky-600" @click="downloadCsvPreview">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="mr-2 h-6 w-6 stroke-current">
+                  <circle cx="12" cy="12" r="9" stroke-width="1.5"></circle>
+                  <path d="M9 12.75L12 15.75M12 15.75L15 12.75M12 15.75L12 8.25" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+                Baixar prévia
+              </button>
+            </div>
+          </div>
+
+          <div class="rounded-md bg-red-50 p-4 mt-8" v-if="processFilesStatus === 'error'">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800">
+                  Ocorreu um erro, verifique os dados e tente novamente.
+                </h3>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-md bg-red-50 p-4 mt-8" v-if="processFilesStatus === 'required-fields'">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800">
+                  É necessário definir as referências dos campos [[ table.requiredFields ]].
+                </h3>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-8 flow-root" v-if="table.rows.length > 0">
+            <div class="ring-1 ring-gray-300 sm:rounded-lg overflow-x-auto">
+              <div class="inline-block min-w-full align-middle">
+                <table class="relative min-w-full divide-y divide-gray-300">
+                  <thead>
+                    <tr class="divide-x divide-gray-200">
+                      <th
+                        scope="col"
+                        class="whitespace-nowrap text-left px-3 py-2"
+                        :class="[header.columnRef ? 'bg-white' : 'bg-primary-50']"
+                        v-for="(header, index) in table.headers"
+                      >
+                        <span class="inline-flex items-center gap-2">
+                          <!-- <span class="flex gap-0.5 text-xs font-semibold text-[#384250]"> -->
+                            <!-- <span>[[ header.name ]]</span> -->
+                            <!-- <span class="text-gray-500" v-if="table.requiredFields.includes(header.name)">*</span> -->
+                          <!-- </span> -->
+
+                          <!-- <span>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-3">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                            </svg>
+                          </span> -->
+
+                          <span>
+                            <select
+                              class="block w-full min-w-[11.25rem] rounded-md border-0 py-1.5 text-xs font-medium shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600"
+                              :class="[header.columnRef ? 'text-gray-900 bg-white' : 'text-primary-600 bg-primary-50']"
+                              v-model="header.columnRef"
+                              @change="handleChangeColumnRef(header)"
+                            >
+                              <option disabled value="">Identificar coluna</option>
+                              <option value="nome">Nome</option>
+                              <option value="email">E-mail</option>
+                              <option value="coordenacao">Coordenação</option>
+                              <option value="disciplinas">Disciplinas</option>
+                              <option value="turmas">Turmas</option>
+                              <option value="permissoes">Permissões</option>
+                            </select>
+                          </span>
+                        </span>
+                      </th>
+                      <th scope="col" class="py-3.5 pl-4 pr-4 text-left text-sm font-semibold text-gray-900 sm:pr-0"><span class="sr-only">Ações</span></th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-200 bg-white">
+                    <tr
+                      class="divide-x divide-gray-200"
+                      v-for="(row, indexRow) in table.rows"
+                    >
+                      <td
+                        class="whitespace-nowrap px-3 py-2 text-xs text-[#6C727F]"
+                        :class="[table.headers[index].columnRef ? 'bg-white' : 'bg-primary-50']"
+                        v-for="(data, index) in row"
+                      >
+                        <div class="flex gap-2">
+                          <template v-if="editing && table.selectedRowIndex == indexRow && table.selectedValueIndex == index">
+                            <input
+                              type="text"
+                              v-model="data.value"
+                              @input="table.rows[indexRow][index] = $event.target.value"
+                              @blur="editing = false"
+                            />
+                          </template>
+                          <template v-else>
+                            <span @click="editing = true" v-if="table.editableFields.includes(table.headers[index])">
+                              [[ data.value ]]
+                            </span>
+                            <span v-else>
+                              [[ data.value ]]
+                            </span>
+                          </template>
+                          <template v-if="['coordenacao', 'disciplinas', 'turmas', 'permissoes'].includes(table.headers[index])">
+                            <button
+                              type="button"
+                              class="text-primary-600 hover:text-primary-900"
+                              @click="handlePlusOrSync(table.headers[index], data.value, indexRow, index)"
+                            >
+                              <template v-if="!data.value">
+                                <!-- <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg> -->
+                              </template>
+                              <template v-else>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                </svg>
+                              </template>
+                            </button>
+                            <button
+                              type="button"
+                              class="text-primary-600 hover:text-primary-900"
+                              title="Copiar o valor de cima"
+                              @click="handleCopy(indexRow, index)"
+                              v-if="indexRow > 0 && table.rows[indexRow - 1][index] && !table.rows[indexRow][index]"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 7.5h-.75A2.25 2.25 0 0 0 4.5 9.75v7.5a2.25 2.25 0 0 0 2.25 2.25h7.5a2.25 2.25 0 0 0 2.25-2.25v-7.5a2.25 2.25 0 0 0-2.25-2.25h-.75m-6 3.75 3 3m0 0 3-3m-3 3V1.5m6 9h.75a2.25 2.25 0 0 1 2.25 2.25v7.5a2.25 2.25 0 0 1-2.25 2.25h-7.5a2.25 2.25 0 0 1-2.25-2.25v-.75" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              class="text-primary-600 hover:text-primary-900"
+                              title="Copiar este valor para todos abaixo"
+                              @click="handleCopyForAll(indexRow, index, table.rows[indexRow][index])"
+                              v-if="table.rows[indexRow][index]"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                              </svg>
+                            </button>
+                          </template>
+                          <span v-for="error in data.errors" :title="error.text" :data-tooltip="error.text">
+                            <svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <g clip-path="url(#clip0_936_4256)">
+                                <path d="M8.33317 10.6668V8.00016M8.33317 5.3335H8.33984M14.9998 8.00016C14.9998 11.6821 12.0151 14.6668 8.33317 14.6668C4.65127 14.6668 1.6665 11.6821 1.6665 8.00016C1.6665 4.31826 4.65127 1.3335 8.33317 1.3335C12.0151 1.3335 14.9998 4.31826 14.9998 8.00016Z" stroke="#D92D20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                              </g>
+                              <defs>
+                                <clipPath id="clip0_936_4256">
+                                  <rect width="16" height="16" fill="white" transform="translate(0.333252)"/>
+                                </clipPath>
+                              </defs>
+                            </svg>
+                          </span>
+                        </div>
+                      </td>
+                      <td class="flex items-center justify-center gap-3 px-3 py-2 text-sm text-gray-500">
+                        <button
+                          type="button"
+                          class="text-primary-600 hover:text-primary-900"
+                          @click="editTeacher(indexRow)"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <g clip-path="url(#clip0_936_4542)">
+                              <path d="M14.0001 14H8.66677M1.66675 14.3334L5.36626 12.9105C5.60289 12.8195 5.7212 12.774 5.83189 12.7146C5.93022 12.6618 6.02395 12.6009 6.11211 12.5324C6.21136 12.4554 6.301 12.3658 6.48027 12.1865L14.0001 4.66671C14.7365 3.93033 14.7365 2.73642 14.0001 2.00004C13.2637 1.26366 12.0698 1.26366 11.3334 2.00004L3.8136 9.51985C3.63433 9.69912 3.5447 9.78876 3.46768 9.88801C3.39926 9.97617 3.33835 10.0699 3.28557 10.1682C3.22615 10.2789 3.18065 10.3972 3.08964 10.6339L1.66675 14.3334ZM1.66675 14.3334L3.03883 10.766C3.13701 10.5107 3.1861 10.3831 3.27031 10.3246C3.34389 10.2735 3.43495 10.2542 3.52295 10.271C3.62364 10.2902 3.72034 10.3869 3.91374 10.5803L5.4198 12.0864C5.6132 12.2798 5.7099 12.3765 5.72912 12.4772C5.74593 12.5652 5.72661 12.6562 5.67551 12.7298C5.61705 12.814 5.48941 12.8631 5.23413 12.9613L1.66675 14.3334Z" stroke="#D3D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </g>
+                            <defs>
+                              <clipPath id="clip0_936_4542">
+                                <rect width="16" height="16" fill="white"/>
+                              </clipPath>
+                            </defs>
+                          </svg>
+                          <span class="sr-only">Editar, [[ row[0] ]]</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="text-primary-600 hover:text-primary-900"
+                          @click="handleRemove(indexRow)"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M6 2H10M2 4H14M12.6667 4L12.1991 11.0129C12.129 12.065 12.0939 12.5911 11.8667 12.99C11.6666 13.3412 11.3648 13.6235 11.0011 13.7998C10.588 14 10.0607 14 9.00623 14H6.99377C5.93927 14 5.41202 14 4.99889 13.7998C4.63517 13.6235 4.33339 13.3412 4.13332 12.99C3.90607 12.5911 3.871 12.065 3.80086 11.0129L3.33333 4" stroke="#D3D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                          </svg>
+                          <span class="sr-only">Remover, [[ row[0] ]]</span>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </template>
+        <template v-else>
+          <div
+            class="mt-2 flex justify-center rounded-lg border border-dashed px-6 py-10"
+            :class="[isDragging ? 'border-primary-600' : 'border-gray-900/25']"
+            @dragenter.prevent="onDragEnter"
+            @dragleave.prevent="onDragLeave"
+            @dragover.prevent="onDragOver"
+            @drop.prevent="onDrop"
+          >
+            <div class="text-center">
+              <svg class="mx-auto h-12 w-12 text-gray-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
+              </svg>
+              <div class="mt-4 flex text-sm leading-6 text-gray-600">
+                <label for="file-upload" class="relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500">
+                  <span>Selecione um arquivo</span>
+                  <input id="file-upload" name="file-upload" type="file" class="sr-only" @change="changeTeachersSpreadsheetFile" />
+                </label>
+                <p class="pl-1">ou arraste e solte</p>
+              </div>
+              <p class="text-xs leading-5 text-gray-600">CSV de até 10 MB</p>
+            </div>
+          </div>
+        </template>
+      </div>
+      <dialog id="modalErrors" class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:w-full sm:max-w-[32.5rem]">
+        <div class="px-4 pb-4 pt-5 sm:p-6">
+          <form method="dialog" class="absolute right-0 top-0 hidden pr-6 pt-6 sm:block">
+            <button type="submit" class="rounded-md bg-white text-[#D0D3D9] hover:text-[#BEC2CA] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+              <span class="sr-only">Fechar</span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+          </form>
+          <div>
+            <div class="mx-auto flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-[#FAE7E6] sm:mx-0">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15.9998 21.3332V15.9998M15.9998 10.6665H16.0132M29.3332 15.9998C29.3332 23.3636 23.3636 29.3332 15.9998 29.3332C8.63604 29.3332 2.6665 23.3636 2.6665 15.9998C2.6665 8.63604 8.63604 2.6665 15.9998 2.6665C23.3636 2.6665 29.3332 8.63604 29.3332 15.9998Z" stroke="#D4281D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+            <div class="mt-4">
+              <h3 class="text-2xl font-medium text-[#101928]" id="modal-title">
+                Há ítens pendentes em "Professores"
+              </h3>
+              <p class="text-sm text-[#6C727F] mt-2">É necessário resolver todas as pendências antes de avançar.</p>
+              <div class="mt-6 border-t border-gray-100">
+                <dl class="divide-y divide-gray-100">
+                  <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0" v-for="error in importErrors">
+                    <dt class="text-sm font-medium leading-6 text-gray-900">[[ error.name ]]</dt>
+                    <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">[[ error.text ]]</dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-between mt-[2.125rem]">
+            <div>
+              <form method="dialog">
+                <button type="submit" class="inline-flex w-full justify-center rounded-lg bg-red-600 px-4 py-3 text-sm font-semibold text-white hover:bg-red-500 sm:w-auto">Revisar ítens</button>
+              </form>
+            </div>
+            <div>
+              <button type="button" class="inline-flex w-full justify-center gap-2 py-3 text-sm text-[#667085] hover:text-gray-600 sm:w-auto">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7.08333 10.4167C7.08333 10.4167 8.17708 11.6667 10 11.6667C11.8229 11.6667 12.9167 10.4167 12.9167 10.4167M12.2917 6.25H12.3M7.70833 6.25H7.71667M5.83333 15V16.9463C5.83333 17.3903 5.83333 17.6123 5.92436 17.7263C6.00352 17.8255 6.12356 17.8832 6.25045 17.8831C6.39636 17.8829 6.56973 17.7442 6.91646 17.4668L8.90434 15.8765C9.31043 15.5517 9.51347 15.3892 9.73957 15.2737C9.94017 15.1712 10.1537 15.0963 10.3743 15.051C10.6231 15 10.8831 15 11.4031 15H13.5C14.9001 15 15.6002 15 16.135 14.7275C16.6054 14.4878 16.9878 14.1054 17.2275 13.635C17.5 13.1002 17.5 12.4001 17.5 11V6.5C17.5 5.09987 17.5 4.3998 17.2275 3.86502C16.9878 3.39462 16.6054 3.01217 16.135 2.77248C15.6002 2.5 14.9001 2.5 13.5 2.5H6.5C5.09987 2.5 4.3998 2.5 3.86502 2.77248C3.39462 3.01217 3.01217 3.39462 2.77248 3.86502C2.5 4.3998 2.5 5.09987 2.5 6.5V11.6667C2.5 12.4416 2.5 12.8291 2.58519 13.147C2.81635 14.0098 3.49022 14.6836 4.35295 14.9148C4.67087 15 5.05836 15 5.83333 15ZM12.7083 6.25C12.7083 6.48012 12.5218 6.66667 12.2917 6.66667C12.0615 6.66667 11.875 6.48012 11.875 6.25C11.875 6.01988 12.0615 5.83333 12.2917 5.83333C12.5218 5.83333 12.7083 6.01988 12.7083 6.25ZM8.125 6.25C8.125 6.48012 7.93845 6.66667 7.70833 6.66667C7.47821 6.66667 7.29167 6.48012 7.29167 6.25C7.29167 6.01988 7.47821 5.83333 7.70833 5.83333C7.93845 5.83333 8.125 6.01988 8.125 6.25Z" stroke="#D2D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Precisando de suporte?
+              </button>
+            </div>
+          </div>
+        </div>
+      </dialog>
+      <dialog id="modalEditTeacher" class="relative transform rounded-lg bg-white text-left shadow-xl transition-all sm:w-full sm:max-w-[45.5rem]">
+        <div class="px-4 pb-4 pt-5 sm:p-6">
+          <form method="dialog" class="absolute right-0 top-0 hidden pr-6 pt-6 sm:block">
+            <button type="submit" class="rounded-md bg-white text-[#D0D3D9] hover:text-[#BEC2CA] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+              <span class="sr-only">Fechar</span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </form>
+          <form>
+            <div class="space-y-12">
+              <div class="border-b border-gray-900/10 pb-12">
+                <h2 class="text-base font-semibold leading-7 text-gray-900">
+                  <template v-if="modalTeacherStatus === 'add'">
+                    Adicionar professor
+                  </template>
+                  <template v-else>
+                    Editar professor
+                  </template>
+                </h2>
+                <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                  <div class="sm:col-span-3">
+                    <label for="modalEditTeacherDataName" class="block text-sm font-medium leading-6 text-gray-900">Nome</label>
+                    <div class="mt-2">
+                      <input type="text" name="modalEditTeacherDataName" id="modalEditTeacherDataName" autocomplete="given-name" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6" v-model="modalEditTeacherData.name">
+                    </div>
+                  </div>
+                  <div class="sm:col-span-3">
+                    <label for="modalEditTeacherDataEmail" class="block text-sm font-medium leading-6 text-gray-900">E-mail</label>
+                    <div class="mt-2">
+                      <input type="email" name="modalEditTeacherDataEmail" id="modalEditTeacherDataEmail" autocomplete="family-name" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6" v-model="modalEditTeacherData.email">
+                    </div>
+                  </div>
+                  <div class="col-span-full">
+                    <label for="modalEditTeacherDataCoordination" class="block text-sm font-medium leading-6 text-gray-900">Coordenações</label>
+                    <div class="mt-2">
+                      <select id="modalEditTeacherDataCoordination" name="modalEditTeacherDataCoordination" v-model="modalEditTeacherData.coordination" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:max-w-xs sm:text-sm sm:leading-6">
+                        <option value="">---</option>
+                        {% for coordination in coordinations %}
+                          <option value="{{ coordination.id }}">{{ coordination.name }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                  </div>
+
+                  <!-- <div class="col-span-full">
+                    <label for="choices-multiple-default">Default</label>
+                    <select
+                      class="form-control"
+                      data-trigger
+                      name="choices-multiple-default"
+                      id="choices-multiple-default"
+                      placeholder="This is a placeholder"
+                      multiple
+                    >
+                      <option value="Choice 1" selected>Choice 1</option>
+                      <option value="Choice 2">Choice 2</option>
+                      <option value="Choice 3">Choice 3</option>
+                      <option value="Choice 4" disabled>Choice 4</option>
+                    </select>
+                  </div> -->
+
+                  <!-- <template v-if="getIndexByColumnRef('disciplinas') !== -1"> -->
+                    <div class="col-span-full" v-show="getIndexByColumnRef('disciplinas') !== -1">
+                      <label for="modalEditTeacherDataSubjects" class="block text-sm font-medium leading-6 text-gray-900">Disciplinas</label>
+                      <div class="mt-2">
+
+                        <!-- <multiselect v-model="modalEditTeacherData.subjects" track-by="id" label="name" placeholder="---" :options="modalEditTeacherData.subjectsOptions">
+                          <template slot="singleLabel" slot-scope="{ option }">
+                            <strong>{{ option.id }}</strong> is written in<strong> {{ option.name }}</strong>
+                          </template>
+                        </multiselect> -->
+
+                        <!-- <multiselect v-model="value" :options="options" :searchable="false" :close-on-select="false" :show-labels="false" placeholder="Pick a value"></multiselect> -->
+
+                        <!-- <v-select :options="modalEditTeacherData.subjectsOptions"></v-select> -->
+
+                        <v-select placeholder="---" v-model="modalEditTeacherData.subjects" :options="modalEditTeacherData.subjectsOptions" :reduce="subject => subject.name" label="name" multiple class="style-chooser"></v-select>
+
+                        <!-- <select id="modalEditTeacherDataSubjects" name="modalEditTeacherDataSubjects" v-model="modalEditTeacherData.subjects" multiple class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:max-w-xs sm:text-sm sm:leading-6">
+                          <option value="">---</option>
+                          {% for subject in subjects %}
+                            <option value="{{ subject.id }}">{{ subject.name }}</option>
+                          {% endfor %}
+                        </select> -->
+                      </div>
+                    </div>
+                  <!-- </template> -->
+                  <!-- <template v-if="getIndexByColumnRef('turmas') !== -1"> -->
+                    <div class="col-span-full" v-show="getIndexByColumnRef('turmas') !== -1">
+                      <label for="modalEditTeacherDataClasses" class="block text-sm font-medium leading-6 text-gray-900">Turmas</label>
+                      <div class="mt-2">
+                        <v-select v-model="modalEditTeacherData.classes" :options="modalEditTeacherData.classesOptions" :reduce="schoolClass => schoolClass.name" label="name" multiple></v-select>
+
+                        <!-- <select id="modalEditTeacherDataClasses" name="modalEditTeacherDataClasses" v-model="modalEditTeacherData.classes" multiple class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:max-w-xs sm:text-sm sm:leading-6">
+                          <option value="">---</option>
+                          {% for school_class in classes %}
+                            <option value="{{ school_class.id }}">{{ school_class.name }}</option>
+                          {% endfor %}
+                        </select> -->
+                      </div>
+                    </div>
+                  <!-- </template> -->
+                  <!-- <template v-if="getIndexByColumnRef('permissoes') !== -1"> -->
+                    <div class="col-span-full" v-show="getIndexByColumnRef('permissoes') !== -1">
+                      <label for="modalEditTeacherDataPermissions" class="block text-sm font-medium leading-6 text-gray-900">Permissões</label>
+                      <div class="mt-2">
+                        <v-select v-model="modalEditTeacherData.permissions" :options="modalEditTeacherData.permissionsOptions" :reduce="permission => permission.id" label="name" multiple></v-select>
+
+                        <!-- <select id="modalEditTeacherDataPermissions" name="modalEditTeacherDataPermissions" v-model="modalEditTeacherData.permissions" multiple class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:max-w-xs sm:text-sm sm:leading-6">
+                          <option value="">---</option>
+                          <option value="coord">Coordenador de disciplina</option>
+                          <option value="coge">Corrige erratas</option>
+                          <option value="elab">Elabora questões</option>
+                          <option value="cog">Corretor respostas de alunos de outros professores</option>
+                          <option value="cogeo">Corrige erratas de outros professores</option>
+                          <option value="qf">O professor pode utilizar o formatador de questões</option>
+                        </select> -->
+                      </div>
+                    </div>
+                  <!-- </template> -->
+                  <!-- <div class="col-span-full">
+                    <label for="modalEditTeacherDataSegment" class="block text-sm font-medium leading-6 text-gray-900">Segmento</label>
+                    <div class="mt-2">
+                      <select id="modalEditTeacherDataSegment" name="modalEditTeacherDataSegment" v-model="modalEditTeacherData.segment" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:max-w-xs sm:text-sm sm:leading-6">
+                        <option value="">---</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                      </select>
+                    </div>
+                  </div> -->
+                </div>
+              </div>
+            </div>
+            <div class="mt-6 flex items-center justify-end gap-x-6">
+              <button type="button" class="w-full rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600" @click="handleUpdate">Salvar</button>
+            </div>
+          </form>
+        </div>
+      </dialog>
+    </main>
+    <div class="absolute w-full bg-white opacity-70" style="height: calc(100% - 77px);" v-if="processFilesStatus === 'loading'"></div>
+    <footer class="flex justify-between border-t border-[#E5E7EA] px-[11.5rem] py-4">
+      <a href="{% url 'onboarding:detail' 3 %}" class="flex items-center gap-2 rounded-lg text-[#667085] py-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12.5 5L7.5 10L12.5 15" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Voltar
+      </a>
+      <button
+        type="button"
+        class="flex items-center gap-4 rounded-lg text-white px-[8.375rem] py-3 text-sm font-semibold"
+        :class="[teachersSpreadsheetFile ? 'bg-primary-600' : 'bg-[#D2D6DB]']"
+        :disabled="processFilesStatus === 'loading' || !teachersSpreadsheetFile"
+        @click="processFiles"
+      >
+        [[ processFilesStatus !== 'loading' ? 'Processar dados' : 'Processando...' ]]
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" v-if="processFilesStatus !== 'loading'">
+          <path d="M4.1665 10H15.8332M15.8332 10L9.99984 4.16669M15.8332 10L9.99984 15.8334" stroke="white" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <svg class="animate-spin" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" v-else>
+          <g clip-path="url(#clip0_864_1942)">
+            <path d="M10.0001 1.66669V5.00002M10.0001 15V18.3334M5.00008 10H1.66675M18.3334 10H15.0001M15.8988 15.8987L13.5417 13.5417M15.8988 4.16664L13.5417 6.52366M4.10139 15.8987L6.45841 13.5417M4.10139 4.16664L6.45841 6.52366" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </g>
+          <defs>
+            <clipPath id="clip0_864_1942">
+              <rect width="20" height="20" fill="white"/>
+            </clipPath>
+          </defs>
+        </svg>
+      </button>
+    </footer>
+  </div>
+  <script src="{% static 'js/papaparse.min.js' %}"></script>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script> -->
+  <script>
+    //////////////////////////////////////////////////////////////////////
+    /// INIT
+    //////////////////////////////////////////////////////////////////////
+
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          // Does this cookie string begin with the name we want?
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay))
+
+    function toCapitalizeCase(str) {
+      const lower = str.toLowerCase();
+      return str.charAt(0).toUpperCase() + lower.slice(1);
+    }
+
+    function redirect(to, permanent = false) {
+      if (permanent) {
+        window.location.replace(to);
+      } else {
+        window.location.href = to;
+      }
+    }
+
+    function arraysAreEqual(a, b) {
+      return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((value, index) => value === b[index]);
+    }
+
+    function arrayIncludesAll(a, b) {
+      return Array.isArray(a) && Array.isArray(b) && b.every(value => a.includes(value));
+    }
+
+    //////////////////////////////////////////////////////////////////////
+    /// SELECT2
+    //////////////////////////////////////////////////////////////////////
+
+    // $('#modalEditTeacherDataSubjects').select2({
+    //   placeholder: 'Select an option',
+    // });
+    // $('#modalEditTeacherDataClasses').select2();
+    // $('#modalEditTeacherDataPermissions').select2();
+
+    //////////////////////////////////////////////////////////////////////
+    /// VUE
+    //////////////////////////////////////////////////////////////////////
+
+    // const { createApp } = Vue
+
+    const initialModalEditTeacherData = {
+      name: '',
+      email: '',
+      coordination: '',
+      subjects: [],
+      subjectsOptions: [
+        {% for subject in subjects %}
+          { id: '{{ subject.id }}', name: '{{ subject.name }} - {{ subject.knowledge_area.name }}' },
+        {% endfor %}
+      ],
+      classes: [],
+      classesOptions: [
+        {% for school_class in classes %}
+          { id: '{{ school_class.id }}', name: '{{ school_class.name }}' },
+        {% endfor %}
+      ],
+      permissions: [],
+      permissionsOptions: [
+        { id: 'coord', name: 'Coordenador de disciplina' },
+        { id: 'coge', name: 'Corrige erratas' },
+        { id: 'elab', name: 'Elabora questões' },
+        { id: 'cog', name: 'Corretor respostas de alunos de outros professores' },
+        { id: 'cogeo', name: 'Corrige erratas de outros professores' },
+        { id: 'qf', name: 'O professor pode utilizar o formatador de questões' },
+      ],
+      // segment: '',
+    }
+
+    Vue.component('v-select', VueSelect.VueSelect);
+    const app = new Vue({
+      el: '#app',
+      delimiters: ['[[', ']]'],
+      data() {
+        return {
+          teachersSpreadsheetFile: '',
+          processFilesStatus: 'idle',
+
+          isDragging: false,
+
+          replaceCoordination: false,
+          replaceSubjects: false,
+          replacePermissions: false,
+
+          table: {
+            // columnsRef: {
+            //   nome: '',
+            //   email: '',
+            //   coordenacao: '',
+            //   disciplinas: '',
+            //   turmas: '',
+            //   permissoes: '',
+            // },
+            headers: [],
+            rows: [],
+            selectedRowIndex: null,
+            selectedValueIndex: null,
+            columnsOrder: ['nome', 'email', 'coordenacao', 'disciplinas', 'turmas', 'permissoes'],
+            requiredFields: ['nome', 'email', 'coordenacao'],
+            editableFields: ['nome', 'email'],
+          },
+
+          modalTeacherStatus: 'edit',
+          modalEditTeacherData: initialModalEditTeacherData,
+
+          editing: false,
+          openedModal: null,
+
+          modalIdentification: '',
+
+          importErrors: [],
+        }
+      },
+      // watch: {
+        // 'table.columnsRef.nome': function(newVal) {
+        //   this.checkForDuplicates('nome', newVal);
+        // },
+        // 'table.columnsRef.email': function(newVal) {
+        //   this.checkForDuplicates('email', newVal);
+        // },
+        // 'table.columnsRef.coordenacao': function(newVal) {
+        //   this.checkForDuplicates('coordenacao', newVal);
+        // },
+        // 'table.columnsRef.disciplinas': function(newVal) {
+        //   this.checkForDuplicates('disciplinas', newVal);
+        // },
+        // 'table.columnsRef.turmas': function(newVal) {
+        //   this.checkForDuplicates('turmas', newVal);
+        // },
+        // 'table.columnsRef.permissoes': function(newVal) {
+        //   this.checkForDuplicates('permissoes', newVal);
+        // },
+      // },
+      methods: {
+        // checkForDuplicates(changedKey, newVal) {
+        //   for (const [key, value] of Object.entries(this.table.columnsRef)) {
+        //     if (key !== changedKey && value === newVal) {
+        //       this.table.columnsRef[key] = ''
+        //     }
+        //   }
+        // },
+        onDragEnter() {
+          this.isDragging = true;
+        },
+        onDragLeave() {
+          this.isDragging = false;
+        },
+        onDragOver(event) {
+          event.preventDefault();
+        },
+        onDrop(event) {
+          this.isDragging = false;
+          const file = event.dataTransfer.files[0];
+          this.handleFileUpload(file);
+        },
+        handleChangeColumnRef(changedHeader) {
+          for (const header of this.table.headers) {
+            if (header.name !== changedHeader.name && header.columnRef === changedHeader.columnRef) {
+              header.columnRef = ''
+            }
+          }
+        },
+        handleFileUpload(file) {
+          this.teachersSpreadsheetFile = file;
+          Papa.parse(file, {
+            complete: (results) => {
+              if (results.data.length) {
+                let alreadyHasColumnRef = []
+                this.table.headers = results.data[0].map(headerName => {
+                  const regex = /\bcoordenacao([-_]?[a-z]+)?\b/;
+                  let headerNameHandled = headerName.toLowerCase()
+                  if (regex.test(headerNameHandled)) {
+                    headerNameHandled = 'coordenacao'
+                  }
+
+                  let columnRef = ''
+                  if (this.table.columnsOrder.includes(headerNameHandled) && !alreadyHasColumnRef.includes(headerNameHandled)) {
+                    columnRef = headerNameHandled
+                    alreadyHasColumnRef.push(headerNameHandled)
+                  }
+                  return { name: headerName, columnRef }
+                })
+                const rows = results.data.slice(1, results.data.length).map(currentRow => {
+                  let row = currentRow
+                  let diffRows = this.table.headers.length - currentRow.length
+                  if (diffRows > 0) {
+                    row = [...currentRow, ...Array(diffRows).fill('')]
+                  }
+                  return row.map(value => {
+                    return { value: value, errors: []}
+                  })
+                })
+                this.table.rows = rows
+              }
+            }
+          });
+        },
+        changeTeachersSpreadsheetFile(event) {
+          const file = event.target.files[0];
+          this.handleFileUpload(file);
+        },
+        removeTeachersSpreadsheetFile() {
+          this.teachersSpreadsheetFile = null;
+        },
+        addTeacherToTable() {
+          this.table.rows.push(Array.from({ length: this.table.headers.length }, () => { return { value: '', errors: [] } }))
+          const indexRow = this.table.rows.length - 1
+          this.modalTeacherStatus = 'add'
+          this.handleEdit(indexRow)
+        },
+        editTeacher(indexRow) {
+          this.modalTeacherStatus = 'edit'
+          this.handleEdit(indexRow)
+        },
+        getIdentificationRef(value) {
+          let reference = ''
+          if (value === 'name') {
+            reference = 'nome'
+          } else if (value === 'email') {
+            reference = 'email'
+          } else if (value === 'coordination') {
+            reference = 'coordenacao'
+          } else if (value === 'subjects') {
+            reference = 'disciplinas'
+          } else if (value === 'classes') {
+            reference = 'turmas'
+          } else if (value === 'permissions') {
+            reference = 'permissoes'
+          }
+          return reference
+        },
+        getRefIdentification(value) {
+          let identification = ''
+          if (value === 'nome') {
+            identification = 'name'
+          } else if (value === 'email') {
+            identification = 'email'
+          } else if (value === 'coordenacao') {
+            identification = 'coordination'
+          } else if (value === 'disciplinas') {
+            identification = 'subjects'
+          } else if (value === 'turmas') {
+            identification = 'classes'
+          } else if (value === 'permissoes') {
+            identification = 'permissions'
+          }
+          return identification
+        },
+        handlePlusOrSync(header, value, indexRow, indexValue) {
+          const modalIdentification = this.getRefIdentification(header)
+          this.modalIdentification = modalIdentification
+
+          this.table.selectedRowIndex = indexRow
+          this.table.selectedValueIndex = indexValue
+
+          const dialog = document.getElementById(`modal${toCapitalizeCase(this.modalIdentification)}`);
+          dialog.showModal();
+        },
+        addValues() {
+          let value = this[`modalSelected${toCapitalizeCase(this.modalIdentification)}`]
+
+          this.table.rows[this.table.selectedRowIndex][this.table.selectedValueIndex] = value;
+
+          const dialog = document.getElementById(`modal${toCapitalizeCase(this.modalIdentification)}`);
+          dialog.close();
+        },
+        handleCopy(indexRow, indexValue) {
+          this.table.rows[indexRow][indexValue] = this.table.rows[indexRow - 1][indexValue]
+        },
+        handleCopyForAll(indexRow, indexValue, value) {
+          this.table.rows.slice(indexRow, this.table.rows.length).forEach((row) => {
+            row[indexValue] = value
+          })
+        },
+        definedRequiredFields() {
+          if (!arrayIncludesAll(this.table.headers.map(header => header.columnRef), this.table.requiredFields)) {
+            this.processFilesStatus = 'required-fields';
+            this.$refs.mainContent.scrollTo({ top: 0, behavior: 'smooth' })
+            return false
+          }
+          return true
+        },
+        handleEdit(indexRow) {
+          if (!this.definedRequiredFields()) return
+
+          this.modalEditTeacherData = initialModalEditTeacherData
+
+          // console.log(this.modalEditTeacherData)
+
+          this.modalEditTeacherData.indexRow = indexRow
+          this.modalEditTeacherData.name = this.table.rows[indexRow][this.getIndexByColumnRef('nome')].value
+          this.modalEditTeacherData.email = this.table.rows[indexRow][this.getIndexByColumnRef('email')].value
+          this.modalEditTeacherData.coordination = this.table.rows[indexRow][this.getIndexByColumnRef('coordenacao')].value
+          if (this.getIndexByColumnRef('disciplinas') !== -1) {
+            this.modalEditTeacherData.subjects = this.table.rows[indexRow][this.getIndexByColumnRef('disciplinas')].value
+          }
+          if (this.getIndexByColumnRef('turmas') !== -1) {
+            this.modalEditTeacherData.classes = this.table.rows[indexRow][this.getIndexByColumnRef('turmas')].value
+          }
+          if (this.getIndexByColumnRef('permissoes') !== -1) {
+            this.modalEditTeacherData.permissions = this.table.rows[indexRow][this.getIndexByColumnRef('permissoes')].value
+          }
+          // this.modalEditTeacherData.segment = this.table.rows[indexRow][6]
+
+          const dialog = document.getElementById('modalEditTeacher');
+          dialog.showModal();
+
+          // console.log(this.modalEditTeacherData)
+        },
+        handleRemove(indexRow) {
+          this.table.rows.splice(indexRow, 1)
+        },
+        handleUpdate() {
+          // console.log(this.modalEditTeacherData)
+          this.table.rows[this.modalEditTeacherData.indexRow][this.getIndexByColumnRef('nome')].value = this.modalEditTeacherData.name
+          this.table.rows[this.modalEditTeacherData.indexRow][this.getIndexByColumnRef('email')].value = this.modalEditTeacherData.email
+          if (this.modalEditTeacherData.email) {
+            this.table.rows[this.modalEditTeacherData.indexRow][this.getIndexByColumnRef('email')].errors = []
+          }
+          this.table.rows[this.modalEditTeacherData.indexRow][this.getIndexByColumnRef('coordenacao')].value = this.modalEditTeacherData.coordination
+          if (this.modalEditTeacherData.coordination) {
+            this.table.rows[this.modalEditTeacherData.indexRow][this.getIndexByColumnRef('coordenacao')].errors = []
+          }
+          if (this.getIndexByColumnRef('disciplinas') !== -1) {
+            this.table.rows[this.modalEditTeacherData.indexRow][this.getIndexByColumnRef('disciplinas')].value = this.modalEditTeacherData.subjects
+          }
+          if (this.getIndexByColumnRef('turmas') !== -1) {
+            this.table.rows[this.modalEditTeacherData.indexRow][this.getIndexByColumnRef('turmas')].value = this.modalEditTeacherData.classes
+          }
+          if (this.getIndexByColumnRef('permissoes') !== -1) {
+            this.table.rows[this.modalEditTeacherData.indexRow][this.getIndexByColumnRef('permissoes')].value = this.modalEditTeacherData.permissions
+          }
+          // this.table.rows[this.modalEditTeacherData.indexRow][6] = this.modalEditTeacherData.segment
+
+          const dialog = document.getElementById('modalEditTeacher');
+          dialog.close();
+        },
+        getIndexByColumnRef(columnRef) {
+          for (let i = 0; i < this.table.headers.length; i++) {
+            if (this.table.headers[i].columnRef === columnRef) {
+              return i;
+            }
+          }
+          return -1;
+        },
+        // reorderRows(headers, rows) {
+        //   const desiredOrder = this.table.columnsOrder
+        //   // const filteredHeaders = headers.filter(header => header.columnRef)
+        //   // const sortedHeaders = filteredHeaders.sort((a, b) => desiredOrder.indexOf(a.columnRef) - desiredOrder.indexOf(b.columnRef))
+
+        //   console.log(headers)
+        //   console.log(rows)
+        //   const sortedHeaders = headers.filter(header => header.columnRef).sort((a, b) => desiredOrder.indexOf(a.columnRef) - desiredOrder.indexOf(b.columnRef))
+
+        //   console.log(sortedHeaders)
+        //   const indexMap = sortedHeaders.map(header => headers.indexOf(header))
+        //   const newRows = rows.map(row => indexMap.map(index => {
+        //     return row[index] || { value: '', errors: [] }
+        //   }))
+
+        //   const updatedRows = newRows.map(row => {
+        //     const currentRow = row.map(value => value.value)
+        //     return [...currentRow, ...Array(desiredOrder.length - row.length).fill('')]
+        //   })
+        //   return updatedRows
+        // },
+        reorderRows(headers, rows) {
+          const desiredOrder = this.table.columnsOrder
+
+          const columnRefToIndex = {}
+          headers.forEach((header, index) => {
+            if (header.columnRef) {
+              columnRefToIndex[header.columnRef] = index
+            }
+          })
+
+          const reorderedRows = rows.map(row => {
+            return desiredOrder.map(column => {
+              const headerIndex = columnRefToIndex[column]
+              return headerIndex !== undefined ? row[headerIndex].value : ''
+            })
+          })
+
+          return reorderedRows
+        },
+        getCsvData() {
+          const reorderRows = this.reorderRows(this.table.headers, this.table.rows)
+          return [this.table.columnsOrder, ...reorderRows]
+        },
+        downloadCsvPreview() {
+          let csv = Papa.unparse(this.getCsvData());
+          let csvBlob = new Blob([csv], { type: 'text/csv' });
+          let csvUrl = URL.createObjectURL(csvBlob);
+
+          let downloadLink = document.createElement('a');
+          downloadLink.href = csvUrl;
+          downloadLink.target = '_blank';
+          downloadLink.download = 'importacao_professores.csv';
+          downloadLink.click();
+        },
+        async processFiles() {
+          if (this.processFilesStatus === 'loading') return;
+          this.processFilesStatus = 'loading';
+
+          if (!this.definedRequiredFields()) return;
+
+          const csvData = this.getCsvData();
+          console.log({ csvData })
+          let csv = Papa.unparse(csvData);
+          let csvBlob = new Blob([csv], { type: 'text/csv' });
+          let csvFile = new File([csvBlob], 'professores.csv');
+
+          let formData = new FormData();
+          formData.append('file', csvFile);
+          formData.append('replaceCoordination', this.replaceCoordination);
+          formData.append('replaceSubjects', this.replaceSubjects);
+          formData.append('replacePermissions', this.replacePermissions);
+          csvData.forEach((row, index) => {
+            if (index === 0) return
+            formData.append('teachersEmails', row[1]);
+          });
+
+          try {
+            const response = await fetch("{% url 'onboarding:upload-import-teachers' %}", {
+              method: 'POST',
+              body: formData,
+            });
+            const data = await response.json();
+            // console.log('import data', data);
+            if (response.status !== 200) {
+              if (data.errors && data.errors.length > 0) {
+                // console.log({ errors: data.errors })
+                data.errors.forEach(error => {
+                  if (error.kind) {
+                    let columnPosition = 0
+                    if (error.kind !== 'generic') {
+                      columnPosition = this.getIndexByColumnRef(this.getIdentificationRef(error.kind))
+                    }
+                    this.table.rows[error.index][columnPosition].errors = [{ text: error.text }];
+                  }
+                })
+              }
+              if (Object.entries(data.teachers_emails).length > 0) {
+                for (const [key, value] of Object.entries(data.teachers_emails)) {
+                  const columnPosition = this.getIndexByColumnRef(this.getIdentificationRef('email'))
+                  this.table.rows[key][columnPosition].errors = value.map(error => { return { text: error } })
+                }
+              }
+              this.importErrors = data.errors;
+              this.processFilesStatus = 'error';
+              const dialog = document.getElementById('modalErrors');
+              dialog.showModal();
+            } else {
+              this.processFilesStatus = 'success';
+              redirect("{% url 'onboarding:detail' 3 %}?status=import-teachers-success");
+            }
+          } catch (error) {
+            console.log('error', error);
+            this.processFilesStatus = 'error';
+          }
+        },
+      },
+      mounted() {
+        const dialogs = document.querySelectorAll('dialog');
+
+        function closeOnClickOutside(event) {
+          const dialog = event.target;
+          if (dialog instanceof HTMLDialogElement) {
+            dialog.close();
+          }
+        }
+
+        dialogs.forEach(dialog => {
+          dialog.addEventListener('click', closeOnClickOutside);
+        });
+
+        // const elementModalEditTeacherDataSubjects = document.getElementById('modalEditTeacherDataSubjects');
+        // const elementModalEditTeacherDataClasses = document.getElementById('modalEditTeacherDataClasses');
+        // const element = document.getElementById('choices-multiple-default');
+        // const choicesOne = new Choices(elementModalEditTeacherDataSubjects, {
+        //   allowHTML: true,
+        //   placeholderValue: 'This is a placeholder set in the config',
+        //   searchPlaceholderValue: 'This is a search placeholder',
+        //   removeItemButton: true,
+        // });
+        // const choicesTwo = new Choices(elementModalEditTeacherDataClasses, {
+          // allowHTML: true,
+          // placeholderValue: 'This is a placeholder set in the config',
+          // searchPlaceholderValue: 'This is a search placeholder',
+          // removeItemButton: true,
+
+          // classNames: {
+          //   containerOuter: 'choices',
+          //   containerInner: 'choices__inner',
+          //   input: 'choices__input', // 'choices__input',
+          //   inputCloned: 'choices__input--cloned',
+          //   list: 'choices__list',
+          //   listItems: 'choices__list--multiple',
+          //   listSingle: 'choices__list--single',
+          //   listDropdown: 'choices__list--dropdown',
+          //   item: 'choices__item',
+          //   itemSelectable: 'choices__item--selectable',
+          //   itemDisabled: 'choices__item--disabled',
+          //   itemChoice: 'choices__item--choice',
+          //   placeholder: 'choices__placeholder',
+          //   group: 'choices__group',
+          //   groupHeading: 'choices__heading',
+          //   button: 'choices__button',
+          //   activeState: 'is-active',
+          //   focusState: 'is-focused',
+          //   openState: 'is-open',
+          //   disabledState: 'is-disabled',
+          //   highlightedState: 'is-highlighted',
+          //   selectedState: 'is-selected',
+          //   flippedState: 'is-flipped',
+          //   loadingState: 'is-loading',
+          //   noResults: 'has-no-results',
+          //   noChoices: 'has-no-choices'
+          // },
+        // });
+      },
+    });
+    // app.component('vue-multiselect', window.VueMultiselect);
+    // app.config.delimiters = ['[[', ']]'];
+    // app.component('vue-multiselect', window.VueMultiselect);
+    // app.component('vSelect', window['vue-select']);
+    // app.mount('#app');
+    // app.$mount('#app');
+  </script>
+</body>
+</html>

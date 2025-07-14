@@ -1,0 +1,500 @@
+{% include 'dashboard/applications/includes/show_diagramming_options.html' %}
+<div v-show="showDiagrammingOptions == '1'">
+    <div class="form-group" v-if="printDefaults.length">
+        <label for="id-exam-print-config-header">Selecione o padrão de impressão</label>
+        <select class="form-control" id="id-exam-print-config-header" ref="inputPrintDefault" @change="selectPrintDefault()">
+            <option value="">Não aplicar nenhum padrão de prova</option>
+            <option :id="printDefault.id" v-for="printDefault in printDefaults">${printDefault.name}</option>
+        </select>
+    </div>
+    <template v-if="!loadedPrintDefaults">
+        <h6>Carregando padrões de impressão <i class="fas fa-spin fa-spinner"></i></h6>
+    </template>
+    <h6>Cabeçalho:</h6>
+    <select name="header" id="id_header" v-model="examPrintConfig.header" class="form-control">
+        <option value="">Não aplicar cabeçalhos</option>
+        {% for header in exam_headers %}
+            <option value="{{header.pk}}" {% if header.main_header %} selected {% endif %}>{{header.name}} {% if header.main_header %} (Padrão) {% endif %}</option>
+        {% endfor %}
+    </select>
+    <small class="form-text text-muted mt-0">
+    Você pode gerenciar seus cabeçalhos em Gerenciamento > Provas.
+    </small>
+
+    <h6 class="mt-3"><label for="id_background_image">Imagem de fundo:</label></h6>
+    <select name="background_image" id="id_background_image" v-model="examPrintConfig.backgroundImage" class="form-control">
+        <option value="">Não há imagem de fundo</option>
+        {% for background in exam_backgrounds %}
+            <option value="{{background.pk}}">{{background.name}}</option>
+        {% endfor %}
+    </select>
+    <small class="form-text text-muted mt-0">
+        Você pode gerenciar as imagens de fundo em Gerenciamento > Provas.
+    </small>
+
+    <h6 class="mt-3">Formato do cabeçalho:</h6>
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.headerFormat == 1 }" @click="examPrintConfig.headerFormat = 1">
+            <input type="radio" name="header_full" id="header_full_default" value="1" autocomplete="off" :checked="examPrintConfig.headerFormat == 1">
+            <i class="fas fa-table fa-lg"></i>
+            <span>
+            Modelo completo
+            </span>
+        </label>
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.headerFormat == 0 }" @click="examPrintConfig.headerFormat = 0">
+            <input type="radio" name="header_full" id="header_full_enem" value="0" autocomplete="off" :checked="examPrintConfig.headerFormat == 0">
+            <i class="far fa-square fa-lg"></i>
+            <span>
+            Apenas nome do aluno
+            </span>
+        </label>
+    </div>
+    <h6 class="mt-3">Formato da prova:</h6>
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.columnType == 0 }" @click="examPrintConfig.columnType = 0">
+            <input type="radio" name="two_columns" id="two_columns_default" value="0" autocomplete="off" :checked="examPrintConfig.columnType == 0">
+            <i class="fas fa-file fa-lg"></i>
+            <span>
+            Modelo padrão
+            </span>
+        </label>
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.columnType == 1 }" @click="examPrintConfig.columnType = 1">
+            <input type="radio" name="two_columns" id="two_columns_enem" value="1" autocomplete="off" :checked="examPrintConfig.columnType == 1">
+            <i class="fas fa-columns fa-lg"></i>
+            <span>
+                Modelo ENEM
+            </span>
+        </label>
+    </div>
+    <h6 class="mt-3">Tipo de caderno:</h6>
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.kind == 0 }" @click="examPrintConfig.kind = 0">
+            <input type="radio" name="separate_subjects" id="separate_subjects_default" value="0" autocomplete="off" :checked="examPrintConfig.kind == 0">
+            <i class="fas fa-file fa-lg"></i>
+            Caderno Único
+        </label>
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.kind == 1 }" @click="examPrintConfig.kind = 1">
+            <input type="radio" name="separate_subjects" id="separate_subjects_enem" value="1" autocomplete="off" :checked="examPrintConfig.kind == 1">
+            <i class="fas fa-copy fa-lg"></i>
+            Caderno por Disciplina
+        </label>
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.kind == 2 }" @click="examPrintConfig.kind = 2">
+            <input type="radio" name="separate_subjects" id="separate_by_question_type" value="2" autocomplete="off" :checked="examPrintConfig.kind == 2">
+            <i class="fas fa-copy fa-lg"></i>
+            Caderno por tipo de questão
+        </label>
+    </div>
+
+    <div class="row">
+        <div class="col-8">
+            <h6 class="mt-3">Espaçamento das questões discursivas:</h6>
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.textQuestionFormat === 1 }" @click="examPrintConfig.textQuestionFormat = 1">
+                <input type="radio" name="line_textual" id="print_line_spaces" value="1" autocomplete="off" :checked="examPrintConfig.textQuestionFormat === 1">
+                <i class="fas fa-bars fa-lg"></i>
+                Imprimir Espaços
+            </label>
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.textQuestionFormat === 0 }" @click="examPrintConfig.textQuestionFormat = 0">
+                <input type="radio" name="line_textual" id="not_print_line_spaces" value="0" autocomplete="off" :checked="examPrintConfig.textQuestionFormat === 0">
+                <i class="fas fa-times fa-lg"></i>
+                Não Imprimir
+            </label>
+            </div>
+        </div>
+        <div class="col">
+            <h6 class="mt-3">Espaçamento(cm)</h6>
+            <input type="number" class="form-control" step="0.5" name="discursive_line_height" v-model="examPrintConfig.discursiveLineHeight">
+        </div>
+    </div>
+
+    <div>
+        <h6 class="mt-3">Tipo de espaço para questão discursiva <span class="badge badge-primary">Novo</span>:</h6>
+        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.discursiveQuestionSpaceType == 0 }" @click="examPrintConfig.discursiveQuestionSpaceType = 0">
+                <input type="radio" name="discursive_question_space_type" id="id-discursive-question-space-type-questions" value="0" autocomplete="off" :checked="examPrintConfig.discursiveQuestionSpaceType == 0">
+                <i class="fas fa-file fa-lg"></i>
+                De acordo com a questão
+            </label>
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.discursiveQuestionSpaceType == 1 }" @click="examPrintConfig.discursiveQuestionSpaceType = 1">
+                <input type="radio" name="discursive_question_space_type" id="id-discursive-question-space-type-blank" value="1" autocomplete="off" :checked="examPrintConfig.discursiveQuestionSpaceType == 1">
+                <i class="far fa-square fa-lg"></i>
+                Espaço em branco
+            </label>
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.discursiveQuestionSpaceType == 2 }" @click="examPrintConfig.discursiveQuestionSpaceType = 2">
+                <input type="radio" name="discursive_question_space_type" id="id-discursive-question-space-type-lines" value="2" autocomplete="off" :checked="examPrintConfig.discursiveQuestionSpaceType == 2">
+                <i class="fas fa-bars fa-lg"></i>
+                Linhas
+            </label>
+        </div>
+    </div>
+
+    <h6 class="mt-3">Ocultar nome das disciplinas:</h6>
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.printSubjectsName }" @click="examPrintConfig.printSubjectsName = true">
+            <input type="radio" name="hide_discipline_name" id="hide_discipline_name_false" value="1" autocomplete="off" :checked="examPrintConfig.printSubjectsName">
+            <i class="fas fa-times fa-lg"></i>
+            Não
+        </label>
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': !examPrintConfig.printSubjectsName }" @click="examPrintConfig.printSubjectsName = false">
+            <input type="radio" name="hide_discipline_name" id="hide_discipline_name_true" value="0" autocomplete="off" :checked="!examPrintConfig.printSubjectsName">
+            <i class="fas fa-check fa-lg"></i>
+            Sim, Ocultar!
+        </label>
+    </div>
+    <small class="form-text text-muted mt-0">
+    Marque esta opção se deseja imprimir o nome da disciplina no início de cada
+    </small>
+
+    <h6 class="mt-3">Ocultar nome das áreas de conhecimento:</h6>
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': !examPrintConfig.hideKnowledgeAreasName }" @click="examPrintConfig.hideKnowledgeAreasName = false">
+            <input type="radio" name="hide_knowledge_area_name" id="hide_knowledge_area_name_false" value="0" autocomplete="off" :checked="!examPrintConfig.hideKnowledgeAreasName">
+            <i class="fas fa-times fa-lg"></i>
+            Não
+        </label>
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.hideKnowledgeAreasName }" @click="examPrintConfig.hideKnowledgeAreasName = true">
+            <input type="radio" name="hide_knowledge_area_name" id="hide_knowledge_area_name_true" value="1" autocomplete="off" :checked="examPrintConfig.hideKnowledgeAreasName">
+            <i class="fas fa-check fa-lg"></i>
+            Sim, Ocultar!
+        </label>
+    </div>
+    <small class="form-text text-muted mt-0">
+    Marque esta opção se deseje ocultar o nome das área do conhecimento no início de cada
+    </small>
+
+    <h6 class="mt-3">Ocultar texto de referência das alternativas:</h6>
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+    <label class="btn btn-outline-primary btn-lg" :class="{'active': !examPrintConfig.hideQuestionsReferencies }" @click="examPrintConfig.hideQuestionsReferencies = false">
+        <input type="radio" name="hide_questions_referencies" id="hide_questions_referencies_false" value="0" autocomplete="off" :checked="!examPrintConfig.hideQuestionsReferencies">
+        <i class="fas fa-times fa-lg"></i>
+        Não
+    </label>
+    <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.hideQuestionsReferencies }" @click="examPrintConfig.hideQuestionsReferencies = true">
+        <input type="radio" name="hide_questions_referencies" id="hide_questions_referencies_true" value="1" autocomplete="off" :checked="examPrintConfig.hideQuestionsReferencies">
+        <i class="fas fa-check fa-lg"></i>
+        Sim, Ocultar!
+    </label>
+    </div>
+    <small class="form-text text-muted mt-0">
+    Marque esta opção se deseje ocultar os textos referências das questões.
+    </small>
+    <h6 class="mt-3">Forçar a impressão das imagens em preto e branco:</h6>
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+    <label class="btn btn-outline-primary btn-lg" :class="{'active': !examPrintConfig.printBlackAndWhiteImages }" @click="examPrintConfig.printBlackAndWhiteImages = false">
+        <input type="radio" name="print_images_with_grayscale" id="print_images_with_grayscale_false" value="0" autocomplete="off" :checked="!examPrintConfig.printBlackAndWhiteImages">
+        <i class="fas fa-times fa-lg"></i>
+        Não
+    </label>
+    <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.printBlackAndWhiteImages }" @click="examPrintConfig.printBlackAndWhiteImages = true">
+        <input type="radio" name="print_images_with_grayscale" id="print_images_with_grayscale_true" value="1" autocomplete="off" :checked="examPrintConfig.printBlackAndWhiteImages">
+        <i class="fas fa-check fa-lg"></i>
+        Sim, Forçar P&B!
+    </label>
+    </div>
+    <small class="form-text text-muted mt-0">
+    Marque esta opção se deseja imprimir as imagens em preto e branco.
+    </small>
+
+    <h6 class="mt-3">Hifenizar textos:</h6>
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+    <label class="btn btn-outline-primary btn-lg" :class="{'active': !examPrintConfig.hyphenate }" @click="examPrintConfig.hyphenate = false">
+        <input type="radio" name="hyphenate_text" id="hyphenate_text_false" value="0" autocomplete="off" :checked="!examPrintConfig.hyphenate">
+        <i class="fas fa-times fa-lg"></i>
+        Não
+    </label>
+    <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.hyphenate }" @click="examPrintConfig.hyphenate = true">
+        <input type="radio" name="hyphenate_text" id="hyphenate_text_true" value="1" autocomplete="off" :checked="examPrintConfig.hyphenate">
+        <i class="fas fa-check fa-lg"></i>
+        Sim, Hifenizar!
+    </label>
+    </div>
+    <small class="form-text text-muted mt-0">
+    Marque esta opção se deseja imprimir o texto hifenizado.
+    </small>
+
+    <h6 class="mt-3">Mostrar a pontuação das questões?</h6>
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': !examPrintConfig.showQuestionScore }" @click="examPrintConfig.showQuestionScore = false">
+            <input type="radio" name="show_question_score" id="show_question_score_false" value="0" autocomplete="off" :checked="!examPrintConfig.showQuestionScore">
+            <i class="fas fa-times fa-lg"></i>
+            Não
+        </label>
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.showQuestionScore }" @click="examPrintConfig.showQuestionScore = true">
+            <input type="radio" name="show_question_score" id="show_question_score_true" value="1" autocomplete="off" :checked="examPrintConfig.showQuestionScore">
+            <i class="fas fa-check fa-lg"></i>
+            Sim, Mostrar!
+        </label>
+    </div>
+    <small class="form-text text-muted mt-0">
+    Marque esta opção se deseja mostrar a pontuação das questões.
+    </small>
+
+    <h6 class="mt-3">Mostrar a banca das questões?</h6>
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': !examPrintConfig.showQuestionBoard }" @click="examPrintConfig.showQuestionBoard = false">
+            <input type="radio" name="show_question_board" id="show_question_board_false" value="0" autocomplete="off" :checked="!examPrintConfig.showQuestionBoard">
+            <i class="fas fa-times fa-lg"></i>
+            Não
+        </label>
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.showQuestionBoard }" @click="examPrintConfig.showQuestionBoard = true">
+            <input type="radio" name="show_question_board" id="show_question_board_true" value="1" autocomplete="off" :checked="examPrintConfig.showQuestionBoard">
+            <i class="fas fa-check fa-lg"></i>
+            Sim, Mostrar!
+        </label>
+    </div>
+    <small class="form-text text-muted mt-0">
+    Marque esta opção se deseja mostrar a banca das questões.
+    </small>
+
+    <h6 class="mt-3">Adicionar o título da prova em todas as páginas?</h6>
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': !examPrintConfig.showFooter }" @click="examPrintConfig.showFooter = false">
+            <input type="radio" name="show_question_board" id="show_footer_false" value="0" autocomplete="off" :checked="!examPrintConfig.showFooter">
+            <i class="fas fa-times fa-lg"></i>
+            Não
+        </label>
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.showFooter }" @click="examPrintConfig.showFooter = true">
+            <input type="radio" name="show_footer" id="show_footer_true" value="1" autocomplete="off" :checked="examPrintConfig.showFooter">
+            <i class="fas fa-check fa-lg"></i>
+            Sim, adicionar!
+        </label>
+    </div>
+    <small class="form-text text-muted mt-0">
+    Marque esta opção se deseja adicionar o título da prova ao rodapé de todas as páginas do caderno (apenas na impressao de malotes).
+    </small>
+
+    <h6 class="mt-3">Adicionar numeração nas páginas?</h6>
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': !examPrintConfig.addPageNumber }" @click="examPrintConfig.addPageNumber = false">
+            <input type="radio" name="show_question_board" id="show_footer_false" value="0" autocomplete="off" :checked="!examPrintConfig.addPageNumber">
+            <i class="fas fa-times fa-lg"></i>
+            Não
+        </label>
+        <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.addPageNumber }" @click="examPrintConfig.addPageNumber = true">
+            <input type="radio" name="show_footer" id="show_footer_true" value="1" autocomplete="off" :checked="examPrintConfig.addPageNumber">
+            <i class="fas fa-check fa-lg"></i>
+            Sim, adicionar!
+        </label>
+    </div>
+    <small class="form-text text-muted mt-0">
+    Marque esta opção se deseja adicionar a numeração de páginas do caderno (apenas na impressao de malotes).
+    </small>
+    <div v-if="examPrintConfig.kind > 0 && examPrintConfig.addPageNumber" class="alert alert-warning" role="alert">
+        O campo de numeração não é aplicado na impressão quando o tipo de prova é diferente de "única".
+    </div>
+
+    <div>
+        <h6 class="mt-3">Ativar o modo econômico? <span class="badge badge-primary">Novo</span></h6>
+        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': !examPrintConfig.economyMode }" @click="examPrintConfig.economyMode = false">
+                <input type="radio" name="economy_mode" id="id-economy-mode-false" value="0" autocomplete="off" :checked="!examPrintConfig.economyMode">
+                <i class="fas fa-times fa-lg"></i>
+                Não
+            </label>
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.economyMode }" @click="examPrintConfig.economyMode = true">
+                <input type="radio" name="economy_mode" id="id-economy-mode-true" value="1" autocomplete="off" :checked="examPrintConfig.economyMode">
+                <i class="fas fa-check fa-lg"></i>
+                Sim, Ativar!
+            </label>
+        </div>
+        <small class="form-text text-muted mt-0">
+            Enunciados são quebrados automaticamente e a prova é exibida em duas colunas.
+        </small>
+    </div>
+
+    <div>
+        <h6 class="mt-3">Forçar alternativas junto ao enunciado? <span class="badge badge-primary">Novo</span></h6>
+        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': !examPrintConfig.forceChoicesWithStatement }" @click="examPrintConfig.forceChoicesWithStatement = false">
+                <input type="radio" name="force_choices_with_statement" id="id-force-choices-with-statement-false" value="0" autocomplete="off" :checked="!examPrintConfig.forceChoicesWithStatement">
+                <i class="fas fa-times fa-lg"></i>
+                Não
+            </label>
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.forceChoicesWithStatement }" @click="examPrintConfig.forceChoicesWithStatement = true">
+                <input type="radio" name="force_choices_with_statement" id="id-force-choices-with-statement-true" value="1" autocomplete="off" :checked="examPrintConfig.forceChoicesWithStatement">
+                <i class="fas fa-check fa-lg"></i>
+                Sim, forçar!
+            </label>
+        </div>
+        <small class="form-text text-muted mt-0">
+            As alternativas de cada questão serão exibidas imediatamente junto ao enunciado. (Quebra de enunciado será desconsiderado.)
+        </small>
+    </div>
+
+    <div>
+        <h6 class="mt-3">Esconder numerações das questões? <span class="badge badge-primary">Novo</span></h6>
+        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': !examPrintConfig.hideNumbering }" @click="examPrintConfig.hideNumbering = false">
+                <input type="radio" name="hide_numbering" id="id-hide-numbering-false" value="0" autocomplete="off" :checked="!examPrintConfig.hideNumbering">
+                <i class="fas fa-times fa-lg"></i>
+                Não
+            </label>
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.hideNumbering }" @click="examPrintConfig.hideNumbering = true">
+                <input type="radio" name="hide_numbering" id="id-hide-numbering-true" value="1" autocomplete="off" :checked="examPrintConfig.hideNumbering">
+                <i class="fas fa-check fa-lg"></i>
+                Sim, esconder!
+            </label>
+        </div>
+        <small class="form-text text-muted mt-0">
+            Remove a numeração das questões, deixando o enunciado e as alternativas sem identificação numérica.
+        </small>
+    </div>
+
+    <div>
+        <h6 class="mt-3">Quebra de enunciado? <span class="badge badge-primary">Novo</span></h6>
+        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': !examPrintConfig.breakEnunciation }" @click="examPrintConfig.breakEnunciation = false">
+                <input type="radio" name="break_enunciation" id="id-break-enunciation-false" value="0" autocomplete="off" :checked="!examPrintConfig.breakEnunciation">
+                <i class="fas fa-times fa-lg"></i>
+                Não
+            </label>
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.breakEnunciation }" @click="examPrintConfig.breakEnunciation = true">
+                <input type="radio" name="break_enunciation" id="id-break-enunciation-true" value="1" autocomplete="off" :checked="examPrintConfig.breakEnunciation">
+                <i class="fas fa-check fa-lg"></i>
+                Sim, quebrar!
+            </label>
+        </div>
+        <small class="form-text text-muted mt-0">
+            Se ativado, quebra o enunciado em partes menores para facilitar a leitura e organização das questões.
+        </small>
+    </div>
+
+    <div>
+        <h6 class="mt-3">Quebrar página de todas as questões <span class="badge badge-primary">Novo</span></h6>
+        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': !examPrintConfig.breakAllQuestions }" @click="examPrintConfig.breakAllQuestions = false">
+                <input type="radio" name="break_all_questions" id="id-break-all-questions-false" value="0" autocomplete="off" :checked="!examPrintConfig.breakAllQuestions">
+                <i class="fas fa-times fa-lg"></i>
+                Não
+            </label>
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.breakAllQuestions }" @click="examPrintConfig.breakAllQuestions = true">
+                <input type="radio" name="break_all_questions" id="id-break-all-questions-true" value="1" autocomplete="off" :checked="examPrintConfig.breakAllQuestions">
+                <i class="fas fa-check fa-lg"></i>
+                Sim, quebrar!
+            </label>
+        </div>
+        <small class="form-text text-muted mt-0">
+            Se ativado, permite que cada página tenha apenas uma questão.
+        </small>
+    </div>
+
+    <div>
+        <h6 class="mt-3">Idioma: <span class="badge badge-primary">Novo</span></h6>
+        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.language === 0 }" @click="examPrintConfig.language = 0">
+                <input type="radio" name="language" id="language_0" value="0" autocomplete="off" :checked="examPrintConfig.language === 0">
+                Português (Padrão)
+            </label>
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.language == 1 }" @click="examPrintConfig.language = 1">
+                <input type="radio" name="language" id="language_1" value="1" autocomplete="off" :checked="examPrintConfig.language == 1">
+                Inglês
+            </label>
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.language == 2 }" @click="examPrintConfig.language = 2">
+                <input type="radio" name="language" id="language_2" value="2" autocomplete="off" :checked="examPrintConfig.language == 2">
+                Espanhol
+            </label>
+        </div>
+        <small class="form-text text-muted mt-0">
+            Selecione o idioma padrão do caderno. Termos padrões como "questão", "texto base" dados do cabeçalho padrão serão traduzidos.
+        </small>
+    </div>
+
+    <h6 class="mt-3">Tipo de fonte:</h6>
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+        <label class="btn btn-outline-primary btn-lg" style="font-family: IBM Plex Sans;" :class="{'active': examPrintConfig.fontFamily === 0 }" @click="examPrintConfig.fontFamily = 0">
+            <input type="radio" name="font_family" id="font_family_0" value="0" autocomplete="off" :checked="examPrintConfig.fontFamily === 0">
+            <i class="fas fa-font fa-sm"></i>
+            IBM Plex Sans (Padrão)
+        </label>
+        <label class="btn btn-outline-primary btn-lg" style="font-family: Verdana;" :class="{'active': examPrintConfig.fontFamily == 1 }" @click="examPrintConfig.fontFamily = 1">
+            <input type="radio" name="font_family" id="font_family_1" value="1" autocomplete="off" :checked="examPrintConfig.fontFamily == 1">
+            <i class="fas fa-font fa-sm"></i>
+            Verdana
+        </label>
+        <label class="btn btn-outline-primary btn-lg" style="font-family: Times;" :class="{'active': examPrintConfig.fontFamily == 2 }" @click="examPrintConfig.fontFamily = 2">
+            <input type="radio" name="font_family" id="font_family_2" value="2" autocomplete="off" :checked="examPrintConfig.fontFamily == 2">
+            <i class="fas fa-font fa-md"></i>
+            Times
+        </label>
+        <label class="btn btn-outline-primary btn-lg" style="font-family: Arial;" :class="{'active': examPrintConfig.fontFamily == 3 }" @click="examPrintConfig.fontFamily = 3">
+            <input type="radio" name="font_family" id="font_family_3" value="3" autocomplete="off" :checked="examPrintConfig.fontFamily == 3">
+            <i class="fas fa-font fa-lg"></i>
+            Arial
+        </label>
+        <label class="btn btn-outline-primary btn-lg" style="'Nunito Sans', sans-serif;" :class="{'active': examPrintConfig.fontFamily == 4 }" @click="examPrintConfig.fontFamily = 4">
+            <input type="radio" name="font_family" id="font_family_4" value="4" autocomplete="off" :checked="examPrintConfig.fontFamily == 4">
+            <i class="fas fa-font fa-lg"></i>
+            Nunito Sans
+        </label>
+    </div>
+
+    <h6 class="mt-3">Espaçamento entre linhas:</h6>
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+    <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.lineHeight == 0 }" @click="examPrintConfig.lineHeight = 0">
+        <input type="radio" name="line_spacing" id="line_spacing_white" value="0" autocomplete="off" :checked="examPrintConfig.lineHeight == 0">
+        <i class="fas fa-text-height fa-sm"></i>
+        Normal
+    </label>
+    <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.lineHeight == 1 }" @click="examPrintConfig.lineHeight = 1">
+        <input type="radio" name="line_spacing" id="line_spacing_rows" value="1" autocomplete="off" :checked="examPrintConfig.lineHeight == 1">
+        <i class="fas fa-text-height fa-md"></i>
+        Médio
+    </label>
+    <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.lineHeight == 2 }" @click="examPrintConfig.lineHeight = 2">
+        <input type="radio" name="line_spacing" id="line_spacing_rows" value="2" autocomplete="off" :checked="examPrintConfig.lineHeight == 2">
+        <i class="fas fa-text-height fa-lg"></i>
+        Grande
+    </label>
+    <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.lineHeight == 3 }" @click="examPrintConfig.lineHeight = 3">
+        <input type="radio" name="line_spacing" id="line_spacing_rows" value="3" autocomplete="off" :checked="examPrintConfig.lineHeight == 3">
+        <i class="fas fa-text-height fa-lg" style="font-size:24px"></i>
+        Extra Grande
+    </label>
+    </div>
+    <h6 class="mt-3">Tamanho da fonte:</h6>
+
+    <div class="table-responsive">
+        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.fontSize == 5 }" @click="examPrintConfig.fontSize = 5">
+                <input type="radio" name="font_size" id="font_size_8" value="5" autocomplete="off" :checked="examPrintConfig.fontSize == 5">
+                <i class="fas fa-font fa-sm"></i>
+                Muito pequena (8pt)
+            </label>
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.fontSize == 6 }" @click="examPrintConfig.fontSize = 6">
+                <input type="radio" name="font_size" id="font_size_10" value="6" autocomplete="off" :checked="examPrintConfig.fontSize == 6">
+                <i class="fas fa-font fa-sm"></i>
+                Pequena 1 (10pt)
+            </label>
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.fontSize == 7 }" @click="examPrintConfig.fontSize = 7">
+                <input type="radio" name="font_size" id="font_size_11" value="6" autocomplete="off" :checked="examPrintConfig.fontSize == 7">
+                <i class="fas fa-font fa-sm"></i>
+                Pequena 2 (11pt)
+            </label>
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.fontSize == 0 }" @click="examPrintConfig.fontSize = 0">
+                <input type="radio" name="font_size" id="font_size_12" value="0" autocomplete="off" :checked="examPrintConfig.fontSize == 0">
+                <i class="fas fa-font fa-sm"></i>
+                Padrão 1 (12pt)
+            </label>
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.fontSize == 1 }" @click="examPrintConfig.fontSize = 1">
+                <input type="radio" name="font_size" id="font_size_14" value="1" autocomplete="off" :checked="examPrintConfig.fontSize == 1">
+                <i class="fas fa-font fa-md"></i>
+                Padrão 2 (14pt)
+            </label>
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.fontSize == 2 }" @click="examPrintConfig.fontSize = 2">
+                <input type="radio" name="font_size" id="font_size_18" value="2" autocomplete="off" :checked="examPrintConfig.fontSize == 2">
+                <i class="fas fa-font fa-lg"></i>
+                Médio (18pt)
+            </label>
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.fontSize == 3 }" @click="examPrintConfig.fontSize = 3">
+                <input type="radio" name="font_size" id="font_size_22" value="3" autocomplete="off" :checked="examPrintConfig.fontSize == 3">
+                <i class="fas fa-font fa-lg"></i>
+                Grande (22pt)
+            </label>
+            <label class="btn btn-outline-primary btn-lg" :class="{'active': examPrintConfig.fontSize == 4 }" @click="examPrintConfig.fontSize = 4">
+                <input type="radio" name="font_size" id="font_size_32" value="4" autocomplete="off" :checked="examPrintConfig.fontSize == 4">
+                <i class="fas fa-font fa-lg"></i>
+                Extra Grande (32pt)
+            </label>
+        </div>
+    </div>
+</div>

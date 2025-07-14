@@ -1,0 +1,254 @@
+
+    <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" id="challengesID" ref="challenges">
+        <skeleton-card v-if="['loading', 'idle'].includes(challenges.status)"></skeleton-card>
+        <span class="tw-flex tw-items-center tw-justify-between tw-pb-6" style="margin-top: 20p; padding-top: 72px;" v-if="challenges.data.length > 1">
+        <div class="tw-flex tw-items-center">
+            <h3 class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">
+            Histórico de desafios
+            </h3>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="tw-ml-2">
+            <g clip-path="url(#clip0_2002_1216)">
+                <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </g>
+            <defs>
+                <clipPath id="clip0_2002_1216">
+                <rect width="16" height="16" fill="white" />
+                </clipPath>
+            </defs>
+            </svg>
+        </div>
+        </span>
+        <div id="chartChallenges" style="width: 100%; height: 100px;" :style="['loading', 'idle'].includes(challenges.status) || challenges.data.length < 2 ? 'visibility: hidden;':''"></div>
+        <div class="tw-flex tw-justify-center tw-pt-2" :class="{ 'd-none': challenges.data.length < 2 }">
+        <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">Últimos 20 instrumentos avaliativos do período selecionado</p>
+        </div>
+    </div>
+
+    <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" style="padding-top: 32px; padding-bottom: 32px;">
+        <hr class="tw-m-0" style="border-color: #E5E7EA;" />
+    </div>
+
+    <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem] tw-pt-10">
+        <div class="tw-flex tw-justify-between">
+        <ul id="tab-header" role="tablist" class="tw-list-none tw-w-full tw-flex tw-mb-0">
+            <li
+            class="tw-w-full tw-text-center tw-px-4 sm:tw-px-6 lg:tw-px-8 tw-py-[1.625rem] tw-cursor-pointer tw-border tw-border-[#E5E7EA] tw-rounded-tl-xl tw-border-b-0"
+            :class="[activeTab === 'tab-1' ? 'tw-bg-white tw--mb-px' : 'tw-bg-[#F9FAFB]']"
+            @click="changeTab('tab-1')"
+            >
+            <span
+                role="tab"
+                aria-controls="tab-1"
+                aria-selected="true"
+                class="d-flex align-items-center justify-content-center tw-text-base tw-px-12 tw-font-medium tw-text-[#001737]"
+            >
+                Assuntos <div class="d-flex align-items-center justify-content-center tw-bg-primary-600 text-white mx-3 rounded-circle" style="width: 30px; height: 30px;">#{topics.status == 'success' ? topics.data.length : '-'}</div>
+            </span>
+            </li>
+            <li
+            class="tw-w-full tw-text-center tw-px-4 sm:tw-px-6 lg:tw-px-8 tw-py-[1.625rem] tw-cursor-pointer tw-border tw-border-[#E5E7EA] tw-border-b-0 tw-border-l-0"
+            :class="[activeTab === 'tab-2' ? 'tw-bg-white tw--mb-px' : 'tw-bg-[#F9FAFB]']"
+            @click="changeTab('tab-2')"
+            >
+            <span
+                role="tab"
+                aria-controls="tab-1"
+                aria-selected="true"
+                class="d-flex align-items-center justify-content-center tw-text-base tw-px-12 tw-font-medium tw-text-[#001737]"
+            >
+                Habilidades <div class="d-flex align-items-center justify-content-center tw-bg-primary-600 text-white mx-3 rounded-circle" style="width: 30px; height: 30px;">#{abilities.status == 'success' ? abilities.data.length : '-'}</div>
+            </span>
+            </li>
+            <li
+            class="tw-w-full tw-border tw-border-[#E5E7EA] tw-text-center tw-px-4 sm:tw-px-6 lg:tw-px-8 tw-py-[1.625rem] tw-cursor-pointer tw-rounded-tr-xl tw-border-b-0 tw-border-l-0"
+            :class="[activeTab === 'tab-3' ? 'tw-bg-white tw--mb-px' : 'tw-bg-[#F9FAFB]']"
+            @click="changeTab('tab-3')"
+            >
+            <span
+                role="tab"
+                aria-controls="tab-1"
+                aria-selected="true"
+                class="d-flex align-items-center justify-content-center tw-text-base tw-px-12 tw-font-medium tw-text-[#001737]"
+            >
+                Competências <div class="d-flex align-items-center justify-content-center tw-bg-primary-600 text-white mx-3 rounded-circle" style="width: 30px; height: 30px;">#{abilities.status == 'success' ? competences.data.length : '-'}</div>
+            </span>
+            </li>
+        </ul>
+        </div>
+        <div id="tab-content" style="max-height: 480px; overflow-y: auto;">
+        <div
+            id="tab-1"
+            role="tabpanel"
+            aria-labelledby="tab-1-content"
+            :style="{ display: activeTab === 'tab-1' ? 'block' : 'none' }"
+        >
+            <div class="tw-bg-white sm:tw-rounded-b-xl tw-pt-8 tw-border tw-border-[#E5E7EA] tw-mb-8">
+            <div class="px-5" style="padding-bottom: 60px;" ref="topics">
+                <span class="tw-flex justify-content-between tw-pb-6">
+                <div class="tw-flex tw-items-center">
+                    <h3 class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">
+                    Grau de domínio nos assuntos
+                    </h3>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="tw-ml-2">
+                    <g clip-path="url(#clip0_2002_1216)">
+                        <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </g>
+                    <defs>
+                        <clipPath id="clip0_2002_1216">
+                        <rect width="16" height="16" fill="white" />
+                        </clipPath>
+                    </defs>
+                    </svg>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <div class="row">
+                    <div class="col">
+                        <select id="inputFilterTopicsSubjects" v-model="subjectsBNCCs.selectedTopics" multiple data-live-search="true" class="tw-text-[#667085] tw-text-sm tw-font-normal tw-border-0 mr-3">
+                        <option :value="subject.id" v-for="subject in subjectsBNCCs.topics">#{subject.name}</option>
+                        </select>
+                    </div>
+                    </div>
+                </div>
+                </span>
+                <div>
+                <skeleton-card v-if="['loading', 'idle'].includes(topics.status)"></skeleton-card>
+                <ul role="list" class="tw-grid tw-gap-6 sm:tw-grid-cols-4">
+                    <li class="tw-list-none tw-flex tw-flex-col tw-gap-6 tw-rounded-xl tw-bg-white tw-border tw-border-[#E5E7EA] tw-p-6" v-for="bncc in topics.data.filter(b => subjectsBNCCs.selectedTopics.length ? subjectsBNCCs.selectedTopics.includes(b.subject_id) : true)">
+                    <h3 data-toggle="tooltip" :title="bncc.text" class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-gray-900 text-truncate mb-0">
+                        #{bncc.text}
+                        <br>
+                        <span style="font-size: 0.7rem;">#{bncc.subject_name}</span>
+                    </h3>
+                    <div class="tw-flex tw-flex-col tw-gap-2">
+                        <div class="tw-flex tw-justify-between">
+                        <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">Grau de domínio</p>
+                        <p class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-[#001737] tw-mb-0">#{bncc.performance.toFixed(2)}%</p>
+                        </div>
+                        <div class="tw-overflow-hidden tw-rounded-[0.25rem]" :style="{ backgroundColor: bncc.performance < 25 ? '#D92D2010' : bncc.performance >= 25 && bncc.performance < 50 ? '#F3B36410' : bncc.performance >= 50 && bncc.performance < 75 ? '#0C7BDB10' : '#41C58810' }">
+                        <div class="tw-h-2 tw-rounded-sm" :style="{ width: bncc.performance +'%', backgroundColor: bncc.performance < 25 ? '#D92D20': bncc.performance >= 25 && bncc.performance < 50 ? '#F3B364' : bncc.performance >= 50 && bncc.performance < 75 ? '#0C7BDB' : '#41C588' }"></div>
+                        </div>
+                    </div>
+                    </li>
+                </ul>
+                </div>
+            </div>
+            </div>
+        </div>
+        <div
+            id="tab-2"
+            role="tabpanel"
+            aria-labelledby="tab-2-content"
+            :style="{ display: activeTab === 'tab-2' ? 'block' : 'none' }"
+        >
+            <div class="tw-bg-white sm:tw-rounded-b-xl tw-pt-8 tw-border tw-border-[#E5E7EA] tw-mb-8">
+            <div class="px-5" style="padding-bottom: 60px;" ref="abilities">
+                <span class="tw-flex justify-content-between tw-pb-6">
+                <div class="tw-flex tw-items-center">
+                    <h3 class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">
+                    Grau de domínio nas habilidades
+                    </h3>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="tw-ml-2">
+                    <g clip-path="url(#clip0_2002_1216)">
+                        <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </g>
+                    <defs>
+                        <clipPath id="clip0_2002_1216">
+                        <rect width="16" height="16" fill="white" />
+                        </clipPath>
+                    </defs>
+                    </svg>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <div class="row">
+                    <div class="col">
+                        <select id="inputFilterAbilitiesSubjects" v-model="subjectsBNCCs.selectedAbilities" data-live-search="true" class="tw-text-[#667085] tw-text-sm tw-font-normal tw-border-0 mr-3">
+                        <option :value="subject.id" v-for="subject in subjectsBNCCs.abilities">#{subject.name}</option>
+                        </select>
+                    </div>
+                    </div>
+                </div>
+                </span>
+                <div>
+                <skeleton-card v-if="['loading', 'idle'].includes(abilities.status)"></skeleton-card>
+                <ul role="list" class="tw-grid tw-gap-6 sm:tw-grid-cols-4">
+                    <li class="tw-list-none tw-flex tw-flex-col tw-gap-6 tw-rounded-xl tw-bg-white tw-border tw-border-[#E5E7EA] tw-p-6" v-for="bncc in abilities.data.filter(b => subjectsBNCCs.selectedAbilities.length ? subjectsBNCCs.selectedAbilities.includes(b.subject_id) : true)">
+                    <h3 data-toggle="tooltip" :title="bncc.text" class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-gray-900 text-truncate mb-0">
+                        #{bncc.code ? bncc.code+ '-':'' } #{bncc.text}
+                        <br>
+                        <span style="font-size: 0.7rem;">#{bncc.subject_name}</span>
+                    </h3>
+                    <div class="tw-flex tw-flex-col tw-gap-2">
+                        <div class="tw-flex tw-justify-between">
+                        <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">Grau de domínio</p>
+                        <p class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-[#001737] tw-mb-0">#{bncc.performance.toFixed(2)}%</p>
+                        </div>
+                        <div class="tw-overflow-hidden tw-rounded-[0.25rem]" :style="{ backgroundColor: bncc.performance < 25 ? '#D92D2010' : bncc.performance >= 25 && bncc.performance < 50 ? '#F3B36410' : bncc.performance >= 50 && bncc.performance < 75 ? '#0C7BDB10' : '#41C58810' }">
+                        <div class="tw-h-2 tw-rounded-sm" :style="{ width: bncc.performance +'%', backgroundColor: bncc.performance < 25 ? '#D92D20': bncc.performance >= 25 && bncc.performance < 50 ? '#F3B364' : bncc.performance >= 50 && bncc.performance < 75 ? '#0C7BDB' : '#41C588' }"></div>
+                        </div>
+                    </div>
+                    </li>
+                </ul>
+                </div>
+            </div>
+            </div>
+        </div>
+        <div
+            id="tab-3"
+            role="tabpanel"
+            aria-labelledby="tab-3-content"
+            :style="{ display: activeTab === 'tab-3' ? 'block' : 'none' }"
+        >
+            <div class="tw-bg-white sm:tw-rounded-b-xl tw-pt-8 tw-border tw-border-[#E5E7EA] tw-mb-8">
+            <div class="px-5" style="padding-bottom: 60px;" ref="competences">
+                <span class="tw-flex justify-content-between tw-pb-6">
+                <div class="tw-flex tw-items-center">
+                    <h3 class="tw-text-base tw-font-medium tw-text-[#101828] tw-mb-0">
+                    Grau de domínio nas competências
+                    </h3>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="tw-ml-2">
+                    <g clip-path="url(#clip0_2002_1216)">
+                        <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </g>
+                    <defs>
+                        <clipPath id="clip0_2002_1216">
+                        <rect width="16" height="16" fill="white" />
+                        </clipPath>
+                    </defs>
+                    </svg>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <div class="row">
+                    <div class="col">
+                        <select id="inputFilterCompetencesSubjects" v-model="subjectsBNCCs.selectedCompetences" data-live-search="true" class="tw-text-[#667085] tw-text-sm tw-font-normal tw-border-0 mr-3">
+                        <option :value="subject.id" v-for="subject in subjectsBNCCs.competences">#{subject.name}</option>
+                        </select>
+                    </div>
+                    </div>
+                </div>
+                </span>
+                <div>
+                <skeleton-card v-if="['loading', 'idle'].includes(competences.status)"></skeleton-card>
+                <ul role="list" class="tw-grid tw-gap-6 sm:tw-grid-cols-4">
+                    <li class="tw-list-none tw-flex tw-flex-col tw-gap-6 tw-rounded-xl tw-bg-white tw-border tw-border-[#E5E7EA] tw-p-6" v-for="bncc in competences.data.filter(b => subjectsBNCCs.selectedCompetences.length ? subjectsBNCCs.selectedCompetences.includes(b.subject_id) : true)">
+                    <h3 data-toggle="tooltip" :title="bncc.text" class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-gray-900 text-truncate mb-0">
+                        #{bncc.code ? bncc.code+ '-':'' } #{bncc.text}
+                        <br>
+                        <span style="font-size: 0.7rem;">#{bncc.subject_name}</span>
+                    </h3>
+                    <div class="tw-flex tw-flex-col tw-gap-2">
+                        <div class="tw-flex tw-justify-between">
+                        <p class="tw-text-sm tw-font-normal tw-text-[#667085] tw-mb-0">Grau de domínio</p>
+                        <p class="tw-font-['Roboto'] tw-text-sm tw-font-medium tw-text-[#001737] tw-mb-0">#{bncc.performance.toFixed(2)}%</p>
+                        </div>
+                        <div class="tw-overflow-hidden tw-rounded-[0.25rem]" :style="{ backgroundColor: bncc.performance < 25 ? '#D92D2010' : bncc.performance >= 25 && bncc.performance < 50 ? '#F3B36410' : bncc.performance >= 50 && bncc.performance < 75 ? '#0C7BDB10' : '#41C58810' }">
+                        <div class="tw-h-2 tw-rounded-sm" :style="{ width: bncc.performance +'%', backgroundColor: bncc.performance < 25 ? '#D92D20': bncc.performance >= 25 && bncc.performance < 50 ? '#F3B364' : bncc.performance >= 50 && bncc.performance < 75 ? '#0C7BDB' : '#41C588' }"></div>
+                        </div>
+                    </div>
+                    </li>
+                </ul>
+                </div>
+            </div>
+            </div>
+        </div>
+        </div>
+    </div>

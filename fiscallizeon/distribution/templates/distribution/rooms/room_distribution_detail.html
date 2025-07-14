@@ -1,0 +1,675 @@
+
+{% extends 'redesign/base.html' %}
+
+
+
+{% load static %}
+
+{% block title %}
+Lize - Listagem de Alunos Ensalados
+{% endblock title %}
+
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<style>
+    .black-text a {
+            color: black !important;
+    }
+    .text {
+        font-family: Inter;
+        font-weight: 600;
+        line-height: 20px;
+        letter-spacing: 0em;
+        text-align: left;
+    }
+    .hovable:hover {
+        color: #fea464 !important;
+        cursor: pointer;
+    }
+    .select2-results__option:before {
+        content: "";
+        display: inline-block;
+        position: relative;
+        height: 20px;
+        width: 20px;
+        border: 2px solid #C1C1C1;
+        border-radius: 4px;
+        background-color: rgb(255, 255, 255);
+        margin-right: 5px;
+        vertical-align: middle;
+    }
+    .select2-results__option[aria-selected=true]:before {
+        content: "✔️";
+        color: rgb(0, 0, 0);
+        border: 2px solid #fffefe;
+        border: 0;
+        display: inline-block;
+        padding-left: 3px;
+    }
+    .select2-container--default.select2-container--focus .select2-selection--multiple {
+        border: 0 !important;
+        box-shadow: inset 0 0 0 0px #fff, inset 0 0 0 calc(2px + 0px ) rgb(255 143 62 / 1 ), 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+    }
+</style>
+{% endblock css-additional %}
+{% block content-fixed %}
+    <div class="tw-flex tw-justify-center">
+        <div class="ard cer dcv  tw-max-w-[100rem] tw-flex-1">
+            <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1.5rem; justify-content: space-between;">
+                <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-6 sm:tw-flex-nowrap tw-w-full">
+                    <h1 class="tw-text-xl tw-font-semibold tw-leading-7 tw-text-[#374151] sm:tw-truncate sm:tw-text-2xl sm:tw-tracking-tight tw-mb-0">
+                        Alunos Ensalados
+                    </h1>
+                    <div class="tw-ml-auto tw-flex tw-gap-4">
+                        <div class="dropdown m-1 float-right">
+                            <button  class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold hover:tw-text-white tw-shadow-sm hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600" type="button" data-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-print  tw-font-semibold"></i> Relatórios
+                                <svg class="tw--mr-1 tw-h-5 tw-w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <a class="dropdown-item" href="#">Imprimir Malote</a>
+                            </div>
+                        </div> 
+                    </div>
+                </div>
+            </div>
+            <div class="row d-flex justify-content-between">
+                {% if object.application_set.all %}
+                    <div class="col-xl-3 col-12 col-md-4 py-1">
+                        <div class="card">
+                            <div class="card-body d-flex flex-column text-center">
+                                <span class="">Data: <strong>{{object.application_set.all.0.date|date:"d/m/Y"}}</strong></span>
+                                <span>De: <strong>{{object.application_set.all.0.start|time:"H:i"}}</strong> Até: <strong>{{object.application_set.all.0.end|time:"H:i"}}</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                <div class="col-xl-3 col-12 col-md-4 py-1">
+                    <div class="card">
+                        <div class="card-body d-flex flex-column text-center">
+                            <span class="tw-font-semibold  tw-font-semibold"><strong>{{aggragations.applications_count}}</strong></span>
+                            <span>Aplicações</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-12 col-md-4 py-1">
+                    <div class="card">
+                        <div class="card-body d-flex flex-column text-center">
+                            <span class=" tw-font-semibold"><strong>{{aggragations.students_count}}</strong></span>
+                            <span>Alunos</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-12 col-md-4 py-1">
+                    <div class="card">
+                        <div class="card-body d-flex flex-column text-center">
+                            <span class="tw-font-semibold"><strong>{{aggragations.rooms_count}}</strong></span>
+                            <span>Salas</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="tw-flex tw-justify-center">
+        <div class="ard cer dcv tw-pb-8 tw-max-w-[100rem] tw-flex-1">
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item  tw-font-semibold">
+                    <a class="nav-link active" data-toggle="tab" href="#rooms" role="tab">
+                        Salas
+                    </a>
+                </li>
+                <li class="nav-item  tw-font-semibold" v-show="selectedRoom.students.length > 0">
+                    <a class="nav-link" data-toggle="tab" href="#students" data-student role="tab">
+                        Alunos <span class="badge badge-secondary ml-1">${selectedRoom.students.length}</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="tw-border tab-content bd bg-white bd-t-0 pd-20" id="myTabContent">
+                <div class="tab-pane fade show active" id="rooms" role="tabpanel" aria-labelledby="home-tab">
+                    <form method="GET" class="d-flex flex-wrap">
+                        <div class="col-md-5 col-12 mb-3 mb-md-0">
+                            <label class="mb-3 tw-font-semibold" for="id_coordination">Coordenação</label>
+                            <div>
+                                <select name="school_coordination" id="id_coordination" class="form-control" multiple>
+                                    {% for coordination in coordinations %}
+                                        <option value="{{coordination.pk}}" {% if coordination.pk|stringformat:'s' in q_school_coordinations %} selected {% endif %}>{{coordination.name}}</option>
+                                    {% endfor %}
+                                </select>
+                            </div> 
+                        </div>
+                        <div class="col-md-5 col-12 mb-3 mb-md-0">
+                            <label class="mb-3 tw-font-semibold" for="id_unity">Unidade</label>
+                            <div>
+                                <select name="unity" id="id_unity" class="form-control" multiple>
+                                    {% for unity in unitys %}
+                                        <option value="{{unity.pk}}" {% if unity.pk|stringformat:'s' in q_unitys %} selected {% endif %}>{{unity.name}}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-2 col-xl-2 d-flex align-items-end">
+                            <button class="btn btn-primary btn-block" type="submit"><i class="fas fa-search"></i> Filtrar</button>
+                        </div>
+                    </form>
+                    <div class="col-12">
+                        <div class="py-3">
+                            <h6 class="mg-b-5">Listagem de salas</h6>
+                            <p class="tx-13 tx-color-03 mg-b-5">Gerencie todas as salas na listadas abaixo</p>
+                        </div>
+                    </div>
+                    <div class="col-12">    
+                        <div class="table-responsive">
+                            <table class="table mg-b-1">
+                                <thead>
+                                    <tr>
+                                        <th>Sala</th>
+                                        <th>Alunos</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for room in rooms %}
+                                    <tr>
+                                        <td class=" tw-font-semibold align-middle">
+                                            {{room.name}} <br> 
+                                            <span class="text-muted">{{room.unity_name}}</span>
+                                        </td>
+                                        <!-- <td class=" tw-font-semibold align-middle">{{room.get_category_display}}</td> -->
+                                        <td class=" tw-font-semibold align-middle">
+                                            {{room.students_count}}
+                                        </td>
+                                        <td class="d-flex justify-content-end">
+                                            <div class="dropdown m-1">
+                                                <button class="tw-inline-flex tw-w-full tw-justify-center tw-gap-x-1.5 tw-rounded-md tw-bg-white tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-[#667085] tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50"  type="button" data-toggle="dropdown" aria-expanded="false">
+                                                    Opções
+                                                    <svg class="tw--mr-1 tw-h-5 tw-w-5 tw-text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </button>
+                                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                                    <div class="dropdown-item">
+                                                        <div class="tw-flex tw-items-center">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                                            </svg>
+                                                            <a style="color: black;"  href="javascript:void(0)" @click="getRoomDistributionStudentList('{{room.room_distribution_id}}', '{{room.id}}')">Ver alunos</a>
+                                                        </div>    
+                                                    </div> 
+                                                    <div class="dropdown-item">
+                                                        <div class="tw-flex tw-items-center">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z" />
+                                                            </svg>
+                                                            <a style="color: black;"  target="_blank" href="{% url 'distribution:room_attendance_detail' pk=room.id distribution=room.room_distribution_id  %}" data-toggle="tooltip" data-placement="top" title="">Imprimir lista de presença</a>
+                                                        </div>      
+                                                    </div>
+                                                    
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4">
+                                            Não há salas cadastrados até o momento.
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="students" role="tabpanel" aria-labelledby="profile-tab">
+                    <div class="py-3">
+                        <h6 class="mg-b-5">Alunos Ensalados</h6>
+                        <p class="tx-13 tx-color-03 mg-b-5">Gerencie todos os alunos ensalados na listadas abaixo</p>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table mg-b-1">
+                            <thead>
+                                <tr>
+                                    <th>Aluno</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="student in selectedRoom.students">
+                                    <td class=" tw-font-semibold align-middle">${student.name}</td>
+                                    <td class="d-flex justify-content-end">
+                                        <div class="dropdown m-1">
+                                            <button class="tw-inline-flex tw-w-full tw-justify-center tw-gap-x-1.5 tw-rounded-md tw-bg-white tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-[#667085] tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50"  type="button" data-toggle="dropdown" aria-expanded="false">
+                                                Opções
+                                                <svg class="tw--mr-1 tw-h-5 tw-w-5 tw-text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                                                </svg>
+                                            </button>
+                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                                <a class= "dropdown-item" href="#" @click.prevent.default="openPrintModal(student)">
+                                                    <div class="tw-flex tw-items-center">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z" />
+                                                        </svg>
+                                                        Imprimir malote individual
+                                                    </div>
+                                                </a>
+                                                <div class="dropdown-item">
+                                                    <div class="tw-flex tw-items-center">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                                            <polyline points="23 4 23 10 17 10"></polyline>
+                                                            <polyline points="1 20 1 14 7 14"></polyline>
+                                                            <path style="stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;" d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                                                        </svg>
+                                                        <a style="color: black;" v-if="Number('{{rooms.count}}') > 1" href="#" @click="selectedStudent = student, getRoomDistributionlList()" data-toggle="modal" data-target="#modalChangeStudent" >Trocar aluno de sala </a>
+                                                    </div>      
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock content-fixed %}
+
+
+
+{% block extra-modal %}
+<div class="modal fade" id="configurePrintModal" role="dialog" tabindex="-1">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Configure a impressão do caderno de prova nesta exportação</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="max-height: fit-content; height: fit-content;">
+                <h6>Cabeçalho:</h6>
+                <select name="header" v-model="printOptions.header" class="form-control">
+                    <option value="">Não aplicar cabeçalhos</option>
+                    {% for header in exam_headers %}
+                    <option value="{{header.pk}}" {% if header.main_header %} selected {% endif %}>{{header.name}} {% if header.main_header %} (Padrão) {% endif %}</option>
+                    {% endfor %}
+                </select>
+                <small class="form-text text-muted mt-0">
+                    Você pode gerenciar seus cabeçalhos em Gerenciamento > Provas.
+                </small>
+                <h6 class="mt-3">Formato do cabeçalho:</h6>
+                <div class="btn-group btn-group-toggle">
+                    <label class="btn btn-outline-primary btn-lg" :class="{active: printOptions.header_full == 1}">
+                        <input type="radio" name="header_full" v-model="printOptions.header_full" value="1">
+                        <i class="fas fa-table fa-lg"></i>
+                        <span>Modelo completo</span>
+                    </label>
+                    <label class="btn btn-outline-primary btn-lg" :class="{active: printOptions.header_full == 0}">
+                        <input type="radio" name="header_full" v-model="printOptions.header_full" value="0">
+                        <i class="fas fa-table fa-lg"></i>
+                        <span>Apenas nome do aluno</span>
+                    </label>
+                </div>
+                <h6 class="mt-3">Formato da prova:</h6>
+                <div class="btn-group btn-group-toggle">
+                    <label class="btn btn-outline-primary btn-lg" :class="{active: printOptions.two_columns == 0}">
+                        <input type="radio" name="two_columns" value="0" v-model="printOptions.two_columns">
+                        <i class="fas fa-file fa-lg"></i>
+                        <span>Modelo padrão</span>
+                    </label>
+                    <label class="btn btn-outline-primary btn-lg" :class="{active: printOptions.two_columns == 1}">
+                        <input type="radio" name="two_columns" value="1" v-model="printOptions.two_columns">
+                        <i class="fas fa-file fa-lg"></i>
+                        <span>Modelo ENEM</span>
+                    </label>
+                </div>
+                <h6 class="mt-3">Tipo de caderno:</h6>
+                <div class="btn-group btn-group-toggle">
+                    <label class="btn btn-outline-primary btn-lg" :class="{active: printOptions.separate_subjects == 0}">
+                        <input type="radio" name="separate_subjects" value="0" v-model="printOptions.separate_subjects">
+                        <i class="fas fa-file fa-lg"></i>
+                        <span>Caderno único</span>
+                    </label>
+                    <label class="btn btn-outline-primary btn-lg" :class="{active: printOptions.separate_subjects == 1}">
+                        <input type="radio" name="separate_subjects" value="1" v-model="printOptions.separate_subjects">
+                        <i class="fas fa-file fa-lg"></i>
+                        <span>Caderno por disciplina</span>
+                    </label>
+                </div>
+                <h6 class="mt-3">Impressão de questões discursivas:</h6>
+                <div class="btn-group btn-group-toggle">
+                    <label class="btn btn-outline-primary btn-lg" :class="{active: printOptions.line_textual == 0}">
+                        <input type="radio" name="line_textual" value="0" v-model="printOptions.line_textual">
+                        <i class="fas fa-file fa-lg"></i>
+                        <span>Espaço em branco</span>
+                    </label>
+                    <label class="btn btn-outline-primary btn-lg" :class="{active: printOptions.line_textual == 1}">
+                        <input type="radio" name="line_textual" value="1" v-model="printOptions.line_textual">
+                        <i class="fas fa-file fa-lg"></i>
+                        <span>Impressão com linhas</span>
+                    </label>
+                </div>
+                <h6 class="mt-3">Tamanho da fonte:</h6>
+                <div class="btn-group btn-group-toggle">
+                    <label class="btn btn-outline-primary btn-lg" :class="{active: printOptions.font_size == 12}">
+                        <input type="radio" name="font_size" value="12" v-model="printOptions.font_size">
+                        <i class="fas fa-file fa-lg"></i>
+                        <span>Normal (12pt)</span>
+                    </label>
+                    <label class="btn btn-outline-primary btn-lg" :class="{active: printOptions.font_size == 14}">
+                        <input type="radio" name="font_size" value="14" v-model="printOptions.font_size">
+                        <i class="fas fa-file fa-lg"></i>
+                        <span>Grande (14pt)</span>
+                    </label>
+                    <label class="btn btn-outline-primary btn-lg" :class="{active: printOptions.font_size == 16}">
+                        <input type="radio" name="font_size" value="16" v-model="printOptions.font_size">
+                        <i class="fas fa-file fa-lg"></i>
+                        <span>Extra grande (16pt)</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="form-buttons-w text-right">
+                    <button class="btn btn-primary not-disable" @click="printExamBag(selectedStudent)">
+                        <i class="os-icon os-icon-check"></i>
+                        <span>Imprimir malote</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalChangeStudent" tabindex="-1" aria-labelledby="modalChangeStudentLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="modalChangeStudentLabel">Trocar o aluno(a) <strong>${selectedStudent.name}</strong> de sala</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<ul class="nav nav-tabs" role="tablist">
+					<li class="nav-item">
+						<a class="nav-link active" data-toggle="tab" href="#modal-rooms" role="tab">
+							Lista de salas disponíveis
+						</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" @click="getGroupRoomsAndStudents()" data-toggle="tab" href="#modal-students" role="tab">
+							Substituir aluno de uma sala específica
+						</a>
+					</li>
+				</ul>
+		
+				<div class="tab-content bd bg-white bd-t-0 pd-20">
+					<div class="tab-pane fade show active" id="modal-rooms" role="tabpanel" aria-labelledby="home-tab">
+						<div class="row p-3">
+							<p class="tx-13 tx-color-03 mg-b-5">Selecione a sala que você deseja adicionar o aluno</p>
+							<table class="table table-striped">
+								<thead>
+									<tr>
+										<th>Sala</th>
+										<th>Capacidade</th>
+										<th>Vagas disponíveis</th>
+										<th></th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr v-for="room in availableRooms">
+										<td class="align-middle">
+											${room.name}
+										</td>
+										<td class="align-middle">
+											${room.room_capacity}
+										</td>
+										<td class="align-middle">
+											${room.number_vacancies_available}
+										</td>
+										<td class="d-flex justify-content-end">
+											<button class="btn btn-success" @click="swapStudentRoom(room.id)" :disabled="!room.number_vacancies_available > 0"><i class="far fa-share-square"></i> Realocar aluno</button>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<div class="tab-pane fade" id="modal-students" role="tabpanel">
+						<div class="row py-3">
+							<p class="tx-13 tx-color-03 mg-b-5">Selecione o aluno que você deseja substituir</p>
+							<template v-for="room in roomsGroup" v-if="room.id != selectedRoom.id">
+								<div class="col-12 py-2">
+									<table class="table table-striped">
+										<thead>
+											<tr>
+												<th class=" tw-font-semibold tx-18">${room.name}</th>
+												<th></th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr v-for="student in room.students">
+												<td class="align-middle">
+													${student.name}
+												</td>
+												<td class="d-flex justify-content-end">
+													<button class="btn btn-primary" @click="swapStudent(student)"><i class="fas fa-sync-alt"></i> Substituir aluno</button>
+												</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+							</template>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">FECHAR</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div aria-hidden="true" class="modal fade" id="exportStudentBagModal" role="dialog" data-backdrop="static" data-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-truncate">Exportação de malote individual</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button> 
+            </div>
+            <div class="modal-body" style="max-height: fit-content; height: fit-content;">
+                <div v-if="exportData.status == 'PROGRESS'">
+                    <h6>Exportação em andamento... <i class="fas fa-spinner fa-spin text-primary mt-2"></i></h6>
+                    <p>Mantenha esta janela aberta enquanto geramos o link para download do malote.</p>
+                </div>
+                <div v-else-if="exportData.status == 'SUCCESS'">
+                    <p>Você pode baixar o malote individual clicando no botão abaixo:</p>
+                    <a :href="exportData.donwloadLink" target="_blank" class="btn btn-primary btn-block">
+                        <i class="fas fa-download"></i>
+                        Baixar arquivo
+                    </a>
+                </div>
+                <div class="p-3" v-if="exportData.status == 'ERROR'">
+                    <p class="text-danger">Um erro aconteceu no processo de exportação. Tente novamente em alguns instantes.</p>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center"></div>
+        </div>
+    </div>
+</div>
+
+{% endblock extra-modal %}
+
+{% block js-additional %}
+
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+
+<script>
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+            selectedRoom: {
+                id: '',
+                distribution: {
+                    id: '',
+                },
+                students: []
+            },
+            selectedStudent: '',
+            roomsGroup: [],
+            availableRooms: [],
+            printOptions: {},
+            exportData: {
+                taskId: '',
+                interval: null,
+                donwloadLink: '',
+                status: null,
+            },
+            printOptions: {
+                header: '',
+                header_full: 0,
+                two_columns: 0,
+                separate_subjects: 0,
+                line_textual: 0,
+                font_size: 12
+            },
+        },
+        methods: {
+            getRoomDistributionStudentList(distributionId, roomId = '') {
+                axios.get(`{% url 'distribution:api_roomdistributionstudent_list' %}?distribution=${distributionId}&room=${roomId}`).then(response => {
+                    this.selectedRoom.distribution.id = distributionId
+                    this.selectedRoom.students = []
+                    response.data.forEach(room => { 
+                        room.student['distributionStudentId'] = room.id 
+                        this.selectedRoom.students.push(room.student)
+                    })
+                    this.selectedRoom.id = roomId
+                    if(this.selectedRoom.students.length > 0) {
+                        $('[data-student]').click()
+                    }
+                })
+            },
+            getRoomDistributionlList() {
+                axios.get(`{% url 'distribution:api_group_rooms_of_roomdistributions_list' %}?pk=${this.selectedRoom.distribution.id}&student_room=${this.selectedRoom.id}`).then(response => {
+                    this.availableRooms = response.data.rooms
+                })
+            },
+            getGroupRoomsAndStudents() {
+                axios.get(`{% url 'distribution:api_roomdistributionstudent_list' %}?distribution=${this.selectedRoom.distribution.id}`).then(response => {
+                    this.roomsGroup = []
+                    response.data.forEach((distribution) =>  {
+                        room = this.roomsGroup.find(room => room.id == distribution.room.id)
+                        distribution.student['distributionStudentId'] = distribution.id
+                        if(room) {
+                            room.students.push(distribution.student)
+                        } else {
+                            this.roomsGroup.push({
+                                id: distribution.room.id,
+                                name: distribution.room.name,
+                                students: [distribution.student]
+                            })
+                        }
+                    })
+                })
+            },
+            swapStudent(student) {
+                url = "{% url 'distribution:api_roomdistributionstudent_swap_update' pk='00000000-0000-0000-0000-000000000000' old_pk='11111111-1111-1111-1111-111111111111' %}"
+                axios.put(
+                    url.replace(
+                        "00000000-0000-0000-0000-000000000000", student.distributionStudentId
+                    ).replace(
+                        "11111111-1111-1111-1111-111111111111", this.selectedStudent.distributionStudentId
+                    ),
+                    { student: this.selectedStudent.id }
+                ).then((response) => {
+                    window.location.reload()
+                })
+            },
+            swapStudentRoom(roomId) {
+                url = "{% url 'distribution:api_roomdistributionstudent_swap_room_update' pk='00000000-0000-0000-0000-000000000000' %}"
+                axios.put(
+                    url.replace("00000000-0000-0000-0000-000000000000", this.selectedStudent.distributionStudentId),
+                    { room: roomId }
+                ).then((response) => {
+                    window.location.reload()
+                })
+            },
+            openPrintModal(student) {
+                this.selectedStudent = student
+                $('#configurePrintModal').modal('show')
+            },
+            printExamBag(student) {
+                $('#configurePrintModal').modal('hide')
+                const self = this
+                let url = "{% url 'distribution:export_application_students_bag' pk='00000000-0000-0000-0000-000000000000' %}"
+                this.cleanExportData()
+                axios.post(url.replace('00000000-0000-0000-0000-000000000000', this.selectedRoom.distribution.id), {
+                    students: [student.id],
+                    print_params: self.printOptions
+                }).then(response => {
+                    self.exportData.taskId = response.data.task_id
+                    self.exportData.status = 'PROGRESS'
+                    self.interval = setInterval(() => {
+                        self.getExportStatus(self.exportData.taskId)
+                    }, 1000)
+                })
+                $('#exportStudentBagModal').modal('show');
+            },
+            getExportStatus(taskId) {
+                const self = this
+                let url = `{% url 'core:get_generic_task_status' %}?task_id=${taskId}`
+                axios.get(url).then(response => {
+                    if(response.data.status == 'SUCCESS') {
+                        clearInterval(self.interval)
+                        self.exportData.interval = null
+                        self.exportData.taskId = ''
+                        self.exportData.status = 'SUCCESS'
+                        self.exportData.donwloadLink = response.data.details
+                    } else if(response.data.status == 'FAILURE') {
+                        clearInterval(self.interval)
+                        self.exportData.interval = null
+                        self.exportData.taskId = ''
+                        self.exportData.status = 'ERROR'
+                    }
+                }).catch(error => {
+                    clearInterval(self.interval)
+                    self.cleanExportData()
+                    self.exportData.status = 'ERROR'
+                })
+            },
+            cleanExportData() {
+                this.exportData.taskId = ''
+                this.exportData.interval = null
+                this.exportData.donwloadLink = ''
+                this.exportData.status = ''
+            },
+        },
+        mounted: function () {
+            var inputCoordinations = $('#id_coordination').select2({
+                placeholder: "Selecione uma coordenação",
+                closeOnSelect: false,
+                allowClear: true,
+            })
+            console.log(inputCoordinations)
+            var inputUnitys = $('#id_unity').select2({
+                placeholder: "Selecione uma unidade",
+                closeOnSelect: false,
+                allowClear: true,
+            })
+        },
+    })
+</script>
+{% endblock %}

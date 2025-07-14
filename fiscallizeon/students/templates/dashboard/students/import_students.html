@@ -1,0 +1,79 @@
+{% extends 'dashboard/base_fixed.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% load format_duration %}
+
+{% block title %}
+  Lize - Importar alunos
+{% endblock title %}
+
+{% block css-additional %}
+<style>
+
+</style>
+{% endblock %}
+
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-30">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="{% url 'applications:applications_list' %}">ALUNOS</a></li>
+          <li class="breadcrumb-item active" aria-current="page">IMPORTAR</li>
+        </ol>
+      </nav>
+      <h4>Importação de alunos (CSV)</h4>
+      <p>O arquivo CSV deve possuir todos os campos preenchidos. Você pode baixar o modelo de arquivo <a href="{% static 'modelo_importacao_alunos.csv' %}">neste link</a>.</p>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+
+
+{% block content-fixed %}
+<form method="POST" enctype='multipart/form-data'>
+  {% csrf_token %}  
+  <div class="row">    
+    <div class="form-group col-md-6 col-sm-12">
+      <label for="inputState">Ano/Série</label>
+      {% render_field form.grade class="form-control" %}
+    </div>
+
+    <div class="form-group col-md-6 col-sm-12">
+      <label for="inputState">Coordenação</label>
+      {% render_field form.coordination class="form-control" %}      
+    </div>
+
+    <div class="form-group col-12">
+      <div class="custom-file">
+        {% render_field form.students_file class="custom-file-input" %}
+        <label class="custom-file-label" for="{{ form.students_file.id_for_label }}">Selecione o arquivo CSV...</label>
+      </div>
+    </div>
+
+    <div class="form-group col-12">
+      <div class="form-check">
+        {% render_field form.replace_old_classes class="form-check-input" %}
+        
+        <label class="form-check-label" for="{{ form.replace_old_classes.id_for_label }}">
+          Remover alunos de turmas anteriores (ano letivo atual)
+        </label>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <button class="btn btn-primary btn-block" type="submit">Enviar</button>
+    </div>
+  </div>
+</form>
+
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script>
+  $('.custom-file input').change(function (e) {
+      if (e.target.files.length) {
+          $(this).next('.custom-file-label').html(e.target.files[0].name);
+      }
+  });
+</script>
+{% endblock %}

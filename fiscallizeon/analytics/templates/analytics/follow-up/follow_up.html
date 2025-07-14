@@ -1,0 +1,1014 @@
+{% extends 'redesign/base.html' %}
+
+{% load static %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'dashboard/lib/apexcharts/apexcharts.css' %}">
+
+<style>
+    .scroll::-webkit-scrollbar {
+        width: 2px !important;
+        height: 6px !important;
+    }
+    .scroll::-webkit-scrollbar-track {
+        background: transparent;    
+    }
+    .scroll::-webkit-scrollbar-thumb {
+        background-color: rgba(155, 163, 175, 0.225) !important;
+        border-radius: 20px !important; 
+    }
+    .scroll-strong::-webkit-scrollbar {
+        width: 12px !important;
+        height: 6px !important;
+    }
+    .scroll-strong::-webkit-scrollbar-track {
+        background: transparent;    
+    }
+    .scroll-strong::-webkit-scrollbar-thumb {
+        background-color: rgba(155, 163, 175, 0.225) !important;
+        border-radius: 20px !important; 
+    }
+    #table-teachers td {
+        padding: 10px 0;
+        background-color: white;
+    }
+    input[type=checkbox] {
+        width: 20px !important;
+        height: 20px !important;
+    }
+    input[type=checkbox]:checked+label::before {
+        background-color: #FF8F3D !important;
+        border: 1px solid #FF8F3D !important;
+    }
+</style>
+{% endblock %}
+
+{% block title %}
+    Lize - Dashboard de acompanhamento de desempenho
+{% endblock title %} 
+
+{% block content-fixed %}
+<div class="p-3">
+    <div class="row d-flex align-items-center justify-content-between">
+        <div class="col">
+            <h4 class="tx-24">Acompanhamento de desempenho</h4>
+        </div>
+        {% comment %} <div class="col text-right tx-medium">Atualizado em: <strong>{{user.get_clients.0.last_update_followup_dashboard}}</strong></div> {% endcomment %}
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="lize-card" style="height: 80px;">
+                <div class="lize-card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="tx-18 tx-medium">Listagem de pendências</span>
+                        </div>
+                        <div></div>
+                        <div class="d-flex align-items-center">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input cp" id="check-show-finisheds" :disabled="loading.items">
+                                <label class="custom-control-label text-muted cp" for="check-show-finisheds">Mostrar finalizadas</label>
+                            </div>
+                            <div class="divider-text divider-vertical" data-text=""></div>
+                            <div class="dropdown">
+                                <h6 id="dropdownTypeMenu" data-toggle="dropdown" class="text-right mb-0 cp">Tipo: <span class="text-muted">${cardType.label}</span></h6>
+                                <div class="dropdown-menu" style="border-radius: 12px;" aria-labelledby="dropdownTypeMenu">
+                                    <a class="dropdown-item" href="javascript:;" @click="handlerCardType('all', 'Todos')">Todos</a>
+                                    <a class="dropdown-item" href="javascript:;" @click="handlerCardType('correction', 'Correção')">Correção</a>
+                                    <a class="dropdown-item" href="javascript:;" @click="handlerCardType('questions', 'Questões')">Questões</a>
+                                    <a class="dropdown-item" href="javascript:;" @click="handlerCardType('cards', 'Upload de cartões')">Upload de cartões</a>
+                                </div>
+                            </div>
+                            <div class="divider-text divider-vertical" data-text=""></div>
+                            <div class="dropdown">
+                                <h6 id="dropdownOrderingMenu" data-toggle="dropdown" class="text-right mb-0 cp">Ordenar por: <span class="text-muted">${ordering.label} <i class="fas text-muted" :class="ordering.type == 'asc' ? 'fa-chevron-down':'fa-chevron-up'"></i></span></h6>
+                                <div class="dropdown-menu" style="border-radius: 12px;" aria-labelledby="dropdownOrderingMenu">
+                                    <a class="dropdown-item" href="javascript:;" @click="handlerOrdering('priority', 'asc', 'Maior criticidade')">Maior criticidade</a>
+                                    <a class="dropdown-item" href="javascript:;" @click="handlerOrdering('priority', 'desc', 'Menor criticidade')">Menor criticidade</a>
+                                    <a class="dropdown-item" href="javascript:;" @click="handlerOrdering('quantity', 'asc', 'Maior quantidade')">Maior quantidade</a>
+                                    <a class="dropdown-item" href="javascript:;" @click="handlerOrdering('quantity', 'desc', 'Menor quantidade')">Menor quantidade</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="alert alert-warning alert-dismissible fade show" role="alert" v-show="loading.items">
+        <strong>Aguarde enquanto buscamos os dados,</strong> o processo pode demorar um pouco.
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">×</span>
+        </button>
+        </div>
+    <div class="row">
+        <div class="col">
+            <div class="lize-card" style="border-radius: 8px;">
+                <div class="lize-card-body pr-1">
+                    <p class="tx-18 tx-medium text-center">Precisa ser priorizado</p>
+                    <div style="max-height: 100vh; overflow-y: scroll;" class="scroll-strong pr-3 px-1">
+                        <card-component 
+                            v-for="(item, index) in shownItems.filter(i => i.priority == 'high')"
+                            :key="index"
+                            v-if="item.quantity"
+                            :type="item.type"
+                            :item="item"
+                            :description="item.description" 
+                            :quantity="item.quantity" 
+                            :total="item.total"
+                            :deadline="item.deadline" 
+                            :priority="'high'" 
+                            :priorityvalue="item.priorityValue"
+                            data-toggle="modal"
+                            data-target="#modalDetail"
+                        ></card-component>
+                        <skeleton-card v-if="loading.items"></skeleton-card>
+                        <h5 class="text-muted text-center py-4" v-if="!loading.items && !shownItems.filter(i => i.priority == 'high' && i.quantity).length">Nenhuma atividade no momento</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="lize-card" style="border-radius: 8px;">
+                <div class="lize-card-body pr-1">
+                    <p class="tx-18 tx-medium text-center">Precisa de sua atenção</p>
+                    <div style="max-height: 100vh; overflow-y: scroll;" class="scroll-strong pr-3 px-1">
+                        <card-component 
+                            v-for="(item, index) in shownItems.filter(i => i.priority == 'medium')"
+                            :key="shownItems.filter(i => i.priority == 'high').length + index"
+                            v-if="item.quantity"
+                            :type="item.type"
+                            :item="item"
+                            :description="item.description"
+                            :quantity="item.quantity" 
+                            :total="item.total"
+                            :deadline="item.deadline" 
+                            :priority="'medium'" 
+                            :priorityvalue="item.priorityValue"
+                            data-toggle="modal"
+                            data-target="#modalDetail"
+                        ></card-component>
+                        <skeleton-card v-if="loading.items"></skeleton-card>
+                        <h5 class="text-muted text-center py-4" v-if="!loading.items && !shownItems.filter(i => i.priority == 'medium' && i.quantity).length">Nenhuma atividade no momento</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="lize-card" style="border-radius: 8px;">
+                <div class="lize-card-body pr-1">
+                    <p class="tx-18 tx-medium text-center">Em andamento</p>
+                    <div style="max-height: 100vh; overflow-y: scroll;" class="scroll-strong pr-3 px-1">
+                        <card-component 
+                            v-for="(item, index) in shownItems.filter(i => i.priority == 'low')"
+                            :key="shownItems.filter(i => i.priority == 'medium').length + shownItems.filter(i => i.priority == 'high').length + index"
+                            v-if="item.quantity"
+                            :type="item.type"
+                            :item="item"
+                            :description="item.description"
+                            :quantity="item.quantity" 
+                            :total="item.total"
+                            :deadline="item.deadline" 
+                            :priority="'low'" 
+                            :priorityvalue="item.priorityValue"
+                            data-toggle="modal"
+                            data-target="#modalDetail"
+                        ></card-component>
+                        <skeleton-card v-if="loading.items"></skeleton-card>
+                        <h5 class="text-muted text-center py-4" v-if="!loading.items && !shownItems.filter(i => i.priority == 'low' && i.quantity).length">Nenhuma atividade no momento</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalDetail" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content" style="border-radius: 12px;" v-if="selectedItem">
+            <div class="modal-header py-4 w-100">
+                <div class="d-flex align-items-center justify-content-between w-100 px-3">
+                    <div>
+                        <h5 class="modal-title" id="staticBackdropLabel">
+                            <span v-if="selectedItem.type == 'correction'">Correção de respostas</span>
+                            <span v-if="selectedItem.type == 'elaboration'">Elaboração de prova</span>
+                            <span v-if="selectedItem.type == 'cards'">Upload de cartões</span>
+                            <span v-if="selectedItem.type == 'questions'">Questões solicitadas</span>
+                        </h5>
+                    </div>
+                    <div class="mx-3">
+                        <span class="mr-4" :class="selectedItem.priority == 'high' ? 'text-danger':'text-muted'">${moment(selectedItem.deadline).fromNow()}</span>
+                        <template v-if="selectedItem.type == 'correction'">
+                            <span style="color: #9BA3AF;"><i class="far fa-check-circle tx-16"></i> Correção</span>
+                        </template>
+                        <template v-if="selectedItem.type == 'elaboration'">
+                            <span style="color: #9BA3AF;"><i class="far fa-check-circle tx-16"></i> Elaboração</span>
+                        </template>
+                        <template v-if="selectedItem.type == 'cards'">
+                            <span style="color: #9BA3AF;"><i class="far fa-clone tx-16"></i> Upload de cartões</span>
+                        </template>
+                        <template v-if="selectedItem.type == 'questions'">
+                            <span style="color: #9BA3AF;"><i class="far fa-file-alt tx-16"></i> Questões solicitadas</span>
+                        </template>
+                    </div>
+                </div>
+                <button type="button" class="close p-2 mr-1" data-dismiss="modal" aria-label="Close" style="font-size: 2.2rem; color: #D0D5DD;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body pb-4 pt-0 px-0">
+                <div v-show="!loading.summary">
+                    <div class="px-4 py-3 mb-3" style="background-color: #F9FAFA;">
+                        <div class="d-flex justify-content-between pb-3">
+                            <h6>Selecione a unidade que deseja visualizar</h6>
+                            <div v-if="selectedItem.type != 'cards'">
+                                <div class="dropdown">
+                                    <h6 id="dropdownViewTypeMenu" data-toggle="dropdown" class="text-right mb-0 cp">Visualizar por: <span class="text-muted">${viewer.label}</h6>
+                                    <div class="dropdown-menu" style="border-radius: 12px;" aria-labelledby="dropdownViewTypeMenu">
+                                        <a class="dropdown-item" href="javascript:;" @click="handlerViewType('teachers', 'Professores')">Professores</a>
+                                        <a class="dropdown-item" href="javascript:;" @click="handlerViewType('exams', 'Cadernos')">Cadernos</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive scroll pb-2">
+                            <div class="d-flex">
+                                <div class="col-4 px-1" v-if="selectedItem.type == 'questions'">
+                                    <div class="lize-card cp lize-hover-warning" @click="selectUnity(selectedItem, null)" :class="{ 'lize-bd-warning lize-bg-warning-light': !selectedItem.selectedUnity }" style="border-radius: 8px;">
+                                        <div class="card-body">
+                                            <h6 class="text-truncate">Todas</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4 px-1" @click="selectUnity(selectedItem, unity.id)" v-for="unity in selectedItem.unities.filter(u => selectedItem.type == 'questions' ? true : (!u.load || u.quantity))">
+                                    <template v-if="selectedItem.type == 'questions'">
+                                        <div class="lize-card cp lize-hover-warning" :class="{ 'lize-bd-warning lize-bg-warning-light': selectedItem.selectedUnity == unity.id }" style="border-radius: 8px;">
+                                            <div class="card-body">
+                                                <h6 class="text-truncate">${unity.name}</h6>
+                                                <template v-if="!unity.load">
+                                                    <div class="skeleton-loader my-3"></div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template v-else>
+                                        <div class="lize-card cp lize-hover-warning" :class="{ 'lize-bd-warning lize-bg-warning-light': selectedItem.selectedUnity == unity.id }" style="border-radius: 8px;">
+                                            <div class="card-body">
+                                                <h6 class="text-truncate mb-4">${unity.name}</h6>
+                                                <template v-if="!unity.load">
+                                                    <div class="skeleton-loader my-3"></div>
+                                                </template>
+                                                <template v-else>
+                                                    <span class="lize-badge lize-badge-danger">${unity.quantity} aguardando</span>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <template v-if="viewer.type == 'exams'">
+                        <div class="mt-2 px-4">
+                            <template v-if="selectedItem.load.exams">
+                                <div class="row m-0 py-2 mx-2" style="border-bottom: 1px solid #E5E7EA;">
+                                    <div class="col-8"><h6>Caderno</h6></div>
+                                    <template v-if="selectedItem.type == 'questions'">
+                                        <div class="col"><h6>&nbsp;</h6></div>
+                                        <div class="col"><h6>Questões</h6></div>
+                                    </template>
+                                    <template v-else>
+                                        <div class="col"><h6>Obj.</h6></div>
+                                        <div class="col"><h6>Disc.</h6></div>
+                                    </template>
+                                    <div class="col"></div>
+                                </div>
+                                <template v-for="(exam, examIndex) in selectedItem.exams.filter(e => e.load.quantity && e.quantity)">
+                                    <div class="row m-0 py-2 mx-2 cp" data-toggle="collapse" role="button" aria-expanded="false" @click="selectedItem.type != 'questions' ? (exam.collapsed = !exam.collapsed, $forceUpdate(), getClassesSummary(exam)) : null" style="border-bottom: 1px solid #E5E7EA;">
+                                        <div class="col-8"><h6 class="py-3 mb-0 tx-16">${exam.name}</h6></div>
+                                        <template v-if="!exam.load.quantity">
+                                            <div class="col d-flex align-items-center">
+                                                <div class="skeleton-loader"></div>
+                                            </div>
+                                        </template>
+                                        <template v-else>
+                                            <div class="col d-flex align-items-center">
+                                                <span class="py-3 mb-0 tx-14 align-self-center text-danger">
+                                                    ${selectedItem.type == 'questions' ? '&nbsp;' : exam.objectiveQuantity}
+                                                </span>
+                                            </div>
+                                            <div class="col d-flex align-items-center">
+                                                <span class="py-3 mb-0 tx-14 align-self-center text-danger">
+                                                    ${selectedItem.type == 'questions' ? exam.quantity : exam.discursiveQuantity}
+                                                </span>
+                                            </div>
+                                        </template>
+                                        <div class="col d-flex">
+                                            <template v-if="selectedItem.type == 'questions'">
+                                                <a target="_blank" :href="`{% url 'exams:exam_review' pk='00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', exam.id)" class="btn btn-danger rounded btn-sm align-self-center" style="border-radius: 8px !important;">Verificar</a>
+                                            </template>
+                                            <template v-else>
+                                                <i class="fas text-muted align-self-center" :class="exam.collapsed ? 'fa-chevron-up':'fa-chevron-down'"></i>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="mx-2 p-3" v-if="exam.collapsed && selectedItem.type != 'questions'" style="background-color: #F9FAFA;">
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <span class="text-muted">Detalhamento de pendências</span>
+                                                <div class="row mt-3">
+                                                    <template v-if="exam.load.classesSummary">
+                                                        <div class="col-12 mb-2" v-for="classe in exam.classes">
+                                                            <div class="lize-card">
+                                                                <div class="card-body py-2">
+                                                                    <div class="row m-0">
+                                                                        <div class="col-8"><h6 class="py-3 mb-0 tx-16">${classe.name}</h6></div>
+                                                                        <template v-if="!classe.load.quantity">
+                                                                            <div class="col d-flex align-items-center">
+                                                                                <div class="skeleton-loader"></div>
+                                                                            </div>
+                                                                        </template>
+                                                                        <template v-else>
+                                                                            <div class="col d-flex align-items-center">
+                                                                                <span class="py-3 mb-0 tx-14 align-self-center text-danger">
+                                                                                    ${classe.objectiveQuantity}
+                                                                                </span>
+                                                                            </div>
+                                                                            <div class="col d-flex align-items-center">
+                                                                                <span class="py-3 mb-0 tx-14 align-self-center text-danger">
+                                                                                    ${classe.discursiveQuantity}
+                                                                                </span>
+                                                                            </div>
+                                                                        </template>
+                                                                        <div class="col d-flex">
+                                                                            <a target="_blank" :href="`{% url 'exams:exams_detail_v2' pk='00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', exam.id) + '?turma=' + classe.id" class="btn btn-danger rounded btn-sm align-self-center" style="border-radius: 8px !important;" :disabled="(classe.total - classe.quantity) >= classe.total">Verificar</a>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-12" v-if="selectedItem.type != 'questions'">
+                                                            <template v-if="!selectedItem.selectedUnity">
+                                                                <h5 class="text-muted text-center">Selecione uma unidade no filtro acima</h5>
+                                                            </template>
+                                                            <template v-else>
+                                                                <h5 v-if="!exam.classes.length" class="text-muted text-center">Nenhuma turma encontrada.</h5>
+                                                            </template>
+                                                        </div>
+                                                    </template>
+                                                    <template v-else>
+                                                        <div class="col-12 mb-2" v-for="i in 5">
+                                                            <div class="lize-card">
+                                                                <div class="card-body py-4">
+                                                                    <div class="row m-0">
+                                                                        <div class="col-8"><div class="skeleton-loader"></div></div>
+                                                                        <div class="col d-flex">
+                                                                            <div class="skeleton-loader"></div>
+                                                                        </div>
+                                                                        <div class="col d-flex">
+                                                                            <div class="skeleton-loader"></div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </template>
+                            <template v-else>
+                                <div class="row m-0 py-2 mx-2">
+                                    <div class="col-12">
+                                        <h5 class="text-muted my-2">Aguarde enquanto carregamos os dados dos cadernos...</h5>
+                                    </div>
+                                    <div class="col-12 mb-2" v-for="i in 5">
+                                        <div class="lize-card">
+                                            <div class="card-body py-4">
+                                                <div class="row m-0">
+                                                    <div class="col-8"><div class="skeleton-loader"></div></div>
+                                                    <div class="col d-flex">
+                                                        <div class="skeleton-loader"></div>
+                                                    </div>
+                                                    <div class="col d-flex">
+                                                        <div class="skeleton-loader"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                    <template v-if="viewer.type == 'teachers'">
+                        <div class="mt-2 px-4">
+                            <div class="row m-0 py-2 mx-2" style="border-bottom: 1px solid #E5E7EA;">
+                                <div class="col-8"><h6>Professor</h6></div>
+                                <template v-if="selectedItem.type == 'questions'">
+                                    <div class="col"><h6></h6></div>
+                                    <div class="col"><h6>Quetões</h6></div>
+                                </template>
+                                <template v-else>
+                                    <div class="col"><h6>Obj.</h6></div>
+                                    <div class="col"><h6>Disc.</h6></div>
+                                </template>
+                                <div class="col"></div>
+                            </div>
+                            <template v-for="(teacher, teacherIndex) in selectedItem.teachers.filter(e => e.load.quantity && e.quantity)">
+                                <div class="row m-0 py-2 mx-2 cp" data-toggle="collapse" role="button" aria-expanded="false" @click="teacher.collapsed = !teacher.collapsed, $forceUpdate(), getTeacherExamsSummary(teacher)" style="border-bottom: 1px solid #E5E7EA;">
+                                    <div class="col-8"><h6 class="py-3 mb-0 tx-16">${teacher.name}</h6></div>
+                                    <template v-if="!teacher.load.quantity">
+                                        <div class="col d-flex align-items-center">
+                                            <div class="skeleton-loader"></div>
+                                        </div>
+                                    </template>
+                                    <template v-else>
+                                        <div class="col d-flex align-items-center">
+                                            <span class="py-3 mb-0 tx-14 align-self-center text-danger">
+                                                ${selectedItem.type == 'questions' ? '' : teacher.objectiveQuantity}
+                                            </span>
+                                        </div>
+                                        <div class="col d-flex align-items-center">
+                                            <span class="py-3 mb-0 tx-14 align-self-center text-danger">
+                                                ${selectedItem.type == 'questions' ? teacher.quantity : teacher.discursiveQuantity}
+                                            </span>
+                                        </div>
+                                    </template>
+                                    <div class="col d-flex px-0">
+                                        <i class="fas text-muted align-self-center" :class="teacher.collapsed ? 'fa-chevron-up':'fa-chevron-down'"></i>
+                                    </div>
+                                </div>
+                                <div class="p-3" v-if="teacher.collapsed" style="background-color: #F9FAFA;">
+                                    <div class="row mb-0">
+                                        <div class="col-12">
+                                            <span class="text-muted mx-2">Detalhamento de pendências</span>
+                                            <div class="row mt-3 mb-0">
+                                                <template v-if="teacher.load.exams">
+                                                    <div class="col-12 mb-2" v-for="exam in teacher.exams">
+                                                        <div class="lize-card cp" @click="exam.collapsed = !exam.collapsed, $forceUpdate(), getClassesSummary(exam, teacher)">
+                                                            <div class="card-body py-2">
+                                                                <div class="row m-0">
+                                                                    <div class="col-8"><h6 class="py-3 mb-0 tx-16">${exam.name}</h6></div>
+                                                                    <template v-if="!teacher.load.quantity">
+                                                                        <div class="col d-flex align-items-center">
+                                                                            <div class="skeleton-loader"></div>
+                                                                        </div>
+                                                                    </template>
+                                                                    <template v-else>
+                                                                        <div class="col d-flex align-items-center">
+                                                                            <span class="py-3 mb-0 tx-14 align-self-center text-danger">
+                                                                                ${selectedItem.type == 'questions' ? '' : exam.objectiveQuantity}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div class="col d-flex align-items-center">
+                                                                            <span class="py-3 mb-0 tx-14 align-self-center text-danger">
+                                                                                ${selectedItem.type == 'questions' ? exam.quantity : exam.discursiveQuantity}
+                                                                            </span>
+                                                                        </div>
+                                                                    </template>
+                                                                    <div class="col d-flex">
+                                                                        <template v-if="selectedItem.type == 'questions'">
+                                                                            <a target="_blank" :href="`{% url 'exams:exam_review' pk='00000000-0000-0000-0000-000000000000' %}?teacher=${teacher.id}`.replace('00000000-0000-0000-0000-000000000000', exam.id)" class="btn btn-danger rounded btn-sm align-self-center" style="border-radius: 8px !important;">Verificar</a>
+                                                                        </template>
+                                                                        <template v-else>
+                                                                            <i class="fas text-muted align-self-center" :class="exam.collapsed ? 'fa-chevron-up':'fa-chevron-down'"></i>
+                                                                        </template>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row" v-if="exam.collapsed">
+                                                            <div class="col-12" v-for="classe in exam.classes">
+                                                                <div class="lize-card mx-3" style="border-radius: 0 !important;">
+                                                                    <div class="card-body py-0">
+                                                                        <div class="row m-0">
+                                                                            <div class="col-8"><h6 class="py-3 mb-0 tx-16">${classe.name}</h6></div>
+                                                                            <template v-if="!classe.load.quantity">
+                                                                                <div class="col d-flex align-items-center">
+                                                                                    <div class="skeleton-loader"></div>
+                                                                                </div>
+                                                                            </template>
+                                                                            <template v-else>
+                                                                                <div class="col d-flex align-items-center">
+                                                                                    <span class="py-3 mb-0 tx-14 align-self-center text-danger">
+                                                                                        ${classe.objectiveQuantity}
+                                                                                    </span>
+                                                                                </div>
+                                                                                <div class="col d-flex align-items-center">
+                                                                                    <span class="py-3 mb-0 tx-14 align-self-center text-danger">
+                                                                                        ${classe.discursiveQuantity}
+                                                                                    </span>
+                                                                                </div>
+                                                                            </template>
+                                                                            <div class="col d-flex px-0">
+                                                                                <a target="_blank" :href="`{% url 'exams:exams_detail_v2' pk='00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', exam.id) + '?turma=' + classe.id" class="btn btn-danger rounded btn-sm align-self-center" style="border-radius: 8px !important;" :disabled="(classe.total - classe.quantity) >= classe.total"><i class="fas fa-search"></i></a>                                                                                    
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12" v-if="selectedItem.type != 'questions'">
+                                                        <template v-if="!selectedItem.selectedUnity">
+                                                            <h5 class="text-muted text-center">Selecione uma unidade no filtro acima</h5>
+                                                        </template>
+                                                        <template v-else>
+                                                            <h5 v-if="!teacher.exams.length" class="text-muted text-center">Nenhum caderno encontrado.</h5>
+                                                        </template>
+                                                    </div>
+                                                </template>
+                                                <template v-else>
+                                                    <div class="col-12 mb-2" v-for="i in 5">
+                                                        <div class="lize-card">
+                                                            <div class="card-body py-4">
+                                                                <div class="row m-0">
+                                                                    <div class="col-8"><div class="skeleton-loader"></div></div>
+                                                                    <div class="col d-flex">
+                                                                        <div class="skeleton-loader"></div>
+                                                                    </div>
+                                                                    <div class="col d-flex">
+                                                                        <div class="skeleton-loader"></div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+                <template v-if="loading.summary">
+                    <div class="row">
+                        <div class="col">
+                            <div class="lize-card m-3">
+                                <div class="lize-card-body d-flex justify-content-center align-items-center text-center" style="min-height: 460px;">
+                                    <div>
+                                        <h5>Aguarde enquanto buscamos os dados</h5>
+                                        <p>O processo pode demorar um pouco...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div><!-- modal-body -->
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div>
+
+{% endblock content-fixed %} 
+
+
+{% block js-additional %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'administration/lib/jqueryui/jquery-ui.min.js' %}"></script>
+<script src="{% static 'js/tippy/popper.min.js' %}"></script>
+<script src="{% static 'js/tippy/tippy.min.js' %}"></script>
+
+<script>
+    moment.locale('pt-br')
+    var app = new Vue({
+        delimiters: ["${", "}"],
+        el: "#app",
+        components: {
+            'skeleton-card': Vue.component('skeleton-card', {
+                template: `
+                    <div class="lize-card mb-3 shadow-sm cp lize-hover-primary" style="border-radius: 8px;">
+                        <div class="lize-card-body p-4">
+                            <div class="row p-3">
+                                <div class="col-3 skeleton-loader"></div>
+                                <div class="offset-6"></div>
+                                <div class="col-3 skeleton-loader"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-8">
+                                    <div class="skeleton-loader"></div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-4">
+                                    <div class="skeleton-loader"></div>
+                                </div>
+                            </div>
+                            <div class="row p-3 mt-3 mb-0">
+                                <div class="col-3 skeleton-loader"></div>
+                                <div class="offset-6"></div>
+                                <div class="col-3 skeleton-loader"></div>
+                            </div>
+                        </div>
+                    </div>
+                `,
+            }),
+            'card-component': Vue.component('card-component', {
+                props: ['item', 'type', 'quantity', 'description', 'total', 'deadline', 'priority', 'priorityvalue'],
+                delimiters: ["#{", "}"],
+                data: function() {
+                    return {
+                        types: {
+                            elaboration: {
+                                icon: '<span style="color: #9BA3AF;"><i class="far fa-check-circle tx-16"></i> Elaboração</span>',
+                                label: 'Elaboração de XX cadernos'
+                            },
+                            correction: {
+                                icon: '<span style="color: #9BA3AF;"><i class="far fa-check-circle tx-16"></i> Correção</span>',
+                                label: 'Correção de XX respostas'
+                            },
+                            cards: {
+                                icon: '<span style="color: #9BA3AF;"><i class="far fa-clone tx-16"></i> Upload de cartões</span>',
+                                label: 'XX upload de cartões'
+                            },
+                            questions: {
+                                icon: '<span style="color: #9BA3AF;"><i class="far fa-file-alt tx-16"></i> Questões solicitadas</span>',
+                                label: 'XX questões solicitadas'
+                            },
+                        }
+                    }
+                },
+                template: `
+                    <div class="lize-card mb-3 shadow-sm cp lize-hover-primary" style="border-radius: 8px;" @click="selectItem(item)">
+                        <div class="lize-card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div v-html="types[type].icon"></div>
+                                <div>
+                                    <span class="mr-2">#{(((total - quantity) / total) * 100).toFixed(0)}% concluída</span>
+                                </div>
+                            </div>
+                            <h5 class="mt-3">
+                                #{quantity > 1 ? types[type].label.replace("XX", quantity):types[type].label.replace("XX", quantity).replace("respostas", "resposta")}
+                            </h5>
+                            <p class="text-muted mb-0 tooltips" :data-tippy-content="item.examsNames.length > 10 ? item.examsNames.slice(0, 10).join(', ') + '<br>... mais '+ item.examsNames.slice(10).length + ' cadernos' : item.examsNames.slice(0, 10).join(', ')">#{description}</p>
+                            <div class="d-flex justify-content-between align-items-center mt-5">
+                                <div class="d-flex">
+                                    <div v-for="i in priorityvalue" :class="{ 'bg-success': priority == 'low', 'bg-warning': priority == 'medium', 'bg-danger': priority == 'high' }" style="width: 27px; height: 6px; border-radius: 4px; margin-left: 4px;"></div>
+                                    <div v-for="i in 5 - priorityvalue" style="background-color: #E5E7EA; width: 27px; height: 6px; border-radius: 4px; margin-left: 4px;"></div>
+                                </div>
+                                <div>
+                                    <div class="tx-14 text-capitalize" :class="priority == 'high' ? 'text-danger':'text-muted'">#{moment(deadline).format("DD/MM/YYYY")}</div>
+                                    <div class="tx-14 text-capitalize" :class="priority == 'high' ? 'text-danger':'text-muted'">#{moment(deadline).fromNow()}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                methods: {
+                    moment(date) {
+                        return moment(date)
+                    },
+                    selectItem(item) {
+                        app.selectedItem = item
+                        if(this.type == 'cards') {
+                            app.handlerViewType('exams', 'Caderno')
+                        } else {
+                            app.handlerViewType('teachers', 'Professores')
+                        }
+                    },
+                },
+            })
+        },
+        data: {
+            items: [],
+            shownItems: [],
+            ordering: {
+                order: 'priority',
+                type: 'asc',
+                label: 'Maior criticidade',
+            },
+            cardType: {
+                type: 'all',
+                label: 'Todos',
+            },
+            selectedItem: null,
+            loading: {
+                items: true,
+                summary: true
+            },
+            viewer: {
+                type: 'teachers', 
+                label: 'Professores'
+            },
+        },
+        updated() {
+            tippy('.tooltips', {
+              placement: 'bottom',
+              allowHTML: true,
+            })
+        },
+        methods: {
+            handlerViewType(type, label) {
+                this.viewer.type = type
+                this.viewer.label = label
+
+                if(type == 'teachers') {
+                    this.getTeachersSummary()
+                } else {
+                    this.getExamsSummary()
+                }
+                
+            },
+            async selectUnity(item, unityID) {
+                
+                item.selectedUnity = unityID
+
+                item.load.exams = false
+
+                item.exams.map(e => e.load.quantity = false)
+                
+                if (this.viewer.type == 'exams') {
+                    
+                    await this.getExamsSummary()
+
+                    if (!item.type == 'questions') {
+                        for(exam of item.exams.filter(e => e.collapsed)) {
+                            await this.getClassesSummary(exam=exam)
+                        }
+                        for(exam of item.exams) {
+                            this.getExamDetailSummary(exam).then((response) => {
+                                let examFounded = item.exams.find(e => e.id == response.data.id)
+                                examFounded.quantity = response.data.quantity
+                                examFounded.total = response.data.total
+                                this.handlerExamsOrdering()
+                                examFounded.load.quantity = true
+                            })
+                        }
+                    }
+                } else {
+
+                    this.getTeachersSummary()
+                    
+                    for(teacher of this.selectedItem.teachers) {
+                        this.getTeacherDetailSummary(teacher).then((response) => {
+                            let teacherFounded = this.selectedItem.teachers.find(e => e.id == response.data.id)
+                            if(teacherFounded) {
+                                teacherFounded.quantity = response.data.quantity
+                                teacherFounded.total = response.data.total
+                                this.handlerTeachersOrdering()
+                                teacherFounded.load.quantity = true
+                            }
+                        })
+                    }
+
+                }
+
+            },
+            moment(date) {
+                return moment(date)
+            },
+            handlerExamsAndUnities(item) {
+                item.exams = item.exams.sort((a, b) => b.quantity - a.quantity)
+            },
+            handlerApplyOrdering() {
+                if(this.ordering.order == 'priority') {
+                    this.shownItems = this.shownItems.sort((a, b) => this.ordering.type == 'asc' ? b.priorityValue - a.priorityValue : a.priorityValue - b.priorityValue)
+                }
+                if(this.ordering.order == 'quantity') {
+                    this.shownItems = this.shownItems.sort((a, b) => this.ordering.type == 'asc' ? b.quantity - a.quantity : a.quantity - b.quantity)
+                }
+            },
+            handlerOrdering(ordering, type, label) {
+                this.ordering.order = ordering
+                this.ordering.type = type
+                this.ordering.label = label
+                this.handlerApplyOrdering()
+            },
+            handlerCardType(type, label) {
+                this.cardType.type = type
+                this.cardType.label = label
+                if(type == 'all') {
+                    this.shownItems = Object.assign([], this.items)
+                } else {
+                    this.shownItems = Object.assign([], this.items.filter(item => item.type == this.cardType.type))
+                }
+            },
+            handlerExamsOrdering() {
+                this.selectedItem.exams.sort((a, b) => b.quantity - a.quantity)
+            },
+            handlerTeachersOrdering() {
+                if(this.selectedItem.teachers.length) {
+                    this.selectedItem.teachers.sort((a, b) => b.quantity - a.quantity)
+                }
+            },
+            handlerExamClassesOrdering(exam) {
+                exam.classes.sort((a, b) => b.quantity - a.quantity)
+            },
+            handlerItemUnitiesOrdering() {
+                this.selectedItem.unities.sort((a, b) => b.quantity - a.quantity)
+            },
+            handlerPriority(item) {
+                let magicNumber = 200
+                if(item.type == 'questions')
+                    magicNumber = 25
+                let a = moment(item.deadline)
+                let b = moment()
+                let diffDays = a.diff(b, 'days') ? a.diff(b, 'days') : 1
+                
+                let quantityPerDay = (item.quantity / Math.abs(diffDays))
+                if(diffDays < 0){
+                    item.priorityValue = 5
+                }else if(quantityPerDay <= magicNumber) {
+                    item.priorityValue = 1
+                } else if(quantityPerDay > magicNumber * 2) {
+                    item.priorityValue = 5
+                } else if(quantityPerDay > magicNumber * 1.8) {
+                    item.priorityValue = 4
+                } else if(quantityPerDay > magicNumber * 1.6) {
+                    item.priorityValue = 3
+                } else if(quantityPerDay > magicNumber * 1.4) {
+                    item.priorityValue = 2
+                }
+                if([4, 5].includes(item.priorityValue)) {
+                    item.priority = 'high'
+                } else if([2, 3].includes(item.priorityValue)) {
+                    item.priority = 'medium'
+                }
+                this.handlerApplyOrdering()
+            },
+            handleExamNames(item) {
+                names = []
+                item.examsNames.forEach((name) => {
+                    if(!names.includes(name.toUpperCase().slice(0, 3).replace('_', ''))) {
+                        names.push(name.toUpperCase().slice(0, 3).replace('_', ''))
+                    }
+                })
+                item.description = names.join(', ')
+            },
+            async getUnityExamsSummary(item, teacherID) {
+                let url = `{% url 'analytics:followup-get-exams-summary' %}?deadline=${item.deadline}&type=${item.type}`
+                if(item.selectedUnity) {
+                    url += `&unity_id=${item.selectedUnity}`
+                }
+                if(teacherID) {
+                    url += `&teacher_id=${teacherID}`
+                }
+                return await axios.get(url)
+            },
+            async getExamDetailSummary(exam) {
+                return await axios.get(`{% url 'analytics:followup-get-exam-summary' %}?deadline=${this.selectedItem.deadline}&exam_id=${exam.id}&unity_id=${item.selectedUnity ? item.selectedUnity:''}&type=${this.selectedItem.type}`)
+            },
+            async getItemQuantity(item) {
+                return await axios.get(`{% url 'analytics:followup-get-item-quantity' %}?deadline=${item.deadline}&type=${item.type}`)
+            },
+            async getTeacherDetailSummary(teacher) {
+                url = `{% url 'analytics:followup-get-teacher-summary' %}?deadline=${this.selectedItem.deadline}&teacher_id=${teacher.id}&type=${this.selectedItem.type}`
+                if (this.selectedItem.selectUnity) {
+                    url += `&unity_id=${this.selectedItem.selectUnity}`
+                }
+                return await axios.get(url)
+            },
+            async getUnitySummary(unity) {
+                return await axios.get(`{% url 'analytics:followup-get-unity-summary' %}?unity_id=${unity.id}&deadline=${this.selectedItem.deadline}&type=${this.selectedItem.type}`).finally(() => unity.load = true)
+            },
+            async getUnityTeachersSummary(item) {
+                url = `{% url 'analytics:followup-get-teachers-summary' %}?deadline=${item.deadline}&type=${this.selectedItem.type}`
+                if (item.selectedUnity) {
+                    url += `&unity_id=${item.selectedUnity}`
+                }
+                return await axios.get(url)
+            },
+            async getTeachersSummary(type = 'correction') {
+                this.selectedItem.load.teachersSummary = true, 
+                this.loading.summary = false
+                await this.getUnityTeachersSummary(this.selectedItem).then((response) => {
+                    this.selectedItem.teachers = response.data                    
+                    this.handlerTeachersOrdering()
+                })
+                for(unity of this.selectedItem.unities.filter(u => !u.load)) {
+                    await this.getUnitySummary(unity).then((response) => {
+                        unity.quantity = response.data.quantity
+                    }).finally(() => {
+                        this.handlerItemUnitiesOrdering()
+                    })
+                }
+            },
+            async getTeacherExamsSummary(teacher) {
+                this.selectedItem.load.summary = true,
+                this.loading.summary = false
+                teacher.load.exams = false 
+                await this.getUnityExamsSummary(this.selectedItem, teacher.id).then((response) => {
+                    teacher.exams = response.data
+                    teacher.load.exams = true
+                    this.$forceUpdate()
+                    this.handlerExamsOrdering()
+                })
+            },
+            async getExamsSummary(teacher) {
+                this.selectedItem.load.summary = true, 
+                this.loading.summary = false
+                
+                await this.getUnityExamsSummary(this.selectedItem).then((response) => {
+                    this.selectedItem.exams = response.data 
+                    this.handlerExamsOrdering()
+                }).finally(() => {
+                    this.selectedItem.load.exams = true
+                })
+
+                for(unity of this.selectedItem.unities.filter(u => !u.load)) {
+                    await this.getUnitySummary(unity).then((response) => {
+                        unity.quantity = response.data.quantity
+                    }).finally(() => {
+                        this.handlerItemUnitiesOrdering()
+                    })
+                }
+                if(this.selectedItem && !this.selectedItem.selectedUnity) {
+                    if(this.selectedItem.type != 'questions') {
+                        this.selectUnity(this.selectedItem, this.selectedItem.unities.at(0).id)
+                    }
+                }
+            },
+            async getClassesSummary(exam, teacher) {
+                if(exam.collapsed) {
+                    exam.load.classesSummary = false
+                    let url = `{% url 'analytics:followup-get-classes-summary' %}?deadline=${this.selectedItem.deadline}&exam_id=${exam.id}&unity_id=${this.selectedItem.selectedUnity}&type=${this.selectedItem.type}`
+                    if(teacher) {
+                        url += `&teacher_id=${teacher.id}`
+                    }
+                    await axios.get(url).then((response) => {
+                        exam.classes = response.data
+                        this.$forceUpdate()
+                    }).finally(() => {
+                        exam.load.classesSummary = true
+                        this.handlerExamClassesOrdering(exam)
+                    })
+                }
+            },
+            async getItems(showFinisheds = false, type='correction') {
+                await axios.get(`{% url 'analytics:followup' %}?type=${type}&show_finisheds=${showFinisheds}`).then((response) => {
+                    let items = response.data.map((item, index) => ({
+                        ...item, 
+                        description: '',
+                        priority: 'low', 
+                        priorityValue: 1,
+                        load: {
+                            quantity: false,
+                            exams: false,
+                            summary: false,
+                            teachersSummary: false,
+                        }
+                    }))
+                    items.forEach((item) => this.items.push(item))
+                })
+                for(item of this.items.filter(i => !i.quantity).filter(i => !i.load.quantity)) {
+                    await this.getItemQuantity(item).then((response) => {
+                        item.quantity = response.data.quantity
+                        item.total = response.data.total
+                        item.selectedUnity = response.data.selectedUnity
+                        item.load.quantity = true
+                        this.$forceUpdate()
+                    })
+                    
+                    this.items.forEach((item) => {
+                        this.handleExamNames(item)
+                        this.handlerExamsAndUnities(item)
+                        this.handlerPriority(item)
+                    })
+                }
+                this.shownItems = Object.assign([], this.items)
+            },
+            async startData(showFinisheds = false) {
+                this.loading.items = true
+                await this.getItems(showFinisheds = showFinisheds)
+                await this.getItems(showFinisheds = showFinisheds, type='cards')
+                await this.getItems(showFinisheds = showFinisheds, type='questions')
+                this.loading.items = false
+            }
+        },
+        watch: {
+            selectedItem: function(val) {
+                if (this.viewer.type == 'exams') {
+                    if (val.type == 'correction') {
+                        this.getExamsSummary()
+                    }
+                } else {
+                    this.getTeachersSummary()
+                }
+            }
+        },
+        mounted() {
+            this.startData()
+            $("#check-show-finisheds").on('change', (e) => {
+                this.items = []
+                this.shownItems = []
+                if($("#check-show-finisheds").prop('checked')) {
+                    this.startData(showFinisheds = true)
+                } else {
+                    this.startData(showFinisheds = false)
+                }
+            })
+        }
+    });
+</script>
+{% endblock js-additional %}

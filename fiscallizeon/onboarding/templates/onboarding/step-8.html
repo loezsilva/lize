@@ -1,0 +1,203 @@
+{% load static %}
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Integração realizada com sucesso - Lize</title>
+  <link href="{% static 'favicon/favicon.ico' %}" rel="shortcut icon" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+  <link href="{% static 'tw/full/output.css' %}" rel="stylesheet">
+</head>
+<body class="flex flex-col h-screen">
+  <header class="flex justify-center border-b border-[#E5E7EA] px-6 py-4">
+    <a class="flex-none text-primary-600" href="/">
+      <span class="sr-only">Lize</span>
+      <svg width="52" height="32" viewBox="0 0 52 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M15.362 21.6376C13.5956 20.8193 11.5161 20.3893 9.87081 20.1636C8.22555 19.938 4.7732 19.7265 2.71343 20.1197C3.46911 12.9932 3.92787 4.67531 4.08972 1.44461C4.12465 0.746213 3.64726 0.110763 2.96959 0.0133674C2.19645 -0.0970939 1.5153 0.490845 1.47571 1.26645C1.34879 3.81419 0.417295 15.6561 0.00627239 20.8276C-0.0892059 22.0272 0.919138 23.0131 2.08933 22.8622C2.96261 22.7506 4.05595 22.6556 5.31812 22.6164C6.5803 22.5772 8.11378 22.671 8.60747 22.7173C11.4148 22.981 13.2801 23.601 14.3257 24.0571C14.937 24.3232 15.6449 24.0737 15.9663 23.481C16.3331 22.804 16.0524 21.956 15.362 21.6365V21.6376ZM13.6996 2.87095C14.4286 2.91699 15.0538 2.32674 15.1977 1.61019C15.351 0.849951 14.9971 1.41725e-09 14.0075 1.41725e-09C13.3458 1.41725e-09 12.638 0.495805 12.5507 1.43783C12.4811 2.17564 12.9577 2.82373 13.7008 2.87095H13.6996ZM48.6574 10.4645C48.9523 9.78699 49.7227 9.44167 50.3917 9.72983L50.3905 9.72864C51.07 10.0216 51.38 10.8182 51.0933 11.5029C49.9697 14.1797 47.5595 19.269 41.4359 19.269C40.6561 19.269 39.8904 19.1713 39.1596 18.9725C37.0326 18.3926 35.3449 16.9327 34.6421 14.8274C32.923 17.1447 30.8717 18.982 28.5826 19.8631C28.9987 21.4421 29.1385 23.2866 28.9311 25.3549C28.4847 29.8929 25.8728 32.3482 23.0546 31.96C20.5196 31.6111 18.7107 28.9938 19.3762 25.7681C20.2772 21.4183 22.6898 19.4119 25.015 18.2521C24.7527 17.8996 24.4753 17.6174 24.1921 17.3983C23.8203 17.1101 23.6035 16.66 23.635 16.1849L23.6944 15.2799C23.7481 14.4607 24.1991 13.7153 24.9077 13.3259C26.3157 12.5531 27.8472 11.0647 27.8472 8.24616C27.8472 7.09589 27.4346 6.5279 26.5837 6.32428C25.107 5.96705 23.1839 7.34595 21.8215 10.3002L21.7445 10.2633L21.8226 10.3014C21.7475 10.4614 21.6524 10.6789 21.5381 10.9404C20.4805 13.3593 17.7795 19.5366 14.0487 18.7081C12.5521 18.3795 11.6337 17.1506 11.5358 15.4228C11.4029 13.1044 12.15 5.92895 12.1932 5.54315C12.2771 4.80488 12.9391 4.27261 13.657 4.35358C14.375 4.43455 14.8832 5.11566 14.8261 5.85036C14.721 7.20467 14.6146 8.39185 14.5201 9.446C14.3546 11.2929 14.2256 12.7314 14.2048 13.9451C14.1827 15.2549 15.0615 16.3207 16.3925 14.4333C17.4473 12.9377 18.6967 10.7682 19.452 9.16065C20.9298 5.95515 23.6816 2.87109 27.1851 3.71891C29.4369 4.25951 30.4404 6.26117 30.4707 8.20567C30.5115 10.8349 28.9847 14.0939 26.3308 15.7431C26.8064 16.2087 27.2294 16.7612 27.5872 17.384C29.874 16.5159 32.2679 14.0356 34.1269 10.761C34.5057 10.0942 34.8239 9.39404 35.113 8.68197C35.1444 8.60219 35.1782 8.52241 35.212 8.44263C37.0162 4.24522 40.1258 2.60913 42.6958 3.74868C44.9009 4.72629 45.8928 7.4936 44.7075 10.1811C43.6154 12.6448 40.3414 14.1654 36.881 12.5222C36.8706 15.1085 38.7668 16.5921 41.4382 16.5921C45.8415 16.5921 47.5257 13.0663 48.6574 10.4645ZM41.6527 6.2052C40.9394 5.88965 39.1433 5.95634 37.613 9.51907H37.6142C37.5741 9.61297 37.5695 9.62227 37.5655 9.63178C37.5606 9.643 37.5565 9.65451 37.4953 9.80604C40.0069 11.3254 41.81 10.2252 42.3193 9.07611C43.0023 7.52575 42.359 6.51837 41.6527 6.2052ZM23.4054 29.3082C24.2457 29.4237 25.9555 28.8379 26.325 25.0846C26.4963 23.3747 26.3809 21.897 26.0896 20.7002C24.3599 21.5635 22.6466 22.9281 21.9427 26.323C21.5359 28.2949 22.5487 29.1903 23.4054 29.3082Z" fill="#FF8F3D"/>
+      </svg>
+    </a>
+  </header>
+  <main class="h-full overflow-y-auto">
+    <div class="h-full flex flex-col justify-center items-center">
+      <p class="text-3xl leading-[2.125rem] font-medium text-[#101828] tracking-[-0.01em] text-center">
+        Parabéns! Você concluiu a integração dos dados. <br />Avance para acessar o resumo geral.
+      </p>
+      <div class="flex gap-8 mt-14">
+        <div class="bg-white rounded-xl border border-[#E5E7EA] p-4 min-w-[15.25rem]">
+          <div class="flex justify-between">
+            <div>
+              <p class="font-['Roboto'] text-base leading-5 font-medium text-[#001737]">Unidades</p>
+            </div>
+            <div>
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6.66667 12.0002V22.6669M12.6667 12.0002V22.6669M19.3333 12.0002V22.6669M25.3333 12.0002V22.6669M4 24.8002L4 25.8669C4 26.6136 4 26.987 4.14532 27.2722C4.27316 27.5231 4.47713 27.727 4.72801 27.8549C5.01323 28.0002 5.3866 28.0002 6.13333 28.0002H25.8667C26.6134 28.0002 26.9868 28.0002 27.272 27.8549C27.5229 27.727 27.7268 27.5231 27.8547 27.2722C28 26.987 28 26.6136 28 25.8669V24.8002C28 24.0535 28 23.6801 27.8547 23.3949C27.7268 23.144 27.5229 22.94 27.272 22.8122C26.9868 22.6669 26.6134 22.6669 25.8667 22.6669H6.13333C5.3866 22.6669 5.01323 22.6669 4.72801 22.8122C4.47713 22.94 4.27316 23.144 4.14532 23.3949C4 23.6801 4 24.0535 4 24.8002ZM15.5372 4.10303L5.67055 6.29562C5.07447 6.42809 4.77643 6.49432 4.55395 6.65459C4.35772 6.79597 4.20364 6.98805 4.1082 7.21028C4 7.46222 4 7.76753 4 8.37816L4 9.86685C4 10.6136 4 10.987 4.14532 11.2722C4.27316 11.5231 4.47713 11.727 4.72801 11.8549C5.01323 12.0002 5.3866 12.0002 6.13333 12.0002H25.8667C26.6134 12.0002 26.9868 12.0002 27.272 11.8549C27.5229 11.727 27.7268 11.5231 27.8547 11.2722C28 10.987 28 10.6136 28 9.86686V8.37816C28 7.76753 28 7.46222 27.8918 7.21028C27.7964 6.98805 27.6423 6.79597 27.446 6.65459C27.2236 6.49432 26.9255 6.42809 26.3295 6.29562L16.4628 4.10303C16.2901 4.06465 16.2037 4.04546 16.1165 4.03781C16.039 4.03102 15.961 4.03102 15.8835 4.03781C15.7963 4.04546 15.7099 4.06465 15.5372 4.10303Z" stroke="#E5E7EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+          </div>
+          <div class="pt-1 pb-5">
+            <p class="text-3xl leading-[2.125rem] font-medium tracking-[-0.01em] text-[#FF8F3D]">
+              {{ user.client.get_unities.count }}
+            </p>
+          </div>
+          <div>
+            <ul class="space-y-1">
+              <li class="flex gap-2 text-xs font-medium text-[#9BA3AF]">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.3337 4L6.00033 11.3333L2.66699 8" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Unidades
+              </li>
+              <li class="flex gap-2 text-xs font-medium text-[#9BA3AF]">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.3337 4L6.00033 11.3333L2.66699 8" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Segmento
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl border border-[#E5E7EA] p-4 min-w-[15.25rem]">
+          <div class="flex justify-between">
+            <div>
+              <p class="font-['Roboto'] text-base leading-5 font-medium text-[#001737]">Coordenação</p>
+            </div>
+            <div>
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.3337 9.33333L15.8463 6.35856C15.4182 5.5024 15.2041 5.07431 14.8848 4.76155C14.6024 4.48497 14.2621 4.27463 13.8884 4.14575C13.4659 4 12.9873 4 12.03 4H6.93366C5.44019 4 4.69345 4 4.12302 4.29065C3.62125 4.54631 3.2133 4.95426 2.95764 5.45603C2.66699 6.02646 2.66699 6.77319 2.66699 8.26667V9.33333M2.66699 9.33333H22.9337C25.1739 9.33333 26.294 9.33333 27.1496 9.76931C27.9023 10.1528 28.5142 10.7647 28.8977 11.5174C29.3337 12.373 29.3337 13.4931 29.3337 15.7333V21.6C29.3337 23.8402 29.3337 24.9603 28.8977 25.816C28.5142 26.5686 27.9023 27.1805 27.1496 27.564C26.294 28 25.1739 28 22.9337 28H9.06699C6.82678 28 5.70668 28 4.85103 27.564C4.09838 27.1805 3.48646 26.5686 3.10297 25.816C2.66699 24.9603 2.66699 23.8402 2.66699 21.6V9.33333Z" stroke="#E5E7EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+          </div>
+          <div class="pt-1 pb-5">
+            <p class="text-3xl leading-[2.125rem] font-medium tracking-[-0.01em] text-[#FF8F3D]">
+              {{ user.client.get_coordinations.count }}
+            </p>
+          </div>
+          <div>
+            <ul class="space-y-1">
+              <li class="flex gap-2 text-xs font-medium text-[#9BA3AF]">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.3337 4L6.00033 11.3333L2.66699 8" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Unidade
+              </li>
+              <li class="flex gap-2 text-xs font-medium text-[#9BA3AF]">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.3337 4L6.00033 11.3333L2.66699 8" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Segmento
+              </li>
+              <li class="flex gap-2 text-xs font-medium text-[#9BA3AF]">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.3337 4L6.00033 11.3333L2.66699 8" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Coordenadores
+              </li>
+              <li class="flex gap-2 text-xs font-medium text-[#9BA3AF]">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.3337 4L6.00033 11.3333L2.66699 8" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Permissões
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl border border-[#E5E7EA] p-4 min-w-[15.25rem]">
+          <div class="flex justify-between">
+            <div>
+              <p class="font-['Roboto'] text-base leading-5 font-medium text-[#001737]">Professores</p>
+            </div>
+            <div>
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="17.334" y="20.0015" width="6.66945" height="4.00167" rx="1" stroke="#E5E7EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M11.9993 28.0046H3.32905C2.96071 28.0046 2.66211 27.706 2.66211 27.3377V26.7961C2.66651 25.2553 3.91448 24.0073 5.45527 24.0029H9.87311C11.4139 24.0073 12.6619 25.2553 12.6663 26.7961V27.3377C12.6663 27.706 12.3677 28.0046 11.9993 28.0046Z" stroke="#E5E7EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M7.66378 20.6683C6.19071 20.6654 4.99853 19.4696 5 17.9965C5.00148 16.5235 6.19605 15.3301 7.66911 15.3301C9.14218 15.3301 10.3368 16.5235 10.3382 17.9965C10.3397 19.4696 9.14751 20.6654 7.67445 20.6683H7.66378Z" stroke="#E5E7EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M5.33008 11.998V6.66241C5.33008 5.18903 6.52448 3.99463 7.99786 3.99463H26.6723C28.1457 3.99463 29.3401 5.18903 29.3401 6.66241V21.3352C29.3401 22.8086 28.1457 24.003 26.6723 24.003H16.0012" stroke="#E5E7EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </div>
+          <div class="pt-1 pb-5">
+            <p class="text-3xl leading-[2.125rem] font-medium tracking-[-0.01em] text-[#FF8F3D]">
+              {{ user.client.get_teachers.count }}
+            </p>
+          </div>
+          <div>
+            <ul class="space-y-1">
+              <li class="flex gap-2 text-xs font-medium text-[#9BA3AF]">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.3337 4L6.00033 11.3333L2.66699 8" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Segmento
+              </li>
+              <li class="flex gap-2 text-xs font-medium text-[#9BA3AF]">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.3337 4L6.00033 11.3333L2.66699 8" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Disciplinas
+              </li>
+              <li class="flex gap-2 text-xs font-medium text-[#9BA3AF]">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.3337 4L6.00033 11.3333L2.66699 8" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Permissões
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl border border-[#E5E7EA] p-4 min-w-[15.25rem]">
+          <div class="flex justify-between">
+            <div>
+              <p class="font-['Roboto'] text-base leading-5 font-medium text-[#001737]">Alunos</p>
+            </div>
+            <div>
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M26.6673 28C26.6673 26.1392 26.6673 25.2089 26.4377 24.4518C25.9206 22.7473 24.5867 21.4134 22.8822 20.8963C22.1251 20.6667 21.1947 20.6667 19.334 20.6667H12.6673C10.8066 20.6667 9.87619 20.6667 9.11913 20.8963C7.41459 21.4134 6.0807 22.7473 5.56364 24.4518C5.33398 25.2089 5.33398 26.1392 5.33398 28M22.0007 10C22.0007 13.3137 19.3144 16 16.0007 16C12.6869 16 10.0007 13.3137 10.0007 10C10.0007 6.68629 12.6869 4 16.0007 4C19.3144 4 22.0007 6.68629 22.0007 10Z" stroke="#E5E7EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+          </div>
+          <div class="pt-1 pb-5">
+            <p class="text-3xl leading-[2.125rem] font-medium tracking-[-0.01em] text-[#FF8F3D]">
+              {{ user.client.get_students.count }}
+            </p>
+          </div>
+          <div>
+            <ul class="space-y-1">
+              <li class="flex gap-2 text-xs font-medium text-[#9BA3AF]">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.3337 4L6.00033 11.3333L2.66699 8" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Série
+              </li>
+              <li class="flex gap-2 text-xs font-medium text-[#9BA3AF]">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.3337 4L6.00033 11.3333L2.66699 8" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Turma
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer class="flex justify-center border-t border-[#E5E7EA] px-[11.5rem] py-4">
+    <a href="{% url 'onboarding:feedback' 9 %}" class="flex items-center gap-4 rounded-lg border border-primary-600 text-primary-600 px-[8.375rem] py-3 text-sm font-semibold hover:text-white hover:bg-primary-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+      Deseja avaliar sua experiência?
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 14C8 14 9.5 16 12 16C14.5 16 16 14 16 14M15 9H15.01M9 9H9.01M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12ZM15.5 9C15.5 9.27614 15.2761 9.5 15 9.5C14.7239 9.5 14.5 9.27614 14.5 9C14.5 8.72386 14.7239 8.5 15 8.5C15.2761 8.5 15.5 8.72386 15.5 9ZM9.5 9C9.5 9.27614 9.27614 9.5 9 9.5C8.72386 9.5 8.5 9.27614 8.5 9C8.5 8.72386 8.72386 8.5 9 8.5C9.27614 8.5 9.5 8.72386 9.5 9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </a>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@tsparticles/confetti@3.0.3/tsparticles.confetti.bundle.min.js"></script>
+  <script>
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+    });
+  </script>
+</body>
+</html>

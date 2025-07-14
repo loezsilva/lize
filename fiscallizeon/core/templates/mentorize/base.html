@@ -1,0 +1,304 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    {% if not DEBUG %}
+      <!-- Google Tag Manager -->
+      <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','GTM-KWRQHDS');</script>
+      <!-- End Google Tag Manager -->
+    {% endif %}
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+
+    <!-- Twitter -->
+    <meta name="twitter:site" content="@themepixels" />
+    <meta name="twitter:creator" content="@themepixels" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="DashForge" />
+    <meta
+      name="twitter:description"
+      content="Lize"
+    />
+
+
+    <!-- Facebook -->
+    <meta property="og:url" content="https://fiscallize.com.br" />
+    <meta property="og:title" content="Lize" />
+    <meta
+      property="og:description"
+      content="Lize"
+    />
+
+
+    <!-- Meta -->
+    <meta
+      name="description"
+      content="Lize"
+    />
+    <meta name="author" content="Lize" />
+
+    <!-- Favicon -->
+    <link
+      rel="shortcut icon"
+      type="image/x-icon"
+      href="{% static 'fiscallize-icon.png' %}"
+    />
+
+    <title>Mentorize - Dashboard</title>
+
+    <!-- vendor css -->
+    <link
+      rel="stylesheet"
+      href="{% static 'new/administration/assets/fonts/feather/feather.css' %}"
+    />
+    <link
+      href="{% static 'new/administration/lib/@fortawesome/fontawesome-free/css/all.min.css' %}"
+      rel="stylesheet"
+    />
+    <link
+      href="{% static 'new/administration/lib/ionicons/css/ionicons.min.css' %}"
+      rel="stylesheet"
+    />
+    <link
+      href="{% static 'new/administration/lib/jqvmap/jqvmap.min.css' %}"
+      rel="stylesheet"
+    />
+    <link
+      href="{% static 'new/administration/lib/jqvmap/jqvmap.min.css' %}"
+      rel="stylesheet"
+    />
+    <link
+      href="{% static 'new/administration/lib/select2/css/select2.min.css' %}"
+      rel="stylesheet"
+    />
+
+    <!-- DashForge CSS -->
+    <link
+      rel="stylesheet"
+      href="{% static 'new/administration/assets/css/dashforge.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'new/administration/assets/css/dashforge.dashboard.css' %}"
+    />
+    <link rel="stylesheet" href="{% static 'administration/assets/css/app_mentorizze.css' %}">
+      
+    <link
+      rel="stylesheet"
+      href="{% static 'administration/assets/css/skin.mentorizze.css' %}"
+    />
+
+    {% block css-additional %}
+      
+    {% endblock css-additional %}
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+    <script src="{% static 'new/administration/lib/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'js/jquery.start-ratings.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+      
+    {% if not DEBUG %}
+      <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "cl4r2phsyu");
+      </script>
+    {% endif %}
+
+    {% if not disable_sleek and not DEBUG %}
+     {% if not debug and user and user_type == "teacher" or user_type == "coordination" and user.get_clients %}
+     <script type="text/javascript">
+       window.SLEEK_USER = {
+         token: '{{user.generate_sleekplan_token}}',
+       }
+     </script>
+
+     <script type="text/javascript">
+       window.$sleek = [];
+       window.SLEEK_PRODUCT_ID = 890227471;
+       (function () {
+         d = document;
+         s = d.createElement("script");
+         s.src = "https://client.sleekplan.com/sdk/e.js";
+         s.async = 1;
+         d.getElementsByTagName("head")[0].appendChild(s);
+       })();
+     </script>
+     {% endif  %}
+    {% endif %}
+    
+
+    {% block head %}
+    {% endblock head %}
+  </head>
+  <body>
+    {% if not DEBUG %}
+        <!-- Google Tag Manager (noscript) -->
+      <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWRQHDS"
+      height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+      <!-- End Google Tag Manager (noscript) -->
+    {% endif %}
+
+    
+    {% comment %} {% include 'includes/header.html' with user=user applications_actived=applications_actived %} {% endcomment %}
+    {% include 'mentorize/includes/sidebar.html' %}
+    
+    <div class="content pd-0">
+      {% block content-header %}
+        <div class="content-header justify-content-end">
+          <nav class="nav">
+          </nav>
+        </div>
+      {% endblock content-header %}
+
+      <div class="content-body bg-light" id="app" style="min-height: 100vh !important;">
+        <div class="container px-0">
+          {% block breadcrumb-fixed %}{% endblock breadcrumb-fixed %}
+        </div>
+        {% block content %} {% endblock content %}
+      </div>
+    </div>
+
+    {% comment %} <footer class="footer">
+      <div>
+        {% now "Y" as current_year %}
+        <span>&copy; {{ current_year }} Mentorize v1.0.0. </span>
+      </div>
+      <div>
+        <nav class="nav">
+          <a
+            href="#"
+            class="nav-link"
+            style="color: #bae2f6"
+            >Termos de uso</a
+          >
+          <a
+            href="#"
+            class="nav-link"
+            style="color: #bae2f6"
+            >Política de privacidade</a
+          >
+          <a
+            href="#"
+            class="nav-link"
+            style="color: #bae2f6"
+            >Base de conhecimento</a
+          >
+        </nav>
+      </div>
+    </footer> {% endcomment %}
+    <script src="{% static 'new/administration/lib/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'new/administration/lib/feather-icons/feather.min.js' %}"></script>
+    <script src="{% static 'new/administration/lib/perfect-scrollbar/perfect-scrollbar.min.js' %}"></script>
+    <script src="{% static 'new/administration/lib/jquery.flot/jquery.flot.js' %}"></script>
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    <script src="{% static 'new/administration/lib/select2/js/select2.min.js' %}"></script>
+
+    <script src="{% static 'administration/assets/js/app.aside.js' %}"></script>
+    <script src="{% static 'new/administration/assets/js/dashforge.js' %}"></script>
+    
+    <!-- append theme customizer -->
+    <script src="{% static 'new/administration/lib/js-cookie/js.cookie.js' %}"></script>
+
+    <script src="{% static 'new/administration/lib/vue/vue.js' %}"></script>
+    <script language="javascript" type="text/javascript" src="{% static 'new/administration/lib/jquery.flot/jquery.flot.tooltip.js' %}"></script>
+
+    {% block bundle %}
+    {% endblock bundle %}
+
+    <style>
+      .modal-body {
+        max-height: 80vh;
+        height: 80vh;
+        overflow: auto;
+      }
+    </style>
+    
+    {% for tutorial in tutoriais %}
+      <div class="modal pr-0" tabindex="-1" role="dialog" data-notification id="modal-tutorial-{{ tutorial.id }}">
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+              <div class="modal-header bg-white">
+                <h5 class="modal-title">
+                  {{ tutorial.title }}
+                </h5>
+                <span class="badge badge-success text-white ml-2 mt-1">Ajuda</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <i class="fas fa-times-circle"></i>
+                </button>
+              </div>
+              <div class="modal-body">
+                {% include 'includes/modal_tutorial_content.html' %}
+              </div>
+              <div class="modal-footer bg-white">
+                <button class="btn btn-primary" data-dismiss="modal">Fechar</button>
+              </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+
+
+    {% if not user.is_anonymous %}
+      
+    {% endif %}
+
+    {% if  user_type == 'student' and user.client_allow_student_notification %}
+      <script src="{% static 'js/onesignal/OneSignalSDKWorker.js' %}"></script>
+      <script>
+        window.OneSignal = window.OneSignal || [];
+        OneSignal.push(function() {
+          OneSignal.init({
+            appId: "{{ONESIGNAl_APP_ID}}",
+          });
+          OneSignal.setEmail("{{ user.email }}");
+          console.log('{{user.pk}}')
+          OneSignal.setExternalUserId("{{ user.pk }}");
+          OneSignal.sendTag("user_type", "{{ user_type }}");
+        });
+      </script>
+    {% endif %}
+
+    <script>
+      $(document).ready(() => {
+        const pathArray = window.location.pathname.split('/')
+        const secondLevelLocation = pathArray[0];
+        var newPathname = "";
+        for (i = 0; i < pathArray.length; i++) {
+            if(i > 0) {
+                newPathname += "/";
+            }
+            newPathname += pathArray[i];
+        }
+        $(`a[href*="${newPathname}"]:first`).parent().addClass('active')
+      })
+    </script>
+
+    {% if not disable_support_chat %}
+      {% include 'includes/chatwoot.html' with user_type="anonimo" %}
+    {% endif %}
+    
+    {% comment %} NÃO REMOVA ESSA INSTÂNCIA DO VUE, ELA É RESPONSÁVEL PELAS NOTIFICAÇÕES DOS USUÁRIOS {% endcomment %}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+    <script>
+      var app_notifications = new Vue({
+        components: {
+          {% include 'includes/components/vue-notifications.html' %}
+        },
+        el: '#vueNotifications',
+      })
+    </script>
+
+  </body>
+</html>

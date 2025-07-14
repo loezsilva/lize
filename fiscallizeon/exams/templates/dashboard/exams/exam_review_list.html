@@ -1,0 +1,553 @@
+{% extends 'dashboard/base_fixed.html' %}
+{% load static %}
+{% load cleaned_params %}
+{% load exams_tags %}
+
+{% block title %}
+  Lize - Listagem de provas para revisão
+{% endblock title %}
+
+{% block css-additional %}
+
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+
+<link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+
+<style>
+  .select2-selection__choice__remove{
+    display: none !important;
+  }
+</style>
+
+{% endblock %}
+
+{% block breadcrumb-fixed %}
+
+
+<div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+  <div>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+        <li class="breadcrumb-item"><a href="#">CADERNO DE PROVAS</a></li>
+        <li class="breadcrumb-item active" aria-current="page">LISTAGEM</li>
+      </ol>
+    </nav> 
+      <h4>Cadernos de prova para revisão</h4>
+    </div>
+    {% if user.get_user_function == "Coordenação" %}
+    <div class="d-none d-md-block">
+      <a href="{% url 'exams:exams_create' %}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+        <i data-feather="plus" class="wd-10 mg-r-5"></i> Cadastrar caderno de prova
+        </a>
+      </div>
+      {% endif %}
+    </div>
+    
+    {% endblock breadcrumb-fixed %}
+    
+    
+    {% block content-fixed %}
+    
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+              
+              <div>
+                <h6 class="mg-b-5">Cadernos de Provas</h6> 
+                <p class="tx-13 tx-color-03 mg-b-5">Gerencie todas as suas provas listadas abaixo</p>
+              </div>
+              
+              <div class="float-right text-right">
+
+                <button data-toggle-off-canvas="#right-off-canvas"
+                  class="btn btn-sm btn-info btn-icon rounded-pill off-canvas-menu  mb-2">
+                  <i class="fas fa-search"></i> Filtrar listagem 
+                  
+                  {% if count_filters > 0 %}
+                  <span class="badge badge-danger">{{count_filters}} Aplicado(s)</span>
+                  {% endif %}
+
+                </button>
+                {% if count_filters > 0 %}
+                <a href="{% url 'exams:exams_review' %}" class="btn btn-sm btn-info btn-icon rounded-pill mb-2">
+                  <i class="fas fa-eraser"></i> Apagar filtro(s)
+                </a>
+                {% endif %}
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-dashboard mg-b-1">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Questões</th>
+                    <th>Situação</th>
+                    <th>Questões Revisadas</th>
+                    <th class="text-wrap"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for exam in object_list %}
+                    {% with exam|get_details:user as exam_details %}
+                      <tr>
+                        <td class="tx-medium">
+                          {% if exam.get_category_display == 'Prova' %}
+                            <span class="badge badge-primary">Caderno de prova</span>
+                          {% else %}
+                            <span class="badge badge-success">Caderno de atividade</span>
+                          {% endif %}
+                          <br>
+                          <span class="badge badge-light">Utilizada em <b> {{exam.count_applications_count}}
+                          </b>aplicações</span><br />
+                          {{ exam.name }} <br/>
+                        </td>
+                        <td class="">
+                          <span>{{ exam.questions.count }} Questões</span><br/>
+                            {% if exam_details.count_empty_feedbacks > 0 %}
+                              <span class="badge badge-danger">
+                                {{exam_details.count_empty_feedbacks}} Sem gabarito
+                              </span>
+                            {% endif %}
+                        </td>
+                        <td class="tx-teal">{{ exam.get_status_display }}</td>
+                        <td>
+                          <span class="badge badge-primary">
+                            {% if exam_details.count_reviewed_questions == 0 %}
+                              Você ainda não revisou nenhuma questão
+                            {% else %}
+                              {{exam_details.count_reviewed_questions}}
+                              {% if exam_details.count_reviewed_questions > 1 %}
+                                questões revisadas
+                              {% else %}
+                                questão revisada
+                              {% endif %}
+                            {% endif %}
+                          </span>
+                          <br>
+                          <div>
+                            {% if exam_details.count_seen_questions %}
+                              <span class="badge badge-primary">
+                                {{exam_details.count_seen_questions}} Visto(s)
+                              </span>
+                            {% endif %}
+                            {% if exam_details.count_approved_questions %}
+                              <span class="badge badge-success">
+                                {{exam_details.count_approved_questions}} Aprovada(s)
+                              </span>
+                            {% endif %}
+                            {% if exam_details.count_reproved_questions %}
+                              <span class="badge badge-danger">
+                                {{exam_details.count_reproved_questions}} Reprovada(s)
+                              </span>
+                            {% endif %}
+                            {% if exam_details.count_correction_pending_questions %}
+                              <span class="badge badge-warning">
+                                {{exam_details.count_correction_pending_questions}} Sugestão de correção
+                              </span>
+                            {% endif %}
+                          </div>
+                        </td>
+                        <td class="text-wrap">
+                            <div class="d-flex justify-content-end">
+                              <div class="dropdown mr-2">
+                                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButtonConfig"
+                                  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                  <i class="fas fa-cog"></i> Opções
+                                </button>
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButtonConfig">
+                                  {% if user_type == 'coordination' or  user_type == 'teacher' and user.inspector.is_discipline_coordinator %}
+                                    <a href="{% url 'exams:exams_update' pk=exam.pk %}{{request|cleaned_params}}" class="dropdown-item nav-link"><i class="fas fa-edit"></i> 
+                                      
+                                      {% if user_type == 'coordination' %}
+                                        Editar/Revisar caderno
+                                      {% else %}
+                                        Revisar caderno
+                                        <p style="line-height: 15px;" class="text-muted m-0 p-0">
+                                          Revise cada questão enviada<br/> pelos professores.
+                                        </p>
+                                      {% endif %}
+                                    </a>                                
+                                  {% endif %}
+                                  {% if user_type != 'teacher' %}
+                                    <a href="javascript:void(0)"
+                                      onClick="confirmCancelCopy('{% url "exams:exams_copy" exam.pk %}')"
+                                      class="dropdown-item nav-link"><i
+                                      class="far fa-copy"></i> Duplicar prova 
+                                    
+                                    </a>
+                                    <a href="javascript:void(0)" class="nav-link dropdown-item"
+                                      onClick="confirmCancel('{% url "exams:exams_delete" exam.pk %}')"
+                                      data-toggle="tooltip" data-placement="top" title="Remover">
+                                      <i class="fas fa-trash"></i> Remover
+                                    </a>
+                                  {% endif %}
+
+                                  {% if exam.questions.count > 0 %}
+                                    <a href="{% url 'exams:exams_preview' pk=exam.pk %}" class="nav-link dropdown-item" data-toggle="tooltip" data-placement="top" title="Visualizar"><i class="fas fa-eye"></i> Visualizar prova
+                                      <br/>
+                                      <p style="line-height: 15px;" class="text-muted m-0 p-0">Veja a prova exatamente<br /> como um aluno verá na<br />  aplicação online.</p>
+                                    </a>
+                                  {% endif %}
+                                </div>
+                              </div>
+                            </div>
+                        </td>
+                      </tr>
+                    {% endwith %}
+                  {% empty %}
+                    <tr>
+                      <td colspan="4">Não há cadernos cadastrados</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+        </div>
+        {% include 'includes/pagination.html' with objects=object_list %}
+    </div>    
+</div>
+
+{% endblock content-fixed %}
+
+{% block off-canvas %}
+  <div id="right-off-canvas" class="off-canvas off-canvas-right wd-400 bg-white"
+    style="overflow-y: auto; overflow-x: hidden;">
+    <form action="" method="GET">
+    <div class="row p-3">
+      <div class="col-12">
+        <h5>Filtrar cadernos de provas</h5>
+        <p>Adiciona abaixo os filtros que você deseja aplicar na listagem abaixo</p>
+        <hr/>
+      </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="exam_name_id" class="mb-1">Nome da prova</label>
+            <input type="text" value="{{q_name}}" id="exam_name_id" name="q_name" class="form-control" placeholder="Digite o nome da prova aqui">            
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="status_id" class="mb-1">Situação da prova</label>
+            <select name="q_status" id="status_id" class="form-control" multiple="multiple">
+              <option value="0" {% if '0' in q_status %}selected="selected"{% endif %}>Elaborando</option>
+              <option value="1" {% if '1' in q_status %}selected="selected"{% endif %}>Aberta</option>
+              <option value="3" {% if '3' in q_status %}selected="selected"{% endif %}>Enviada para revisão</option>
+              <option value="2" {% if '2' in q_status %}selected="selected"{% endif %}>Fechada</option>
+
+            </select>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="id_category" class="mb-1">Categoria</label>
+            <select name="category" id="id_category" class="form-control">
+                <option value=""></option>
+                <option value="exam" {% if category == 'exam' %} selected="selected" {% endif %}>Caderno de prova</option>
+                <option value="homework" {% if category == 'homework' %} selected="selected" {% endif %}>Lista de Exercício</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="subject_id" class="mb-1">Disciplinas na Prova</label>
+            <select name="q_subjects" id="subject_id" class="form-control" multiple="multiple">
+              {% for subject in subjects %}
+                <option value="{{subject.pk}}"
+                  {% if subject.pk|stringformat:'s' in q_subjects %}selected="selected" {% endif %}>
+                  {{subject.knowledge_area.name}} - {{subject.name}}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="grade_id" class="mb-1">Séries</label>
+            <select name="q_grades" id="grade_id" class="form-control" multiple="multiple">
+              {% for grade in grades %}
+              <option value="{{grade.pk}}" {% if grade.pk|stringformat:'s' in q_grades %}selected="selected"
+                {% endif %}>
+                {{grade}}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="custom-control custom-switch ">
+            <input {% if q_has_questions %}checked="checked"{% endif %} type="checkbox" id="has_questions_id" name="q_has_questions" class="custom-control-input">
+            <label class="custom-control-label" for="has_questions_id">Provas com questões</label>
+            <small class="form-text text-muted mt-0">Selecine caso queira ver apenas provas com questões já cadastradas.</small>
+          </div>
+        </div>
+
+         <div class="col-12 mt-2">
+           <div class="custom-control custom-switch ">
+             <input type="checkbox" id="is_unprecedented" name="q_is_unprecedented" class="custom-control-input"
+               {% if q_is_unprecedented %}checked="checked"{% endif %}>
+             <label class="custom-control-label" for="is_unprecedented">Provas inéditas</label>
+             <small class="form-text text-muted mt-0">Selecine caso queira ver apenas provas que ainda não foram utilizadas em nenhuma aplicação.</small>
+           </div>
+         </div>
+        
+
+        <div class="col-12 mt-5">
+          <button type="submit" class="btn btn-primary btn-block">
+            <i class="fas fa-search"></i>
+            Aplicar filtro
+          </button>
+        </div>
+      </div>      
+      <input type="hidden" value="{{year|force_escape}}" name="year">
+    </form>
+  </div>
+{% endblock %}
+
+
+{% block extra-modal %}
+
+{% include 'includes/confirm_modal.html' %}
+
+<div aria-hidden="true" class="modal  fade" id="configurePrintModal" role="dialog" tabindex="-1">
+  <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Configure a impressão de prova</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form id="configure_print_form_id" action="" method="get" target="_blank">
+      <div class="modal-body" style="max-height: fit-content; height: fit-content;">
+        <h6>Formato do cabeçalho:</h6>
+        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+          <label class="btn btn-outline-primary btn-lg active">
+            <input type="radio" name="header_full" id="header_full_default" value="1" autocomplete="off" checked>
+            <i class="fas fa-table fa-lg"></i>
+            <span>
+              Modelo completo
+            </span>
+          </label>
+          <label class="btn btn-outline-primary btn-lg">
+            <input type="radio" name="header_full" id="header_full_enem" value="0" autocomplete="off">
+            <i class="far fa-square fa-lg"></i>
+            <span>
+              Apenas nome do aluno
+            </span>
+          </label>
+        </div>
+        <h6 class="mt-3">Formato da prova:</h6>
+        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+          <label class="btn btn-outline-primary btn-lg active">
+            <input type="radio" name="two_columns" id="two_columns_default" value="0" autocomplete="off" checked>
+            <i class="fas fa-file fa-lg"></i>
+            <span>
+              Modelo padrão
+            </span>
+          </label>
+          <label class="btn btn-outline-primary btn-lg">
+            <input type="radio" name="two_columns" id="two_columns_enem" value="1" autocomplete="off">
+             <i class="fas fa-columns fa-lg"></i>
+             <span>
+               Modelo ENEM
+             </span>
+          </label>
+        </div>
+       
+        <h6 class="mt-3">Tipo de caderno:</h6>
+
+        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+          <label class="btn btn-outline-primary btn-lg active">
+            <input type="radio" name="separate_subjects" id="separate_subjects_default" value="0" autocomplete="off"
+              checked>
+             <i class="fas fa-file fa-lg"></i>
+             Caderno Único
+          </label>
+          <label class="btn btn-outline-primary btn-lg">
+            <input type="radio" name="separate_subjects" id="separate_subjects_enem" value="1" autocomplete="off">
+             <i class="fas fa-copy fa-lg"></i>
+             Caderno por Disciplina
+          </label>
+        </div>
+
+        <h6 class="mt-3">Impressão de questões discursivas:</h6>
+
+        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+          <label class="btn btn-outline-primary btn-lg active">
+            <input type="radio" name="line_textual" id="line_textual_white" value="0" autocomplete="off"
+              checked>
+            <i class="fas fa-square fa-lg"></i>
+            Espaço em branco
+          </label>
+          <label class="btn btn-outline-primary btn-lg">
+            <input type="radio" name="line_textual" id="line_textual_rows" value="1" autocomplete="off">
+            <i class="fas fa-bars fa-lg"></i>
+            Impressão com linhas
+          </label>
+        </div>
+
+        <div class="custom-control custom-switch mt-4">
+          <input type="checkbox" id="no_disclosed_id" name="print_correct_answers" class="custom-control-input" value="1">
+          <label class="custom-control-label" for="no_disclosed_id">
+           <h6 class="mb-0">Imprimir prova gabaritada<span class="badge badge-danger ml-1">Atenção</span></h6>
+          </label>
+          <small class="form-text text-muted mt-0">
+            Selecione essa opção se deseja imprimir a <br/>prova com o gabarito inserido.
+          </small>
+        </div>
+      </div>
+      <div class="modal-footer">
+          <div class="form-buttons-w text-right">
+            <button class="btn btn-primary not-disable" type="submit">
+              <i class="os-icon os-icon-check"></i>
+              <span>Imprimir prova</span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div aria-hidden="true" class="modal  fade" id="exportAttachmentsModal" role="dialog" tabindex="-1">
+  <div class="modal-dialog modal-md" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-truncate" id="modal-exam-export-title"></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" style="max-height: fit-content; height: fit-content;">
+        <div id="exporting-info">
+          <h6>Exportação em andamento... <i class="fas fa-spinner fa-spin text-primary mt-2"></i></h6>
+          <p>Mantenha esta janela aberta enquanto geramos o link para download.</p>
+        </div>
+        <div id="exported-info" class="d-none">
+          <p>Você pode baixar o arquivo ZIP com as respostas de anexo clicando no botão abaixo:</p>
+          <a href="#" target="_blank" id="download-attachments-url" class="btn btn-primary btn-block">
+            <i class="fas fa-download"></i>
+             Baixar respostas
+          </a>
+        </div>
+        <div id="exported-error" class="d-none">
+          <p class="text-danger">Um erro aconteceu no processo de exportação. Tente novamente mais tarde.</p>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-center"></div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock extra-modal %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+
+<script>
+
+  function openConfigurePrintModal(url) {
+    document.getElementById('configure_print_form_id').action = url
+    $("#configurePrintModal").modal("show")
+  }
+
+  function confirmCancelCopy(url) {
+    document.getElementById('confirmCancelCopyFormId').action = url
+    $("#confirmCancelCopyModal").modal("show")
+  }
+
+  $('#status_id').select2({
+    placeholder: "Selecione uma opção",
+  });
+
+  $('#subject_id').select2({
+    placeholder: "Selecione uma opção",
+  });
+
+  $('#grade_id').select2({
+    placeholder: "Selecione uma opção",
+  });
+
+  $('.table-responsive').on('show.bs.dropdown', function () {
+    $('.table-responsive').css( "overflow", "inherit" );
+  });
+  
+  $('.table-responsive').on('hide.bs.dropdown', function () {
+    $('.table-responsive').css( "overflow", "auto" );
+  })
+
+
+  $(function () {
+    'use strict'
+
+    $('.off-canvas-menu').on('click', function (e) {
+      e.preventDefault();
+      var target = $(this).attr('data-toggle-off-canvas');
+      $(target).addClass('show');
+    });
+
+    $('.off-canvas .close').on('click', function (e) {
+      e.preventDefault();
+      $(this).closest('.off-canvas').removeClass('show');
+    })
+
+    $(document).on('click touchstart', function (e) {
+      e.stopPropagation();
+
+      if (!$(e.target).closest('.off-canvas-menu').length) {
+        var offCanvas = $(e.target).closest('.off-canvas').length;
+        if (!offCanvas) {
+          $('.off-canvas.show').removeClass('show');
+        }
+      }
+    });
+  
+    $('.export-attachments').on('click', function(e) {
+      let examId = $(this).data('exam-id')
+      let examName = $(this).data('exam-name')
+
+      {% with task_id='1234567890'|random %}
+      let exportAttachmentsUrl = "{% url 'exams:exam_export_attachments' pk='00000000-0000-0000-0000-000000000000' task_id=task_id %}"
+      let exportAttachmentsStatusUrl = "{% url 'exams:exam_export_attachments_status' pk='00000000-0000-0000-0000-000000000000' task_id=task_id %}"
+      {% endwith %}
+
+      $('#exportAttachmentsModal').modal('show');
+      $('#modal-exam-export-title').html(examName)
+
+      $('#exporting-info').removeClass('d-none')
+      $('#exported-info').addClass('d-none')
+      $('#exported-error').addClass('d-none')
+
+      axios.get(exportAttachmentsUrl.replace('00000000-0000-0000-0000-000000000000', examId))
+      .then(function (response) {})
+
+      let interval = setInterval(function(){
+        axios.get(exportAttachmentsStatusUrl.replace('00000000-0000-0000-0000-000000000000', examId))
+        .then(function (response) {
+          if (response.data.details) {
+            $('#download-attachments-url').attr('href', response.data.details)
+            $('#exported-info').removeClass('d-none')
+            $('#exporting-info').addClass('d-none')
+            clearInterval(interval)
+          }
+        })
+        .catch(function(response) {
+          $('#exported-error').removeClass('d-none')
+          $('#exporting-info').addClass('d-none')
+          clearInterval(interval)
+        })
+      }, 1000)
+    })
+  });
+
+</script>
+{% endblock %}

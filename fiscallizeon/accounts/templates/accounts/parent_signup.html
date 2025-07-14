@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Cadastro do responsável - Lize{% endblock title %}
+
+{% block css-additional %}
+
+<style>
+    form i.togglePassword {
+        cursor: pointer;
+        top: -27px;
+        float: right;
+        margin-right: 17px;
+        font-size: 16px;
+        margin-bottom: p;
+        position: relative;
+    }
+</style>
+{% endblock css-additional %}
+
+{% block content %}
+<div class="content content-auth">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                {% include 'redesign/includes/logo.html' with width=80 height=48 %}
+                {% include 'includes/messages.html' with messages=messages only %}
+            </div>
+        </div>
+        <div class="media align-items-stretch justify-content-center ht-100p pos-relative">
+            <div class="row d-flex justify-content-center">
+                <div class="col-12 col-lg-7">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="sign-wrapper mg-lg-l-50 mg-xl-l-60">
+                        <div class="wd-100p">
+                            <h3 class="tx-color-01 mg-b-5">Seja bem vindo(a)</h3>
+                            <p class="tx-color-03 tx-16">Insira seus dados abaixo para criar seu usuário na plataforma.</p>
+                            <input type="hidden" name="email" value="{{parent.email}}" />
+                            <input type="hidden" name="username" value="{{parent.email}}" />
+                            <div class="form-group">
+                            <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+                            <input class="form-control {% if form.username.errors %}is-invalid{% endif %}" disabled value="{{parent.email}}" type="text" />
+                            {% for error in form.username.errors %}
+                            <div class="text-danger">
+                                {{ error }}
+                            </div>
+                            {% endfor %}
+                            {% for error in form.email.errors %}
+                            <div class="text-danger">
+                                {{ error }}
+                            </div>
+                            {% endfor %}
+                            </div>
+                            <div class="form-group">
+                                <div class="d-flex justify-content-between mg-b-5">
+                                    <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                                </div>
+                                {% render_field form.name class="form-control" placeholder="Digite seu nome" %}
+                                {% if form.name.errors %}
+                                    {% for error in form.name.errors %}
+                                    <div class="text-danger">
+                                        {{ error|escape }}
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <div class="form-group">
+                                <div class="d-flex justify-content-between mg-b-5">
+                                    <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+                                </div>
+                                <input class="form-control {% if form.password1.errors %}is-invalid{% endif %}" placeholder="Digite sua senha" type="password" id="{{ form.password1.auto_id }}" name="{{ form.password1.name }}"/>
+                                <i class="far fa-eye-slash togglePassword" id="togglePassword1"></i>
+                                {% if form.password1.errors %}
+                                    {% for error in form.password1.errors %}
+                                    <div class="text-danger">
+                                        {{ error|escape }}
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <div class="form-group">
+                            <div class="d-flex justify-content-between mg-b-5">
+                                <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+                            </div>
+                            <input class="form-control {% if form.password2.errors %}is-invalid{% endif %}" placeholder="Digite sua senha" type="password" id="{{ form.password2.auto_id }}" name="{{ form.password2.name }}"/>
+                            <i class="far fa-eye-slash togglePassword" id="togglePassword2"></i>
+                            {% if form.password2.errors %}
+                                {% for error in form.password2.errors %}
+                                <div class="text-danger">
+                                    {{ error|escape }}
+                                </div>
+                                {% endfor %}
+                            {% endif %}
+                            </div>
+                            <div class="row">
+                            <div class="col-12">
+                                Ao utilizar essa plataforma estou ciente e de acordo com o <a href="{% url 'terms' slug='aviso-privacidade' %}"
+                                target="_blank" class="btn-link-orange"> Aviso de Privacidade
+                                </a> e
+                                <a href="{% url 'terms' slug='condicoes-uso' %}" target="_blank" class="btn-link-orange"> Condições de Uso
+                                </a> da Lize.
+                            </div>
+                            </div>
+                            <button type="submit" class="btn btn-block btn-orange">Criar conta na plataforma</button>
+                        </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    const togglePassword1 = document.querySelector("#togglePassword1");
+    let password1 = document.querySelector("#id_password1");
+
+    togglePassword1.addEventListener("click", function () {
+        // toggle the type attribute
+        const type = password1.getAttribute("type") === "password" ? "text" : "password";
+        password1.setAttribute("type", type);
+        
+        // toggle the icon
+        this.classList.toggle("fa-eye-slash");
+        this.classList.toggle("fa-eye");
+    });
+    const togglePassword2 = document.querySelector("#togglePassword2");
+    let password2 = document.querySelector("#id_password2");
+
+    togglePassword2.addEventListener("click", function () {
+        // toggle the type attribute
+        const type = password2.getAttribute("type") === "password" ? "text" : "password";
+        password2.setAttribute("type", type);
+        // toggle the icon
+        this.classList.toggle("fa-eye-slash");
+        this.classList.toggle("fa-eye");
+    });
+
+
+    // delete cookies if key start with "_sleek_"
+    function delete_cookie(key) {
+        document.cookie = key + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    }
+    function delete_all_cookies() {
+        var cookies = document.cookie.split(";");
+        for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i];
+        var eqPos = cookie.indexOf("=");
+        var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+        if (name.indexOf("_sleek_") == 0) {
+            delete_cookie(name);
+        }
+        }
+    }
+
+    delete_all_cookies()
+
+    // delete local storage if key start with "_sleek_"
+    function delete_local_storage(key) {
+        localStorage.removeItem(key);
+    }
+
+    function delete_all_local_storage() {
+        console.log(key)
+        var keys = Object.keys(localStorage);
+        for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        if (key.indexOf("_sleek_") == 0) {
+            delete_local_storage(key);
+        }
+        }
+    }
+
+    delete_all_local_storage()
+
+    
+</script>
+{% endblock %}

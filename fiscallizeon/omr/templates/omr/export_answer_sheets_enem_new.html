@@ -1,0 +1,449 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load cleaned_params %}
+{% load exclude_especific_params %}
+
+{% block title %}
+  Lize - Imprimir gabarito ENEM
+{% endblock title %}
+
+{% block css-additional %}
+
+<style>
+  body, html {
+    background-color: #fff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .row {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .bg-light {
+    background: #D9D9D9 !important;
+  }
+  .signature {
+    height: 2px;
+    background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' stroke='%23333' stroke-width='4' stroke-dasharray='6%2c 14' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+  }
+  #instructions h4 {
+    font-size: 1.5rem;
+    font-weight: 400;
+    text-align: center;
+    text-transform: uppercase;
+  }
+  #instructions h4.background {
+    position: relative;
+    z-index: 1;
+  }
+  #instructions h4.background:before {
+    /* border-top: 2px solid #000; */
+    content: "";
+    margin: 0 auto;
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 95%;
+    z-index: -1;
+  }
+  #instructions h4.background span {
+    background: #fff;
+    padding: 0 15px;
+  }
+
+  .black-square {
+    width: 10mm; 
+    height: 10mm; 
+    background: url('{% static "omr_marker.jpg" %}') left 1mm top 1mm no-repeat;
+    background-size: 8mm;
+  }
+  .circle {
+    width: 17px; 
+    height: 17px;
+    border-radius: 100%;
+    border: 1px solid;
+    margin: 0 5px;
+    font-size: 7pt;
+    font-weight: 400;
+    {% if complete_fill %}
+    background-color: #000;
+    {% endif %}
+  }
+
+  #template-tables .circle {
+    width: 17px;
+    height: 17px;
+    border: 2px solid;
+    margin-left: 1px;
+  }
+  #template-tables, #instructions, #exam-title, #header-content {
+    margin: 0 3mm !important;
+  } 
+  #template-tables td {
+    padding-bottom: 4.5px;
+  }
+  @page {
+    size: A4;
+    margin: 1mm 5mm 5mm 5mm;
+  }
+
+  .class-page {
+    page-break-after: always;
+    height: 298mm;
+    text-align: center;
+    padding-top: 100mm;
+    font-size: 22pt;
+  }
+
+  .qr-code {
+    position: relative;
+  }
+
+  .randomization-version {
+      position: absolute;
+      top: -0.5mm;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      z-index: -1;
+      overflow: hidden;
+      font-weight: bold;
+      font-size: 9pt;
+  }
+
+  .student-name {
+      white-space: nowrap;
+      overflow: hidden;
+      max-width: 650px;
+      display: block;
+      text-overflow: ellipsis;
+    }
+
+  .qr-text {
+    letter-spacing: 0.05em;
+    font-size: 12pt;
+  }
+
+</style>
+
+{% endblock %}
+
+{% block content %}
+  {% for application_student in application_students %}
+      <section id="sectionHeader">
+        <div class="row d-flex align-items-center">
+          <div class="col-lg-4 col-5">
+            <div class="">
+              <span class="tx-38 tx-semibold" style="text-underline-offset: 10px; border-bottom: 3px solid;">CARTÃO-RESPOSTA</span>
+              <p class="tx-19 text-uppercase">{{ object.exam.name|truncatechars:30 }}</p>
+            </div>
+          </div>
+          <div class="col-lg-5 col-7 pb-2">
+            <div class="card-body bg-light pr-5 py-2">
+              <p class="mb-0"><strong style="font-size: 1.2rem;">Essa prova só pode ser aplicada a partir da data</strong>
+                Caso essa prova seja aplicada antes da data indicada, os dados
+                desse <strong>CARTÃO-RESPOSTA</strong> serão desconsiderados
+              </p>
+            </div>
+          </div>
+          <div class="col-12 p-0 mb-1 d-flex justify-content-between">
+            <div class="black-square"></div>
+            <div class="qr-text pt-1">#{{qr_code_text}}#</div>
+            <div class="black-square"></div>
+          </div>
+        </div>
+      </section>
+      <section id="header-content">
+        <div class="row d-flex align-items-center">
+          <div class="col-12 p-0">
+            <table style="border: 2px solid;">
+              <tbody>
+                <tr>
+                  <td class="py-2">
+                    <span class="p-1 student-name text-uppercase">Nome do aluno: 
+                      <strong>
+                        {{application_student.student.name}}
+                        {% if application_student.student.name %}(Mat. {{application_student.student.enrollment_number}}){% endif %}
+                      </strong>
+                    </span>
+                  </td>
+                  <td class="bg-light text-center border border-dark tx-12"><span class="tx-bold">IDENTIFICAÇÃO DO ALUNO</span></td>
+                </tr>
+                <tr>
+                  <td class="m-0 p-0">
+                    <div class="d-flex">
+                      <div class="text-center pt-1" style="width: 25px; height: 25px; border: 1px solid;" v-for="i in 28"></div>
+                    </div>
+                    <div class="d-flex">
+                      <div class="text-center pt-1" style="width: 25px; height: 25px; border: 1px solid;" v-for="i in 28"></div>
+                    </div>
+                  </td>
+                  <td class="border border-dark text-center qr-code" rowspan="3">
+                    {{ application_student.qr_code|safe }}
+                    <div class="randomization-version">
+                      {% if randomization_version %}V{{ randomization_version.version_number }}{% endif %}
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-2">
+                    <span>Exame realizado por:</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-2">
+                    <span>
+                      <strong class="tx-20">
+                        Instituição: 
+                        {% if application_student.get_last_class_student %}
+                          {{ application_student.get_last_class_student.name|truncatechars:10 }} - {{ application_student.get_last_class_student.coordination.unity.name|truncatechars:20 }}
+                        {% else %}
+                          {{ object.exam.coordinations.all.0.unity.client.name }}
+                        {% endif %}
+                      </strong>
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td class="bg-light text-center border border-dark tx-bold px-3 tx-10">PARA USO EXCLUSIVO DO FISCAL DE SALA</td>
+                </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                  <td rowspan="2" class="border border-dark">
+                    <table class="table mb-0">
+                      <tbody>
+                        <tr>
+                          <td class="p-1 text-center border-0 align-middle tx-10">Participante ausente</td>
+                          <td class="p-1 mr-2 text-center border-0 d-flex align-middle">SIM <div class="ml-2" style="border: 3px solid; border-radius: 100%; width: 23px; height: 23px;">&nbsp;</div></td>
+                        </tr>
+                        <tr>
+                          <td class="p-1 text-center border-0 tx-10">Participante presente deixou o cartão-resposta em branco</td>
+                          <td class="p-1 mr-2 text-center border-0 d-flex">SIM <div class="ml-2" style="border: 3px solid; border-radius: 100%; width: 23px; height: 23px;">&nbsp;</div></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="signature mx-1"></div>
+                    <p class="text-center tx-10 mb-0 mt-1">Assinatura do participante</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section id="instructions">
+        <div class="row">
+          <div class="col-12 pt-2 px-0">
+            <h4 class="background"><span>INSTRUÇÕES</span></h4>
+            <ul>
+              <li>Verifique se o seu nome completo, o número da sua inscrição e os demais dados impressos neste <strong>CARTÃO-RESPOSTA/FOLHA DE REDAÇÃO</strong> estão corretos.
+                Preencha o seu nome completo e assine somente no local apropriado.
+              </li>
+              <li>Não haverá substituição deste <strong>CARTÃO-RESPOSTA/FOLHA DE REDAÇÃO</strong> por erro de preenchimento e/ou destaque.</li>
+              <li>
+                O <strong>CARTÃO-RESPOSTA/FOLHA DE REDAÇÃO</strong> é o único documento que será utilizado para a correção eletrônica de suas provas. Não o amasse, não o dobre
+                nem o rasure. O preenchimento do <strong>CARTÃO-RESPOSTA/FOLHA DE REDAÇÃO</strong> deve ser feito com caneta esferográfica de tinta preta fabricada
+                em material transparente. Não será permitido o uso de lápis, lapiseira (grafite) e borracha.
+              </li>
+              <li>Faça o preenchimento de suas respostas neste <strong>CARTÃO-RESPOSTA</strong>, nos campos apropriados, conforme o <strong>EXEMPLO DE PREENCHIMENTO</strong></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+      <section id="exam-title">
+        <div class="row mt-2">
+          <div class="col-12 p-0 d-flex justify-content-center text-uppercase">
+            <h2>
+              {{ object.exam.name|truncatechars:50 }}
+            </h2>
+          </div>
+          <div class="col-12 px-0 mt-1">
+            <div class="row d-flex justify-content-between">
+              <div class="col px-0">
+                <h6>EXEMPLO DE PREENCHIMENTO</h6>
+                <p>
+                  Para todas as marcações neste <strong>CARTÃO-RESPOSTA</strong>, preencha os círculos completamente e com
+                  nitidez, utilizando <strong>caneta esferográﬁca de tinta preta, fabricada em material transparente</strong>,
+                  conforme a ilustração
+                </p>
+              </div>
+              <div class="col-5 d-flex justify-content-end p-0">
+                <table>
+                  <tbody class="border border-dark">
+                    <tr>
+                      <td class="py-2 px-1">
+                        <div class="d-flex flex-column">
+                          <span>&rarr;	resposta à <strong>QUESTÃO</strong> X=A</span>
+                          <span>&rarr;	resposta à <strong>QUESTÃO</strong> Y=C</span>
+                          <span>&rarr;	resposta à <strong>QUESTÃO</strong> Z=D</span>
+                        </div>
+                      </td>
+                      <td class="tx-12">
+                        <div class="d-flex flex-column px-1" style="border: 2px solid;">
+                          <div class="d-flex text-center align-items-center py-1">
+                            <span class="mr-3">X</span><div class="circle" style="background-color: black;"></div><div class="circle">B</div><div class="circle">C</div><div class="circle">D</div><div class="circle">E</div>
+                          </div>
+                          <div class="d-flex text-center align-items-center py-1">
+                            <span class="mr-3">Y</span><div class="circle">A</div><div class="circle">B</div><div class="circle" style="background-color: black;"></div><div class="circle">D</div><div class="circle">E</div>
+                          </div>
+                          <div class="d-flex text-center align-items-center py-1">
+                            <span class="mr-3">Z</span><div class="circle" style="background-color: black;"></div><div class="circle">B</div><div class="circle">C</div><div class="circle" style="background-color: black;"></div><div class="circle">E</div>
+                            
+                          </div>
+                          <img src="{% static 'mao-e-caneta.png' %}" style="position: absolute; width: 80px; top: -10px; right: -15px;">
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="col-12 p-0">
+                <div class="row">
+                  <div class="col-4 bg-light" style="border: 2px solid;">
+                    <p class="mt-3 mb-2">
+                      <strong>ATENÇÃO:</strong> TRANSCREVA AQUI COM A SUA
+                      CALIGRAFIA USUAL, A FRASE APRESENTADA
+                      NA CAPA DO SEU CADERNO DE QUESTÕES
+                      CONFORME AS INSTRUÇÕES NELA CONTIDAS.
+                    </p>
+                  </div>
+                  <div class="col" style="border: 2px solid;">
+                    <span style="position: absolute; font-size: 6rem; left: -16px; top: -20px;"><!--&#10157;--></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section id="template-tables">
+        <div class="row">        
+            <div class="col-12 p-0">
+              <h5 class="pl-3" {% if not object.exam.has_foreign_languages %}style="visibility: hidden;"{% endif %}>Lingua estrangeira</h5>
+            </div>
+            <div class="col-12 d-flex p-0 pl-3" {% if not object.exam.has_foreign_languages %}style="visibility: hidden;"{% endif %}>
+                <div class="d-flex"><div class="circle ml-0 mr-2"></div> Inglês</div>
+                <div class="d-flex"><div class="circle ml-2 mr-2"></div> Espanhol</div>      
+            </div>
+          <div class="col-12 p-0 mt-1">
+            <div class="px-0 d-flex justify-content-between">
+              <div class="p-0" id="tables" v-for="column in generateTables().columns()">
+                <table class="text-center tx-semibold table-striped">
+                    <thead class="border border-dark">
+                      <tr class="bg-light">
+                        <td colspan="6" class="tx-15">${column.title}</td>
+                      </tr>
+                    </thead>
+                    <tbody class="border border-dark">
+                      <tr class="text-center">
+                        <td class="p-0"></td>
+                        <td class="p-0">A</td>
+                        <td class="p-0">B</td>
+                        <td class="p-0">C</td>
+                        <td class="p-0">D</td>
+                        <td class="p-0">E</td>
+                      </tr>
+                      <tr v-for="question in column.questions" class="omr-row">
+                        <td class="pl-2">
+                          <span class="tx-14" style="font-variant-numeric: tabular-nums;">${String(question + 1).padStart(3, '0')}</span>
+                        </td>
+                        <td><div class="circle">A</div></td>
+                        <td><div class="circle">B</div></td>
+                        <td><div class="circle">C</div></td>
+                        <td><div class="circle">D</div></td>
+                        <td><div class="circle">E</div></td>
+                      </tr>
+                    </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section id="footer">
+        <div class="row mt-2">
+          <div class="col-12 p-0 d-flex justify-content-between">
+            <div class="black-square"></div>
+            <p class="pt-2 mb-0">Lize - {% now "Y" %}</p>
+            <div class="black-square"></div>
+          </div>
+        </div>
+      </section>
+  {% endfor %}
+{% endblock content %}
+
+{% block extra-modal %}
+
+{% endblock extra-modal %}
+
+{% block js-additional %}
+
+
+<script>
+  var app = new Vue({
+    el: '#app',
+    delimiters: ['${', '}'],
+    data: {
+      questionsCount: 90,
+      startNumber: {{object.exam.start_number|default:1}},
+    },
+    methods: {
+      generateTables(columns = 6, questions = this.questionsCount, startNumber = this.startNumber) {
+        let questions_per_column = questions / columns;
+        let object = {
+          columns: () => {
+            let colum = [];
+            let questions = []
+            let count = startNumber - 1;
+            for (let i = 0; i < columns; i++) {
+              for (let j = 0; j < questions_per_column; j++) {
+                questions.push(count);
+                count++;
+              }
+              colum.push({
+                title: `Quest. de ${String(questions[0]+ 1).padStart(2, '0')} a ${String(questions[questions.length -1] + 1).padStart(2, '0')}`,
+                questions: questions
+              });
+              questions = []
+            }
+            return colum;
+          },
+        }
+
+        return object
+      },
+      truncStudentName(name, start=0, end=56) {
+        if (name.length < 56) {
+          name += ' '.repeat(56 - name.length)
+        }
+        return name.substring(start, end)
+      },
+    },
+    mounted() {
+      this.generateTables()
+      {% if simulate_answer %}
+        const omrRows = document.getElementsByClassName("omr-row");
+        for (let i = 0; i < omrRows.length; i++) {
+            const omrCircles = omrRows[i].getElementsByClassName("circle");
+            const randomCircle = omrCircles[Math.floor(Math.random() * omrCircles.length)];
+            randomCircle.style.backgroundColor = "#000";
+        }
+      {% endif %}
+    }
+  }) 
+</script>
+<script defer>
+  document.addEventListener('DOMContentLoaded', function() {
+    let loadedElement = document.createElement('div')
+    loadedElement.id = 'loaded'
+    document.body.appendChild(loadedElement)
+  });
+</script>
+{% endblock %}

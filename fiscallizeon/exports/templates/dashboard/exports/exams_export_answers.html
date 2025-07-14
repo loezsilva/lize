@@ -1,0 +1,217 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Exportação de dados da prova - Lize{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">EXPORTAR</a></li>
+          <li class="breadcrumb-item active" aria-current="page">PROVA - RESPOSTAS DETALHADAS</li>
+        </ol>
+      </nav>
+      <h4>Exportação de respostas detalhadas</h4>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+      <nav class="ls" aria-label="Breadcrumb">
+        <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+          <li>
+            <div>
+              <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                  <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+              </a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="javascript:;" onclick="history.back()" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Exportar</a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Respostas detalhadas</a>
+            </div>
+          </li>
+        </ol>
+      </nav>
+    </div>
+<div class="row">
+    <div class="col-md-12">
+
+        {% include 'dashboard/exports/includes/tabs.html' with active_tab='answers' %}
+
+        <div class="card card-body tab-content mb-3" id="tabContent">
+            <div class="tab-pane show active" id="export-answers" role="tabpanel" aria-labelledby="profile-tab">
+                <form action="" method="POST">
+                    {% csrf_token %}
+                    <div class="row mb-0">
+                        <div class="col-12">
+                            <p>Esse modelo de exportação irá gerar uma planilha com todas as respostas dos alunos de provas aplicadas no período selecionado.</p>
+                        </div>
+                        <div class="col-6">
+                            <h6 class="mt-3">{{ form.start_date.label }}:</h6>
+                            {% render_field form.start_date class="form-control" type="date" %}
+                            {% if form.start_date.errors %}
+                            <span class="text-danger">{{ form.start_date.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-6">
+                            <h6 class="mt-3">{{ form.end_date.label }}:</h6>
+                            {% render_field form.end_date class="form-control" type="date" %}
+                        </div>
+                        <div class="col-4">
+                            <h6 class="mt-3">{{ form.export_format.label }}:</h6>
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-outline-primary btn-lg active">
+                                <input type="radio" name="{{ form.export_format.name }}" id="formato_csv" value="csv" autocomplete="off" checked>
+                                    <i class="fas fa-file-csv"></i>
+                                    CSV
+                                </label>
+                                <label class="btn btn-outline-primary btn-lg">
+                                <input type="radio" name="{{ form.export_format.name }}" id="formato_default" value="xls" autocomplete="off">
+                                    <i class="fas fa-file-excel"></i>
+                                    XLSX
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                          <div class="custom-control custom-switch mt-4">
+                              <input type="checkbox" id="add_topic" name="add_topic"
+                                  class="custom-control-input" value="1">
+                              <label class="custom-control-label" for="add_topic">
+                                  <h6 class="mb-0">Adicionar assuntos abordados</h6>
+                              </label>
+                              <small class="form-text text-muted mt-0">
+                                  Selecione essa opção se deseja adicionar assuntos abordados em cada questão no relatório
+                              </small>
+                          </div>
+                      </div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="mr-2 btn btn-success float-right not-disable">
+                        Exportar relatório
+                    </button>
+                </form>
+            </div>
+            
+        </div>
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+<div aria-hidden="true" class="modal  fade" id="exportResultsModal" role="dialog" tabindex="-1">
+  <div class="modal-dialog modal-md" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-truncate">Exportação de resultados de provas</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button> 
+      </div>
+      <div class="modal-body" style="max-height: fit-content; height: fit-content;">
+        <div id="exporting-info">
+          <h6>Exportação em andamento... <i class="fas fa-spinner fa-spin text-primary mt-2"></i></h6>
+          <p>Mantenha esta janela aberta enquanto geramos o link para download dos resultados.</p>
+          <div class="progress">
+            <div
+                class="progress-bar bg-primary progress-bar-striped progress-bar-animated" 
+                role="progressbar"
+                id="progressbar"
+                style="width: 2%">
+            </div>
+          </div>
+        </div>
+
+        <div id="exported-info" class="d-none">
+          <p>Você pode baixar o arquivo com os resultados das provas clicando no botão abaixo:</p>
+          <a href="#" target="_blank" id="download-results-url" class="btn btn-primary btn-block">
+            <i class="fas fa-download"></i>
+             Baixar resultados
+          </a>
+        </div>
+        <div id="exported-error" class="d-none p-3">
+          <p class="text-danger">Um erro aconteceu no processo de exportação. Tente novamente em alguns instantes.</p>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-center"></div>
+    </div>
+  </div>
+</div>
+{% endblock extra-modal %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+
+<script type="text/javascript">
+    $(document).ready(function(){
+        moment.locale('pt-br');
+    })
+
+    {% if export_id %}
+        $('#exportResultsModal').modal('show');
+
+        var x = setInterval(
+            function() {
+                axios.get("{% url 'exports:exams_export_results' export_id=export_id %}")
+                .then(function(response) {
+                    const data = response.data
+
+                    switch (data.status) {
+                        case 'PROGRESS':
+                            const {done, total} = data.details
+                            const progress = Math.round(done / total * 100)
+                            $('.progress-bar').css('width', `${progress}%`)
+                            break
+                        case 'SUCCESS':
+                            clearInterval(x)
+                            $('#download-results-url').attr('href', response.data.details)
+                            $('#exported-info').removeClass('d-none')
+                            $('#exporting-info').addClass('d-none')
+                            break
+                        case 'PENDING':
+                            clearInterval(x)
+                            $('#exported-error').removeClass('d-none')
+                            $('#exporting-info').addClass('d-none')
+                            break
+                    }                    
+                })
+                .catch(function(response) {
+                    $('#exported-error').removeClass('d-none')
+                    $('#exporting-info').addClass('d-none')
+                    clearInterval(interval)
+                })
+            },
+            1000
+        );
+    {% endif %}
+</script>
+{% endblock js-additional %}

@@ -1,0 +1,72 @@
+<dialog id="status-dialog" @close="closeDialog()" class="tw-rounded-lg tw-w-1/2 tw-p-10">
+    <h3>Alterar situação da questão</h3>
+    <br/>
+    <div  v-if="newStatusQuestion.status == 5  "class="tw-flex tw-items-start tw-gap-1  tw-mb-3">
+        <div class="tw-flex tw-items-center tw-h-5">
+            <input id="question_sugestion" type="checkbox" v-model="questionSugestion" class="tw-w-4 tw-h-4 tw-border tw-border-gray-300 tw-rounded tw-bg-gray-50 tw-focus:tw-ring-3 tw-focus:tw-ring-blue-300" />
+        </div>
+        <label for="question_sugestion" class="tw-ms-2 tw-text-sm tw-font-medium tw-text-gray-900 tw-flex tw-flex-col">Sugerir correção na questão<small>Marque está opção apenas se tiver alguma sugestão de mudança, caso não tenha pode clicar em  "Estou de Acordo".</small></label>
+    </div>
+    <form class="tw-flex tw-flex-col tw-gap-8">
+        {% if include_question_fragment %}
+            <div v-if="newStatusQuestion.question_fragment && (newStatusQuestion.status == 5 && questionSugestion || newStatusQuestion.status != 5)">
+                <b>Fragmento da questão:</b> ${newStatusQuestion.question_fragment}
+            </div>
+            <div  v-if="newStatusQuestion.status == 5 && questionSugestion || newStatusQuestion.status != 5" class="alert alert-info mb-0">
+                Se desejar selecione um fragmento da questão para enviar junto com a anotação para o professor!
+            </div>
+            <div  v-if="newStatusQuestion.status == 5 && questionSugestion || newStatusQuestion.status != 5" >
+                <h4>Deseja enviar alguma nota para professor?</h4>
+                <label class="tw-flex tw-flex-col tw-gap-3 tw-mb-3">
+                    <textarea rows="5" placeholder="Digite uma mensagem para o professor (opcional)" class="tw-rounded-md" v-model="newStatusQuestion.note"></textarea>
+                </label>
+            </div>
+        {% endif %}
+        <div v-if="clientTags.length && newStatusQuestion.status != 5">
+            <h4>Motivos pra essa ação</h4>
+            <ul class="tw-list-none tw-text-sm tw-font-medium tw-text-gray-900 tw-bg-white tw-border tw-border-gray-200 tw-rounded-lg">
+                <li v-for="statusTag in clientTags" class="tw-w-full tw-border-b tw-border-gray-200 tw-rounded-t-lg ">
+                    <div class="tw-flex tw-items-center tw-ps-3">
+                        <input :id="statusTag.id" type="checkbox" :value="statusTag.id" class="status-tags tw-w-4 tw-h-4 tw-text-blue-600 tw-bg-gray-100 tw-border-gray-300 tw-rounded tw-focus:ring-blue-500 ">
+                        <label :for="statusTag.id" class="tw-w-full tw-py-3 tw-ms-2 tw-text-sm tw-font-medium tw-text-gray-900">${statusTag.name}</label>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div v-if="newStatusQuestion.status == 6">
+            <h4>Tipo de anulação</h4>
+            <div >
+                <ul class="tw-list-none tw-items-center tw-w-3/4 tw-text-sm tw-font-medium tw-text-gray-900 tw-bg-white tw-border tw-border-gray-200 tw-rounded-lg sm:tw-flex ">
+                    <li class="tw-w-full tw-border-b tw-border-gray-200 sm:tw-border-b-0 sm:tw-border-r ">
+                        <div class="tw-flex tw-items-center tw-pl-3">
+                            <input id="distribute" type="radio" value="" @click="newStatusQuestion.give_score=false; newStatusQuestion.distributeInExamTeacherSubject=false" checked name="list-radio" class="tw-w-4 tw-h-4 tw-text-blue-600 tw-bg-gray-100 tw-border-gray-300 tw-focus:ring-blue-500 tw-focus:ring-2 ">
+                            <label for="distribute" class="tw-w-full tw-py-3 tw-ml-2 tw-text-sm tw-font-medium tw-text-gray-900 ">Distribuir nota entre questões da prova</label>
+                        </div>
+                    </li>
+                    <li class="tw-w-full tw-border-b tw-border-gray-200 sm:tw-border-b-0 sm:tw-border-r ">
+                        <div class="tw-flex tw-items-center tw-pl-3">
+                            <input id="distribute-exam-teacher-subject" type="radio" value="" @click="newStatusQuestion.give_score=false; newStatusQuestion.distributeInExamTeacherSubject=true" name="list-radio" class="tw-w-4 tw-h-4 tw-text-blue-600 tw-bg-gray-100 tw-border-gray-300 tw-focus:ring-blue-500 tw-focus:ring-2 ">
+                            <label for="distribute-exam-teacher-subject" class="tw-w-full tw-py-3 tw-ml-2 tw-text-sm tw-font-medium tw-text-gray-900 ">Distribuir nota entre questões da solicitação</label>
+                        </div>
+                    </li>
+                    <li class="tw-w-full tw-border-b tw-border-gray-200 sm:tw-border-b-0 sm:tw-border-r ">
+                        <div class="tw-flex tw-items-center tw-pl-3">
+                            <input id="give-score" type="radio" value="" @click="newStatusQuestion.give_score=true; newStatusQuestion.distributeInExamTeacherSubject=false" name="list-radio" class="tw-w-4 tw-h-4 tw-text-blue-600 tw-bg-gray-100 tw-border-gray-300 tw-focus:ring-blue-500 tw-focus:ring-2 ">
+                            <label for="give-score" class="tw-w-full tw-py-3 tw-ml-2 tw-text-sm tw-font-medium tw-text-gray-900 ">Dar nota aos alunos</label>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div>
+                <p class="tw-text-red-500">
+                    Marcar "dar nota aos alunos" irá dar a nota integral da questão para <b>todos</b> os alunos da aplicação. <br/>Certifique-se que essa é a ação desejada antes de confirmar a anulação.
+                </p>
+            </div>
+        </div>
+        <div class="tw-flex tw-gap-3">
+            <button v-if="newStatusQuestion.status == 5 && questionSugestion || newStatusQuestion.status != 5 " class="tw-flex tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-lg tw-bg-primary-600 tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-primary-500 hover:tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600" value="default" @click.prevent="submitNewStatus()">Confirmar</button>
+            <button v-else class="tw-flex tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-lg tw-bg-primary-600 tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-primary-500 hover:tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600" value="default" @click.prevent="submitNewStatus()">Estou de acordo</button>
+            <button class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold hover:tw-text-white tw-shadow-sm hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600" value="cancel" formmethod="dialog">Cancelar</button>
+        </div>
+    </form>
+  </dialog>

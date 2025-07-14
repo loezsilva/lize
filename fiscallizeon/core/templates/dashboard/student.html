@@ -1,0 +1,765 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'administration/base.html' %} {% endcomment %}
+
+{% load proportion %}
+{% load applications_student %}
+{% load cache %}
+{% load math %}
+
+{% block js-header-additional %}
+{% if user.client.pk == 'f5503904-ce79-4daa-8955-2ee872306901' %}
+    <meta name="facebook-domain-verification" content="9hhd0dw6154r3ajq35svdi85849a7j" />
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '1014374073291111');
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=1014374073291111&ev=PageView&noscript=1"
+    /></noscript>
+    <!-- Meta Pixel Code -->
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '340788518509482');
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=340788518509482&ev=PageView&noscript=1"
+    /></noscript>
+    <!-- End Meta Pixel Code -->
+{% endif %}
+{% endblock js-header-additional %}
+
+{% block css-additional %}
+<style>
+
+  /* Define a altura do modal e o layout flexível */
+  .modal-custom-height {
+    height: 240px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .badge{
+    border-radius: 3px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+    font-size: .9em;
+    height: 1.85em;
+    text-align: center;
+  }
+  .collapse-badge-container{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+</style>
+{% endblock css-additional %}
+
+{% block content-fixed %}
+<div class="content" style="min-height: calc(100vh - 110px);">
+  <div class="container pd-x-0 pd-lg-x-10 pd-xl-x-0">
+    <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-30">
+      <div>
+        <h4 class="mg-b-0 tx-spacing--1">Olá, {{ user.get_user_first_name }}!</h4>
+      </div>
+    </div>
+    {% if user.client_has_sisu_simulator and user.is_authenticated and user.student.last_class_is_high_school %}
+      <div class="mb-3 d-sm-none d-block">
+        <div class="col-12 px-0">
+          <div class="lize-card">
+            <div class="card-body p-4">
+              <div class="row mb-1 text-center">
+                <div class="col text-center d-flex align-items-center">
+                  <div>
+                    <h5>Simulador SISU</h5>
+                    <p class="mb-0 tx-medium text-muted tx-12 lh-1 mb-2">Confira se suas notas garantiriam uma vaga no SISU em todo o Brasil.</p>
+                  </div>
+                </div>
+                <div class="col-3 p-0 m-0 text-center">
+                  <div>
+                    <svg width="232" class="img-thumbnail border-0" viewBox="0 0 232 217" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <g clip-path="url(#clip0_591_2445)">
+                        <path d="M179.091 46.5605C171.917 46.5605 166.08 40.7145 166.08 33.5284C166.08 25.8566 171.432 20.4963 179.091 20.4963C186.266 20.4963 192.103 26.3423 192.103 33.5284C192.103 41.083 186.634 46.5605 179.091 46.5605ZM179.091 21.8029C172.201 21.8029 167.385 26.6271 167.385 33.5284C167.385 39.9942 172.636 45.2539 179.091 45.2539C185.881 45.2539 190.798 40.3292 190.798 33.5284C190.798 27.0626 185.547 21.8029 179.091 21.8029Z" fill="#000200"/>
+                        <path d="M169.823 120.012C169.639 120.012 169.456 119.929 169.338 119.795C167.231 117.416 166.061 114.334 166.061 111.151C166.061 103.479 171.412 98.1191 179.072 98.1191C186.246 98.1191 192.083 103.965 192.083 111.151C192.083 112.625 191.882 114.049 191.464 115.389C191.414 115.573 191.264 115.724 191.08 115.808C184.474 118.455 177.316 119.862 169.823 120.012C169.84 120.012 169.823 120.012 169.823 120.012ZM179.089 99.4257C172.198 99.4257 167.382 104.25 167.382 111.151C167.382 113.915 168.352 116.595 170.124 118.706C177.232 118.538 184.022 117.198 190.327 114.702C190.645 113.58 190.795 112.391 190.795 111.151C190.795 104.685 185.544 99.4257 179.089 99.4257Z" fill="#000200"/>
+                        <path d="M182.887 89.8273C175.796 89.8273 169.391 85.9077 166.163 79.5759C165.996 79.2576 166.13 78.8556 166.448 78.6881C166.765 78.5206 167.167 78.6546 167.334 78.9728C170.344 84.8524 176.298 88.504 182.887 88.504C193.005 88.504 200.347 81.1504 200.347 71.0162C200.347 61.3678 192.52 53.5285 182.887 53.5285C172.602 53.5285 165.428 60.7145 165.428 71.0162C165.428 71.3848 165.143 71.6695 164.775 71.6695C164.407 71.6695 164.123 71.3848 164.123 71.0162C164.123 59.944 171.833 52.2219 182.887 52.2219C193.24 52.2219 201.652 60.6475 201.652 71.0162C201.652 81.921 193.758 89.8273 182.887 89.8273Z" fill="#000200"/>
+                        <path d="M184.679 26.7444C182.372 30.1113 179.763 33.5955 178.475 37.5152C177.087 35.8568 175.782 34.1315 174.394 32.4732C173.842 31.8367 172.922 32.758 173.474 33.3945C175.113 35.3376 176.618 37.3979 178.291 39.3243C178.609 39.6928 179.261 39.4918 179.378 39.0395C180.448 34.7345 183.358 30.9824 185.817 27.3977C186.285 26.7109 185.148 26.0577 184.679 26.7444Z" fill="#FF8F3D"/>
+                        <path d="M182.25 108.186C180.711 110.481 179.34 112.893 177.601 115.054C176.564 114.166 175.795 113.027 174.774 112.106C174.156 111.537 173.236 112.458 173.855 113.027C175.092 114.15 176.012 115.557 177.367 116.545C177.584 116.696 177.985 116.646 178.153 116.445C180.143 114.083 181.665 111.403 183.371 108.84C183.839 108.136 182.718 107.483 182.25 108.186Z" fill="#FF8F3D"/>
+                        <path d="M181.534 58.3369V75.1546C181.534 75.9922 182.839 75.9922 182.839 75.1546V58.3369C182.839 57.4994 181.534 57.4994 181.534 58.3369Z" fill="#FF8F3D"/>
+                        <path d="M182.67 80.9673C182.803 80.3475 182.92 79.711 183.004 79.0912C183.121 78.2704 181.85 77.9856 181.733 78.8232C181.649 79.4597 181.532 80.0795 181.399 80.6993C181.215 81.52 182.486 81.8048 182.67 80.9673Z" fill="#FF8F3D"/>
+                        <path d="M152.92 101.252H127.064C126.696 101.252 126.412 100.967 126.412 100.599C126.412 100.23 126.696 99.9456 127.064 99.9456L152.92 99.9456C153.288 99.9456 153.572 100.23 153.572 100.599C153.572 100.967 153.288 101.252 152.92 101.252Z" fill="#000200"/>
+                        <path d="M152.917 34.8859L135.507 34.8859C135.139 34.8859 134.855 34.6011 134.855 34.2326C134.855 33.8641 135.139 33.5793 135.507 33.5793L152.917 33.5793C153.285 33.5793 153.569 33.8641 153.569 34.2326C153.569 34.5844 153.285 34.8859 152.917 34.8859Z" fill="#000200"/>
+                        <path d="M155.243 71.469L113.634 71.469C113.617 71.469 113.601 71.469 113.584 71.469C113.684 71.9045 113.768 72.34 113.835 72.7755L155.26 72.7755C155.628 72.7755 155.912 72.4908 155.912 72.1223C155.896 71.7705 155.595 71.469 155.243 71.469Z" fill="#000200"/>
+                        <path d="M168.622 127.584C160.862 127.584 153.303 126.21 146.145 123.48C141.027 121.57 136.127 118.94 131.578 115.691C114.921 103.731 104.97 84.3502 104.97 63.8473C104.97 26.3089 131.143 0.0939941 168.622 0.0939941C203.709 0.0939941 232.257 28.6875 232.257 63.8473C232.257 100.783 205.481 127.584 168.622 127.584ZM168.622 1.40055C131.913 1.40055 106.275 27.0794 106.275 63.8473C106.275 83.9314 116.025 102.91 132.347 114.636C136.796 117.818 141.596 120.381 146.613 122.274C153.62 124.937 161.029 126.277 168.622 126.277C204.746 126.277 230.952 100.029 230.952 63.8473C230.952 29.4078 202.99 1.40055 168.622 1.40055Z" fill="#000200"/>
+                        <path d="M168.621 120.028C137.682 120.028 112.512 94.8184 112.512 63.8463C112.512 52.9918 115.138 42.6901 120.105 34.0467C121.376 31.8189 122.831 29.6413 124.453 27.6144L126.376 25.3196C126.376 25.3196 126.46 25.2191 126.477 25.2191C136.762 13.7281 151.345 7.66431 168.621 7.66431C199.544 7.66431 224.714 32.8742 224.714 63.863C224.714 87.9506 212.154 107.365 191.115 115.807C184.492 118.47 177.334 119.877 169.859 120.028C169.441 120.028 169.023 120.028 168.621 120.028ZM168.621 8.95412C151.713 8.95412 137.481 14.8671 127.447 26.0734L125.473 28.4185C123.901 30.3951 122.48 32.5057 121.242 34.6833C116.392 43.1424 113.817 53.2263 113.817 63.8463C113.817 94.0981 138.401 118.722 168.621 118.722C169.023 118.722 169.424 118.722 169.809 118.705C177.134 118.571 184.141 117.181 190.613 114.584C211.134 106.343 223.392 87.3811 223.392 63.8463C223.392 33.5777 198.825 8.95412 168.621 8.95412Z" fill="#000200"/>
+                        <path d="M89.5188 217.284C89.4017 217.284 89.2847 217.251 89.1843 217.184L79.1165 211.003C78.8154 210.819 78.7151 210.433 78.8823 210.132L89.0171 191.84C89.1843 191.522 89.5857 191.405 89.9034 191.589C90.2212 191.756 90.3383 192.158 90.1543 192.477L80.3206 210.216L89.2847 215.727L101.56 195.492C101.744 195.19 102.145 195.09 102.463 195.274C102.764 195.458 102.865 195.86 102.681 196.178L90.0707 216.983C89.9871 217.134 89.8365 217.234 89.6693 217.284C89.6359 217.284 89.569 217.284 89.5188 217.284Z" fill="#000200"/>
+                        <path d="M114.303 176.412C114.186 176.412 114.069 176.379 113.968 176.312C113.667 176.128 113.567 175.726 113.751 175.407L145.828 122.525C146.012 122.224 146.413 122.123 146.731 122.308C147.032 122.492 147.132 122.894 146.948 123.212L114.872 176.094C114.738 176.295 114.52 176.412 114.303 176.412Z" fill="#000200"/>
+                        <path d="M102.846 168.673C102.746 168.673 102.629 168.64 102.529 168.589C102.211 168.422 102.094 168.02 102.278 167.701L131.394 114.836C131.562 114.518 131.963 114.401 132.281 114.585C132.598 114.752 132.716 115.154 132.532 115.473L103.415 168.338C103.298 168.556 103.064 168.673 102.846 168.673Z" fill="#000200"/>
+                        <path d="M114.303 176.411C114.186 176.411 114.069 176.378 113.969 176.311C113.668 176.127 113.568 175.725 113.751 175.406L137.583 136.092C133.268 133.881 128.937 131.737 124.689 129.71L104.888 165.641C104.721 165.959 104.319 166.076 104.001 165.892C103.684 165.724 103.567 165.322 103.751 165.004L123.853 128.538C124.02 128.236 124.388 128.119 124.706 128.27C129.355 130.464 134.105 132.809 138.821 135.255C138.988 135.339 139.105 135.489 139.155 135.657C139.205 135.824 139.172 136.025 139.088 136.176L114.872 176.093C114.738 176.294 114.521 176.411 114.303 176.411Z" fill="#000200"/>
+                        <path d="M92.5961 212.226C92.479 212.226 92.3787 212.192 92.2783 212.142L81.8426 206.112C81.5415 205.927 81.4245 205.542 81.5917 205.224L89.0339 191.84C89.2011 191.522 89.6025 191.405 89.9202 191.589C90.238 191.756 90.3551 192.158 90.1711 192.477L83.0467 205.308L92.362 210.685L101.577 195.492C101.761 195.19 102.162 195.09 102.48 195.274C102.781 195.458 102.881 195.86 102.697 196.178L93.148 211.924C93.0309 212.108 92.8135 212.226 92.5961 212.226Z" fill="#000200"/>
+                        <path d="M153.722 68.1369C153.555 68.1369 153.387 68.0699 153.254 67.9526L120.207 34.8197C120.006 34.6187 119.956 34.2837 120.107 34.0324C121.378 31.8046 122.833 29.627 124.455 27.6001L126.378 25.3053C126.495 25.1713 126.713 25.0373 126.897 25.0205C127.08 25.0205 127.298 25.0373 127.432 25.1713L161.716 59.5103C161.833 59.6275 161.9 59.795 161.9 59.9793C161.9 60.1468 161.833 60.3143 161.716 60.4483L154.207 67.9526C154.056 68.0699 153.889 68.1369 153.722 68.1369ZM121.478 34.2502L153.722 66.5456L160.311 59.9625L126.997 26.6118L125.475 28.4377C124.003 30.2635 122.665 32.2233 121.478 34.2502Z" fill="#000200"/>
+                        <path d="M164.775 71.0348L160.845 60.5488L154.306 67.0984L164.775 71.0348Z" fill="#000200"/>
+                        <path d="M164.778 71.688C164.694 71.688 164.628 71.6713 164.544 71.6545L154.075 67.7181C153.874 67.6344 153.707 67.4668 153.673 67.2491C153.64 67.0313 153.69 66.8136 153.857 66.6461L160.396 60.0965C160.547 59.9458 160.781 59.8788 160.998 59.9123C161.216 59.9625 161.4 60.1133 161.467 60.3143L165.397 70.8002C165.481 71.0348 165.43 71.3028 165.246 71.487C165.113 71.621 164.945 71.688 164.778 71.688ZM155.48 66.8471L163.658 69.9125L160.597 61.7213L155.48 66.8471Z" fill="#000200"/>
+                        <path d="M101.645 196.48C98.2831 196.48 93.6672 195.124 87.4626 190.919C80.656 186.313 78.3313 186.463 68.5478 187.066C62.7111 187.435 54.717 187.921 41.8563 187.703C-0.13771 186.949 -21.1932 175.374 -22.481 152.309C-23.9527 125.842 -2.93062 112.191 13.0241 104.217C28.7781 96.3444 56.7741 95.7749 57.0417 95.7749C57.4263 95.7749 57.6939 96.0597 57.7106 96.4114C57.7106 96.7799 57.4263 97.0647 57.0751 97.0815C56.7908 97.0815 29.0958 97.651 13.6094 105.39C-2.0108 113.196 -22.5981 126.546 -21.1765 152.242C-19.9389 174.487 0.698487 185.659 41.873 186.396C54.7003 186.631 62.6609 186.128 68.4642 185.76C78.1139 185.157 81.0239 184.973 88.1985 189.83C99.7381 197.636 105.173 195.174 107.381 193.013C107.632 192.762 108.05 192.762 108.301 193.03C108.552 193.281 108.552 193.7 108.284 193.951C107.063 195.157 104.956 196.48 101.645 196.48Z" fill="#000200"/>
+                        <path d="M105.624 161.874C105.507 161.874 105.39 161.84 105.272 161.773C100.974 159.059 80.939 158.607 61.5726 158.188C46.3203 157.853 30.5663 157.502 21.7193 156.044C13.9928 154.771 9.82857 151.002 10.5812 145.944C11.4341 140.165 19.0937 134.067 27.3219 135.173C27.6564 135.223 27.8905 135.491 27.8905 135.826C27.8905 136.178 27.7567 144.386 20.7326 150.45C20.465 150.684 20.0469 150.651 19.8128 150.383C19.5787 150.115 19.6121 149.696 19.8797 149.461C25.4153 144.671 26.3853 138.339 26.5526 136.396C19.2442 135.759 12.6382 141.069 11.8856 146.128C11.2501 150.433 14.9127 153.582 21.9535 154.738C30.7001 156.178 46.4207 156.53 61.6228 156.865C82.0595 157.317 101.376 157.736 105.992 160.651C106.293 160.852 106.393 161.254 106.192 161.555C106.042 161.773 105.841 161.874 105.624 161.874Z" fill="#000200"/>
+                        <path d="M12.2022 143.079C11.9346 143.079 11.7005 142.912 11.6001 142.66C9.00793 135.893 -3.75249 126.781 -15.4091 128.523C-15.7603 128.573 -16.0948 128.322 -16.145 127.97C-16.1951 127.618 -15.9443 127.283 -15.5931 127.233C-3.15042 125.374 10.0281 134.871 12.821 142.191C12.9548 142.526 12.7875 142.912 12.4531 143.029C12.3527 143.062 12.2691 143.079 12.2022 143.079Z" fill="#000200"/>
+                        <path d="M114.438 174.537C114.003 175.525 113.367 175.609 113.117 175.626C110.123 175.961 104.069 169.746 102.631 166.229C102.497 165.894 102.112 165.743 101.778 165.877C101.443 166.011 101.293 166.396 101.427 166.731C102.865 170.249 108.936 176.949 112.899 176.949C113.016 176.949 113.15 176.949 113.267 176.932C114.287 176.815 115.592 176.162 116.027 173.716C115.491 173.951 114.956 174.219 114.438 174.537Z" fill="#000200"/>
+                        <path d="M112.448 182.845C109.889 182.845 106.745 182.007 103.066 179.679C102.765 179.495 102.664 179.076 102.865 178.774C103.049 178.473 103.45 178.372 103.768 178.573C113.886 184.939 118.335 179.31 118.82 178.64C120.174 176.747 119.556 172.71 117.599 170.65C117.348 170.382 117.365 169.98 117.616 169.729C117.883 169.478 118.285 169.494 118.536 169.746C120.944 172.292 121.596 176.982 119.873 179.394C118.686 181.052 116.194 182.845 112.448 182.845Z" fill="#000200"/>
+                        <path d="M110.541 188.541C107.731 188.541 104.119 186.983 99.3191 184.722C98.9846 184.571 98.8508 184.186 99.0014 183.851C99.1519 183.532 99.5365 183.382 99.871 183.532C106.46 186.631 110.641 188.357 113.2 186.38C115.692 184.437 115.408 182.41 115.391 182.326C115.341 181.975 115.575 181.64 115.926 181.573C116.277 181.506 116.612 181.757 116.679 182.109C116.695 182.226 117.13 184.973 114.003 187.419C112.999 188.189 111.862 188.541 110.541 188.541Z" fill="#000200"/>
+                        <path d="M107.029 193.732C104.22 193.732 100.607 192.175 95.8074 189.913C95.4729 189.762 95.3391 189.377 95.4896 189.042C95.6402 188.724 96.0248 188.573 96.3593 188.724C102.949 191.823 107.13 193.548 109.688 191.572C112.18 189.628 111.896 187.602 111.879 187.518C111.829 187.166 112.063 186.831 112.414 186.764C112.766 186.697 113.1 186.932 113.167 187.3C113.184 187.417 113.618 190.164 110.491 192.61C109.488 193.397 108.35 193.732 107.029 193.732Z" fill="#000200"/>
+                        <path d="M19.7478 155.627C19.7311 155.627 19.6977 155.627 19.6809 155.627C19.3297 155.593 19.0622 155.258 19.0956 154.906L21.1694 136.079C21.2028 135.727 21.5206 135.459 21.8885 135.492C22.2397 135.526 22.5073 135.861 22.4739 136.213L20.4001 155.04C20.3499 155.375 20.0823 155.627 19.7478 155.627Z" fill="#000200"/>
+                        <path d="M27.6419 135.692L21.8052 136.127L20.9355 149.159L25.4845 143.648L27.6419 135.692Z" fill="#000200"/>
+                        <path d="M74.2014 113.833C73.2983 113.833 72.2949 113.749 71.2078 113.565C64.6353 112.46 58.1296 106.63 55.8886 101.84C54.8183 99.5616 54.7012 97.5682 55.5542 96.0942C55.7381 95.7759 56.1395 95.6754 56.4405 95.8597C56.7583 96.0439 56.8586 96.4459 56.6747 96.7474C55.8886 98.121 56.4573 99.9636 57.076 101.27C59.1833 105.759 65.2708 111.22 71.442 112.259C74.8202 112.828 77.1448 112.476 78.349 111.203C79.4026 110.098 79.6702 108.222 79.1517 105.625C79.0848 105.274 79.3022 104.922 79.6535 104.855C80.0047 104.788 80.3559 105.006 80.4228 105.357C81.0415 108.406 80.6569 110.684 79.2855 112.108C78.1817 113.264 76.4759 113.833 74.2014 113.833Z" fill="#000200"/>
+                        <path d="M102.046 160.618C101.678 160.618 101.393 160.333 101.393 159.965C101.393 124.369 96.1755 110.349 81.3748 102.694C81.057 102.526 80.9232 102.141 81.0905 101.806C81.2577 101.488 81.6424 101.354 81.9769 101.521C97.3128 109.444 102.698 123.749 102.698 159.948C102.698 160.333 102.397 160.618 102.046 160.618Z" fill="#000200"/>
+                        <path d="M92.0973 159.327C92.0806 159.327 92.0638 159.327 92.0471 159.327C91.6959 159.293 91.4116 158.992 91.4451 158.623L92.8331 139.544C92.8666 139.176 93.1844 138.908 93.5356 138.941C93.8868 138.975 94.1711 139.276 94.1376 139.645L92.7495 158.724C92.7161 159.059 92.4318 159.327 92.0973 159.327Z" fill="#000200"/>
+                        <path d="M96.1754 154.086C95.0549 154.086 93.8006 153.985 92.3624 153.701C92.0112 153.634 91.777 153.282 91.8439 152.93C91.9108 152.578 92.262 152.344 92.6132 152.411C98.6339 153.567 101.527 151.54 101.561 151.523C101.845 151.305 102.263 151.372 102.464 151.674C102.681 151.959 102.614 152.377 102.33 152.578C102.23 152.645 100.239 154.086 96.1754 154.086Z" fill="#000200"/>
+                        <path d="M92.7973 69.4606C92.5297 69.4606 92.2788 69.2931 92.1785 69.0251C92.0614 68.69 92.2454 68.3048 92.5798 68.1875C93.8676 67.7353 94.8877 66.948 95.1721 66.1942C95.3058 65.8424 95.2724 65.5074 95.0884 65.1556C94.5867 64.2343 92.2286 64.4521 91.175 64.7034C90.8238 64.7871 90.4726 64.5694 90.389 64.2176C90.3054 63.8658 90.5228 63.5141 90.874 63.4303C91.3088 63.3298 95.1219 62.4923 96.2424 64.5191C96.6103 65.2059 96.6772 65.9429 96.4096 66.6465C95.9748 67.7855 94.7205 68.824 93.0314 69.4103C92.9478 69.4606 92.8641 69.4606 92.7973 69.4606Z" fill="#000200"/>
+                        <path d="M82.2288 59.6609L82.6636 60.8837C83.2155 62.475 85.6906 61.604 85.122 60.0127L84.6872 58.7899C84.1186 57.1986 81.6602 58.0696 82.2288 59.6609Z" fill="#000200"/>
+                        <path d="M82.0124 51.5865C81.3601 52.0556 80.7915 52.6418 80.1058 53.0439C79.3867 53.4794 79.9219 54.6687 80.641 54.2332C81.427 53.7641 82.0793 53.1276 82.8318 52.5916C83.5342 52.1058 82.698 51.1008 82.0124 51.5865Z" fill="#000200"/>
+                        <path d="M79.25 97.0823C78.9155 97.0823 78.6312 96.831 78.5977 96.496C78.5643 96.1442 78.8151 95.8092 79.1663 95.7757C79.2667 95.759 89.1673 94.6032 93.1978 89.8962C96.4757 86.0603 96.2081 80.8006 92.1776 69.0248C92.0606 68.6898 92.2445 68.3045 92.579 68.1873C92.9302 68.07 93.2981 68.2543 93.4152 68.5893C97.0777 79.2595 98.2819 85.943 94.2012 90.7337C89.8363 95.8427 79.7517 97.0153 79.3169 97.0655C79.3001 97.0823 79.2667 97.0823 79.25 97.0823Z" fill="#000200"/>
+                        <path d="M82.8473 95.6745L80.4558 102.274C77.6127 101.219 76.1744 98.0866 75.6895 95.2725C78.0475 95.641 80.4558 95.775 82.8473 95.6745Z" fill="#000200"/>
+                        <path d="M79.2501 97.0819C73.9486 97.0819 69.3328 85.6411 65.6201 76.4617C64.1818 72.8938 62.5596 68.8736 61.8237 68.2873C58.2615 69.3594 55.8867 70.8335 55.0338 72.5085C54.6157 73.3293 54.5655 74.1836 54.8665 75.0546C55.0505 75.5907 55.5522 76.5622 56.7898 77.115C58.1612 77.7348 59.9841 77.6175 62.0913 76.78C62.2586 76.713 62.4425 76.713 62.593 76.7967C62.7603 76.8637 62.8773 76.9977 62.9442 77.1652C64.6835 81.7717 64.8842 85.3061 63.5463 87.3832C62.8104 88.539 61.5896 89.209 60.1346 89.3095C55.4519 89.5943 53.0436 86.6461 48.478 74.9541L44.9994 65.0712C42.4573 57.8349 43.4273 47.8012 62.5261 41.0506C74.651 36.7625 82.6117 39.4928 86.2073 49.158C87.0603 51.4528 87.8296 53.4797 88.532 55.3893C89.6525 58.3709 90.6559 61.0175 91.6761 63.8819C91.7932 64.2169 91.6259 64.6022 91.2747 64.7194C90.9402 64.8367 90.5556 64.6692 90.4385 64.3174C89.4183 61.4698 88.4316 58.8232 87.3111 55.8583C86.592 53.9655 85.8227 51.9386 84.9698 49.627C81.6417 40.6319 74.4336 38.2365 62.9442 42.2902C52.96 45.8246 41.9556 52.5584 46.2035 64.6524L49.6821 74.5186C54.2979 86.3279 56.3215 88.2542 60.051 88.0365C60.7868 87.9862 61.7903 87.7182 62.4592 86.7132C63.4961 85.1051 63.3289 82.1235 61.9575 78.2708C59.2315 79.2088 57.3751 78.8403 56.2714 78.3378C55.0338 77.7683 54.0972 76.7632 53.6624 75.5237C53.3614 74.6861 53.1607 73.3796 53.8966 71.9558C54.9334 69.9122 57.5591 68.2538 61.6732 67.031C63.0948 66.83 64.1149 69.1919 66.8744 76.0094C70.0519 83.899 74.8685 95.8088 79.3003 95.8256C79.6682 95.8256 79.9526 96.1103 79.9526 96.4788C79.9024 96.7803 79.6013 97.0819 79.2501 97.0819Z" fill="#000200"/>
+                        <path d="M78.3983 110.247C78.3314 110.247 78.2645 110.231 78.1809 110.214C77.8464 110.097 77.6624 109.728 77.7795 109.393L82.2281 96.227C82.3451 95.8919 82.7131 95.7077 83.0475 95.8249C83.382 95.9422 83.566 96.3107 83.4489 96.6457L79.0003 109.812C78.9167 110.063 78.6659 110.247 78.3983 110.247Z" fill="#000200"/>
+                        <path d="M74.1002 74.7361C71.2739 74.7361 69.6684 69.0744 67.628 61.9051C66.9256 59.426 66.1898 56.8799 65.4038 54.5515C64.9188 53.1444 64.9522 51.9049 65.5041 50.8496C66.6748 48.5882 69.9025 47.667 73.2975 46.6954C76.5754 45.7574 79.9704 44.7858 80.8233 42.625C80.9571 42.29 81.3417 42.1225 81.6762 42.2565C82.0107 42.3905 82.1779 42.7757 82.0441 43.1108C80.9571 45.8579 77.2443 46.9299 73.6654 47.9517C70.6718 48.806 67.5946 49.6938 66.6748 51.4526C66.2901 52.1896 66.2901 53.0607 66.6581 54.1327C67.4608 56.4946 68.1967 59.0574 68.8991 61.5533C70.4879 67.1313 72.2773 73.4296 74.117 73.4296H74.1337C75.1371 73.3961 77.2611 72.391 79.5021 71.3022C84.0677 69.1079 89.7539 66.3608 93.1322 68.2369C93.4499 68.4044 93.567 68.8064 93.383 69.1246C93.2158 69.4429 92.8144 69.5602 92.4966 69.3759C89.7037 67.8181 84.1347 70.515 80.0707 72.4748C77.4952 73.7143 75.4716 74.7026 74.1839 74.7361C74.1337 74.7361 74.117 74.7361 74.1002 74.7361Z" fill="#000200"/>
+                        <path d="M56.1065 100.566C56.0564 100.566 55.9895 100.566 55.9393 100.55C55.5881 100.449 55.3874 100.097 55.4877 99.7456L58.5482 88.4891C58.6486 88.1374 58.9998 87.9364 59.351 88.0369C59.7022 88.1374 59.9029 88.4891 59.8025 88.8409L56.742 100.097C56.6584 100.365 56.3908 100.566 56.1065 100.566Z" fill="#000200"/>
+                        <path d="M88.6676 74.2668C88.2328 73.9988 87.7813 73.7643 87.313 73.5465C86.5604 73.1948 86.1089 74.4176 86.8782 74.7693C87.2461 74.9368 87.5973 75.1379 87.9318 75.3389C88.6342 75.7744 89.3868 74.7191 88.6676 74.2668Z" fill="#000200"/>
+                        </g>
+                        <defs>
+                        <clipPath id="clip0_591_2445">
+                        <rect width="232" height="217" fill="white"/>
+                        </clipPath>
+                        </defs>
+                    </svg>
+                  </div>
+                </div>
+                <div class="col-12 text-center">
+                  <a href="{% url 'students:sisusimulator' %}" class="btn btn-xs btn btn-block btn-primary lize-bg-primary">Abrir simulador SISU</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+    
+    <div class="row mr-0 ml-0">
+      {% if not user.client_has_filtered_layout_for_today_student_applications %}
+      <div class="col-lg-3 bd-r-0 bd-sm-r">
+        <div class="card-events">
+          <p class="event-panel-label mb-2">Aplicações de hoje</p>
+          
+          {% for application_student in applications_today %}
+            {% include 'includes/card-application-student.html' with application_student=application_student %}
+          {% empty %}
+            <div class="media-body event-panel-gray event-panel-border bg-white rounded ml-0 mb-2">
+              <h6 class="event-title">Não há provas disponíveis para você hoje.</h6>
+            </div>
+          {% endfor %}
+          <hr />
+          <p class="event-panel-label mb-2">Aplicações agendadas</p>
+          {% for application_student in applications_future %}
+            <div class="media-body event-panel-orange event-panel-border bg-white rounded ml-0 mb-2">
+              <span class="event-time">{{ application_student.application.date|date:"d/m/Y" }} das {{ application_student.application.start }} até às {{ application_student.application.end }}</span>
+              <span class="badge-custom badge-custom-orange">
+                {% if application_student.application.category == 2 %}
+                  Prova
+                {% elif application_student.application.category == 4 %}
+                  Lista de Exercício
+                {% endif %}
+              </span>
+              <h6 class="event-title text-truncate" title="{{application_student.application.exam.name}}">{{ application_student.application.exam.name }}</h6>
+            </div>
+          {% empty %}
+            <div class="media-body event-panel-gray event-panel-border bg-white rounded ml-0 mb-2">
+              <h6 class="event-title">Não há provas agendadas para você.</h6>
+            </div>
+          {% endfor %}
+          <hr class="d-block d-sm-none" />
+        </div>
+      </div>
+      {% endif %}
+      <div {% if user.client_has_filtered_layout_for_today_student_applications %} class="col-lg-12 p-0" {% else %} class="col-lg-9" {% endif %}>
+        {% if applications_student_launch_score %}
+        <div class="card mg-b-10">
+          <div class="card-header d-flex justify-content-between">
+            <h6 class="lh-5 mg-b-0">Resultados liberados recentemente</h6>
+            <a href="{% url 'applications:application_student_list' %}" class="tx-12 link-03">
+              Ver todas as provas <i data-feather="arrow-right" class="wd-15 ht-15"></i>
+            </a>
+          </div>
+          <div class="card-body pd-0">
+            <ul class="list-unstyled mg-b-0">
+              {% regroup applications_student_launch_score by application.student_stats_permission_date|date:"D, d \d\e F" as applications_student_launch_score_dates %}
+              {% for applications_student_launch_score_date in applications_student_launch_score_dates %}
+              <li class="list-label bg-light p-2">{{ applications_student_launch_score_date.grouper }}</li>
+                {% for application_student in applications_student_launch_score_date.list %}
+                <li class="list-item p-2">
+                  <a href="{% url 'applications:application_exam_student_detail_v2' application_student.pk %}" class="d-flex align-items-center justify-content-between w-100" style="color: inherit;">
+                    <div class="media align-items-center">
+                      <div class="wd-35 ht-35 bd bd-2 bd-primary tx-primary rounded-circle align-items-center justify-content-center op-6 d-none d-sm-flex">
+                        <i data-feather="book" class="wd-20 ht-20"></i>
+                      </div>
+                      <div class="media-body mg-sm-l-15">
+                        <p class="tx-medium mg-b-0">{{ application_student.application.exam.name }}</p>
+                        <span class="badge-custom-r badge-custom-green">{{ application_student.application.get_category_display }}</span>
+                      </div>
+                    </div>
+                    {% with total_grade=application_student.get_total_grade total_weight=application_student.get_total_weight %}
+                      <div class="text-right tx-rubik">
+                        <p class="mg-b-0 tx-primary">
+                          {{ total_grade|divide:total_weight|multiply:100|floatformat:2 }}%                          
+                        </p>
+                        <p class="tx-12 tx-nowrap mg-b-0">{{ total_grade|floatformat:2 }} <small class="tx-11 tx-color-03 tx-medium">/ {{ total_weight|floatformat:2 }}</small></p>
+                      </div>
+                    {% endwith %}
+                  </a>
+                </li>
+                {% endfor %}
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+        {% endif %}
+        <div class="card mg-b-10">
+          <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+            <div>
+              <h6 class="mg-b-5">Seu desempenho geral</h6>
+              <p class="tx-13 tx-color-03 mg-b-0">Resumo do seu desempenho geral em todas as provas e atividades</p>
+            </div>
+          </div>
+          <div class="card-body pd-y-30">
+            {% cache 86400 student_performance_dashboard user.student.id %}
+            <div class="row">
+              <div class="col-6 col-sm media">
+                <div class="wd-40 wd-md-50 ht-40 ht-md-50 bg-teal tx-white mg-r-10 mg-md-r-10 d-flex align-items-center justify-content-center rounded op-6">
+                  <i data-feather="bar-chart-2"></i>
+                </div>
+                <div class="media-body">
+                  <h6 class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold tx-nowrap mg-b-5 mg-md-b-8">Provas realizadas</h6>
+                  <h4 class="tx-20 tx-sm-18 tx-md-24 tx-normal tx-rubik mg-b-0">
+                    {{ user.student.get_finished_exams_current_year.count|default:0 }}
+                  </h4>                    
+                </div>
+              </div>
+              <div class="col-6 col-sm media">
+                <div class="wd-40 wd-md-50 ht-40 ht-md-50 bg-pink tx-white mg-r-10 mg-md-r-10 d-flex align-items-center justify-content-center rounded op-5">
+                  <i data-feather="bar-chart-2"></i>
+                </div>
+                <div class="media-body">
+                  <h6 class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold mg-b-5 mg-md-b-8">Questões</h6>
+                  <h4 class="tx-20 tx-sm-18 tx-md-24 tx-normal tx-rubik mg-b-0">
+                    {{ user.student.get_total_answerds.sum_total_answers|default:0 }}
+                  </h4>
+                </div>
+              </div>
+              <div class="col-6 col-sm media mg-t-20 mg-sm-t-0">
+                <div class="wd-40 wd-md-50 ht-40 ht-md-50 bg-orange tx-white mg-r-10 mg-md-r-10 d-flex align-items-center justify-content-center rounded op-5">
+                  <i data-feather="bar-chart-2"></i>
+                </div>
+                <div class="media-body">
+                  <h6 class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold mg-b-5 mg-md-b-8">Acertos</h6>
+                  <h4 class="tx-20 tx-sm-18 tx-md-24 tx-normal tx-rubik mg-b-0">
+                    {{ user.student.get_total_answerds.sum_total_correct_answers|default:0 }}
+                  </h4>
+                </div>
+              </div>
+              <div class="col-6 col-sm media mg-t-20 mg-sm-t-0">
+                <div class="wd-40 wd-md-50 ht-40 ht-md-50 bg-primary tx-white mg-r-10 mg-md-r-10 d-flex align-items-center justify-content-center rounded op-4">
+                  <i data-feather="bar-chart-2"></i>
+                </div>
+                <div class="media-body">
+                  <h6 class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold mg-b-5 mg-md-b-8">Aproveitamento</h6>
+                  <h4 class="tx-20 tx-sm-18 tx-md-24 tx-normal tx-rubik mg-b-0">
+                    {{ user.student.get_total_answerds.sum_total_correct_answers|default:0|proportion:user.student.get_total_answerds.sum_total_answers|default:0|floatformat:2 }}%
+                  </h4>
+                </div>
+              </div>
+            </div>
+            {% endcache %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% if user.client_has_filtered_layout_for_today_student_applications %}
+    <div class="row mr-0 ml-0">
+      <div class="card-events col-12">
+        <div class="row today-applications">
+          <div class="col-12 p-0">
+            <div class="row p-0 mr-0 ml-0">
+              <div class="col-12 col-sm-9 p-0 d-flex align-items-center">
+                <h4 class="event-panel-label m-0">Aplicações de hoje</h4>
+              </div>
+              <div class="form-group col-12 mt-4 mt-0-sm col-sm-3 p-0" v-if="applications.length != 0">
+                <select type="text" class="form-control" v-model="selectedField">
+                  <option v-if="selectedField" :value="selectedField" disabled>
+                    Agrupar por ${ selectedField == 'subject' ? 'Disciplina' : selectedField == 'knowledgeArea' ? 'Área de conhecimento' : selectedField == 'schoolClass' ? 'Turma' : 'Curso' }
+                  </option>
+                  <option value="subject">Disciplina</option>
+                  <option value="knowledgeArea">Área de conhecimento</option>
+                  <option value="schoolClass">Turma</option>
+                  <option value="course">Curso</option>           
+                </select>
+              </div>
+            </div>
+            <div v-if="applications.length != 0"class="p-0 mr-0 ml-0">
+              <div v-show="selectedField=='subject'" class="accordion" id="accordion-subject">
+                <div class="card" v-for="(subject, index) in allSubjects">
+                  <div
+                    class="card-header d-flex justify-content-between align-items-center"
+                    :id="'heading-'+ subject.id + index"
+                  >
+                    
+                    
+                    <h5 class="mb-0 mr-1"> ${subject.name} 
+                    </h5>
+                    
+  
+                    <div class="collapse-badge-container">
+                      <span class="badge badge-secondary px-2 py-1">
+                        ${subject.numberOfApplications}
+                      </span>
+                      <button
+                      class="btn"
+                      type="button"
+                      data-toggle="collapse"
+                      :data-target="'#collapse-' + subject.id+ index"
+                      aria-expanded="true"
+                      :aria-controls="'collapse-'+ subject.id + index">
+                      <i class="fa fa-chevron-down"></i>
+                      </button>
+                    </div>
+
+                  </div>
+  
+                  <div
+                    :id="'collapse-'+subject.id+ index"
+                    class="collapse"
+                    :aria-labelledby="'heading-'+subject.id+ index"
+                    data-parent="#accordion-subject"
+                  >
+                    <div :id="'subject-'+index" class="card-body row">
+                      <div class="col-lg-4 col-12" v-for="app in filterApplicationsBySubject(subject)">
+                        <application-card v-bind:property="subject.id" v-bind:index="index" v-bind:key="app.pk" v-bind:application="app"></application-card>
+                      </div>               
+                    </div>
+
+                    
+                  </div>
+                </div>
+              </div>
+              <div v-show="selectedField=='knowledgeArea'" class="accordion" id="accordion-knowledgeArea">
+                <div class="card" v-for="(knowledgeArea, index) in allKnowledgeAreas">
+                  <div
+                    class="card-header d-flex justify-content-between align-items-center"
+                    :id="'heading-' +knowledgeArea.id+ index"
+                  >
+  
+                  
+  
+                  <h5 class="mb-0 mr-2">${knowledgeArea.name}
+                  </h5>
+                  
+                 
+                  <div class="collapse-badge-container">
+                    <span class="badge badge-secondary px-2 py-1">
+                      ${knowledgeArea.numberOfApplications}
+                    </span>
+                  
+                    <button
+                      class="btn"
+                      type="button"
+                      data-toggle="collapse"
+                      :data-target="'#collapse-'+knowledgeArea.id + index"
+                      aria-expanded="true"
+                      :aria-controls="'collapse-'+knowledgeArea.id+ index">
+                      <i class="fa fa-chevron-down"></i>
+                    </button>
+                  </div>
+                </div>
+  
+                  <div
+                    :id="'collapse-'+ knowledgeArea.id + index"
+                    class="collapse"
+                    :aria-labelledby="'heading-'+knowledgeArea.id + index"
+                    data-parent="#accordion-knowledgeArea"
+                  >
+                    <div :id="'knowledgeArea-'+index" class="card-body row">
+                      <div class="col-lg-4 col-12" v-for="app in filterApplicationsByKnowledgeArea(knowledgeArea)">
+                        <application-card v-bind:property="knowledgeArea.id" v-bind:index="index" v-bind:key="app.pk" v-bind:application="app"></application-card>
+                      </div>               
+                    </div>
+
+                    
+                  </div>
+                </div>
+              </div>
+              <div v-show="selectedField=='schoolClass'" class="accordion" id="accordion-course">
+                <div class="card" v-for="(schoolClass, index) in allSchoolClasses">
+                  <div
+                    class="card-header d-flex justify-content-between align-items-center"
+                    :id="'heading-' + schoolClass.pk + index"
+                  >
+                    
+                    <h5 class="mb-0 mr-2">${schoolClass.name}
+                    </h5>
+                    
+                    <div class="collapse-badge-container">
+                      <span class="badge badge-secondary px-2 py-1">
+                        ${schoolClass.numberOfApplications}
+                      </span>
+                      <button
+                        class="btn"
+                        type="button"
+                        data-toggle="collapse"
+                        :data-target="'#collapse-'+ schoolClass.pk + index"
+                        aria-expanded="true"
+                        :aria-controls="'collapse-'+ schoolClass.pk + index">
+                        <i class="fa fa-chevron-down"></i>
+                      </button>
+                    </div>
+
+                  </div>
+  
+                  <div
+                    :id="'collapse-'+ schoolClass.pk + index"
+                    class="collapse"
+                    :aria-labelledby="'heading-' + schoolClass.pk + index"
+                    data-parent="#accordion-course"
+                  >
+                    <div :id="'class-'+index"  class="card-body row">
+                      <div class="col-lg-4 col-12" v-for="app in filterApplicationsByClass(schoolClass)">
+                        <application-card v-bind:property="schoolClass.pk" v-bind:index="index" v-bind:key="app.pk" v-bind:application="app"></application-card>
+                      </div>               
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+              <div v-show="selectedField=='course'" class="accordion" id="accordion">
+                <div class="card" v-for="(course, index) in allCourses">
+                  <div
+                    class="card-header d-flex justify-content-between align-items-center"
+                    :id="'heading-' + course.pk + index"
+                  >
+                    
+                    
+                    <h5 class="mb-0 mr-1">${course.name}</h5>
+
+                    <div class="collapse-badge-container">
+                      <span class="badge badge-secondary px-2 py-1">
+                        ${course.numberOfApplications}
+                      </span>
+                      <button
+                        class="btn"
+                        type="button"
+                        data-toggle="collapse"
+                        :data-target="'#collapse-' + course.pk + index"
+                        aria-expanded="true"
+                        :aria-controls="'collapse-'+ course.pk  + index">
+                        <i class="fa fa-chevron-down"></i>
+                    </button>
+                    </div>
+
+                  </div>
+  
+                  <div
+                    :id="'collapse-'+ course.pk  + index"
+                    class="collapse"
+                    :aria-labelledby="'heading-' + course.pk + index"
+                    data-parent="#accordion"
+                  >
+                    <div :id="'course-'+index" class="card-body row">
+                      <div class="col-lg-4 col-12" v-for="app in filterApplicationsByCourse(course)">
+                        <application-card v-bind:property="course.pk" v-bind:index="index" v-bind:key="app.pk" v-bind:application="app"></application-card>
+                      </div>               
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+
+            <div v-else class="card-body">
+              <div class="media-body event-panel-gray event-panel-border bg-white rounded ml-0 mb-2">
+                <h6 class="event-title">Não há provas disponíveis para você hoje.</h6>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock content-fixed %} 
+{% block js-additional %}
+<script type="text/javascript">
+  moment.locale('pt-br');
+  {% comment %} {% if has_online_application_today %}
+    $(window).focus(function () {
+      window.location.reload()
+    });
+  {% endif %} {% endcomment %}
+
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    components: {
+      {% include 'includes/components/card-application-student.html' %},
+    },
+    data: {
+      applications: [
+      {% for application_student in applications_today|dictsortreversed:"application.is_happening" %}
+        {
+          applicationStudentPk: "{{application_student.pk}}",
+          category: "{{application_student.application.category}}",
+          automaticCreation: {{application_student.application.automatic_creation|lower}},
+          start: "{{application_student.application.start}}",
+          end: "{{application_student.application.end}}",
+          dateEnd: "{{application_student.application.date_end}}",
+          examName: "{{application_student.application.exam.name}}",
+          isTimeFinished: {{application_student.application.is_time_finished|lower}},
+          isHappening: {{application_student.application.is_happening|lower}},
+          pk: "{{application_student.application.pk}}",
+          releaseResultAtEnd: {{application_student.application.release_result_at_end|lower}},
+          studentStatsPermissionDate: "{{application_student.application.student_stats_permission_date|date:'Y-m-d H:i:s'}}",          
+          subjects: {{application_student.application.get_subjects|safe}},
+          progress: "{{application_student.progress}}",
+          endTime: "{{application_student.end_time}}",
+          isBlockedByTolerance: {{application_student.is_blocked_by_tolerance|lower}},
+          startApplicationUrl: '{% url "applications:applications_monitoring_student" application_student.pk %}',
+          startHomeworkUrl: '{% url "applications:applications_homework_student" application_student.pk %}',
+          seeResultUrl: '{% url "applications:application_exam_student_detail_v2" application_student.pk %}',
+          dateTimeTz: '{{ application_student.date_time_start_tz|date:"Y-m-d H:i:s" }}',
+          allowStudentRedoList: {{ application_student.application.allow_student_redo_list|yesno:"true,false" }},
+          alreadyReachedMaxTimeFinish: {{ application_student.already_reached_max_time_finish|yesno:"true,false" }},
+          schoolClasses: [
+          {% for school_class in application_student.student.classes.all %}
+            {
+              name: "{{school_class.name}}",
+              pk: "{{school_class.pk}}",
+            },
+          {% empty %}
+            {
+              name: "Outros",
+              pk: "Outros-pk-school-class",
+            },
+          {% endfor %}
+          ],
+          courses: [
+          {% for school_class in application_student.student.classes.all %}
+          {% if school_class.course %}
+            {
+              name: "{{school_class.course.name}}",
+              pk: "{{school_class.course.pk}}",
+            },
+          {% else %}
+          {
+            name: "Outros",
+            pk: "Outros-pk-course",
+          },
+          {% endif %}
+          {% empty %}
+            {
+              name: "Outros",
+              pk: "Outros-pk-course",
+            },
+          {% endfor %}
+          ]
+
+        },
+      {% endfor %}
+      ],
+      selectedField: 'subject',
+      allSubjects: [
+      
+      ],
+      allKnowledgeAreas: [
+      
+      ],
+      allSchoolClasses: [
+      
+      ],
+      
+      allCourses: [
+      
+      ],
+
+      
+    },
+    computed: {
+
+    },
+    methods: {
+      getUniqueFields() {
+        const subjects = []
+        const knowledgeAreas= []
+        const classes = []
+        const courses = []
+        this.applications.forEach(application => {
+          application.subjects.forEach(subject => {
+            if (!subjects.map(s => s.id).includes(subject.id)) {
+              this.$set(subject, 'numberOfApplications', 0)
+              subjects.push(subject);
+            }
+            if (!knowledgeAreas.map(k => k.id).includes(subject.knowledge_area.id)) {
+              this.$set(subject.knowledge_area, 'numberOfApplications', 0)
+              knowledgeAreas.push(subject.knowledge_area);
+            }
+          });
+          application.schoolClasses.forEach(schoolClass => {
+            if (!classes.map(c => c.pk).includes(schoolClass.pk)) {    
+              this.$set(schoolClass, 'numberOfApplications', 0)
+              classes.push(schoolClass);
+            }
+          });
+          application.courses.forEach(course => {
+            if (!courses.map(c => c.pk).includes(course.pk) && course.pk) {
+              this.$set(course, 'numberOfApplications', 0)
+              courses.push(course);
+            }
+          });
+        });
+
+    
+
+        this.allSubjects = subjects.sort((a, b) => a.name.localeCompare(b.name));
+        this.allKnowledgeAreas = knowledgeAreas.sort((a, b) => a.name.localeCompare(b.name));
+        this.allSchoolClasses = classes.sort((a, b) => {
+          if(a.name == "Outros" && b.name == "Outros") {
+            return 0;
+          }
+          if (a.name == "Outros") {
+            return 1;
+          }
+          if (b.name == "Outros") {
+            return -1;
+          }
+          return a.name.localeCompare(b.name)
+        });
+        this.allCourses = courses.sort((a, b) => {
+          if(a.name == "Outros" && b.name == "Outros") {
+            return 0;
+          }
+          if (a.name == "Outros") {
+            return 1;
+          }
+          if (b.name == "Outros") {
+            return -1;
+          }
+          return a.name.localeCompare(b.name)
+        });
+      },
+
+      
+      getNumberOfApplications() {
+        this.allSubjects.forEach((s, index) => {
+          s.numberOfApplications = this.filterApplicationsBySubject(s).length
+        })
+        this.allKnowledgeAreas.forEach((k, index) => {
+          k.numberOfApplications = this.filterApplicationsByKnowledgeArea(k).length
+        })
+        this.allSchoolClasses.forEach((c, index) => {
+          c.numberOfApplications = this.filterApplicationsByClass(c).length
+        })
+        this.allCourses.forEach((c, index) => {
+          c.numberOfApplications = this.filterApplicationsByCourse(c).length
+        })
+      },
+
+      filterApplicationsBySubject(subject) {
+        return this.applications.filter(app => app.subjects.map(sub => sub.id).includes(subject.id))
+      },
+
+      filterApplicationsByKnowledgeArea(knowledgeArea) {
+        return this.applications.filter(app => app.subjects.map(sub => sub.knowledge_area.id).includes(knowledgeArea.id))
+      },
+
+      filterApplicationsByClass(schoolClass) {
+        return this.applications.filter(app => app.schoolClasses.map(sc => sc.pk).includes(schoolClass.pk))
+      },
+
+      filterApplicationsByCourse(course) {
+        return this.applications.filter(app => app.courses.map(c => c.pk).includes(course.pk))
+      },
+      timeFormated(seconds) {
+        const h = String(Math.floor(seconds / 3600)).padStart(2, '0');
+        const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+        const sec = String(seconds % 60).padStart(2, '0');
+        return `${h}:${m}:${sec}`;
+      },
+      showHomeworkStartConfirmation(seconds, applicationStudentStartTime, goToUrl) {
+        if(Number(seconds) > 0 && !applicationStudentStartTime) {
+          Swal.fire({
+            title: 'Você tem certeza que deseja começar a lista de exercício?',
+            html: `
+              <br>
+              Após iniciado, você terá até <strong>${this.timeFormated(Number(seconds))}</strong> para concluir a lista. 
+              <br>
+              <br>
+              <strong>Não será possível retomá-la depois do prazo.</strong>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sim, começar!',
+            cancelButtonText: 'Cancelar',
+          }).then((result) => {
+            if (result.isConfirmed) {
+              window.location.href = goToUrl
+            }
+          })
+        } else {
+          window.location.href = goToUrl
+        }
+      },
+      stopwatch(applicationStudentId, seconds) {
+        const el = $(`#stopwatch-${applicationStudentId}`);
+
+        let timeLeft = seconds;
+        el.html(`Você deve concluir em até <strong>${this.timeFormated(timeLeft)}</strong>`);
+
+        const interval = setInterval(() => {
+          if (timeLeft <= 0) {
+            clearInterval(interval);
+            el.html(`<span class="text-danger">O prazo para conclusão foi encerrado!`); 
+          } else {
+            el.html(`Você deve concluir em até <strong>${this.timeFormated(timeLeft)}</strong>`);
+          }
+          timeLeft--;
+        }, 1000);
+      },
+    },
+
+
+    created() {
+      this.getUniqueFields();
+      this.getNumberOfApplications();
+    },
+    mounted() {
+      {% for application_student in applications_today %}
+        {% if application_student.application.max_time_finish and application_student.start_time and application_student.time_left_to_finish %}
+          this.stopwatch("{{application_student.id}}", {{application_student.time_left_to_finish|safe}})
+        {% endif %}
+      {% endfor %}
+    },
+    
+  })
+</script>
+{% endblock js-additional %}

@@ -1,0 +1,135 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="pt-br" class="tw-scroll-smooth tw-antialiased [font-feature-settings:'ss01']">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Twitter -->
+    <meta name="twitter:site" content="@lizeoficial">
+    <meta name="twitter:creator" content="@lizeoficial">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Lize">
+    <meta name="twitter:description" content="Monitoramento e aplicações de provas online">
+    <meta name="twitter:image" content="https://lizeedu.com.br/img/social.png">
+
+    <!-- Facebook -->
+    <meta property="og:url" content="https://lizeedu.com.br">
+    <meta property="og:title" content="Lize">
+    <meta property="og:description" content="Monitoramento e aplicações de provas online">
+
+    <meta property="og:image" content="https://lizeedu.com.br/img/social.png">
+    <meta property="og:image:secure_url" content="https://lizeedu.com.br/img/social.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="600">
+
+    <!-- Meta -->
+    <meta name="description" content="Monitoramento e aplicações de provas online">
+    <meta name="author" content="Lize">
+
+    <!-- Favicon -->
+    <link href="{% static 'favicon/favicon.ico' %}" rel="shortcut icon" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon/apple-touch-icon.png' %}" />
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}" />
+    <link rel="mask-icon" href="{% static 'favicon/safari-pinned-tab.svg' %}" color="#5bbad5" />
+    <meta name="msapplication-TileColor" content="#da532c" />
+    <meta name="theme-color" content="#ffffff" />
+
+    <title>Entrar - Lize</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'tw/tw-reset.css' %}" />
+    <link rel="stylesheet" href="{% static 'tw/tw.css' %}" />
+    <style>
+      body {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      .js-focus-visible :focus:not(.focus-visible) {
+        outline: none;
+      }
+
+      .tw-prose-emphasis {
+        --tw-shadow: inset 0 -2px 0 0 var(--tw-prose-background,#fff),inset 0 calc(-1 * (var(--tw-prose-underline-size,4px) + 2px)) 0 0 var(--tw-prose-underline,#7dd3fc);
+        --tw-shadow-colored: inset 0 -2px 0 0 var(--tw-shadow-color),inset 0 0 0 var(--tw-shadow-color);
+        box-shadow: var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow);
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tw-flex tw-min-h-screen">
+      <div class="tw-flex tw-flex-1 tw-flex-col tw-justify-center tw-px-4 tw-py-12 sm:tw-px-6 lg:tw-px-20 xl:tw-px-24">
+        <div class="tw-mx-auto tw-w-full tw-max-w-sm lg:tw-w-96">
+          <div>
+            {% include 'redesign/includes/logo.html' with width=47 height=40 %}
+            <h2 class="tw-mt-8 tw-text-2xl tw-font-semibold tw-leading-9 tw-tracking-tight tw-text-gray-900">
+              Bem-vindo de volta
+            </h2>
+            <p class="tw-mt-2 tw-text-sm tw-leading-6 tw-text-gray-500">
+              Insira seus dados abaixo ou entre com a conta do google para ter acesso ao seu dashboard.
+            </p>
+          </div>
+          {% if error_message %}
+          <div class="tw-my-8 tw-flex tw-rounded-2xl tw-p-4 tw-bg-amber-50">
+            <svg aria-hidden="true" viewBox="0 0 32 32" fill="none" class="tw-h-8 tw-w-8 tw-flex-none [--icon-foreground:theme(colors.amber.900)] [--icon-background:theme(colors.amber.100)]">
+              <defs>
+                <radialGradient cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" id=":S5:-gradient" gradientTransform="rotate(65.924 1.519 20.92) scale(25.7391)">
+                  <stop stop-color="#FDE68A" offset=".08"></stop>
+                  <stop stop-color="#F59E0B" offset=".837"></stop>
+                </radialGradient>
+              </defs>
+              <g>
+                <circle cx="20" cy="20" r="12" fill="url(#:S5:-gradient)"></circle>
+                <path d="M3 16c0 7.18 5.82 13 13 13s13-5.82 13-13S23.18 3 16 3 3 8.82 3 16Z" fill-opacity="0.5" class="tw-fill-[var(--icon-background)] tw-stroke-[color:var(--icon-foreground)]" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="m15.408 16.509-1.04-5.543a1.66 1.66 0 1 1 3.263 0l-1.039 5.543a.602.602 0 0 1-1.184 0Z" class="tw-fill-[var(--icon-foreground)] tw-stroke-[color:var(--icon-foreground)]" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="M16 23a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" fill-opacity="0.5" stroke="currentColor" class="tw-fill-[var(--icon-background)] tw-stroke-[color:var(--icon-foreground)]" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+              </g>
+            </svg>
+            <div class="tw-ml-4 tw-flex-auto">
+              <div class="tw-prose tw-text-amber-800 [--tw-prose-underline:theme(colors.amber.400)] [--tw-prose-background:theme(colors.amber.50)] prose-a:tw-text-amber-900 prose-code:tw-text-amber-900">
+                <p class="tw-text-sm tw-mt-2">
+                    {{ error_message }}
+                </p>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+          <div class="tw-mt-5">
+            <div>
+                <form method="POST" id="verify-2fa-form">
+                {% csrf_token %}
+                <div>
+                    <label for="code" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Insira o código enviado para o seu e-mail:</label>
+                    <div class="tw-mt-2">
+                        <input id="code" name="code" type="text" required maxlength="6" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6">
+                    </div>
+                </div>
+                <div class="tw-mt-2">
+                  <div id="error-message" class="tw-text-red-500 tw-mt-2"></div>
+                  <button type="submit" class="tw-flex tw-w-full tw-justify-center tw-rounded-md tw-bg-primary-600 tw-px-3 tw-py-1.5 tw-text-sm tw-font-semibold tw-leading-6 tw-text-white tw-shadow-sm hover:tw-bg-primary-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600">Verificar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+   
+
+  </body>
+</html>

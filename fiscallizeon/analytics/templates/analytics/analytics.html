@@ -1,0 +1,1531 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+
+
+{% block title %}Análise de performance - Lize{% endblock title %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10 performance-content">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">COORDENAÇÃO</a></li>
+          <li class="breadcrumb-item active" aria-current="page">ANALÍTICO</li>
+        </ol>
+      </nav> 
+    </div>    
+  </div>
+  <div class="row">
+    <div class="col-12 d-flex justify-content-between">
+      <h4>Análise de Performance</h4>
+      <div class="text-right justify-content-end">
+          <!--
+          <button data-toggle-off-canvas="#right-off-canvas" class="btn btn-sm btn-info btn-icon rounded-pill off-canvas-menu  mb-2">
+            <i class="fas fa-search"></i> Filtrar aplicações 
+            <template v-if="filters.showAppliedFilters.length > 0">
+              <span class="badge badge-danger">${filters.showAppliedFilters.length} Aplicado(s)</span>
+            </template>
+          </button>
+          -->
+          <template v-if="filters.showAppliedFilters.length > 0">
+            <a @click="changeFilters('removeFilters')" class="btn btn-sm btn-secondary text-white btn-icon rounded-pill mb-2">
+              <i class="fas fa-eraser"></i> Apagar filtro(s)
+            </a>
+          </template>
+      </div>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block css-additional %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+  
+  <style>
+    .applied-blur {
+      filter: blur(15px);
+      -webkit-filter: blur(15px);
+    }
+
+    .df-settings-body{
+      width: 380px !important;
+    }
+
+    .df-settings-link{
+          left: -50px !important;
+          width: 50px !important;
+    }
+
+    .select2-selection__choice__remove {
+      display: none !important;
+    }
+
+    .df-settings.show{
+      right: 332px;
+    }
+
+    .select2-container{
+      width: 100% !important;
+    }
+
+    .subject-list:hover {
+      background-color: #EEEFF4;
+      cursor: pointer;
+      opacity: 0.6;
+    }
+    .card {
+      animation: fadeIn; /* referring directly to the animation's @keyframe declaration */
+      animation-duration: 1s; /* don't forget to set a duration! */
+    }
+    .marker {
+      animation: fadeInRight; /* referring directly to the animation's @keyframe declaration */
+      animation-duration: 0.5s; /* don't forget to set a duration! */
+    }
+    .divScrollab {
+      max-height: 360px; 
+      overflow-y: scroll;
+      border-top: 1px solid #EEEFF4;
+    }
+    .bg-success {
+      background-color: rgba(97,185,90, 0.5) !important;
+    }
+    .bg-danger {
+      background-color: rgba(237,93,115, 0.5) !important;
+    }
+    .marker {
+      cursor: pointer;
+    }
+    @media only screen and (max-width: 850px) {
+    .df-settings-body{
+      width: 290px;
+    }
+    .df-settings.show{
+      right: 244px;
+    }
+    .question img{
+      max-width: 250px !important;
+    /* min-width: 100% !important; */
+    }
+    }
+  </style>
+{% endblock css-additional %}
+    
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 0.625rem; margin-bottom: 1rem; justify-content: space-between;">
+      <!-- Empty -->
+    </div>
+    <div>
+      <h4>Análise de Performance</h4>
+    </div>
+<div class="performance-content" :class="{'applied-blur' : (widgets.applications_count == 0 && !load.widgets) }">
+  <div class="row">
+      <div class="col-6 col-md-6 col-lg-3 mg-t-10">
+          <div class="card">
+            <div class="card-body pd-y-20" v-if="applications">
+              <div class="row row-sm">
+                <div class="col-12">
+                  <template v-if="!load.widgets">
+                    <h3 class="tx-normal tx-rubik tx-spacing--1 mg-b-5">${widgets.applications_count}</h3>
+                    <h6 class="tx-12 tx-semibold tx-uppercase tx-spacing-1 tx-primary mg-b-5">APLICAÇÕES</h6>
+                  </template>
+                  <div class="placeholder-paragraph" v-else>
+                    <div class="line"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div><!-- card -->
+      </div>
+
+      <div class="col-6 col-md-6 col-lg-3 mg-t-10">
+        <div class="card">
+          <div class="card-body pd-y-20">
+            <div class="row row-sm">
+                <div class="col-12">
+                  <template v-if="!load.widgets">
+                    <h3 class="tx-normal tx-rubik tx-spacing--1 mg-b-5">${widgets.questions_count}</h3>
+                    <h6 class="tx-12 tx-semibold tx-uppercase tx-spacing-1 tx-teal mg-b-5">QUESTÕES</h6>
+                  </template>
+                  <div class="placeholder-paragraph" v-else>
+                    <div class="line"></div>
+                  </div>
+                </div>
+            </div>
+          </div>
+        </div><!-- card -->
+      </div>
+
+      <div class="col-6 col-md-6 col-lg-3 mg-t-10">
+          <div class="card">
+            <div class="card-body pd-y-20">
+              <div class="row row-sm">
+                  <div class="col-12">
+                    <template v-if="!load.widgets">
+                      <h3 class="tx-normal tx-rubik tx-spacing--1 mg-b-5">${widgets.students_count}</h3>
+                      <h6 class="tx-12 tx-semibold tx-uppercase tx-spacing-1 tx-teal mg-b-5">PROVAS REALIZADAS</h6>
+                    </template>
+                    <div class="placeholder-paragraph" v-else>
+                      <div class="line"></div>
+                    </div>
+                  </div>
+                  
+              </div>
+            </div>
+          </div><!-- card -->
+      </div>
+
+      <div class="col-6 col-md-6 col-lg-3 mg-t-10">
+          <div class="card">
+            <div class="card-body pd-y-20">
+              <div class="row row-sm">
+                <div class="col-12">
+                  <template v-if="!load.widgets">
+                    <h3 class="tx-normal tx-rubik tx-spacing--1 mg-b-5">
+                      ${parseFloat(widgets.applications_avarage).toFixed(2)} %</h3>
+                    <h6 class="tx-12 tx-semibold tx-uppercase tx-spacing-1 text-success mg-b-5">APROVEITAMENTO</h6>
+                  </template>
+                  <div class="placeholder-paragraph" v-else>
+                    <div class="line"></div>
+                  </div>
+                </div>
+              </div>
+            </div><!-- card-body -->
+          </div><!-- card -->
+      </div>
+  </div>
+
+  <h4>Resumo de aplicações</h4>
+  <div class="row">
+    <div class="col-lg-8 col-xl-9">
+      <div class="card">
+        <div v-if="filters.showAppliedFilters.length > 0" data-toggle-off-canvas="#right-off-canvas" class="off-canvas-menu filters marker marker-ribbon marker-primary marker-top-right pos-absolute t-2 r-0" data-placement="top" :title="filters.showAppliedFilters">${filters.showAppliedFilters.length} Filtros Aplicados <i class="px-2 fa fa-times" style="cursor: pointer;" @click="changeFilters('removeFilters')"></i></div>
+        <div class="card-header bd-b-0 pd-t-30 pd-lg-t-25 pd-l-20 pd-lg-l-25 d-flex flex-column flex-sm-row align-items-sm-start justify-content-sm-between">
+          <div>
+            <h6 class="mg-b-5">Você pode detalhar melhor a aplicação clicando no ícone <i class="fas fa-chart-line"></i></h6>
+            <p class="tx-12 tx-color-03 mg-b-0">O gráfico mostra as aplicações de acordo com o período selecionado.</p>
+          </div>
+        </div><!-- card-header -->
+        <div class="card-body pd-lg-25">
+          <div class="table-responsive divScrollab mb-4" v-if="!load.applicationList && widgets.applications_count > 0 || applications.length > 0">
+            <table class="table table-dashboard table-hover">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Nome</th>
+                  <th></th>
+                  <th>Desempenho</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="application in applications" style="cursor: pointer;" v-if="application.performance != 0">
+                    <td class="tx-color-03 tx-normal">${momentRef(application.date).format('DD/MM/YYYY')}</td>
+                    <td class="tx-color-03 tx-normal text-truncate" :title="application.exam ? application.exam.name : 'Aplicação sem prova selecionada'" style="max-width: 8rem;">${application.exam ? application.exam.name : 'Aplicação sem prova selecionada'}</td>
+                    <!-- <td class="tx-teal">${application.students.length}/ <span class="text-danger">${application.missing_students_count}</span> -->
+                    <td>
+                    </td>
+                    <td class="tx-teal">
+                      <div class="progress">
+                        <div class="progress-bar bg-success" role="progressbar" v-bind:style="'width: '+application.performance+'%'" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100">
+                          <span class="font-weight-bold">${parseFloat(application.performance).toFixed(2)} %</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="text-right tx-teal">
+                      <a :href="'/aplicacoes/'+application.pk" target="_blank"> <i class="fas fa-chart-line"></i></a>
+                    </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="row m-0 text-center" v-if="nextApplicationsPage">
+              <div class="col-12">
+                <button @click="getApplicationsData(nextApplicationsPage)" class="btn btn-primary btn-sm rounded">
+                <span v-if="load.applicationList && applications.length > 0">
+                  <i class="fas fa-spinner fa-spin"></i> Carregando
+                </span> 
+                <span v-else>
+                  + carregar mais
+                </span>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <template v-else>
+            <div class="placeholder-paragraph aligned-centered">
+              <div class="line"></div>
+              <div class="line"></div>
+              <div class="line"></div>
+              <div class="line"></div>
+              <div class="line"></div>
+              <div class="line"></div>
+            </div>
+            <h4 v-if="!load.applicationList && !widgets.applications_count > 0">Não foi encontrada nenhuma aplicação.</h4>
+          </template>
+        </div><!-- card-body -->
+      </div><!-- card -->
+    </div>
+    <div class="col-12 col-lg-4 col-xl-3 mg-t-10 mg-lg-t-0">
+      <div class="card">
+        <div class="card-header text-center">
+          <h6 class="lh-5 mg-b-0">
+            Resumo Geral
+          </h6>
+        </div>
+        <div class="card-body pd-lg-25">
+          <canvas id="chartApplicationsSummary" v-show="!load.applicationSummary"></canvas>
+        </div><!-- card-body -->
+        <template v-if="!load.applicationSummary">
+          <div class="card-footer">
+            <div class="row">
+              <div class="col-6">
+                <p class="tx-10 tx-uppercase tx-medium tx-color-03 tx-spacing-1 tx-nowrap mg-b-5">Presença</p>
+                <div class="d-flex align-items-center">
+                  <div class="wd-10 ht-10 rounded-circle bg-success mg-r-5"></div>
+                  <h5 class="tx-normal tx-rubik mg-b-0">
+                    ${parseFloat(chartApplicationPerformance.presence_percent).toFixed(2)} %<small class="tx-color-04"></small></h5>
+                </div>
+              </div><!-- col -->
+              <div class="col-6">
+                <p class="tx-10 tx-uppercase tx-medium tx-color-03 tx-spacing-1 mg-b-5">Ausência</p>
+                <div class="d-flex align-items-center">
+                  <div class="wd-10 ht-10 rounded-circle bg-pink mg-r-5"></div>
+                  <h5 class="tx-normal tx-rubik mg-b-0">
+                    ${parseFloat(100 - chartApplicationPerformance.presence_percent).toFixed(2)} %<small class="tx-color-04"></small></h5>
+                </div>
+              </div>
+              <!-- col -->
+              <!-- <div class="col-12 mg-t-20">
+                <p class="tx-10 tx-uppercase tx-medium tx-color-03 tx-spacing-1 mg-b-5">Tempo médio das aplicações</p>
+                <div class="d-flex align-items-center">
+                  <div class="wd-10 ht-10 rounded-circle bg-teal mg-r-5"></div>
+                  <h5 class="tx-normal tx-rubik mg-b-0">${chartApplicationPerformance.average_duration_applications >= 60 ? (chartApplicationPerformance.average_duration_applications / 60).toFixed(0) + 'h' : chartApplicationPerformance.average_duration_applications.toFixed(0) + 'min'}<small class="tx-color-04"></small></h5>
+                </div>
+              </div> -->
+              <!-- col -->
+              <!-- <div class="col-12 mg-t-20">
+                <p class="tx-10 tx-uppercase tx-medium tx-color-03 tx-spacing-1 mg-b-5">Média de Pausas</p>
+                <div class="d-flex align-items-center">
+                  <div class="wd-10 ht-10 rounded-circle bg-teal mg-r-5"></div>
+                  <h5 class="tx-normal tx-rubik mg-b-0">${chartApplicationPerformance.average_pauses_applications >= 60 ? (chartApplicationPerformance.average_pauses_applications / 60).toFixed(0) + 'h' : chartApplicationPerformance.average_pauses_applications.toFixed(0) + 'min'} <small class="tx-color-04"></small></h5>
+                </div>
+              </div> -->
+              <!-- col -->
+            </div><!-- row -->
+          </div><!-- card-footer -->
+        </template>
+        <div class="card-body pt-0" v-else>
+          <div class="placeholder-pie" style="max-height: 220px;"></div>
+          <hr/>
+          <div class="row">
+            <div class="col-6">
+              <div class="semi-line"></div>
+            </div>
+            <div class="col-6">
+              <div class="semi-line"></div>
+            </div>
+            <div class="col-12">
+              <div class="line-thick"></div>
+            </div>
+            <div class="col-12">
+              <div class="line-thick"></div>
+            </div>
+          </div>
+        </div>
+      </div><!-- card -->
+    </div>
+  </div>
+
+  <h4>Áreas / Disciplinas</h4>
+  <div class="row">
+      <div class="col-md-12" v-show="!subjectsSummary">
+        <div class="card">
+          <div v-if="filters.showAppliedFilters.length > 0" data-toggle-off-canvas="#right-off-canvas" class="off-canvas-menu filters marker marker-ribbon marker-primary marker-top-right pos-absolute t-2 r-0" data-placement="top" :title="filters.showAppliedFilters">${filters.showAppliedFilters.length} Filtros Aplicados <i class="px-2 fa fa-times" style="cursor: pointer;" @click="changeFilters('removeFilters')"></i></div>
+          <div class="card-header bd-b-0 pd-t-40 pd-lg-t-25 pd-l-20 pd-lg-l-25 d-flex flex-column flex-sm-row align-items-sm-start justify-content-sm-between">
+            <div>
+              <h6 class="">O Gráfico mostra a porcentagem de acertos por área do conhecimento</h6> 
+              <p class="tx-12 tx-color-03 mg-b-0">Os detalhes deste gráfico são de acordo com o período selecionado no filtro.</p>
+            </div>
+            <div class="text-right">
+              <h6 class="mg-t-20">Você pode clicar na disciplina para ver mais detalhes</h6>
+            </div>
+          </div>
+          <div class="card-body py-0">
+              <div class="row">
+                  <div class="col-12 col-xl-8">
+                      <canvas id="chartAreas" v-show="!load.knowledgeArea"></canvas>
+                      <div v-if="load.knowledgeArea">
+                        <div class="line-thick"></div>
+                        <div class="line-thick mt-4"></div>
+                        <div class="line-thick mt-4"></div>
+                        <div class="line-thick mt-4"></div>
+                        <div class="line-thick mt-4"></div>
+                        <div class="line-thick mt-4"></div>
+                        <div class="line-thick mt-4"></div>
+                        <div class="line-thick mt-4"></div>
+                      </div>
+                  </div>
+                  <div class="col-12 col-xl-4 mg-t-30 mg-lg-t-0 border-left divScrollab">
+                    <template v-if="!load.subjects"> 
+                      <div class="col-sm-12 col-lg-12 mg-t-10 subject-list" @click="changeData('subjects', subject)" :title="'Clique para detalhar a matéria '+ subject.name" v-for="subject in subjects">
+                        <div class="d-flex align-items-center justify-content-between mg-b-5">
+                          <h6 class="tx-uppercase tx-13 tx-spacing-1 tx-color-02 tx-semibold mg-b-0">${subject.name}</h6>
+                          <span class="tx-10 tx-color-04">Aproveitamento</span>
+                        </div>
+                        <div class="d-flex align-items-end justify-content-between mg-b-5">
+                        <h5 class="tx-normal tx-10 lh-2 mg-b-0">${subject.knowledge_area_name}</h5>
+                        <h6 class="tx-normal tx-rubik tx-color-03 lh-2 mg-b-0 text-nowrap">
+                          ${parseFloat(subject.performance_total).toFixed(2)} %
+                        </h6>
+                      </div>
+                      <div class="progress ht-4 mg-b-0 op-5">
+                        <div :class="'progress-bar bg-teal wd-'+Math.ceil(subject.performance_total/5)*5+'p'" role="progressbar" :aria-valuenow="subject.performance_total" aria-valuemin="0" aria-valuemax="100"></div>
+                      </div>
+                      </div>
+                    </template>
+                    <div v-else>
+                      <div class="line-thick mt-4"></div>
+                      <div class="line-thick mt-4"></div>
+                      <div class="line-thick mt-4"></div>
+                      <div class="line-thick mt-4"></div>
+                      <div class="line-thick mt-4"></div>
+                      <div class="line-thick mt-4"></div>
+                      <div class="line-thick mt-4"></div>
+                      <div class="line-thick mt-4"></div>
+                      <div class="line-thick mt-4"></div>
+                    </div>
+
+                  </div>
+              </div>
+          </div><!-- card-body -->
+        </div><!-- card -->
+      </div>
+
+      <div class="col-12" v-if="subjectsSummary">
+          <div class="card">
+            <div class="card-header d-sm-flex justify-content-between bd-b-0 pd-t-20 pd-b-0">
+                <div class="marker marker-ribbon marker-primary marker-top-left pos-absolute t-10 l-0" @click="changeData('subjects', 'reset')" title="Voltar para o gráfico de disciplinas" style="cursor: pointer;"><i class="fa fa-arrow-left"></i> Voltar</div>
+            </div>
+              <div class="card-body">
+                <div class="col-12">
+                  <div class="card mg-b-10">
+                    <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+                      <div>
+                        <h6 class="mg-b-5">Resumo da disciplina de ${subjectSelected.name}</h6>
+                      </div>
+                      <div class="d-flex mg-t-20 mg-sm-t-0">
+                        <div class="btn-group flex-fill">
+                          <!-- <button class="btn btn-white btn-xs active">Range</button>
+                          <button class="btn btn-white btn-xs">Period</button> -->
+                        </div>
+                      </div>
+                    </div><!-- card-header -->
+                    <div class="card-body pd-y-30">
+                      <div class="d-sm-flex">
+                        <div class="media">
+                          <div class="wd-40 wd-md-50 ht-40 ht-md-50 bg-teal tx-white mg-r-10 mg-md-r-10 d-flex align-items-center justify-content-center rounded op-6">
+                            <i class="fas fa-chalkboard-teacher fa-2x"></i>
+                          </div>
+                          <div class="media-body">
+                            <h6 class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold tx-nowrap mg-b-5 mg-md-b-8">Professores</h6>
+                            <h4 class="tx-20 tx-sm-18 tx-md-24 tx-normal tx-rubik mg-b-0">${subjectSelected.teachers_count}</h4>
+                          </div>
+                        </div>
+                        <div class="media mg-t-20 mg-sm-t-0 mg-sm-l-15 mg-md-l-40">
+                          <div class="wd-40 wd-md-50 ht-40 ht-md-50 bg-pink tx-white mg-r-10 mg-md-r-10 d-flex align-items-center justify-content-center rounded op-5">
+                            <i class="fas fa-user-graduate fa-2x"></i>  
+                          </div>
+                          <div class="media-body">
+                            <h6 class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold mg-b-5 mg-md-b-8">Alunos</h6>
+                            <h4 class="tx-20 tx-sm-18 tx-md-24 tx-normal tx-rubik mg-b-0">${subjectSelected.students_count}<small></small></h4>
+                          </div>
+                        </div>
+                        <div class="media mg-t-20 mg-sm-t-0 mg-sm-l-15 mg-md-l-40">
+                          <div class="wd-40 wd-md-50 ht-40 ht-md-50 bg-primary tx-white mg-r-10 mg-md-r-10 d-flex align-items-center justify-content-center rounded op-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-bar-chart-2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                          </div>
+                          <div class="media-body">
+                            <h6 class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold mg-b-5 mg-md-b-8">Aproveitamento</h6>
+                            <h4 class="tx-20 tx-sm-18 tx-md-24 tx-normal tx-rubik mg-b-0">${Math.floor(100 * Math.random())}<small> %</small></h4>
+                          </div>
+                        </div>
+                      </div>
+                    </div><!-- card-body -->
+                    <div class="table-responsive divScrollab">
+                      <table class="table table-dashboard table-hover mg-b-0">
+                        <thead>
+                          <tr>
+                            <th>Professor</th>
+                            <th>Alunos</th>
+                            <th>Desempenho</th>
+                            <th></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="teacher in subjectSelected.teachers" style="cursor: pointer;">
+                            <td class="tx-color-03 tx-normal">${teacher.name}</td>
+                            <td class="tx-teal">${teacher.students.length}</td>
+                            <td class="tx-teal">
+                              <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" v-bind:style="'width: '+teacher.hits+'%'" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100"><span class="font-weight-bold">${teacher.hits} %</span></div>
+                                <div class="progress-bar bg-danger" role="progressbar" v-bind:style="'width: '+(100 - teacher.hits)+'%'" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
+                              </div>
+                            </td>
+                            <td class="text-right tx-teal">
+                              <i class="fas fa-chart-line"></i>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <!-- <div class="card card-body ht-lg-100 card-download">
+                    <div class="media">
+                      <span class="tx-color-04"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download wd-60 ht-60"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></span>
+                      <div class="media-body mg-l-20">
+                        <h6 class="mg-b-10">Download em PDF</h6>
+                        <p class="tx-color-03 mg-b-0">Open it in a spreadsheet and perform your own calculations, graphing etc. The CSV file contains additional details, such as the buyer location. </p>
+                      </div>
+                    </div>
+                  </div> -->
+                </div>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <h4>Turmas</h4>
+  <div class="row">
+      <div class="col-12" v-show="!classeSummary">
+          <div class="card">
+            <div v-if="filters.showAppliedFilters.length > 0" data-toggle-off-canvas="#right-off-canvas" class="off-canvas-menu filters marker marker-ribbon marker-primary marker-top-right pos-absolute t-2 r-0" data-placement="top" :title="filters.showAppliedFilters">${filters.showAppliedFilters.length} Filtros Aplicados <i class="px-2 fa fa-times" style="cursor: pointer;" @click="changeFilters('removeFilters')"></i></div>
+            <div class="card-header justify-content-between bd-b-0 pd-t-20 pd-b-0">
+              <div class="col-12">
+                <!-- <h6 class="">Clique no nome de uma turma para ver mais detalhes</h6>  -->
+                <!-- <p class="tx-12 tx-color-03 mg-b-0">Os detalhes deste gráfico são de acordo com o período selecionado no filtro.</p> -->
+              </div>
+              <div class="table-responsive">
+                <template>
+                  <ul class="list-inline tx-uppercase tx-10 tx-medium tx-spacing-1 tx-color-03 mg-b-0 d-flex flex-nowrap" v-if="!load.classes">
+                    <li class="list-inline-item" v-for="classe in chartClasses.classesLabels">
+                      <a href="javascript:void(0)" class="btn btn-xs btn-info m-1 text-nowrap" @click="changeData('classes', classe)" :title="'Clique para detalhar a turma '+ classe">
+                        <span class="d-inline-block wd-7 ht-7 bg-white rounded-circle mg-r-5">  
+                        </span>
+                        ${classe}
+                        <!-- <span class="d-none d-md-inline"> Tickets</span> -->
+                      </a>
+                    </li>
+                  </ul>
+                </template>
+              </div>
+              </div>
+              <div class="card-body">
+              <div class="chart-fifteen">
+                  <canvas id="chartClasses" v-show="!load.classes"></canvas>
+                  <div class="d-flex px-5" v-if="load.classes">
+                    <div class="line-thick-horizontal"></div>
+                    <div class="line-thick-horizontal"></div>
+                    <div class="line-thick-horizontal"></div>
+                    <div class="line-thick-horizontal"></div>
+                    <div class="line-thick-horizontal"></div>
+                    <div class="line-thick-horizontal"></div>
+                    <div class="line-thick-horizontal"></div>
+                    <div class="line-thick-horizontal"></div>
+                    <div class="line-thick-horizontal"></div>
+                    <div class="line-thick-horizontal"></div>
+                    <div class="line-thick-horizontal"></div>
+                    <div class="line-thick-horizontal"></div>
+                    <div class="line-thick-horizontal"></div>
+                    <div class="line-thick-horizontal"></div>
+                  </div>
+              </div>
+              </div><!-- card-body -->
+          </div>
+      </div>
+      <div class="col-12" v-if="classeSummary">
+          <div class="card">
+            <div class="card-header d-sm-flex justify-content-between bd-b-0 pd-t-20 pd-b-0">
+                <div class="marker marker-ribbon marker-primary marker-top-left pos-absolute t-10 l-0" @click="changeData('classes', 'reset')" title="Voltar para o gráfico de disciplinas" style="cursor: pointer;"><i class="fa fa-arrow-left"></i> Voltar</div>
+            </div>
+              <div class="card-body">
+                
+                <div class="col-12">
+                  <div class="card mg-b-10">
+                    <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+                      <div>
+                        <h6 class="mg-b-5">Resumo da turma ${chartClasses.classeSelected.name}</h6>
+                        <!-- <p class="tx-13 tx-color-03 mg-b-0">Your sales and referral earnings over the last 30 days</p> -->
+                      </div>
+                      <div class="d-flex mg-t-20 mg-sm-t-0">
+                        <div class="btn-group flex-fill">
+                          <!-- <button class="btn btn-white btn-xs active">Range</button>
+                          <button class="btn btn-white btn-xs">Period</button> -->
+                        </div>
+                      </div>
+                    </div><!-- card-header -->
+                    <div class="card-body pd-y-30">
+                      <div class="d-sm-flex">
+                        <div class="media mg-t-20 mg-sm-t-0">
+                          <div class="wd-40 wd-md-50 ht-40 ht-md-50 bg-pink tx-white mg-r-10 mg-md-r-10 d-flex align-items-center justify-content-center rounded op-5">
+                            <i class="fas fa-user-graduate fa-2x"></i>  
+                          </div>
+                          <div class="media-body">
+                            <h6 class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold mg-b-5 mg-md-b-8">Alunos</h6>
+                            <h4 class="tx-20 tx-sm-18 tx-md-24 tx-normal tx-rubik mg-b-0">${chartClasses.classeSelected.students.length}<small></small></h4>
+                          </div>
+                        </div>
+                        <div class="media mg-t-20 mg-sm-t-0 mg-sm-l-15 mg-md-l-40">
+                          <div class="wd-40 wd-md-50 ht-40 ht-md-50 bg-primary tx-white mg-r-10 mg-md-r-10 d-flex align-items-center justify-content-center rounded op-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-bar-chart-2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                          </div>
+                          <div class="media-body">
+                            <h6 class="tx-sans tx-uppercase tx-10 tx-spacing-1 tx-color-03 tx-semibold mg-b-5 mg-md-b-8">Desempenho</h6>
+                            <h4 class="tx-20 tx-sm-18 tx-md-24 tx-normal tx-rubik mg-b-0">200<small> %</small></h4>
+                          </div>
+                        </div>
+                      </div>
+                    </div><!-- card-body -->
+                    <div class="table-responsive divScrollab">
+                      <table class="table table-dashboard table-hover mg-b-0">
+                        <thead>
+                          <tr>
+                            <th>Nome</th>
+                            <th class="text-right">Aplicações</th>
+                            <th>Desempenho</th>
+                            <th></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="student in chartClasses.classeSelected.students" style="cursor: pointer;">
+                            <td class="tx-color-03 tx-normal">${student.name}</td>
+                            <td class="text-right tx-teal">${12}</td>
+                            <td class="text-right tx-teal">
+                              <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" v-bind:style="'width: '+student.hits+'%'" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100"><span class="font-weight-bold">${student.hits} %</span></div>
+                                <div class="progress-bar bg-danger" role="progressbar" v-bind:style="'width: '+(100 - student.hits)+'%'" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
+                              </div>
+                            </td>
+                            <td class="text-right tx-teal">
+                              <i class="fas fa-chart-line"></i>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <!-- <div class="card card-body ht-lg-100 card-download">
+                    <div class="media">
+                      <span class="tx-color-04"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download wd-60 ht-60"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></span>
+                      <div class="media-body mg-l-20">
+                        <h6 class="mg-b-10">Download em PDF</h6>
+                        <p class="tx-color-03 mg-b-0">Open it in a spreadsheet and perform your own calculations, graphing etc. The CSV file contains additional details, such as the buyer location. </p>
+                      </div>
+                    </div>
+                  </div> -->
+                </div>
+              </div>
+          </div>
+      </div>
+  </div>
+
+
+  <h4>Questões</h4>
+  <div class="row">
+      <div class="col-md-6 col-lg-6 col-xl-6 mg-t-10 mg-lg-t-0">
+          <div class="card">
+            <div v-if="filters.showAppliedFilters.length > 0" data-toggle-off-canvas="#right-off-canvas" class="off-canvas-menu filters marker marker-ribbon marker-primary marker-top-right pos-absolute t-2 r-0" data-placement="top" :title="filters.showAppliedFilters">${filters.showAppliedFilters.length} Filtros Aplicados <i class="px-2 fa fa-times" style="cursor: pointer;" @click="changeFilters('removeFilters')"></i></div>
+            <div class="card-header">
+              <h6 class="mg-b-0" v-if="!load.questionsSummary">Nível</h6>
+              <div class="line-fine" v-else></div>
+            </div><!-- card-header -->
+              <div class="card-body pd-lg-25">
+                <div class="row">
+                  <div class="col-12 col-xl-9 d-flex justify-content-center">
+                    <canvas id="chartQuestionsNivel" height="220" v-show="!load.questionsSummary"></canvas>
+                    <div class="placeholder-pie" v-if="load.questionsSummary"></div>
+                  </div>
+                  <div class="col-12 col-xl-3 pt-5">
+                    <template>
+                      <div class="row" v-if="!load.questionsSummary">
+                        <div class="col-6 col-xl-12 p-2">
+                          <p class="tx-10 tx-uppercase tx-medium tx-color-03 tx-spacing-1 tx-nowrap mg-b-5">Questão Fácil</p>
+                          <div class="d-flex align-items-center">
+                            <div class="wd-10 ht-10 rounded-circle bg-primary mg-r-5"></div>
+                            <h5 class="tx-normal tx-rubik mg-b-0">${chartQuestions.questions_easy} <small
+                                class="tx-color-04">${parseFloat(( chartQuestions.questions_easy /
+                                chartQuestions.questions_count_summary) * 100).toFixed(2)} %</small></h5>
+                          </div>
+                        </div><!-- col -->
+                        <div class="col-6 col-xl-12 p-2">
+                          <p class="tx-10 tx-uppercase tx-medium tx-color-03 tx-spacing-1 mg-b-5">Questão Média</p>
+                          <div class="d-flex align-items-center">
+                            <div class="wd-10 ht-10 rounded-circle bg-orange mg-r-5"></div>
+                            <h5 class="tx-normal tx-rubik mg-b-0">${chartQuestions.questions_medium} <small
+                                class="tx-color-04">${parseFloat(( chartQuestions.questions_medium /
+                                chartQuestions.questions_count_summary) * 100).toFixed(2)} %</small></h5>
+                          </div>
+                        </div><!-- col -->
+                        <div class="col-6 col-xl-12 p-2">
+                          <p class="tx-10 tx-uppercase tx-medium tx-color-03 tx-spacing-1 mg-b-5">Questões Difícil</p>
+                          <div class="d-flex align-items-center">
+                            <div class="wd-10 ht-10 rounded-circle bg-pink mg-r-5"></div>
+                            <h5 class="tx-normal tx-rubik mg-b-0">${chartQuestions.questions_hard} <small
+                                class="tx-color-04">${parseFloat(( chartQuestions.questions_hard /
+                                chartQuestions.questions_count_summary) * 100).toFixed(2)} %</small></h5>
+                          </div>
+                        </div><!-- col -->
+                        <div class="col-6 col-xl-12 p-2">
+                          <p class="tx-10 tx-uppercase tx-medium tx-color-03 tx-spacing-1 mg-b-5">Questão Indefinida</p>
+                          <div class="d-flex align-items-center">
+                            <div class="wd-10 ht-10 rounded-circle bg-teal mg-r-5"></div>
+                            <h5 class="tx-normal tx-rubik mg-b-0">${chartQuestions.questions_undefined} <small class="tx-color-04">${parseFloat(( chartQuestions.questions_undefined / chartQuestions.questions_count_summary) * 100).toFixed(2)} %</small></h5>
+                          </div>
+                          </div><!-- col -->
+                      </div>
+                      <div class="row" v-else>
+                        <div class="col-xl-12 col-6">
+                          <div class="line-fine"></div>
+                          <div class="line-thick"></div>
+                        </div>
+                        <div class="col-xl-12 col-6 pt-3">
+                          <div class="line-fine"></div>
+                          <div class="line-thick"></div>
+                        </div>
+                        <div class="col-xl-12 col-6 pt-3">
+                          <div class="line-fine"></div>
+                          <div class="line-thick"></div>
+                        </div>
+                        <div class="col-xl-12 col-6 pt-3">
+                          <div class="line-fine"></div>
+                          <div class="line-thick"></div>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+          </div>
+      </div>
+      <div class="col-md-6 col-lg-6 col-xl-6 mg-t-10 mg-lg-t-0">
+          <div class="card">
+            <div v-if="filters.showAppliedFilters.length > 0" data-toggle-off-canvas="#right-off-canvas" class="off-canvas-menu filters marker marker-ribbon marker-primary marker-top-right pos-absolute t-2 r-0" data-placement="top" :title="filters.showAppliedFilters">${filters.showAppliedFilters.length} Filtros Aplicados <i class="px-2 fa fa-times" style="cursor: pointer;" @click="changeFilters('removeFilters')"></i></div>
+            <div class="card-header">
+              <h6 class="mg-b-0" v-if="!load.questionsPerformance">Índice de acerto</h6>
+              <div class="line-fine" v-else></div>
+            </div>
+            <div class="card-body pd-lg-25">
+              <div class="row">
+                <div class="col-12">
+                    <canvas id="chartQuestionsPerformance" height="220" v-show="!load.questionsPerformance"></canvas>
+                    <div class="d-flex justify-content-between px-5" v-if="load.questionsPerformance">
+                      <div class="line-thick-horizontal"></div>
+                      <div class="line-thick-horizontal"></div>
+                      <div class="line-thick-horizontal"></div>
+                      <div class="line-thick-horizontal"></div>
+                    </div>
+                </div>
+              </div>
+            </div>
+          </div>
+      </div>
+  </div>
+</div>
+
+<div class="df-settings" style="z-index: 998;">
+  <a id="dfSettingsShow"  href="#" class="df-settings-link" style="font-size: 25px;">
+    <i class="fas fa-search"></i>
+    <span class="badge badge-danger">${filters.showAppliedFilters.length}</span>
+  </a>
+  <div class="df-settings-body p-1" style="overflow-x: hidden;">
+
+    <form method="GET" v-model="form" ref="formFilter">
+      <div class="row p-3">
+        <div class="col-12">
+          <h5>Filtrar Aplicações</h5>
+          <hr />
+        </div>
+
+        <div class="col-6">
+          <div class="form-group mb-3">
+            <label for="q_initial_date" class="mb-1">Data Inicial</label>
+            <input type="date" v-model="form.initialDate" id="q_initial_date" name="q_initial_date"
+              class="form-control">
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="form-group mb-3">
+            <label for="q_final_date" class="mb-1">Data Final</label>
+            <input type="date" v-model="form.finalDate" id="q_final_date" name="q_final_date" class="form-control">
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="unity_id" class="mb-1">Unidade</label>
+            <select name="q_unitys" id="unity_id" class="form-control" multiple>
+              {% for unity in unitys %}
+              <option value="{{unity.pk}}" {% if unity.pk|stringformat:'s' in q_unitys %}selected="selected"
+                {% endif %}>
+                {{unity}}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="grade_id" class="mb-1">Série</label>
+            <select name="q_grades" id="grade_id" class="form-control" multiple>
+              {% for grade in grades %}
+              <option value="{{grade.pk}}" {% if grade.pk|stringformat:'s' in q_grades %}selected="selected"
+                {% endif %}>
+                {{grade}}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3" id="el">
+            <label for="subject_id" class="mb-1">Disciplinas</label>
+            <select name="q_subjects" id="subject_id" class="form-control" multiple>
+              {% for subject in subjects %}
+              <option value="{{subject.pk}}" {% if subject.pk|stringformat:'s' in q_subjects %}selected="selected"{% endif %}>
+                {{subject.name}} > {{subject.knowledge_area.name}}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="classe_id" class="mb-1">Turmas</label>
+            <select name="q_classes" id="classe_id" class="form-control" multiple>
+              {% for classe in classes %}
+              <option value="{{classe.pk}}" {% if classe.pk|stringformat:'s' in q_classes %}selected="selected"
+                {% endif %}>
+                {{classe}}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="stage_id" class="mb-1">Etapa do ensino</label>
+            <select name="q_stage" id="stage_id" v-model="form.stage" class="form-control">
+              <option value="">Escolha uma opção</option>
+              <option value="1" {% if q_stage == '1' %} selected="selected" {% endif %}>Ensino Fundamental</option>
+              <option value="0" {% if q_stage == '0' %} selected="selected" {% endif %}>Ensino Médio</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="col-12 mt-3">
+          <button type="button" class="btn btn-success btn-block" @click="changeFilters('submit')">
+            <i class="fas fa-search"></i>
+            Aplicar filtro
+          </button>
+        </div>
+      </div>
+    </form>
+
+
+
+  </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+
+{% block js-additional %}
+
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+
+<script>
+    
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+            //Models 
+            form: {
+              initialDate: '{{q_initial_date|safe}}',
+              finalDate: '{{q_final_date|safe}}',
+              stage: {% if q_stage %}{{q_stage|safe}}{% else %}""{%endif%},
+              selectedUnitys: {% if q_unitys %}{{q_unitys|safe}}{% else %}[]{% endif %},
+              selectedGrades: {% if q_grades %}{{q_grades|safe}}{% else %}[]{% endif %},
+              selectedSubjects: {% if q_subjects %}{{q_subjects|safe}}{% else %}[]{% endif %},
+              selectedClasses: {% if q_classes %}{{q_classes|safe}}{% else %}[]{% endif %},
+            },
+            filters: {
+              showAppliedFilters: []
+            },
+            params: '{{params}}'.replace(/&amp;/gi, '&'),
+            newUrl: '',
+            widgets: {
+              applications_avarage: 0,
+              applications_count: 0,
+              questions_count: 0,
+              students_count: 0
+            },
+            nextApplicationsPage: "",
+            applications: [],
+            chartApplicationPerformance: {
+              presence_percent: 0,
+              average_duration_applications: 0,
+              average_pauses_applications: 0,
+            },
+            chartKnowledgeArea: {
+
+            },
+            subjects: [
+              {% for subject in subjects %}
+                {
+                  name: '{{subject.name}}',
+                  area: '{{subject.knowledge_area}}',
+                  client: '{{subject.client}}',
+                  teachers_count: Math.floor(5 * Math.random()),
+                  students_count: 0,
+                  teachers: [],
+                  hits: Math.floor(100 * Math.random())
+                },
+              {% endfor %}
+            ],
+
+            chartClasses: {
+              classesList: [],
+              classesLabels: [],
+              classesStudents_count: 0,
+              classeSelected: {
+                name: '',
+                students: [],
+                hits_geral: 0
+              },
+            },
+            
+            chartQuestions: {
+              questions_count_summary: 0,
+              questions_easy: 0,
+              questions_medium: 0,
+              questions_hard: 0,
+              questions_undefined: 0,
+            },
+            chartQuestionsPerformance: {
+              
+            },
+
+            //Variáveis de controle
+            classeSummary: false,
+            subjectsSummary: false,
+
+            subjectSelected: {
+              name: '',
+              area: '',
+              teachers: [],
+              hits: Math.floor(100 * Math.random()),
+              teachers_count: 0,
+              students_count: 0
+            },
+            load: {
+              widgets: true,
+              applicationList: true,
+              applicationSummary: true,
+              knowledgeArea: true,
+              subjects: true,
+              classes: true,
+              questionsSummary: true,
+              questionsPerformance: true,
+            },
+        },
+        methods: {
+          momentRef(args) {
+            return moment(args)
+          },
+          getUrlParams(){
+            return this.newUrl ? this.newUrl : this.generareNewUrl()
+          },
+          generareNewUrl(){
+            let newUrl = `?&q_initial_date=${this.form.initialDate}&q_final_date=${this.form.finalDate}&q_stage=${this.form.stage}`
+
+            this.form.selectedUnitys.forEach((pk) => newUrl += `&q_unitys=${pk}`)
+            this.form.selectedGrades.forEach((pk) => newUrl += `&q_grades=${pk}`)
+            this.form.selectedSubjects.forEach((pk) => newUrl += `&q_subjects=${pk}`)
+            this.form.selectedClasses.forEach((pk) => newUrl += `&q_classes=${pk}`)
+
+            return newUrl
+          },
+          getWidgetsData() {
+            this.load.widgets = true
+            
+            let widgetsUrl = `{% url 'analytics:coordination_widgets' %}?${this.getUrlParams()}`
+            axios.get(widgetsUrl).then(response => {
+              this.widgets.applications_count = response.data.applications_count
+              this.widgets.students_count = response.data.students_count
+              this.widgets.questions_count = response.data.questions_count
+              this.widgets.applications_avarage = response.data.applications_avarage
+              response ? this.load.widgets = false : undefined
+
+
+              if(!this.load.widgets && this.widgets.applications_count==0){
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Sem dados para analisar com os filtros selecionados',
+                  text: 'Ajuste os filtros para abranger mais aplicações a serem analisadas.',
+                  showConfirmButton: true,
+                  confirmButtonText: '<i class="fas fa-search"></i> Alterar filtros'
+                }).then((value) => {
+                    $('.df-settings').addClass('show');
+                });
+              }
+
+              
+            })  
+
+          },
+          getApplicationsData(pageUrl=null) {
+            this.load.applicationList = true
+            
+            let applicationsUrl = pageUrl ? pageUrl :`{% url 'analytics:coordination_applications_list' %}`
+
+            applicationsUrl = `${applicationsUrl}?${this.getUrlParams()}`
+
+            axios.get(applicationsUrl).then(response => {
+              this.applications = this.applications.concat(response.data.results)
+              this.nextApplicationsPage = response.data.next
+              response ? this.load.applicationList = false : false
+            })            
+            
+          },
+          getSummaryApplicationData(){
+            this.load.applicationSummary = true
+
+            let applicationsSummaryUrl = `{% url 'analytics:coordination_chart_applications_summary' %}?${this.getUrlParams()}`
+
+            axios.get(applicationsSummaryUrl).then(response => {
+              this.chartApplicationPerformance.presence_percent = response.data.presence_percent
+              this.chartApplicationPerformance.average_duration_applications =
+              response.data.average_duration_applications
+              this.chartApplicationPerformance.average_pauses_applications = response.data.average_pauses_applications
+              response.data.datasets[0].backgroundColor = function() {
+              return ['rgba(97,185,90, 0.6)', 'rgba(237,93,115, 0.6)']
+              }
+              delete response.data.datasets[0].borderColor
+              window.chartS ? window.chartS.destroy() : undefined
+              window.chartS = new Chart($("#chartApplicationsSummary").get(0).getContext("2d"), {
+                type: 'doughnut',
+                data: response.data,
+                options: {
+                  plugins: {
+                    legend: {
+                    labels: {
+                      font: {
+                        size: 10
+                      }
+                    }
+                    }
+                  }
+                }
+              })
+              response ? this.load.applicationSummary = false : undefined
+            })
+          },
+          getAreasData() {
+            this.load.knowledgeArea = true
+            let areasUrl = `{% url 'analytics:coordination_chart_areas_performance' %}?${this.getUrlParams()}`
+              
+            axios.get(areasUrl).then(response => {
+              if(response) {
+                window.chartA ? window.chartA.destroy() : undefined
+                    response.data.datasets.forEach(dataset =>  {
+                      dataset.backgroundColor = function(e) {
+                        if ( e.raw <= 49 ){ return 'rgba(147,22,33, 1)' ; } else if ( e.raw> 49 && e.raw <= 69) {
+                            return 'rgba(238, 203, 47, 1)' ; } else { return 'rgba(73, 160, 120, 1)' ; }
+                      }
+                    })
+                    window.chartA = new Chart($("#chartAreas").get(0).getContext("2d"), {
+                        type: 'bar', 
+                        data: response.data,
+                        options: {
+                          onClick: (evt, item) => {
+                          },
+                          // responsive: true,
+                          indexAxis: 'y',
+                          scales: {
+                            x: {
+                              display: true,
+                              max: 100,
+                              ticks: {
+                                callback: function(label, index, labels) {
+                                  console.log(label, index, labels)
+                                  if(index == 0) {
+                                    return '0 %'
+                                  }
+                                  if(index == 5) {
+                                    return '50 %'
+                                  }
+                                  if(index == 7) {
+                                    return '70 %'
+                                  }
+                                  if(index == 10) {
+                                    return '100 %'
+                                  }
+                                }
+                              },
+                            },
+                            y: {
+                              ticks: {
+                                callback: function(value, index, values) {
+                                  return this.getLabelForValue(value).split(" - ")[0];
+                                }
+                              }
+                            } 
+                          },
+                          plugins: {
+                            legend: {
+                              display: false,
+                            },
+                          }
+                        }
+                    })
+                }
+                response ? this.load.knowledgeArea = false : undefined
+            }) 
+
+          },
+          getSubjectsData(){
+            this.load.subjects = true
+            let subjectsUrl = `{% url 'analytics:coordination_list_subjects' %}?${this.getUrlParams()}`
+
+            axios.get(subjectsUrl).then(response => {
+              this.subjects = response.data
+              response ? this.load.subjects = false : undefined
+            })
+          },
+          changeFilters(event) {
+            this.applications = []
+            if(event == 'removeFilters') {
+              this.filters.showAppliedFilters = []
+              history.pushState(null, null, '?')
+
+              this.getParams()
+              this.getWidgetsData()
+              this.getApplicationsData()
+              this.getSummaryApplicationData()
+              this.getAreasData()
+              this.getSubjectsData()
+              this.getClassesData()
+              this.getQuestionPerformanceData()
+              this.getQuestionsData()
+
+              this.$refs.formFilter.reset()
+            }
+            if(event == 'submit') {
+              this.newUrl = this.generareNewUrl()
+              
+              history.pushState(null, null, this.newUrl)
+              
+              this.getParams()
+              this.getWidgetsData()
+              this.getApplicationsData()
+              this.getSummaryApplicationData()
+              this.getAreasData()
+              this.getSubjectsData()
+              this.getClassesData()
+              this.getQuestionPerformanceData()
+              this.getQuestionsData()
+            
+            }
+          },
+          getClassesData() {
+
+              this.load.classes = true
+              let classesUrl = `{% url 'analytics:coordination_chart_classes_summary' %}?${this.getUrlParams()}`
+                
+                axios.get(classesUrl).then(response => {
+                  this.chartClasses.classesList = response.data.classes
+                  this.chartClasses.classesLabels = response.data.labels
+                  this.chartClasses.classesStudents_count = response.data.students_count 
+
+                  window.chartC ? window.chartC.destroy() : undefined
+
+                  response.data.datasets[0]['maxBarThickness'] = 40
+                  response.data.datasets[0].backgroundColor = function(e) {
+                      if ( e.raw <= 49 ){ return 'rgba(147,22,33, 1)' ; } else if ( e.raw> 49 && e.raw <= 69) {
+                          return 'rgba(238, 203, 47, 1)' ; } else { return 'rgba(73, 160, 120, 1)' ; }
+                  }
+                  window.chartC = new Chart($("#chartClasses").get(0).getContext("2d"), {
+                      type: 'bar', 
+                      data: response.data,
+                      options: {
+                        scales: {
+                          y: {
+                            display: true,
+                            max: 100,
+                            ticks: {
+                              callback: function(label, index, labels) {
+                                if(index == 0) {
+                                  return '0 %'
+                                }
+                                if(index == 5) {
+                                  return '50 %'
+                                }
+                                if(index == 7) {
+                                  return '70 %'
+                                }
+                                if(index == 10) {
+                                  return '100 %'
+                                }
+                              }
+                            },
+                          },
+                          x: {
+                            display: true,
+                          },
+                        },
+                        plugins: {
+                          legend: {
+                            display: false,
+                          },
+                        }
+                      }
+                  });
+                  response ? this.load.classes = false : undefined
+                })
+
+          },
+          getQuestionsData() {
+            this.load.questionsSummary = true
+            let questionsUrl = `{% url 'analytics:coordination_chart_questions_summary' %}?${this.getUrlParams()}`  
+            
+            axios.get(questionsUrl).then(response => {
+             
+                  this.chartQuestions.questions_count_summary = response.data.questions_count
+                  this.chartQuestions.questions_easy = response.data.questions_easy
+                  this.chartQuestions.questions_medium = response.data.questions_medium
+                  this.chartQuestions.questions_hard = response.data.questions_hard
+                  this.chartQuestions.questions_undefined = response.data.questions_undefined
+
+                  response.data.datasets[0].backgroundColor = function() {
+                    return ['rgba(97,185,90, 0.6)', 'rgba(255, 206, 86, 0.6)', 'rgba(237,93,115, 0.6)', 'rgba(126,229,229, 0.6)']
+                  }
+                  delete response.data.datasets[0].borderColor
+                  window.chartQ ? window.chartQ.destroy() : undefined
+                  window.chartQ = new Chart($("#chartQuestionsNivel").get(0).getContext("2d"), {
+                      type: 'pie', 
+                      data: response.data,
+                      options: {
+                        //onClick: (evt, item) => {
+                          //item[0].element.outerRadius += 5
+                        //},
+                        plugins: {
+                          legend: {
+                              labels: {
+                                  // This more specific font property overrides the global property
+                                  font: {
+                                      size: 10
+                                  }
+                              }
+                          }
+                        }
+                      }
+                  })
+                  response ? this.load.questionsSummary = false : undefined
+                })
+
+          },
+          getQuestionPerformanceData(){
+            this.load.questionsPerformance = true
+            
+            let questionsPerformanceUrl = `{% url 'analytics:coordination_chart_questions_performance' %}?${this.getUrlParams()}`
+
+            axios.get(questionsPerformanceUrl).then(response => {
+
+            response.data.datasets[0]['maxBarThickness'] = 40
+
+            response.data.datasets[0].backgroundColor = function(e) {
+              if ( e.raw <= 49 ){ 
+                return 'rgba(147,22,33, 1)' ; 
+              } else if ( e.raw > 49 && e.raw <= 69) {
+                return 'rgba(238, 203, 47, 1)' ; } 
+              else { 
+                return 'rgba(73, 160, 120, 1)' ; 
+              } 
+            }
+
+            delete response.data.datasets[0].borderColor
+            window.chartQP ? window.chartQP.destroy() : undefined
+            
+              window.chartQP = new Chart($("#chartQuestionsPerformance").get(0).getContext("2d"), { 
+              type: 'bar', 
+              data: response.data, 
+              options: { 
+                scales: { 
+                  y: { 
+                    display: true, max: 100, ticks: { 
+                      callback: function(label, index, labels) {
+                         if(index==0) {
+                            return '0 %' 
+                          } if(index==5) {
+                               return '50 %' 
+                              } if(index==7) {
+                                 return '70 %' 
+                                } if(index==10) {
+                                    return '100 %' 
+                                  } 
+                                } 
+                              }, 
+                            }, x: {
+                              display: true, 
+                            }, 
+                          }, plugins: {
+                            legend: {
+                              display: false,
+                            },
+                          }
+                        }
+                      }
+                    ) 
+              response ? this.load.questionsPerformance=false : undefined 
+            })
+
+          },
+          changeData(type, object) {
+
+            if(type == 'classes') {
+
+              let randomNumber = Math.floor(100 * Math.random())
+              
+              //Reseta alunos 
+              this.chartClasses.classeSelected = this.chartClasses.classesList.find((classe) => classe.name == object)
+              this.classeSummary = true
+              if(object == 'reset') {
+                this.classeSummary = false
+              }
+
+            } else if(type == 'subjects') {
+              
+              let subject = this.subjects.find((subject) => subject.name == object.name)
+              
+              if(subject) {
+                subject.teachers = []
+                subject.students_count = 0
+                this.subjectSelected = subject
+
+                for(i = 0; i < this.subjectSelected.teachers_count; i++) {
+                  numero = Math.floor(100 * Math.random())
+                  this.subjectSelected.teachers.push(
+                      {
+                        name: `Professor de teste ${i}`,
+                        hits: Math.floor(100 * Math.random()),
+                        students: []
+                      }
+                    )
+                  for(ii = 0; ii < numero; ii++) {
+                    this.subjectSelected.teachers[i].students.push(
+                      {
+                        name: `Aluno de teste ${ii}`,
+                        hits: Math.floor(100 * Math.random()),
+                        applications: []
+                      }
+                    )
+                    for(iii = 0; iii < numero; iii++) {
+                      this.subjectSelected.teachers[i].students[ii].applications.push(
+                        {
+                          name: `Prova de teste ${iii}`,
+                          date: '00/00/0000',
+                          hits: Math.floor(100 * Math.random()),
+                        }
+                      )
+                    }
+                  }
+                }
+              }
+              this.subjectSelected.teachers.forEach((teacher) => {
+                this.subjectSelected.students_count += teacher.students.length
+              })
+              
+              this.subjectsSummary = true
+              if(object == 'reset') {
+                this.subjectsSummary = false
+              }
+            }
+          },
+          getParams() {
+            this.params = ''
+            const urlSearchParams = new URLSearchParams(window.location.search);
+            const params = Object.fromEntries(urlSearchParams.entries());
+            this.filters.showAppliedFilters = []
+            
+            Object.entries(params).forEach(([key, value]) => {
+
+              this.params += `&${key}=${value}`
+
+              if(key == 'q_initial_date' && value != "")
+                this.filters.showAppliedFilters.push('Data')
+              if(key == 'q_subjects' && value != "")
+                this.filters.showAppliedFilters.push('Disciplinas')
+              if(key == 'q_unitys' && value != "")
+                this.filters.showAppliedFilters.push('Unidades')
+              if(key == 'q_grades' && value != "")
+                this.filters.showAppliedFilters.push('Série')
+              if(key == 'q_classes' && value != "")
+                this.filters.showAppliedFilters.push('Turmas')
+              if(key == 'q_stage' && value != "")
+                this.filters.showAppliedFilters.push('Etapa do ensino')
+            })
+
+          }
+        },
+        mounted: function() {
+          self = this
+          
+          this.getParams()
+          this.getWidgetsData()
+          this.getApplicationsData()
+          this.getSummaryApplicationData()
+          this.getAreasData()
+          this.getSubjectsData()
+          this.getClassesData()
+          this.getQuestionPerformanceData()
+          this.getQuestionsData()
+          
+          
+          $('#unity_id').select2({
+            placeholder: "Selecione uma opção",
+            closeOnSelect: false,
+          }).on('select2:selecting', function(e) {
+            let cur = e.params.args.data.id;
+            let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+            $(e.target).val(old).trigger('change');
+            $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+            return false;
+          });
+          $('#grade_id').select2({
+            placeholder: "Selecione uma opção",
+            closeOnSelect: false,
+          }).on('select2:selecting', function(e) {
+            let cur = e.params.args.data.id;
+            let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+            $(e.target).val(old).trigger('change');
+            $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+            return false;
+          });
+          $('#subject_id').select2({
+            placeholder: "Selecione uma opção",
+            closeOnSelect: false,
+            templateResult: function (data, container) {
+              let subject_name = data.text.split('>')[0]
+              let knowledge_area_name = data.text.split('>')[1]
+              return $(
+                `<strong class="select2-results__custom_option">${subject_name}</strong> <br> <span class="select2-results__custom_option">${knowledge_area_name}</span>`
+              );
+            },
+          }).on('select2:selecting', function(e) {
+            let cur = e.params.args.data.id;
+            let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+            $(e.target).val(old).trigger('change');
+            $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+            return false;
+          });
+          $('#classe_id').select2({
+            placeholder: "Selecione uma opção",
+            closeOnSelect: false,
+          }).on('select2:selecting', function(e) {
+            let cur = e.params.args.data.id;
+            let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
+            $(e.target).val(old).trigger('change');
+            $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
+            return false;
+          });
+          
+          $("#unity_id").on("select2:select select2:unselect", function (e) {
+            var items = $(this).val();
+            self.form.selectedUnitys = items
+          })
+
+          $("#grade_id").on("select2:select select2:unselect", function (e) {
+            var items = $(this).val();
+            self.form.selectedGrades = items
+          })
+
+          $("#subject_id").on("select2:select select2:unselect", function (e) {
+            var items = $(this).val();
+            self.form.selectedSubjects = items
+          })
+
+          $("#classe_id").on("select2:select select2:unselect", function (e) {
+            var items = $(this).val();
+            self.form.selectedClasses = items
+          })
+
+          $('.performance-content').click(function(){
+            $('.df-settings').removeClass('show');
+          })
+            
+            
+        },
+        updated: function() {
+          
+        },
+    })
+
+    //Para deixar o tooltip azul
+    $('.filters').tooltip({
+      template: `
+        <div class="tooltip tooltip-primary" role="tooltip">
+          <div class="arrow"></div>
+          <div class="tooltip-inner"></div>
+        </div>`
+    });
+    
+    $('.table-responsive').on('show.bs.dropdown', function () {
+      $('.table-responsive').css( "overflow", "inherit" );
+    });
+    
+    $('.table-responsive').on('hide.bs.dropdown', function () {
+      $('.table-responsive').css( "overflow", "auto" );
+    })
+
+    // $(function () {
+    //   'use strict'
+  
+    //   $('.off-canvas-menu').on('click', function (e) {
+    //     e.preventDefault();
+    //     var target = $(this).attr('data-toggle-off-canvas');
+    //     $(target).addClass('show');
+    //   });
+  
+    //   $('.off-canvas .close').on('click', function (e) {
+    //     e.preventDefault();
+    //     $(this).closest('.off-canvas').removeClass('show');
+    //   })
+  
+    //   $(document).on('click touchstart', function (e) {
+    //     e.stopPropagation();
+  
+    //     if (!$(e.target).closest('.off-canvas-menu').length) {
+    //       var offCanvas = $(e.target).closest('.off-canvas').length;
+    //       if (!offCanvas) {
+    //         $('.off-canvas.show').removeClass('show');
+    //       }
+    //     }
+    //   });
+    // });
+</script>
+
+{% endblock %}

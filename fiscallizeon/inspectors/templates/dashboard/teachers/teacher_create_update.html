@@ -1,0 +1,882 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+  {% if not object %}
+    Adicionar professor - Lize
+  {% else %}
+    Alteração de professor - Lize
+  {% endif %}
+{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<style>
+  .select2-selection--multiple {
+    border-radius: 8px !important;
+  }
+</style>
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">PROFESSORES</a></li>
+          {% if not object %}
+            <li class="breadcrumb-item active" aria-current="page">CADASTRAR</li>
+          {% else %}
+            <li class="breadcrumb-item active" aria-current="page">ATUALIZAR</li>
+          {% endif %}
+        </ol>
+      </nav> 
+      <h4>
+        {% if not object %}
+          Cadastrar Professor
+        {% else %}
+          Atualizar Professor
+        {% endif %}
+      </h4>
+    </div>
+    <div class="d-none d-md-block">
+        <button class="btn btn-sm pd-x-15 btn-white btn-uppercase" onclick="history.back();">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </button>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+      <nav class="ls" aria-label="Breadcrumb">
+        <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+          <li>
+            <div>
+              <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                  <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+              </a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="{% url 'inspectors:teachers_list' %}" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Professores</a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">{% if not object %}Cadastrar{% else %}Editar{% endif %}</a>
+            </div>
+          </li>
+        </ol>
+      </nav>
+      <div class="d-none d-md-block">
+        <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+          <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+      </div>
+    </div>
+<div class="row">
+    <div class="col-md-9">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+              <div>
+                <ul class="nav nav-tabs mb-4">
+                  <li class="nav-item">
+                    <a class="{% if form.password.errors or form.username.errors %}nav-link{% else %}nav-link active{% endif %}"
+                      data-toggle="tab" href="#teacher-data" aria-current="page">
+                      <i class="fas fa-align-right mr-1"></i>
+                      Dados do professor</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="{% if form.password.errors or form.username.errors %}nav-link active{% else %}nav-link{% endif %}" data-toggle="tab" href="#user-data">
+                      <i class="fas fa-user mr-1"></i> Dados de usuário
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="card-body" v-if="teacher">
+                <form method="post" onsubmit="return false" @submit="saveTeacher()">
+                    {% csrf_token %}
+                    <div class="tab-content">
+                      <div class="form-row {% if form.password.errors or form.username.errors %}tab-pane fade{% else %}tab-pane fade show active{% endif %}" id="teacher-data" role="tabpanel" aria-labelledby="teacher-tab">
+                          <div class="form-group col-md-6">
+                            <label for="{{ form.name.auto_id }}">{{ form.name.label }}</label>
+                            <input type="name" id="{{form.name.auto_id}}" v-model="teacher.name" class="form-control" required>
+                            <small class="form-text text-muted">
+                                {{ form.name.help_text }}
+                            </small>
+                            <template v-if="teacher.errors && teacher.errors.name">
+                              <label class="text-danger" v-for="error in teacher.errors.name">
+                                ${error}
+                              </label>
+                            </template>
+                          </div>
+                          <div class="form-group col-md-6">
+                            <label for="{{ form.email.auto_id }}">{{ form.email.label }}</label>
+                            <input type="email" id="{{form.email.auto_id}}" v-model="teacher.email" class="form-control" required>
+                            <small class="form-text text-muted">
+                                {{ form.email.help_text }}
+                            </small>
+                            <template v-if="teacher.errors && teacher.errors.email">
+                              <label class="text-danger" v-for="error in teacher.errors.email">
+                                ${error}
+                              </label>
+                            </template>
+                            {% if form.email.errors %}
+                            {% endif %}
+                          </div>
+
+                          <div class="form-row d-none">
+                            <div class="form-group col-md-6">
+                                <label for="{{ form.custom_groups.auto_id }}">{{ form.custom_groups.label }}</label>
+                                {% render_field form.custom_groups class="form-control" %}
+                                <small class="form-text text-muted">
+                                    {{ form.custom_groups.help_text }}
+                                </small>
+                                {% if form.custom_groups.errors %}
+                                    <label class="text-danger">
+                                    {{ form.custom_groups.errors.0 }}</label>
+                                {% endif %}
+                            </div>
+                          </div>
+
+                          <div class="form-group col-md-12">
+                            {{ form.coordinations.label }} desse professor
+                            <div class="row mb-1">
+                              <div class="col-12">
+                                <button type="button" class="btn btn-xs btn-outline-primary p-1 mb-1"
+                                  @click="addCoordinationsToSelect2('all')">
+                                  <span class="fas fa-plus px-1" aria-hidden="true"></span>Todas
+                                </button>
+                                <button type="button" class="btn btn-xs btn-outline-primary p-1 mb-1"
+                                  @click="addCoordinationsToSelect2('elementarySchool')">
+                                  <span class="fas fa-plus px-1" aria-hidden="true"></span>Ensino fundamental 1
+                                </button>
+                                <button type="button" class="btn btn-xs btn-outline-primary p-1 mb-1"
+                                  @click="addCoordinationsToSelect2('elementarySchool2')">
+                                  <span class="fas fa-plus px-1" aria-hidden="true"></span>Ensino fundamental 2
+                                </button>
+                                <button type="button" class="btn btn-xs btn-outline-primary p-1 mb-1"
+                                  @click="addCoordinationsToSelect2('high')">
+                                  <span class="fas fa-plus px-1" aria-hidden="true"></span>Ensino médio
+                                </button>
+                                <button type="button" class="btn btn-xs btn-outline-danger p-1 mb-1"
+                                  @click="addCoordinationsToSelect2('', true)">
+                                  <span class="fas fa-trash px-1" aria-hidden="true"></span>Remover todas
+                                </button>
+                              </div>
+                            </div>
+                            {% render_field form.coordinations class="form-control" %}
+                            
+                            <small class="form-text text-muted">
+                              {{ form.coordinations.help_text }}
+                            </small>
+                            <template v-if="teacher.errors && teacher.errors.coordinations">
+                              <label class="text-danger" v-for="error in teacher.errors.coordinations">
+                                ${error}
+                              </label>
+                            </template>
+                          </div>
+                          <div class="col-md-12 mb-3">
+                            Segmentos de turmas
+                            <select multiple class="form-control" name="grades" id="grades">
+                              <option v-for="grade in grades"  :value='grade.id'>${grade.name}</option>
+                            </select>
+                            <template v-if="teacher.errors && teacher.errors.grades">
+                              <label class="text-danger" v-for="error in teacher.errors.grades">
+                                ${error}
+                              </label>
+                            </template>
+                          </div>
+                          <div class="col-md-12 mb-3">
+                            Disciplinas desse professor
+                            <select multiple class="form-control" name="subjects" id="id_subjects">
+                              <option v-for="subject in filteredAvailableSubjects" :selected="teacher.subjects.find((teacherSubject) => teacherSubject.subject.id == subject.id)" :value='subject.id'>${subject.name}</option>
+                            </select>
+                            <template v-if="teacher.errors && teacher.errors.subjects">
+                              <label class="text-danger" v-for="error in teacher.errors.subjects">
+                                ${error}
+                              </label>
+                            </template>
+                          </div>
+                          
+                          <div class="form-group col-md-12">
+                            <label>Turmas das disciplinas</label>
+                            <div class="accordion" id="accordionSubjects">
+                              <div class="card" v-for="(teacherSubject, teacherSubjectIndex) in teacher.subjects">
+                                <div class="card-header py-0 px-0">
+                                  <div class="d-flex justify-content-between align-items-center">
+                                    <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" :data-target="'#teacher_subject_'+teacherSubjectIndex">
+                                      ${teacherSubject.subject.name} ${teacherSubject.subject.knowledge_area_name}
+                                    </button>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                      <span class="badge badge-primary m-1">
+                                        ${teacherSubject.classes.length} 
+                                      </span>
+                                      <template v-if="!teacherSubject.protected">
+                                        <span class="badge badge-danger m-1" style="cursor: pointer;" @click="addOrRemoveSubject(teacherSubject.subject)">
+                                          <i class="fas fa-times" title="Remover Disciplina"></i>
+                                        </span>
+                                      </template>
+                                      <template v-else>
+                                        <span class="badge badge-secondary m-1">
+                                          <i class="fas fa-times" title="A disciplina já está associada a uma prova"></i>
+                                        </span>
+                                      </template>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div :id="'teacher_subject_'+teacherSubjectIndex" class="collapse" data-parent="#accordionSubjects">
+                                  <div class="card-body">
+                                    <div class="row" v-if="!teacherSubject.show_all">
+                                      <div class="col-12">
+                                        <button type="button" class="btn btn-xs btn-outline-primary p-1 m-1" @click="addOrRemoveClasses(teacherSubject, 'all')">
+                                          <span class="fas fa-plus px-1" aria-hidden="true"></span>Todas
+                                        </button>
+                                        <button type="button" class="btn btn-xs btn-outline-danger p-1 m-1" @click="addOrRemoveClasses(teacherSubject, '', true)">
+                                          <span class="fas fa-trash px-1" aria-hidden="true"></span>Remover todas
+                                        </button>
+                                      </div>
+                                      <hr>
+                                      <div class="table-responsive">
+                                        <div class="col-12 d-flex justify-content-between">
+                                          <button type="button" class="btn btn-xs btn-outline-primary p-1 m-1 col-2" :class="{ 'active': checkIfGradeExist(teacherSubject.classes, grade) }" v-for="grade in grades" @click="addOrRemoveClasses(teacherSubject, grade)">
+                                            <span class="fas fa-plus px-1" aria-hidden="true"></span>${grade.name}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                      <div class="col-12 text-center">
+                                        <a href="javascript:void(0)" @click="teacherSubject.show_all = !teacherSubject.show_all">${teacherSubject.show_all ? 'Recolher todas as turmas' : 'Escolher as turmas manualmente'}</a>
+                                      </div>
+                                    </div>
+                                    <div class="row" v-if="teacherSubject.show_all">
+                                      <div class="col-12 text-center">
+                                        <input type="search" @input="fetchClasses()" ref="searchClasses" class="form-control form-control-sm" placeholder="Digite o nome da turma">
+                                      </div>
+                                    </div>
+                                    <template v-if="teacherSubject.show_all">
+                                      <div class="col-12">
+                                        <div class="row">
+                                          <div class="col-6 mb-2" v-for="(classe, index) in foundClasses.length ? foundClasses:classes.filter(classe => classe.name.length)">
+                                            <div class="custom-control custom-checkbox">
+                                              <input type="checkbox" class="custom-control-input" @change="selectClasse(teacherSubject, classe)" :id="'teacher_subject_'+teacherSubjectIndex+'_classe_'+index" :checked="teacherSubject.classes.find(_classe => _classe == classe.id)">
+                                              <label class="custom-control-label" :for="'teacher_subject_'+teacherSubjectIndex+'_classe_'+index">${classe.full_name}</label>
+                                            </div>
+                                            <p class="text-muted m-0">${classe.grade_name}</p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </template>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+  
+                          <div class="col-md-12">
+                            <div class="custom-control custom-switch">
+                              {% render_field form.can_elaborate_questions v-model="teacher.can_elaborate_questions" class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.can_elaborate_questions.auto_id}}">
+                                {{ form.can_elaborate_questions.label }}</label>
+                              <p class="text-muted">
+                                O professor poderá elaborar questões.
+                              </p>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.can_elaborate_questions.help_text }}
+                              </small>
+                              <template v-if="teacher.errors && teacher.errors.can_elaborate_questions">
+                                <label class="text-danger" v-for="error in teacher.errors.can_elaborate_questions">
+                                  ${error}
+                                </label>
+                              </template>
+                            </div>
+                          </div>
+                          <div class="col-md-12">
+                            <div class="custom-control custom-switch">
+                              {% render_field form.can_correct_questions_other_teachers v-model="teacher.can_correct_questions_other_teachers" class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.can_correct_questions_other_teachers.auto_id}}">
+                                {{ form.can_correct_questions_other_teachers.label }}</label>
+                              <p class="text-muted">
+                                O professor poderá corrigir questões de outros professores que sejam da mesma disciplina.
+                              </p>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.can_correct_questions_other_teachers.help_text }}
+                              </small>
+                              <template v-if="teacher.errors && teacher.errors.can_correct_questions_other_teachers">
+                                <label class="text-danger" v-for="error in teacher.errors.can_correct_questions_other_teachers">
+                                  ${error}
+                                </label>
+                              </template>
+                            </div>
+                          </div>
+  
+                          <div class="col-md-12">
+                            <div class="custom-control custom-switch">
+                              {% render_field form.can_response_wrongs v-model="teacher.can_response_wrongs" class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.can_response_wrongs.auto_id}}">
+                                {{ form.can_response_wrongs.label }}</label>
+                              <p class="text-muted">
+                                O professor poderá responder erratas.
+                              </p>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.can_response_wrongs.help_text }}
+                              </small>
+                              <template v-if="teacher.errors && teacher.errors.can_response_wrongs">
+                                <label class="text-danger" v-for="error in teacher.errors.can_response_wrongs">
+                                  ${error}
+                                </label>
+                              </template>
+                            </div>
+                          </div>
+  
+                          <div class="col-md-12" v-if="canResponseWrongs">
+                            <div class="custom-control custom-switch">
+                              {% render_field form.can_answer_wrongs_others_teachers v-model="teacher.can_answer_wrongs_others_teachers" class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.can_answer_wrongs_others_teachers.auto_id}}">
+                                {{ form.can_answer_wrongs_others_teachers.label }}</label>
+                              <p class="text-muted">
+                                O professor poderá responder erratas de outros professores da mesma disciplina.
+                              </p>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.can_answer_wrongs_others_teachers.help_text }}
+                              </small>
+                              <template v-if="teacher.errors && teacher.errors.can_answer_wrongs_others_teachers">
+                                <label class="text-danger" v-for="error in teacher.errors.can_answer_wrongs_others_teachers">
+                                  ${error}
+                                </label>
+                              </template>
+                            </div>
+                          </div>
+  
+                          <div class="col-md-6">
+                            <div class="custom-control custom-switch">
+                              {% render_field form.is_discipline_coordinator v-model="teacher.is_discipline_coordinator" class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.is_discipline_coordinator.auto_id}}">
+                                {{ form.is_discipline_coordinator.label }}</label>
+                              <p class="text-muted">
+                                O professor poderá analisar todos os cadernos de sua disciplina, aprovando ou sugerindo correção aos professores que estão elaborando.
+                              </p>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.is_discipline_coordinator.help_text }}
+                              </small>
+                              <template v-if="teacher.errors && teacher.errors.is_discipline_coordinator">
+                                <label class="text-danger" v-for="error in teacher.errors.is_discipline_coordinator">
+                                  ${error}
+                                </label>
+                              </template>
+                            </div>
+                          </div>
+                          <div class="form-group col-12" v-show="teacher.is_discipline_coordinator">
+                              <div>
+                                  <label class="form-control-label">Defina as permissões deste professor</label>
+                              </div>
+                              <div class="d-flex">
+                                <div class="custom-control custom-checkbox m-1">
+                                  <input type="checkbox" class="custom-control-input" v-model="teacher.can_viewed" id="{{form.can_viewed.auto_id}}">
+                                  <label class="custom-control-label" for="{{form.can_viewed.auto_id}}">{{form.can_viewed.label}}</label>
+                                </div>
+                                <div class="custom-control custom-checkbox m-1">
+                                  <input type="checkbox" class="custom-control-input" v-model="teacher.can_approve" id="{{form.can_approve.auto_id}}">
+                                  <label class="custom-control-label" for="{{form.can_approve.auto_id}}">{{form.can_approve.label}}</label>
+                                </div>
+                                <div class="custom-control custom-checkbox m-1">
+                                  <input type="checkbox" class="custom-control-input" v-model="teacher.can_fail" id="{{form.can_fail.auto_id}}">
+                                  <label class="custom-control-label" for="{{form.can_fail.auto_id}}">{{form.can_fail.label}}</label>
+                                </div>
+                                <div class="custom-control custom-checkbox m-1">
+                                  <input type="checkbox" class="custom-control-input" v-model="teacher.can_update_note" id="{{form.can_update_note.auto_id}}">
+                                  <label class="custom-control-label" for="{{form.can_update_note.auto_id}}">{{form.can_update_note.label}}</label>
+                                </div>
+                                <div class="custom-control custom-checkbox m-1">
+                                  <input type="checkbox" class="custom-control-input" v-model="teacher.can_suggest_correction" id="{{form.can_suggest_correction.auto_id}}">
+                                  <label class="custom-control-label" for="{{form.can_suggest_correction.auto_id}}">{{form.can_suggest_correction.label}}</label>
+                                </div>
+                              </div>
+                          </div>
+                      </div>
+                      
+                      <div class="{% if form.password.errors or form.username.errors %}tab-pane fade show active{% else %}tab-pane fade{% endif %}" id="user-data" role="tabpanel" aria-labelledby="contact-tab">
+                        <h5>Dados de usuário</h5>
+                        <p class="tx-13 tx-color-03 mg-b-5">Informe os dados do usuário abaixo</p><hr>
+                        <div class="row">
+                          <div class="col-sm-7">
+                            <div class="form-group">
+                              <label for="{{form.username.auto_id}}">{{ form.username.label }}</label>
+                              <div class="input-group mb-2">
+                                <div class="input-group-prepend">
+                                  <div class="input-group-text"><i class="fas fa-user mr-1"></i></div>
+                                </div>
+                                <input v-model="teacher.new_username" class="form-control" autocomplete="new-password"  type="text" name="{{form.username.name}}" id="{{form.username.auto_id}}" placeholder="{{object.user.username}}">
+                              </div>
+                              <template v-if="teacher.errors && teacher.errors.username">
+                                <label class="text-danger" v-for="error in teacher.errors.username">
+                                  ${error}
+                                </label>
+                              </template>
+                            </div>
+                            <div class="form-group">
+                              <label for="{{form.password.auto_id}}">{{ form.password.label }}</label>
+                              <div class="input-group mb-2">
+                                <div class="input-group-prepend">
+                                  <div class="input-group-text"><i class="fas fa-key mr-1"></i></div>
+                                </div>
+                                <input v-model="teacher.password" class="form-control" autocomplete="new-password"  name="{{form.password.name}}" type="password" id="{{form.password.auto_id}}">
+                              </div>
+                              <div class="invalid-feedback">{{ form.errors.old_password }}</div>
+                              <template v-if="teacher.errors && teacher.errors.password">
+                                <label class="text-danger" v-for="error in teacher.errors.password">
+                                  ${error}
+                                </label>
+                              </template>
+                            </div>
+                            <div class="form-group">
+                              <label for="{{form.confirmation_password.auto_id}}">{{ form.confirmation_password.label }}</label>
+                              <div class="input-group mb-2">
+                                <div class="input-group-prepend">
+                                  <div class="input-group-text"><i class="fas fa-key mr-1"></i></div>
+                                </div>
+                                <input v-model="teacher.confirmation_password" class="form-control" autocomplete="new-password"  name="{{form.confirmation_password.name}}" type="password" id="{{form.confirmation_password.auto_id}}">
+                              </div>
+                              <div class="invalid-feedback">{{ form.errors.old_password }}</div>
+                              <template v-if="teacher.errors && teacher.errors.confirmation_password">
+                                <label class="text-danger" v-for="error in teacher.errors.confirmation_password">
+                                  ${error}
+                                </label>
+                              </template>
+                            </div>
+                            <div class="form-group">
+                              <div class="custom-control custom-switch">
+                                {% render_field form.must_change_password class="custom-control-input" v-model="teacher.must_change_password" %}
+                                <label class="custom-control-label" for="{{form.must_change_password.auto_id}}">
+                                  {{ form.must_change_password.label }}</label>
+                                <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                  {{ form.must_change_password.help_text }}
+                                </small>
+                              </div>
+                            </div>
+                        </div>
+                      </div>
+                    </div>
+                    </div>
+                    <input type="hidden" name="inspector_type" value="0">
+                    
+                    {% if not object %}
+                      <button type="submit" class="btn btn-secondary float-right m-1" :disabled="saving" @click="saveAndChangePermissions = true">Salvar e alterar permissões</button>
+                    {% endif %}
+                      
+                    <button type="submit" class="btn btn-primary float-right m-1" :disabled="saving">Salvar professor</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+<script type="text/javascript">
+  moment.locale('pt-br');
+  var app_question = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {
+      canResponseWrongs: {{form.can_response_wrongs.value|safe|default:"False"|lower}},
+      coordinations: [
+        {% for coordination in form.coordinations.field.queryset.all %}
+          {
+            pk: '{{coordination.pk}}',  
+            highSchool: {{coordination.high_school|lower}}, 
+            elementarySchool: {{coordination.elementary_school|lower}}, 
+            elementarySchool2: {{coordination.elementary_school2|lower}}, 
+          },
+        {% endfor %}
+      ],
+      classes: [
+        {% for classe in classes %}
+          {
+            id: '{{classe.id}}',  
+            name: '{{classe.name}}',
+            full_name: '{{classe}}',
+            grade: '{{classe.grade.id}}',
+            grade_name: '{{classe.grade}}',
+          },
+        {% endfor %}
+      ],
+      grades: [
+        {% for grade in grades %}
+          {
+            id: '{{grade.id}}',  
+            name: '{{grade}}',
+          },
+        {% endfor %}
+      ],
+      selectedGrades: [],
+      availableSubjects: [
+        {% for subject in form.subjects.field.queryset.all %}
+          {
+            id: '{{subject.id}}',
+            name: '{{subject}}',
+            grades: [
+              {% for grade in subject.knowledge_area.grades.all %}
+                '{{grade.id}}',
+              {% endfor %}
+            ]
+          },
+        {% endfor %}
+      ],
+      teacher: {
+        name: '',
+        subjects: [],
+        can_annul: false,
+        can_answer_wrongs_others_teachers: false,
+        can_approve: false,
+        can_correct_questions_other_teachers: false,
+        can_elaborate_questions: false,
+        can_fail: false,
+        can_response_wrongs: false,
+        can_suggest_correction: false,
+        can_update_note: false,
+        can_viewed: false,
+        inspector_type: 0,
+        is_discipline_coordinator: false,  
+        is_discipline_coordinator: false,
+        coordinations: [],
+        custom_groups: [],
+        new_username: '',
+        password: '',
+        confirmation_password: '',
+        must_change_password: false,
+      },
+      foundClasses: [],
+      saving: false,
+      saveAndChangePermissions: false,
+      initialEmail: '{{ object.email|default:"" }}',
+    },
+    computed: {
+      filteredAvailableSubjects: function(){
+        if(!this.selectedGrades.length >= 1){
+          return this.availableSubjects
+        }
+        
+        return this.availableSubjects.filter((subject) => {
+          return subject.grades.filter((id) => this.selectedGrades.includes(id)).length >= 1
+        })
+      },
+    },
+    methods: {
+      initializeSelect2() {
+        $('#'+"{{form.coordinations.auto_id}}").select2({width: '100%', closeOnSelect: false})
+        $('#'+"{{form.subjects.auto_id}}").select2({width: '100%', closeOnSelect: false})
+        $('#grades').select2({width: '100%'})
+        $('#grades').on('select2:select', (e)=>{
+          let data = e.params.data
+          this.selectedGrades.push(data.id)
+          
+          this.teacher.subjects.forEach((teacherSubject) => {
+            if(!this.filteredAvailableSubjects.find((availableSubject) => availableSubject.id == teacherSubject.subject.id) && !teacherSubject.protected){
+              this.teacher.subjects.splice(this.teacher.subjects.indexOf(teacherSubject), 1)
+            }
+          })
+        })
+        $('#grades').on('select2:unselect', (e)=>{
+          let data = e.params.data
+          this.selectedGrades.splice(this.selectedGrades.indexOf((grade) => grade == data.id))
+          
+          this.teacher.subjects.forEach((teacherSubject) => {
+            if(!this.filteredAvailableSubjects.find((availableSubject) => availableSubject.id == teacherSubject.subject.id) && !teacherSubject.protected){
+              this.teacher.subjects.splice(this.teacher.subjects.indexOf(teacherSubject), 1)
+            }
+          })
+        })
+        $('#'+"{{form.coordinations.auto_id}}").select2({width: '100%'})
+        $('#'+"{{form.subjects.auto_id}}").select2({width: '100%'})
+        $('#'+"{{form.subjects.auto_id}}").on('select2:select', (e) => {
+          let data = e.params.data
+          this.addOrRemoveSubject(data)
+        });
+        $('#'+"{{form.subjects.auto_id}}").on('select2:unselecting', (e) => {
+          let data = e.params.args.data
+          if(this.teacher.subjects.find(teacherSubject => teacherSubject.subject.id == data.id).protected) {
+            this.alertTop('A disciplina não pode ser removida pois já está associada a um caderno.', 'warning')
+            e.preventDefault()
+          } else {
+            this.addOrRemoveSubject(data)
+          }
+        });
+        $('#'+"{{form.coordinations.auto_id}}").on('select2:select', (e) => {
+          let data = e.params.data;
+          this.teacher.coordinations.push(data.id)
+        });
+        $('#'+"{{form.coordinations.auto_id}}").on('select2:unselect', (e) => {
+          let data = e.params.data;
+          this.teacher.coordinations.splice(this.teacher.coordinations.indexOf(coordination => coordination == data.id), 1)
+        });
+        $('#{{form.custom_groups.auto_id}}').select2({closeOnSelect: false})
+        $("#{{form.custom_groups.auto_id}}").on('change', () => {
+          this.teacher.custom_groups = $("#{{form.custom_groups.auto_id}}").val()
+        });
+
+        this.teacher.custom_groups = $("#{{form.custom_groups.auto_id}}").val()
+
+      },
+      addCoordinationsToSelect2(type, reset = false) {
+        let coordinationsPkList = []
+        if (reset) {
+          this.teacher.coordinations = coordinationsPkList
+          return $('#'+"{{form.coordinations.auto_id}}").val(null).trigger('change')
+        }
+        this.coordinations.forEach((coordination) => {
+          if(type == 'all') {
+            coordinationsPkList.push(coordination.pk)
+          }
+          else if(type == 'high') {
+            if(coordination.highSchool) {
+              coordinationsPkList.push(coordination.pk)
+            }
+          } else if(type == 'elementarySchool') {
+            if(coordination.elementarySchool) {
+              coordinationsPkList.push(coordination.pk)
+            }
+          } else if(type == 'elementarySchool2') {
+            if(coordination.elementarySchool2) {
+              coordinationsPkList.push(coordination.pk)
+            }
+          }
+        })
+        $('#'+"{{form.coordinations.auto_id}}").val($('#'+"{{form.coordinations.auto_id}}").val().concat(coordinationsPkList))
+        $('#'+"{{form.coordinations.auto_id}}").trigger('change')
+        this.teacher.coordinations = coordinationsPkList
+      },
+      addOrRemoveClasses(teacherSubject, grade, reset = false) {
+        if(reset) {
+          teacherSubject.classes = []
+          teacherSubject.grades = []
+          return
+        }
+        if(grade == 'all') {
+          teacherSubject.classes = this.classes.map((classe => classe.id))
+          teacherSubject.grades = this.grades.map((grade => grade.id))
+          return
+        }
+        this.classes.filter(classe => classe.grade == grade.id).map((classe => classe.id)).forEach((classe) => {
+          if(!teacherSubject.classes.includes(classe)) {
+            teacherSubject.classes.push(classe)
+          } else {
+            teacherSubject.classes.splice(teacherSubject.classes.indexOf(classe), 1)
+          }
+        })
+        if(!teacherSubject.grades.includes(grade.id)) {
+          teacherSubject.grades.push(grade.id)
+        } else {
+          teacherSubject.grades.splice(teacherSubject.grades.indexOf(grade.id), 1)
+        }
+      },
+      addOrRemoveSubject(subject) {
+        if(this.teacher.subjects.find(teacherSubject => teacherSubject.subject.id == subject.id)) {
+          this.teacher.subjects.splice(this.teacher.subjects.findIndex(teacherSubject => teacherSubject.subject.id == subject.id), 1)
+          $("#{{form.subjects.auto_id}}").val(this.teacher.subjects.map(teacherSubject => teacherSubject.subject.id)).trigger('change')
+        } else {
+          let teacherSubject = {
+            teacher: {
+              id: this.teacher.id,
+              name: this.teacher.name,
+            },
+            classes: [],
+            grades: [],
+            show_all: false,
+            subject: {
+              id: subject.id,
+              name: subject.text,
+            }
+          }
+          this.teacher.subjects.push(teacherSubject)
+        }
+      },
+      async checkCoordinationAssociation() {
+        email = this.teacher.email
+        if (this.initialEmail) {
+          email = this.initialEmail
+        }
+        const url = `{% url 'api2:check-coordination-association-api' %}?email=${email}`;
+    
+        try {
+            const response = await axios.get(url);
+            if (response.data.email_exists) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (error) {
+            return false;
+        }
+      },
+      saveObject(){
+        axios.post("{% url 'api:inspectors-list' %}", this.teacher).then((response) => {
+          axios.post("{% url 'notifications:api-check-notification' %}", { viewType: 'create', appLabel: 'inspectors.Inspector' })
+          this.alertTop('Professor adicionado com sucesso!')
+          if(this.saveAndChangePermissions) {
+            window.location.href = `{% url 'accounts:user_permissions' pk='00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', response.data.user)
+          } else {
+            window.location.href = "{% url 'inspectors:teachers_list' %}"
+          }
+        }).catch((error) => {
+          this.teacher.errors = error.response.data
+          this.alertTop('Ocorreu um erro ao tentar adicionar o professor!', 'error')
+          this.saving = false
+        })
+      },
+      updateObject(){
+        {% if object %}
+          if((this.teacher.new_username && this.teacher.password && this.teacher.confirmation_password) || this.teacher.new_username || this.teacher.must_change_password) {
+            axios.patch("{% url 'api:inspectors-update-teacher-user' object.pk %}", this.teacher).then((res) => {
+              if(res.status == 206){
+                this.teacher.errors = res.data.errors
+                this.saving = false
+              }else{
+                axios.put("{% url 'api:inspectors-detail' object.pk %}", this.teacher).then((response) => {
+                  axios.post("{% url 'notifications:api-check-notification' %}", { viewType: 'update', appLabel: 'inspectors.Inspector' })
+                  this.alertTop('Professor atualizado com sucesso!')
+                  window.location.href = "{% url 'inspectors:teachers_list' %}"
+                }).catch((error) => {
+                  this.teacher.errors = error.response.data
+                  this.alertTop('Ocorreu um erro ao tentar atualizar o professor!', 'error')
+                  this.saving = false
+                })
+              }
+            })
+          } else {
+            axios.put("{% url 'api:inspectors-detail' object.pk %}", this.teacher).then((response) => {
+              axios.post("{% url 'notifications:api-check-notification' %}", { viewType: 'update', appLabel: 'inspectors.Inspector' })
+              this.alertTop('Professor atualizado com sucesso!')
+              window.location.href = "{% url 'inspectors:teachers_list' %}"
+            }).catch((error) => {
+              this.teacher.errors = error.response.data
+              this.alertTop('Ocorreu um erro ao tentar atualizar o professor!', 'error')
+              this.saving = false
+            })
+          }
+          {% endif %}
+      },
+      async saveTeacher() {
+        this.saving = true
+        const checkCoordinatioAssociation =  await this.checkCoordinationAssociation();
+              
+        {% if object %}
+          if (checkCoordinatioAssociation) {
+            Swal.fire({
+              title: 'Atenção!',
+              html: 'Este professor está associado a um coordenador existente. Ao fazer alterações no usuário, isso irá refletir no professor associado. <br/><br/>',
+              icon: 'warning',
+              showCancelButton: true,
+              confirmButtonColor: '#3085d6',
+              cancelButtonColor: '#d33',
+              confirmButtonText: 'Confirmar e salvar membro',
+              cancelButtonText: 'Cancelar'
+            }).then((result) => {
+              if (result.isConfirmed) {
+                this.updateObject()
+              } 
+            });
+          }
+          else {
+            this.updateObject()
+          }
+        {% else %}
+          if (checkCoordinatioAssociation) {
+            Swal.fire({
+                title: 'Atenção!',
+                html:  'O email que você adicionou pertence a um coordenador existente. Ao salvar este professor, ele será associado ao coordenador. <br/><br/>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Confirmar e salvar membro',
+                cancelButtonText: 'Cancelar'
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  this.saveObject()
+                } 
+              });
+            }
+            else {
+              this.saveObject()
+          }
+  
+        {% endif %}
+      },
+      checkIfGradeExist(classes, grade) {
+        return this.classes.filter(_classe => {
+          if(_classe.grade == grade.id) {
+            if(classes.includes(_classe.id)) {
+              return true
+            } else {
+              return false
+            }
+          }
+        }).length
+      },
+      selectClasse(teacherSubject, classe) {
+        if(!teacherSubject.classes.find(_classe => _classe == classe.id)) {
+          teacherSubject.classes.push(classe.id)
+        } else {
+          teacherSubject.classes.splice(teacherSubject.classes.indexOf(classe.id), 1)
+        }
+      },
+      fetchClasses() {
+        let term = $(this.$refs.searchClasses).val()
+        if(term && term.length > 1) {
+          let consulta = this.classes.filter(classe => classe.name.substr(0, term.length).toUpperCase() == term.toUpperCase())
+          this.foundClasses = consulta
+        } else {
+          this.foundClasses = []
+        }
+      },
+      alertTop(text, icon = 'success') {
+        Swal.fire({
+          position: 'top-end',
+          text: text,
+          icon: icon,
+          showConfirmButton: false,
+          timer: 1500,
+          timerProgressBar: true,
+          toast: true,
+        })
+      },
+    },
+    mounted() {
+      {% if object %}
+        axios.get("{% url 'api:inspectors-detail' object.pk %}").then((response) => {
+          this.teacher = response.data
+        }).finally(() => {
+          this.initializeSelect2()
+        })
+      {% else %}
+        this.initializeSelect2()
+      {% endif %}
+    },
+  })
+
+
+</script>
+{% endblock %}

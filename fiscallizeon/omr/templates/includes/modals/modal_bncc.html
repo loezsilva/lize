@@ -1,0 +1,244 @@
+<div class="modal fade" id="modalBNCCInfo" tabindex="-1" aria-labelledby="modalBNCCInfoLabel">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalBNCCInfoLabel">Questão ${selectedExamQuestion.order}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="height: inherit;">
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-toggle="tab" href="#question-answer" role="tab">
+                            Resposta
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#question-subject" role="tab">
+                            Assuntos
+                            <span class="badge badge-secondary ml-1">
+                                ${currentTopics.length}
+                                assuntos
+                            </span>
+                            <div class="mx-2 spinner-border text-primary" style="width: 1.4rem; height: 1.4rem;" role="status" v-if="loads.topics">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link mr-1" data-toggle="tab" href="#question-bncc" role="tab">
+                            BNCC
+                            <span class="badge badge-secondary ml-1">
+                                ${currentCompetences.length}
+                                competências
+                            </span>
+                            <span class="badge badge-secondary ml-1">
+                                ${currentAbilities.length}
+                                habilidades
+                            </span>
+                            <div class="mx-2 spinner-border text-primary" style="width: 1.4rem; height: 1.4rem;" role="status" v-if="loads.abilities || loads.competences">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+                <div class="tab-content bd bd-gray-300 bd-t-0 pd-20" id="myTabContent">
+
+                    <div class="tab-pane fade show active" id="question-answer" role="tabpanel" aria-labelledby="home-tab">    
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="">Resposta da questão</label>
+                                    <textarea name="" id="commented_answer" cols="30" rows="10" class="form-control"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="">Feedback do professor</label>
+                                    <textarea name="" id="teacher_feedback" cols="30" rows="10" class="form-control"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="question-subject" role="tabpanel" aria-labelledby="profile-tab">
+
+                        <h5>Assuntos Abordados</h5>
+            
+                        <div class="row">
+                            <div class="col-12">
+                                <template v-if="loads.topics">
+                                    <div class="row py-5">
+                                        <div class="col d-flex justify-content-center align-items-center flex-wrap">
+                                            <h4 class="mb-0">Carregando assuntos</h4>
+                                            <div class="mx-2 spinner-border text-dark" style="width: 1.4rem; height: 1.4rem;" role="status">
+                                                <span class="sr-only">Loading...</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                                <template v-else>
+                                    <div class="form-group">
+                                        <label for="">Buscar assuntos disponíveis</label>
+                                        <input placeholder="Digite aqui o assunto que você está procurando" type="text"
+                                            v-model="searchTopic" class="form-control">
+                                    </div>
+                                    <input v-for="topic in currentTopics" v-if="topic.id" type="hidden" :value="topic.id" name="topics">
+                                    <div class="col-6" v-for="stage in Object.entries(regroupedTopics)">
+                                        <table class="table table table-bordered table-sm table-hover">
+                                            <thead>
+                                                <tr>
+                                                <th>Assuntos (Etapa ${stage[0]})
+                                                    <span class="text-muted small">Assuntos abordados nessa questão</span>
+                                                </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-for="topic in stage[1]">
+                                                    <td>
+                                                        <div class="custom-control custom-checkbox">
+                                                        <input type="checkbox" class="custom-control-input" :id="'topic_'+topic.id"
+                                                            :value="topic.id" :checked="checkExist(topic.id, currentTopics)"
+                                                            name="topics_reference" @change="checkOption(topic, currentTopics, $event)">
+                                                        <label class="custom-control-label" :for="'topic_'+topic.id">
+                                                            ${topic.name}
+                                                        </label>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <table class="table" v-if="!topics.length > 0">
+                                        <tbody>
+                                            <tr>
+                                                <td>Não há assuntos disponíveis para esses dados pedagógicos</td>
+                                                
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="question-bncc" role="tabpanel" aria-labelledby="contact-tab">
+                        <h5>
+                            BNCC - Habilidade e Competências
+                        </h5>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <template v-if="loads.competences">
+                                    <div class="row py-5">
+                                        <div class="col d-flex justify-content-center align-items-center flex-wrap">
+                                            <h4 class="mb-0">Carregando competências</h4>
+                                            <div class="mx-2 spinner-border text-dark" style="width: 1.4rem; height: 1.4rem;" role="status">
+                                                <span class="sr-only">Loading...</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                                <template v-else>
+                                    <div class="form-group">
+                                        <label for="">Buscar competências disponíveis</label>
+                                        <input placeholder="Digite aqui a competência que está procurando" type="text"
+                                        v-model="searchCompetence" class="form-control">
+                                    </div>
+                                    <table class="table table table-bordered table-sm table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Competências
+                                                    <span class="text-muted small">Competências necessárias para realizar esta questão</span>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                
+                                            <input v-for="competence in currentCompetences" v-if="competence.id" type="hidden"
+                                                :value="competence.id" name="competences">
+                    
+                                            <tr v-for="competence in filterCompetences">
+                                                <td>
+                                                    <div class="custom-control custom-checkbox">
+                                                        <input type="checkbox" class="custom-control-input" :id="'competence_'+competence.id"
+                                                        :value="competence.id" :checked="checkExist(competence.id, currentCompetences)"
+                                                        name="competences_reference"
+                                                        @change="checkOption(competence, currentCompetences, $event)">
+                                                        <label class="custom-control-label" :for="'competence_'+competence.id">
+                                                        ${competence.text}
+                                                        </label>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr v-if="!competences.length > 0">
+                                                <td>Não há competências disponíveis</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </template>
+                            </div>
+                            <div class="col-6">
+                                <template v-if="loads.abilities">
+                                    <div class="row py-5">
+                                        <div class="col d-flex justify-content-center align-items-center flex-wrap">
+                                            <h4 class="mb-0">Carregando habilidades</h4>
+                                            <div class="mx-2 spinner-border text-dark" style="width: 1.4rem; height: 1.4rem;" role="status">
+                                                <span class="sr-only">Loading...</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                                <template v-else>
+                                    <div class="form-group">
+                                        <label for="">Buscar habilidades disponíveis</label>
+                                        <input placeholder="Digite aqui a habilidade que está procurando" type="text"
+                                        v-model="searchAbility" class="form-control">
+                                    </div>
+                                    <table class="table table table-bordered table-sm table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Habilidades
+                                                    <span class="text-muted small">Habilidades necessárias para realizar esta questão</span>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                
+                                            <input v-for="ability in currentAbilities" v-if="ability.id" type="hidden" :value="ability.id" name="abilities">
+                    
+                                            <tr v-for="ability in filterAbilities">
+                                                <td>
+                                                <div class="custom-control custom-checkbox">
+                                                    <input type="checkbox" class="custom-control-input" :id="'ability_'+ability.id"
+                                                    :value="ability.id" :checked="checkExist(ability.id, currentAbilities)"
+                                                    name="abilities_reference" @change="checkOption(ability, currentAbilities, $event)">
+                                                    <label class="custom-control-label" :for="'ability_'+ability.id">
+                                                        (${ability.code}) ${ability.text}
+                                                    </label>
+                                                </div>
+                                                </td>
+                                            </tr>
+                                            <tr v-if="!abilities.length > 0">
+                                                <td>Não há habilidades disponíveis</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </template>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Concluir edição</button>
+            </div>
+        </div>
+    </div>
+</div>

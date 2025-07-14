@@ -1,0 +1,144 @@
+{% extends request.user.get_base_url|default:'administration/base.html' %}
+
+{% block content %}
+<div class="content content-fixed" style="background-color: #f5f6fa; min-height: calc(100vh - 110px);">
+  <div class="container pd-x-0 pd-lg-x-10 pd-xl-x-0">
+    <div class="d-sm-flex align-items-end justify-content-between mg-b-15 mg-lg-b-25">
+      <div>
+        <p class="mg-b-0 tx-color-03">Passo 1</p>
+        <h4 class="mg-b-5">Encontre os temas</h4>
+        <p class="mg-b-0 tx-color-03">Filtre abaixo os temas que deseja adicionar à sua prova.</p>
+      </div>
+      <div>
+        <nav class="nav nav-with-icon">
+          <a href="" class="nav-link active" style="text-decoration: underline;">
+            Filtros favoritos <i data-feather="star" class="mg-l-5"></i>
+          </a>
+        </nav>
+      </div>
+    </div>
+    <div class="d-flex mg-b-15 mg-lg-b-25">
+      <div class="flex-1">
+        <div class="card" style="max-height: 450px;">
+          <div class="card-header pd-t-20">
+            <div>
+              <p class="mg-b-10"><strong>Categorias de conteúdos</strong></p>
+            </div>
+            <div>
+              <div class="search-form">
+                <button class="btn" type="button" style="border-right-width: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; border-left-width: 1px; border-top-left-radius: 0.25rem; border-bottom-left-radius: 0.25rem;"><i data-feather="search"></i></button>
+                <input type="search" class="form-control" placeholder="Disciplinas, temas, tópicos, assuntos..." style="border-top-left-radius: 0; border-bottom-left-radius: 0; border-left-width: 0; border-top-right-radius: 0.25rem; border-bottom-right-radius: 0.25rem; border-right-width: 1px;" />
+              </div>
+            </div>
+          </div>
+          <div class="card-body" style="overflow-y: scroll;">
+            <div class="d-flex align-items-start justify-content-between">
+              <div class="d-flex align-items-center">
+                <i data-feather="folder" style="opacity: 0.5;"></i>
+                <p class="mb-0 tx-semibold mg-l-10">Disciplina</p>
+              </div>
+              <div>
+                <button type="button" class="btn btn-primary btn-icon" style="padding: 0.1rem; font-size: .5rem; border-radius: 9999px;">
+                  <i data-feather="plus"></i>
+                </button>
+              </div>
+            </div>
+            <div class="d-flex align-items-start justify-content-between mg-t-5 ml-5">
+              <div>
+                <p class="mb-0 tx-semibold">Assunto</p>
+              </div>
+              <div>
+                <button type="button" class="btn btn-secondary btn-icon" style="padding: 0.1rem; font-size: .5rem; border-radius: 9999px; opacity: 0.5;">
+                  <i data-feather="check"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="divider-text divider-vertical" data-text="and"></div>
+      <div class="flex-1">
+        <div class="card" style="max-height: 450px;">
+          <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between">
+            <div>
+              <p class="mb-0"><strong>Assuntos pré-selecionados</strong></p>
+            </div>
+            <div class="d-flex mg-t-20 mg-sm-t-0">
+              <nav class="nav nav-with-icon">
+                <a href="" class="nav-link">
+                  Limpar <i data-feather="x" class="mg-l-5 mg-t-4" style="opacity: 0.4;"></i>
+                </a>
+              </nav>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="d-flex align-items-start justify-content-between mg-b-10">
+              <div>
+                <p class="mb-0 tx-medium">Assunto <span class="tx-12 tx-color-04 mg-l-10">Disciplina</span></p>
+              </div>
+              <div class="d-flex">
+                <div>
+                  <p class="mg-t-2 mb-0 tx-12 tx-color-04 mg-r-10">(123)</p>
+                </div>
+                <div>
+                  <button type="button" class="btn btn-danger btn-icon" style="padding: 0.1rem; font-size: .5rem; border-radius: 9999px;">
+                    <i data-feather="minus"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="d-flex align-items-start justify-content-between mg-b-10">
+              <div>
+                <p class="mb-0 tx-medium">Assunto <span class="tx-12 tx-color-04 mg-l-10">Disciplina</span></p>
+              </div>
+              <div class="d-flex">
+                <div>
+                  <p class="mg-t-2 mb-0 tx-12 tx-color-04 mg-r-10">(123)</p>
+                </div>
+                <div>
+                  <button type="button" class="btn btn-danger btn-icon" style="padding: 0.1rem; font-size: .5rem; border-radius: 9999px;">
+                    <i data-feather="minus"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer pd-20">
+            <div>
+              <p class="mb-0"><strong>Filtros avançados</strong></p>
+            </div>
+            <div class="mg-t-5 mg-lg-t-15 mg-b-15 mg-lg-b-25">
+              <div class="d-flex flex-wrap" style="gap: 0.5rem;">
+                <span class="badge badge-pill badge-primary" style="padding: 0.25rem 1rem; border-radius: 10rem; font-size: 14px;">Tipo: Múltipla Escolha <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-plus"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></span>
+                <span class="badge badge-pill badge-primary" style="padding: 0.25rem 1rem; border-radius: 10rem; font-size: 14px;">Nível: Fácil <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-plus"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></span>
+                <span class="badge badge-pill badge-primary" style="padding: 0.25rem 1rem; border-radius: 10rem; font-size: 14px;">Séries: Fundamental <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-plus"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></span>
+              </div>
+            </div>
+            <div>
+              <button class="btn btn-sm pd-x-15 btn-outline-primary btn-block">
+                Filtro avançado <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-plus"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        <div class="d-sm-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <h4 class="mg-b-0">1938</h4>
+            <span class="tx-12 tx-color-03 tx-semibold mg-l-5">questões pré-selecionadas</span>
+          </div>
+          <div>
+            <input type="checkbox" /> <label>Salvar filtro como favorito</label>
+            <button class="btn btn-sm pd-x-15 btn-primary mg-l-5">
+              Aplicar filtro
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

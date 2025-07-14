@@ -1,0 +1,37 @@
+'tooltip-component': Vue.component('tooltip-component', {
+    delimiters: ['#{', '}'],
+    props: ['configs'],
+    // Parametros para o configs
+    // classes > Classes personalizadas
+    // objects > Array contendo os objetos
+    // attribute > Nome do atributo que será mostrado dentro do span
+    // showNumber > Número da quantidade de objetos que serão mostrados
+    template: `
+        <div :class="configs.class ? configs.class : 'tw-flex tw-items-center tw-flex-wrap tw-gap-1'">
+            <span
+                v-for="(object, index) in configs.objects.slice(0, configs.showNumber)"
+                class="tw-inline-flex tw-items-center tw-rounded-full tw-bg-white tw-px-3 tw-py-1 tw-text-xs tw-font-medium tw-text-gray-600 tw-ring-1 tw-ring-inset tw-ring-[#E5E7EA] tooltips"
+                :data-tippy-content="configs.attribute ? object[configs.attribute] : object"
+            >
+                <template v-if="configs.attribute">#{object[configs.attribute]}</template>
+                <template v-else>#{object}</template>
+            </span>
+            <span
+                v-if="configs.objects.length > configs.showNumber && configs.objects.slice(configs.showNumber, configs.objects.length - 1).length"
+                class="tw-inline-flex tw-items-center tw-rounded-full tw-bg-white tw-px-3 tw-py-1 tw-text-xs tw-font-medium tw-text-gray-600 tw-ring-1 tw-ring-inset tw-ring-[#E5E7EA] tooltips"
+                :data-tippy-content="configs.objects.slice(configs.showNumber, configs.objects.length - 1).map(object => configs.attribute ? object[configs.attribute] : object).join(', ')"
+            >
+                + #{configs.objects.slice(configs.showNumber, configs.objects.length - 1).length}
+            </span>
+        </div>
+    `,
+    mounted() {
+        tippy('.tooltips', {
+            placement: 'bottom',
+            followCursor: true,
+            followCursor: 'horizontal',
+            allowHTML: true,
+            theme: 'custom',
+        })
+    }
+})

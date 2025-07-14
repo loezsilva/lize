@@ -1,0 +1,205 @@
+{% extends "dashboard/base_without_header.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    LizeEdu - Comprovante de envio de respostas
+{% endblock title %}
+
+{% block css-additional %}
+<link rel="stylesheet" href="{% static 'administration/assets/css/app.profile.css' %}">
+<style>
+    img {
+        margin: 0 !important;
+        display: inline !important;
+    } 
+    body {
+        background-color: #FFFFFF !important;
+    }
+    .timeline-border-danger::before {
+        border-color: red !important; 
+    }
+</style>
+{% endblock css-additional %}
+
+{% block content %}
+    <div class="p-5">
+        <div class="row">
+            <div class="col-12">
+                <h3 class="text-uppercase mb-0 d-flex align-items-center">${proof.exam_name} <span class="badge badge-primary mx-2" v-if="proof.is_randomized">PROVA RANDOMIZADA</span> <span v-if="proof.group_attachments" class="badge badge-primary mx-2">RESPOSTAS AGRUPADAS</span></h3>
+            </div>
+            <div class="col mt-2">
+                <div class="d-flex flex-column">
+                    <label class="tx-sans tx-uppercase tx-10 tx-medium tx-spacing-1 tx-color-03">Informações do comprovante</label>
+                    <ul class="list-unstyled lh-7">
+                        <li>
+                            Emitido em <span class="tx-bold">${moment(proof.created_at).format("LLL")}</span>
+                        </li>
+                        <li>
+                            Início da prova: <span class="tx-bold">${moment(proof.start_date).format("LLL")}</span>
+                        </li>
+                        <li>
+                            Final da prova: <span class="tx-bold">${moment(proof.end_date).format("LLL")}</span>
+                        </li>
+                        <li>
+                            <span class="tx-bold">${proof.answers_json.filter(answer => answer.answer_id).length}</span> Respostas
+                        </li>
+                        <li>
+                            <span class="tx-bold">${proof.answers_json.length}</span> Questões
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col mt-2">
+                <div class="d-flex flex-column">
+                    <label class="tx-sans tx-uppercase tx-10 tx-medium tx-spacing-1 tx-color-03">Informações do aluno</label>
+                    <ul class="list-unstyled lh-7">
+                        <li>
+                            Aluno: <span class="tx-bold">${proof.student.name}</span>
+                        </li>
+                        <li>
+                            Email do aluno: <span class="tx-bold">${proof.student.email}</span>
+                        </li>
+                        <li v-if="proof.student.ip_address">
+                            IP do aluno: <span class="tx-bold">${proof.student.ip_address}</span>
+                        </li>
+                        <li v-if="proof.student.browser">
+                            Navegador: <span class="tx-bold">${proof.student.browser} ${proof.student.browser_version}</span>
+                        </li>
+                        <li v-if="proof.student.operation_system">
+                            S.O: <span class="tx-bold">${proof.student.operation_system}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col mt-2 tx-right d-flex flex-column">
+                <label class="tx-sans tx-uppercase tx-10 tx-medium tx-spacing-1 tx-color-03">Código</label>
+                <h3 class="tx-normal mg-b-10 tx-spacing--2 text-uppercase">#${proof.code}</h3>
+                <!-- <div data-qrcode=true class="m-0"></div> -->
+            </div>
+        </div>
+    </div>
+    <div class="pr-5 mt-5">
+        <div class="timeline-group tx-13">
+            <div class="timeline-label">Lista de respostas enviadas</div>
+            <div class="timeline-item" v-for="(answer, index) in proof.answers_json">
+                <div class="timeline-time">
+                    <template v-if="answer.answer_updated_at">
+                        ${moment(answer.answer_updated_at).format("DD/MM/YY LT")}
+                    </template>
+                    <template v-else> --:--:-- </template>
+                </div>
+                <div class="timeline-body" :class="{'timeline-border-danger': !answer.answer_id}">
+                    <h6 class="mg-b-0">
+                        Questão ${answer.number_print}) - <span class="tx-bold">${answer.category}</span> <span v-if="answer.print_only_enunciation" class="badge badge-secondary">ESTA QUESTÃO É APENAS ENUNCIADO</span>
+                    </h6>
+                    <div class="mt-2">
+                        Enunciado da questão:
+                        <div v-html="answer.question_enunciation" class="tx-bold"></div>
+                    </div>
+
+                    <template v-if="answer.answer_id && !answer.print_only_enunciation">
+                        <div class="mt-2">
+                            <template v-if="answer.category == 'Arquivo anexado'">
+                                <template v-if="answer.file_name">
+                                    Nome do arquivo enviado:
+                                    <div v-html="answer.file_name" class="tx-bold"></div>
+                                </template>
+                                <template v-if="answer.files_names">
+                                    Nome do(s) arquivo(s):
+                                    <p class="tx-bold">${answer.files_names.join(', ')}</p>
+                                </template>
+                                <template v-if="!answer.file_name && !answer.files_names">
+                                    <span class="tx-bold">Nenhum arquivo enviado.</span>
+                                </template>
+                            </template>
+                            <template v-if="answer.category == 'Objetiva'">
+                                <div class="mt-2" v-if="answer.category == 'Objetiva'">
+                                    Alternativa selecionada: <span class="tx-bold text-uppercase">${answer.selected_alternative_letter}</span>
+                                </div>
+                                <div class="mt-2">
+                                    Texto da alternativa:
+                                    <div v-html="answer.text" class="tx-bold"></div>
+                                </div>
+                            </template>
+                            <template v-else>
+                                <div>
+                                    Alternativas selecionadas:
+                                        <div v-for="letter in answer.alternative_letters" :key="letter">
+                                            <span class="tx-bold text-uppercase">${ letter }</span>
+                                        </div>
+                                    
+                                </div>
+                                <div class="mt-2">                            
+                                    Texto da alternativaaaaaaa:
+                                    <div v-html="answer.text" class="tx-bold"></div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                    <template v-else>
+                        <div class="mt-3 tx-bold" v-if="!answer.print_only_enunciation">
+                            Nenhuma resposta enviada
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block js-additional %}
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+    <script src="{% static 'js/qrcode.js' %}"></script>
+    <script>
+        moment.locale('pt-br')
+        var app = new Vue({
+            delimiters: ['${', '}'],
+            el: '#app',
+            data: {
+                proof: {
+                    exam_name: '{{proof.exam_name}}',
+                    student: {
+                        name: '{{proof.application_student.student.name}}',
+                        email: '{{proof.application_student.student.email}}',
+                        device: '{{proof.application_student.device|default:""}}',
+                        device_family: '{{proof.application_student.device_family|default:""}}',
+                        browser: '{{proof.application_student.browser|default:""}}',
+                        browser_version: '{{proof.application_student.browser_version|default:""}}',
+                        operation_system: '{{proof.application_student.operation_system|default:""}}',
+                        operation_system_version: '{{proof.application_student.operation_system_version|default:""}}',
+                        ip_address: '{{proof.application_student.ip_address|default:""}}',
+                    },
+                    group_attachments: {{proof.group_attachments|lower}},
+                    is_randomized: {{proof.is_randomized|lower}},
+                    code: '{{proof.code}}',
+                    answers_json: {{proof.answers_json_serailized|safe}},
+                    start_date: '{{proof.start_date|safe}}',
+                    end_date: '{{proof.end_date|safe}}',
+                    created_at: '{{proof.created_at|safe}}',
+                }
+            },
+            watch:{
+
+            },
+            methods: {
+                gerateQRCode() {
+                    self = this
+                    new QRCode($('div[data-qrcode=true]')[0], {
+                        text: `{{BASE_URL}}{% url 'answers:proof_of_answers' proof.application_student.pk %}`,
+                        width: 128,
+                        height: 128,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                },
+            },
+            mounted() {
+                {% comment %} this.gerateQRCode() {% endcomment %}
+            }
+        })
+    </script>
+
+{% endblock %}

@@ -1,0 +1,1207 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+{% load format_date_input %}
+{% load i18n %}
+
+{% block title %}Criação de aplicação - Lize{% endblock title %}
+
+
+{% block css-additional %}
+  <link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+  <link rel="stylesheet" href="{% static 'administration/lib/quill/quill.snow.css' %}">
+  <link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+  <link href="{% static 'administration/assets/css/boostrap5.css' %}" rel="stylesheet">
+
+  <style>
+    .disabled {
+      pointer-events: none;
+    }
+  </style>
+
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="{% url 'applications:applications_list' %}">APLICAÇÕES</a></li>
+          <li class="breadcrumb-item active" aria-current="page">AGENDAR</li>
+        </ol>
+      </nav> 
+      <h4>Agendar aplicação</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+      <nav class="ls" aria-label="Breadcrumb">
+        <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+          <li>
+            <div>
+              <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                  <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+              </a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="{% url 'applications:applications_list' %}?category=online" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Aplicações</a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Agendar</a>
+            </div>
+          </li>
+        </ol>
+      </nav>
+      <div class="d-none d-md-block">
+        <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+          <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+      </div>
+    </div>
+<div class="row">
+    <div class="col-md-9">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+              <div>
+                <h6 class="mg-b-5">Agende uma nova aplicação</h6>
+                <p class="tx-13 tx-color-03 mg-b-5">Informe os dados abaixo e agende sua aplicação</p>
+              </div>
+            </div>
+            <div class="card-body">
+                <form method="POST" @change="validateForm()">
+                    {% csrf_token %}
+                    {% if not user.user_type == "teacher" %}
+                      <div class="form-row">
+                          <div class="col-12">
+                            {{ form.category.label }}
+                          </div>
+                          <div class="d-flex">
+                            <div class="btn-group btn-group-toggle py-2" data-toggle="buttons">
+                              
+                                
+                              {% if user.client_has_exam_elaboration or user.client_allow_online_abstract_application %}
+                                <label id="onlineSelectButton" @click="selectedCategory = 2" class="btn btn-outline-primary btn-sm" v-bind:class="selectedCategory == 2 || selectedCategory == 4 ? 'active':''">
+                                  <input type="radio" checked required>
+                                  <i class="fas fa-globe fa-lg"></i>
+                                  <span>
+                                    Online
+                                  </span>
+                                </label>
+                              {% endif %}
+                              <label id="presentialSelectButton" @click="selectedCategory = 3" class="btn btn-outline-primary btn-sm" v-bind:class="selectedCategory == 3 ? 'active':''">
+                                <input type="radio" {% if not user.client_has_exam_elaboration %} checked required {% endif %}>
+                                <i class="fas fa-chair fa-lg"></i>
+                                <span>
+                                  Presencial
+                                </span>
+                              </label>
+
+                            </div>
+                            <div v-show="selectedCategory == 2 || selectedCategory == 4">
+                              <i class="fas fa-chevron-right ml-3 mr-3 mt-3"></i>
+
+                              <div class="btn-group btn-group-toggle py-2" data-toggle="buttons">
+                              
+                                <label @click="selectedCategory = 2" class="btn btn-outline-primary btn-sm" v-bind:class="selectedCategory == 2 ? 'active':''">
+                                  <input type="radio" checked required>
+                                  <i class="fas fa-chalkboard-teacher"></i>
+                                  <span>
+                                    Prova
+                                  </span>
+                                </label>
+                                <label @click="selectedCategory = 4" class="btn btn-outline-primary btn-sm" v-bind:class="selectedCategory == 4 ? 'active':''">
+                                  <input type="radio">
+                                  <i class="fas fa-home"></i>
+                                  <span>
+                                    Lista de Exercício
+                                  </span>
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-12 p-0">
+                            <div class="alert alert-secondary text-justify"
+                              v-show="selectedCategory == 2">
+                              <span class="font-weight-bold">
+                                <i class="fas fa-globe"></i> Prova online</label>:
+                              </span>
+                              Os alunos poderão realizar a prova apenas no dia da aplicação, e uma vez finalizada não poderá refazê-la.
+                            </div>
+                            <div class="alert alert-secondary text-justify" v-show="selectedCategory == 4">
+                              <span class="font-weight-bold">
+                                <i class="fas fa-home"></i> Lista de Exercício</label>:
+                              </span>
+                              Os alunos poderão entrar e sair da aplicação durante todo o período cadastrado. A última resposta do aluno será levada em consideração quando o período da aplicação for encerrado.
+                            </div>
+                          </div>
+                          <small class="form-text text-muted">
+                            {{ form.category.help_text }}
+                          </small>
+                          {% if form.category.errors %}
+                          <label class="text-danger">
+                            {{ form.category.errors.0 }}
+                          </label>
+                          {% endif %}
+                      </div>
+                    {% endif %}
+                    
+                    <div class="form-row">
+                        <div class="form-group col">
+                          {{ form.date.label }}
+                          <input type="date" data="datepicker" required="required" name="date" id="id_date" class="form-control" value="{{form.date.value|format_date_input}}">
+                          <small class="form-text text-muted">
+                              {{ form.date.help_text }}
+                          </small>
+                          {% if form.date.errors %}
+                              <label class="text-danger">
+                              {{ form.date.errors.0 }}</label>
+                          {% endif %}
+                        </div>
+                        <div class="form-group col">
+                          {{ form.start.label }}
+                          {% render_field form.start class="form-control" type="time" %}
+                          <small class="form-text text-muted">
+                              {{ form.start.help_text }}
+                          </small>
+                          {% if form.start.errors %}
+                              <label class="text-danger">
+                                {{ form.start.errors.0 }}
+                              </label>
+                          {% endif %}
+                          <span class="text-danger" for="{{form.start.auto_id}}" data-validate-error="{{form.start.auto_id}}"></span>
+                          
+                        </div>
+
+                        <div v-show="selectedCategory == 4" class="form-group col ">
+                          {{ form.date_end.label }}
+                          <input type="date" id="{{form.date_end.auto_id}}" name="{{form.date_end.name}}" value="{{form.date_end.value|safe}}" class="form-control" :required="selectedCategory == 4"> 
+                          <small class="form-text text-muted">
+                            {{ form.date_end.help_text }}
+                          </small>
+                          {% if form.date_end.errors %}
+                          <label class="text-danger">
+                            {{ form.date_end.errors.0 }}</label>
+                          {% endif %}
+                          <span class="text-danger" for="{{form.date_end.auto_id}}"
+                            data-validate-error="{{form.date_end.auto_id}}"></span>
+                        </div>
+
+                        <div class="form-group col">
+                          {{ form.end.label }}
+                          {% render_field form.end class="form-control" type="time" %}
+                          <small class="form-text text-muted">
+                              {{ form.end.help_text }}
+                          </small>
+                          {% if form.end.errors %}
+                              <label class="text-danger">
+                              {{ form.end.errors.0 }}</label>
+                          {% endif %}
+                          <span class="text-danger" for="{{form.end.auto_id}}" data-validate-error="{{form.end.auto_id}}"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row" v-show="selectedCategory == 2">
+                        <div class="form-group col-md-4">
+                          {{ form.min_time_finish.label }}
+                          {% render_field form.min_time_finish class="form-control" placeholder="HH:MM:SS" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}"  %}
+                          <small class="form-text text-muted">
+                              {{ form.min_time_finish.help_text }}
+                          </small>
+                          {% if form.min_time_finish.errors %}
+                              <label class="text-danger">
+                              {{ form.min_time_finish.errors.0 }}</label>
+                          {% endif %}
+                        </div>
+                        <div class="form-group col-md-4">
+                          {{ form.min_time_pause.label }}
+                          {% render_field form.min_time_pause class="form-control" placeholder="HH:MM:SS" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}"  %}
+                          <small class="form-text text-muted">
+                              {{ form.min_time_pause.help_text }}
+                          </small>
+                          {% if form.min_time_pause.errors %}
+                              <label class="text-danger">
+                              {{ form.min_time_pause.errors.0 }}</label>
+                          {% endif %}
+                        </div>
+                        <div class="form-group col-md-4">
+                          {{ form.max_time_tolerance.label }}
+                          {% render_field form.max_time_tolerance class="form-control" placeholder="HH:MM:SS" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}"  %}
+                          <small class="form-text text-muted">
+                              {{ form.max_time_tolerance.help_text }}
+                          </small>
+                          {% if form.max_time_tolerance.errors %}
+                              <label class="text-danger">
+                              {{ form.max_time_tolerance.errors.0 }}</label>
+                          {% endif %}
+                        </div>
+                    </div>
+
+                    <div v-show="selectedCategory != 3" class="form-group">
+                      <div class="custom-control custom-checkbox">
+                        <input
+                          type="checkbox"
+                          class="custom-control-input"
+                          id="{{ form.release_result_at_end.auto_id }}"
+                          name="{{ form.release_result_at_end.name }}"
+                          checked="{{ form.release_result_at_end.value }}"
+                          v-model="releaseResultAtEnd"
+                        />
+                        <label
+                          class="custom-control-label"
+                          for="{{ form.release_result_at_end.auto_id }}"
+                        >
+                          {{ form.release_result_at_end.label }}
+                        </label>
+                      </div>
+                    </div>
+
+                    <div class="form-row">
+                      <div class="form-group col-md-4">
+                        <label for="{{form.student_stats_permission_date.auto_id}}">{{form.student_stats_permission_date.label}}</label>
+                          <input type="datetime-local" name="{{form.student_stats_permission_date.name}}" id="{{form.student_stats_permission_date.auto_id}}" class="form-control" value="{{form.student_stats_permission_date.value|safe}}" :disabled="releaseResultAtEnd" />
+                        <small class="form-text text-muted">
+                          {{ form.student_stats_permission_date.help_text }}
+                        </small>
+                        {% if form.student_stats_permission_date.errors %}
+                          <label class="text-danger">
+                          {{ form.student_stats_permission_date.errors.0 }}</label>
+                        {% endif %}
+                      </div>
+                      {% if user.client_has_wrongs %}
+                        <div class="form-group col-md-4">
+                            <label for="{{form.deadline_to_request_review.auto_id}}">Data limite para o aluno solicitar correção da resposta</label>
+                            <input type="date" name="{{form.deadline_to_request_review.name}}" id="{{form.deadline_to_request_review.auto_id}}" class="form-control" value="{{form.deadline_to_request_review.value|format_date_input}}">
+                          <small class="form-text text-muted">
+                            {{ form.deadline_to_request_review.help_text }}
+                          </small>
+                          {% if form.deadline_to_request_review.errors %}
+                            <label class="text-danger">
+                            {{ form.deadline_to_request_review.errors.0 }}</label>
+                          {% endif %}
+                          <span class="text-danger" for="{{form.deadline_to_request_review.auto_id}}" data-validate-error="{{form.deadline_to_request_review.auto_id}}"></span>
+                        </div>
+                      {% endif %}
+                      <div class="form-group col-md-4">
+                          <label for="{{form.deadline_for_correction_of_responses.auto_id}}">Data limite para os professores corrigirem as respostas</label>
+                          <input type="date" name="{{form.deadline_for_correction_of_responses.name}}" id="{{form.deadline_for_correction_of_responses.auto_id}}" class="form-control" value="{{form.deadline_for_correction_of_responses.value|format_date_input}}">
+                        <small class="form-text text-muted">
+                          {{ form.deadline_for_correction_of_responses.help_text }}
+                        </small>
+                        {% for error in form.deadline_for_correction_of_responses.errors %}
+                          <label class="text-danger">
+                          {{ error }}</label>
+                        {% endfor %}
+                      </div>
+                      <div class="form-group col-md-4">
+                        <label for="{{form.deadline_for_sending_response_letters.auto_id}}">Data limite para envio dos cartões resposta</label>
+                        <input type="date" name="{{form.deadline_for_sending_response_letters.name}}" id="{{form.deadline_for_sending_response_letters.auto_id}}" class="form-control" value="{{form.deadline_for_sending_response_letters.value|format_date_input}}">
+                      <small class="form-text text-muted">
+                        {{ form.deadline_for_sending_response_letters.help_text }}
+                      </small>
+                      {% for error in form.deadline_for_sending_response_letters.errors %}
+                        <label class="text-danger">
+                        {{ error }}</label>
+                      {% endfor %}
+                      </div>
+                    </div>
+
+                    {% if not user.user_type == 'teacher' %}
+                      
+                      <div class="form-row mb-4" v-show="selectedCategory == 2">
+                        <div class="col-md-12">
+                          <div class="custom-control custom-switch ">
+                            {% render_field form.block_after_tolerance class="custom-control-input" %}
+                            <label class="custom-control-label" for="{{form.block_after_tolerance.auto_id}}">
+                              <i class="fas fa-lock"></i>
+                              {{ form.block_after_tolerance.label }}</label>
+                            <small class="form-text text-muted mt-0" style="line-height: initial;">
+                              {{ form.block_after_tolerance.help_text }}
+                            </small>
+                            {% if form.block_after_tolerance.errors %}
+                            <label class="text-danger">
+                              {{ form.block_after_tolerance.errors.0 }}
+                            </label>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div class="form-row mb-3" v-show="selectedCategory == 2">
+                          <div class="col-md-4">
+                            <div class="custom-control custom-switch ">
+                              {% render_field form.can_be_done_pc class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.can_be_done_pc.auto_id}}">
+                                <i class="fas fa-desktop"></i>
+                                {{ form.can_be_done_pc.label }}</label>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.can_be_done_pc.help_text }}
+                              </small>
+                              {% if form.can_be_done_pc.errors %}
+                              <label class="text-danger">
+                                {{ form.can_be_done_pc.errors.0 }}
+                              </label>
+                              {% endif %}
+                            </div>
+                          </div>
+
+                          <div class="col-md-4">
+                            <div class="custom-control custom-switch">
+                              {% render_field form.can_be_done_cell class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.can_be_done_cell.auto_id}}">
+                                <i class="fas fa-mobile-alt"></i>
+                                {{ form.can_be_done_cell.label }}
+                              </label>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.can_be_done_cell.help_text }}
+                              </small>
+                              {% if form.can_be_done_cell.errors %}
+                                <label class="text-danger">
+                                  {{ form.can_be_done_cell.errors.0 }}
+                                </label>
+                              {% endif %}
+                            </div>
+                          </div>
+
+                          <div class="col-md-4">
+                            <div class="custom-control custom-switch">
+                                {% render_field form.can_be_done_tablet class="custom-control-input" %}
+                                <label class="custom-control-label" for="{{form.can_be_done_tablet.auto_id}}">
+                                  <i class="fas fa-tablet-alt"></i>
+                                  {{ form.can_be_done_tablet.label }}</label>
+                                <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                  {{ form.can_be_done_tablet.help_text }}
+                                </small>
+                              {% if form.can_be_done_tablet.errors %}
+                                  <label class="text-danger">
+                                    {{ form.can_be_done_tablet.errors.0 }}
+                                  </label>
+                              {% endif %}
+                            </div>
+                          </div>
+                      </div>
+
+                      <div class="row mt-3">
+                        <div class="col-12">
+                          <div class="custom-control custom-switch">
+                              {% render_field form.show_result_only_for_started_application class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.show_result_only_for_started_application.auto_id}}">
+                                <i  class="fas fa-tv"></i>
+                                {{ form.show_result_only_for_started_application.label }}</label>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.show_result_only_for_started_application.help_text }}
+                              </small>
+                            {% if form.show_result_only_for_started_application.errors %}
+                                <label class="text-danger">
+                                  {{ form.show_result_only_for_started_application.errors.0 }}
+                                </label>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+
+
+                      {% if user.client_has_template and user.client_has_exam_elaboration or user.client_allow_online_abstract_application %}
+
+                        <div class="form-row">
+                          <div class="col">
+                            <label class="mb-0">Escolha o tipo de exame</label>
+                          </div>
+                          <div class="form-group col-12 mb-0">
+                            <div class="btn-group btn-group-toggle pb-2" data-toggle="buttons">
+                              {% if user.client_has_exam_elaboration %}
+                              <label @click="selectedExamType = 'Exams'" class="btn btn-outline-primary btn-sm" v-bind:class="selectedExamType == 'Exams' ? 'active':''">
+                                <input type="radio" value="Exams" checked required>
+                                <i class="fas fa-file-alt"></i>
+                                <span>
+                                  Caderno de Prova
+                                </span>
+                              </label>
+                              {% endif %}
+                              <label @click="selectedExamType = 'Template'" class="btn btn-outline-primary btn-sm" v-bind:class="selectedExamType == 'Template' ? 'active':''">
+                                <input type="radio" value="3" {% if not user.client_has_exam_elaboration %}checked{% endif %}>
+                                <i class="fas fa-grip-vertical"></i>
+                                <span>
+                                  Gabarito avulso
+                                </span>
+                              </label>
+                              
+                            </div>
+                            <small class="form-text text-muted">
+                              {{ form.category.help_text }}
+                            </small>
+                            {% if form.category.errors %}
+                            <label class="text-danger">
+                              {{ form.category.errors.0 }}
+                            </label>
+                            {% endif %}
+                          </div>
+                        </div>
+
+                      {% endif %}
+                    
+                    {% endif %}
+
+                    <div id="exam-select" class="form-group">
+                      <label for="id_exam" class="mb-0">
+                        {% if not user.user_type == 'teacher' %}
+                          <template v-if="selectedExamType == 'Exams'">
+                            {{ form.exam.label }}
+                          </template>
+                          <template v-else>
+                            Gabarito avulso que será aplicado
+                          </template>
+                        {% else %}
+                          Caderno de atividade que será aplicado
+                        {% endif %}
+                      </label>
+                      <select 
+                          name="{{ form.exam.html_name }}"
+                          id="{{ form.exam.id_for_label }}"
+                          class="form-control"
+                          required
+                      >
+                      </select>
+                      <small class="form-text text-muted">
+                          {{ form.exam.help_text }}
+                      </small>
+                      {% if form.exam.errors %}
+                          <label class="text-danger">
+                          {{ form.exam.errors.0 }}</label>
+                      {% endif %}
+                    </div>
+
+                    
+                    <div class="form-group" v-show="selectedCategory == 2">
+                        <label for="">{{ form.orientations.label }}</label>
+                        <div id="editor-container" class="ht-200"></div>
+                        <small class="form-text text-muted">
+                          {{ form.orientations.help_text }}
+                        </small>
+                        {% render_field form.orientations %}
+                    </div>
+                    
+                    {% if not user.user_type == 'teacher' %}                      
+                      <div class="form-group mb-2" v-show="false">
+                          {{ form.subject.label }}
+                          <div data-label="Example" class="df-example demo-forms">
+                              {% render_field form.subject class="form-control" data-role="tagsinput" style="width: 100%;" %}
+                              <small class="form-text text-muted">
+                                {{ form.subject.help_text }}
+                              </small>
+                              {% if form.subject.errors %}
+                                  <label class="text-danger">
+                                  {{ form.subject.errors.0 }}</label>
+                              {% endif %}
+                          </div>
+                      </div>
+                    {% endif %}
+                    <div v-if="selectedCategory != 3" class="form-group">
+                      {{ form.students.label }}
+                      <div class="d-flex align-items-center">
+                        <select style="width: 100%;" name="{{ form.students.html_name }}" id="{{form.students.auto_id}}"  class="form-control" multiple :required="classes.length == 0">
+                        </select>
+                        <div class="w-50 custom-file ml-1">
+                          <label for="file-input" class="custom-file-label" data-browse="escolher">Importar alunos via planilha</label>
+                          <input @change="handleFileInput($event)" id="file-input" type="file" class="custom-file-input"/>
+                          <a href="{% static 'modelo_importacao_alunos_matricula.csv' %}">baixar planilha modelo</a>
+                        </div>
+                      </div>
+                      <small class="form-text text-muted">
+                        {{ form.students.help_text }}
+                      </small>
+                      {% if form.students.errors %}
+                      <label class="text-danger">
+                        {{ form.students.errors.0 }}</label>
+                      {% endif %}
+                    </div>
+
+                    {% if education_systems %}
+                      <div class="form-group" >
+                        <label for="id_system">Selecione um sistema de ensino</label>
+                        <select id="id_system" class="form-control" >
+                          <option value=""></option>
+                          {% for system in education_systems %}
+                            <option value="{{system.pk}}">{{system}}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                    {% endif %}
+
+                    <div class="form-group" >
+                      <label for="id_turn">Selecione um turno</label>
+                      <select id="id_turn" class="form-control" >
+                        <option value=""></option>
+                        {% for value, turn in turns %}
+                          <option value="{{value}}">{{turn}}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    
+                    <div class="form-group" >
+                      <label for="id_grades">Selecione uma série específica</label>
+                      <select id="id_grades" class="form-control">
+                        <option value=""></option>
+                        {% for grade in grades %}
+                          <option value="{{grade.pk}}">{{grade}}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+
+                    <div>
+                      <div class="form-group">
+                        {{ form.school_classes.label }}
+                        <select 
+                          name="{{ form.school_classes.html_name }}"
+                          id="{{ form.school_classes.id_for_label }}"
+                          class="form-control"
+                          multiple="multiple"
+                        >
+                          {% for school_class in form.instance.school_classes.all %}
+                            <option value="{{ school_class.pk }}" selected="selected">{{ school_class.name }}</option>
+                          {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">
+                            {{ form.school_classes.help_text }}
+                        </small>
+                        {% if form.school_classes.errors %}
+                            <label class="text-danger">
+                            {{ form.school_classes.errors.0 }}</label>
+                        {% endif %}
+                      </div>
+
+                      <div class="form-group">
+                        <div v-for="(classe, index) in classes.filter(classe => classe.students.length)">
+                          <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex">
+                              <span class="d-block tx-bold">
+                                ${classe.name}
+                              </span>
+                              <span class="text-muted ml-2 font-weight-bold">
+                                ${classe.unity_name}
+                              </span>
+                            </div>
+                            <div>
+                              <span class="badge badge-primary m-1" style="cursor: pointer;" @click="selectStudents('selectAll', index)">Selecionar Todos</span>
+                              <span class="badge badge-primary m-1" style="cursor: pointer;" @click="selectStudents('unselectAll', index)">Desselecionar todos</span>
+                            </div>
+                          </div>
+                          <div class="row">
+                            <div class="col-6 col-xl-3" v-for="student in classe.students">
+                              <div class="form-check" id="checks_students">
+                                <input class="form-check-input" data-type="student" :data-classe="'check'+index" name="students" @click="studentsCount()" type="checkbox" :id="student.id+index" checked :value="student.id">
+                                <label class="form-check-label" :for="student.id+index" style="width:100%;">
+                                  <p class="m-0 p-0 text-truncate">
+                                    ${student.name}
+                                  </p>
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                          <hr>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div v-if="selectedCategory == 3" class="form-group">
+                      {{ form.students.label }}
+                      <div class="d-flex align-items-center">
+                        <select style="width: 100%;" name="{{ form.students.html_name }}" id="{{form.students.auto_id}}"  class="form-control" multiple :required="classes.length == 0">
+                        </select>
+                        <div class="w-50 custom-file ml-1">
+                          <label for="file-input" class="custom-file-label" data-browse="escolher">Importar alunos via planilha</label>
+                          <input @change="handleFileInput($event)" id="file-input" type="file" class="custom-file-input"/>
+                          <a href="{% static 'modelo_importacao_alunos_matricula.csv' %}">baixar planilha modelo</a>
+                        </div>
+                      </div>
+                      <small class="form-text text-muted">
+                        {{ form.students.help_text }}
+                      </small>
+                      {% if form.students.errors %}
+                      <label class="text-danger">
+                        {{ form.students.errors.0 }}</label>
+                      {% endif %}
+                    </div>
+                    
+                    <div class="row d-flex align-items-center card-footer mb-0 pb-0">
+                      <div class="col p-0" v-if="selectedStudentsCount">
+                        Você selecionou <span class="tx-bold">${selectedStudentsCount}</span> aluno(s)
+                      </div>
+                      <div class="col p-0">
+                        <button type="submit" class="btn btn-primary float-right m-1" :disabled="!formIsValid">Salvar aplicação</button>
+                        {% if not object and user.client_has_distribution %}
+                          <input type="checkbox" class="d-none" name="create_distribution" id="create_distribution" V-if="selectedCategory == 3">
+                          <button type="button" class="btn btn-secondary float-right m-1" :disabled="!formIsValid" @click="checkDistribute()" V-if="selectedCategory == 3">Concluir e Ensalar</button>
+                        {% endif %}
+                      </div>
+                    </div>
+                    <input type="hidden" name="category" v-model="selectedCategory">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+
+<script src="{% static 'administration/lib/typeahead.js/typeahead.bundle.min.js' %}"></script>
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'administration/assets/vendor/moment.min.js' %}"></script>
+<script src="{% static 'administration/assets/vendor/jquery.mask.min.js' %}"></script>
+
+<script>
+  
+var app = new Vue({
+  delimiters: ['${', '}'],
+  el: '#app',
+  data: {
+    categoryFromList: '{{ category_from_list }}',
+    classes: [],
+    students: [
+      {% for id in form.students.value %}
+          {
+            id: '{{id}}',
+          },
+      {% endfor %}
+    ],
+    studentsPkOnly: {{form.students.value|default_if_none:"[]"|safe}},
+    classesPkOnly: {{form.school_classes.value|default_if_none:"[]"|safe}},
+    inspectorsPkOnly: {{form.inspectors.value|default_if_none:"[]"|safe}},
+    selectedOption: 'Turmas',
+    selectedExamType: {% if user.client_has_template and not user.client_has_exam_elaboration or user.client_allow_online_abstract_application and not user.client_has_exam_elaboration %}'Template'{% else %}'Exams'{% endif %},
+    selectedStudentsCount: 0,
+    selectedCategory: {% if not user.client_has_exam_elaboration %}3{% elif user_type == 'teacher' %}4{% else %}{{ form.category.value|default:2 }}{% endif %},
+    formIsValid: false,
+    studentsInClasse: [],
+    studentNotInClasse: [],
+    releaseResultAtEnd: {{form.release_result_at_end.value|default_if_none:"false"|lower}},
+    inputStudents: undefined,
+  },
+  watch: {
+    selectedExamType: function(e) {
+      $('#{{form.exam.auto_id}}').val(null).trigger('change')
+    },
+    selectedCategory: function(e) {
+        this.selectedExamType = {% if user.client_has_template and not user.client_has_exam_elaboration or user.client_allow_online_abstract_application and not user.client_has_exam_elaboration %}'Template'{% else %}'Exams'{% endif %}
+        $('#id_inspectors_fiscallize').prop('checked', false)
+        if(this.selectedCategory == 4) {
+          $("#{{form.student_stats_permission_date.auto_id}}").prop("min", moment().format(`${$("#{{form.date_end.auto_id}}").val()}T${$("#{{form.end.auto_id}}").val()}`))
+        } else {
+          $("#{{form.student_stats_permission_date.auto_id}}").prop("min", moment().format(`${$("#{{form.date.auto_id}}").val()}T${$("#{{form.end.auto_id}}").val()}`))
+        }
+    },
+  },
+  methods: {
+    checkDistribute(){
+      $('#create_distribution').prop('checked', true), $(`button[type='submit']`).click()
+    },
+    handleFileInput(e){
+      let file = e.target.files[0]
+
+      formData = new FormData()
+      formData.append('file', file)
+
+      axios.post('{% url "applications:application_student_upload" %}', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+      }).then((res) => {
+        res.data.forEach((student) => {
+          let studentClasses = student.classes.map((item) => ({name: item}))
+          let newOption = $(new Option(student.name, student.pk, true, true));
+          newOption.data('data', { id: student.pk, text: student.name, classes: studentClasses, selected: true});
+          if(!this.inputStudents.find("option[value='" + student.pk + "']").length){
+            this.inputStudents.append(newOption).trigger('change');
+          }
+        })
+      })
+    },
+    inicializeOnTemplateSelected() {
+      {% if exam_template %}
+        this.selectedCategory = 3
+        this.selectedExamType = 'Template'
+        axios.get('{% url "exams:exam_api_detail" exam_template.id %}').then(response => {
+          let exam = response.data
+            let newOption = $(new Option(exam.name, exam.id, true, true));
+            newOption.data('data', { id: exam.id, text: exam.name, questions_count: exam.questions_count, status: exam.status, selected: true })
+            $('#id_exam').append(newOption).trigger('change');
+        })
+      {% endif %}
+    },
+    inicializeOnExamSelected() {
+      {% if exam %}
+        this.selectedCategory = 4
+        axios.get('{% url "exams:exam_api_detail" exam.id %}').then(response => {
+          let exam = response.data
+          let newOption = $(new Option(exam.name, exam.id, true, true));
+          newOption.data('data', { id: exam.id, text: exam.name, questions_count: exam.questions_count, status: exam.status, selected: true })
+          $('#id_exam').append(newOption).trigger('change');
+        })
+      {% endif %}
+    },
+    selectStudents(option, index) {
+      if(option == 'selectAll') {
+        $(`input:checkbox[data-classe=check${index}]`).prop('checked', true)
+      }
+      if(option == 'unselectAll') {
+        $(`input:checkbox[data-classe=check${index}]`).prop('checked', false)
+      }
+      this.studentsCount()
+    },
+
+    studentsCount() {
+      this.selectedStudentsCount = $(':checkbox[data-type=student]:checked').length + $('#id_students option:selected').length;
+    },
+    validateForm() {
+      self = this
+      application_today = moment($('#{{form.date.auto_id}}').val()).format('DD/MM/YYYY') == moment().format('DD/MM/YYYY')
+      start = $('#{{form.start.auto_id}}').val().toString()
+      end = $('#{{form.end.auto_id}}').val().toString()
+      this.formIsValid = true
+      
+      $('[data-validate-error={{form.start.auto_id}}]').text('')
+      $('[data-validate-error={{form.end.auto_id}}]').text('')
+      $('[data-validate-error={{form.deadline_to_request_review.auto_id}}]').text('')
+      
+      if(start && application_today) {
+          if(moment().add(2, 'minutes').toDate().getTime() > moment().hours(start.split(':')[0]).minutes(start.split(':')[1]).toDate().getTime()) {
+            $('[data-validate-error={{form.start.auto_id}}]').text(`O horário inicial da aplicação precisa ser no mínimo ${moment().add(2, 'minutes').format('HH:mm')}`)
+            this.formIsValid = false
+          }
+      }
+
+      if(application_today && start && end && end <= start) {
+        $('[data-validate-error={{form.end.auto_id}}]').text(`O horário final da aplicação deve ser maior que o horário inicial`)
+        this.formIsValid = false
+      }
+      
+      {% if user.client_has_wrongs %}
+        if(moment($('#{{form.deadline_to_request_review.auto_id}}').val()) <= moment($('#{{form.date.auto_id}}').val()) || moment($('#{{form.deadline_to_request_review.auto_id}}').val()) <= moment($('#{{form.student_stats_permission_date.auto_id}}').val()) ){
+          $('[data-validate-error={{form.deadline_to_request_review.auto_id}}]').text('O limite para solicitar correções deve ser maior que a data da aplicação e de liberação das notas')
+          this.formIsValid = false
+        }
+      {% endif %}
+    },
+    fetchStudentsNotInClasse: async function() {
+      let studentsClasses = []
+      this.classes.forEach((classe) => classe.students.forEach((classeStudent) => studentsClasses.push(classeStudent)))
+      this.students.forEach((student) => {
+        if(!studentsClasses.find(e => e.id == student.id)) {
+          this.studentNotInClasse.push(student)
+        }
+      })
+      await this.studentNotInClasse
+    },
+  },
+  mounted: function() {
+
+    var self = this
+
+    if(self.categoryFromList){
+      if(self.categoryFromList == 'presential'){
+        self.selectedCategory = 3
+      }else{
+        self.selectedCategory = 2
+      }
+    }
+    var inputExam = $('#{{form.exam.auto_id}}').select2({closeOnSelect: false}), inputSchoolClass = $('#{{form.school_classes.auto_id}}').select2({closeOnSelect: false}), inputInspectors = $('#{{form.inspectors.auto_id}}').select2({closeOnSelect: false}), inputGrades = $('#id_grades').select2({ placeholder: "Selecione uma opção", allowClear: true, width: '100%', closeOnSelect: false})
+    var inputSystem = $('#id_system').select2({ placeholder: "Selecione uma opção", allowClear: true, })
+    var inputTurn = $('#id_turn').select2({ placeholder: "Selecione uma opção", allowClear: true, })
+    var inputStudents = $('#{{form.students.auto_id}}').select2({closeOnSelect: false})
+    self.inputStudents = inputStudents
+
+    inputSchoolClass.on('select2:select', (e) => {
+      axios.get(`{% url "students:students_list_api" %}?classe=${e.params.data.id}`).then((response) => {
+        if(response.data.length > 0) {
+          self.classes.push({id: e.params.data.id, name: e.params.data.name, students: response.data, unity_name: e.params.data.unity_name})
+        }
+      }).finally(() => {
+        self.studentsCount()
+      })
+    })
+
+    $('#id_inspectors_fiscallize').change(function() {
+      if($(this).prop('checked')) {
+        $('[data-verification="valid"]').hide(900)
+      } else {
+        $('[data-verification="valid"]').show(900);
+        this.inicialieOnTemplateSelected()
+      }
+    })
+    inputSchoolClass.on('select2:unselect', (e) => {
+      self.classes.splice(self.classes.indexOf(self.classes.find(classe => classe.id == e.params.data.id)), 1)
+      setTimeout(() => {
+        self.studentsCount()
+      }, 1000)
+
+    })
+
+    inputSchoolClass.on('select2:clear', (e) => {
+      self.classes = [], self.selectedStudentsCount = 0
+    })
+
+    inputStudents.on('select2:select select2:unselect select2:clear', (e) => { self.studentsCount() })
+
+    var quill2 = new Quill('#editor-container', {
+      modules: {
+        toolbar: [
+          ['bold', 'italic'],
+          ['link', 'blockquote', 'code-block', 'image'],
+          [{ list: 'ordered' }, { list: 'bullet' }]
+        ]
+      },
+      placeholder: 'Adicione as orientações que serão apresentados aos seus alunos',
+      theme: 'snow'
+    });
+    
+    $(document).ready(function(){
+      quill2.root.innerHTML = document.getElementById('id_orientations').value;
+    })
+  
+    let form = document.querySelector('form');
+    form.onsubmit = function() {
+        document.getElementById('id_orientations').value = quill2.root.innerHTML;
+    }
+    
+    inputSchoolClass.select2({
+      placeholder: 'Buscar pelo nome da turma...',
+      closeOnSelect: false,
+      minimumInputLength: 1,
+      allowClear: true,
+      escapeMarkup: function (text) {
+        return text;
+      },
+      ajax: {
+        url: function (params) {
+          return `{% url "classes:classes_list_api" %}?year={{year|force_escape}}`;
+        },
+        delay: 800,
+        data: function (params) {
+          return {
+            search: params.term
+          }
+        },
+        processResults: function(results) {
+            let new_results = $.map(results, function(element) {
+                element.text = element.name + " - " + element.unity_name
+                return element 
+            })
+            
+            return {
+                results: new_results,
+            }
+        }
+      },
+      templateSelection: (data) => {
+        if(data.text){
+          return `<span class="font-weight-bold">
+            <span class="mr-1">${data.text}</span>
+            <span class="text-muted">${data.unity_name}</span>
+            <span class="badge badge-primary font-weight-bold">${data.students_count} Alunos</span>
+            </span>`
+        }else{
+          return "Buscar pelo nome da turma..."
+        }
+      },
+      templateResult: (data) => {
+        if (data.text){
+        return `
+        <div class="row mb-0">
+          <div class="col-12 mb-0">
+            <div class="font-weight-bold">
+              ${data.text}
+              <span class="badge badge-primary font-weight-bold">${data.students_count} Alunos</span>
+              <p class="text-muted mb-0">${data.unity_name}</p>
+            </div>
+          </div>
+        `
+        } else{
+          return "Buscando..."
+        }
+      }
+    })
+    inputGrades.change((e) => {
+      if(e.target.value.length > 0) {  
+        self.classes = []
+        inputSchoolClass.val(null).trigger('change');
+        axios.get(`{% url "classes:classes_list_api" %}?year={{year|force_escape}}&grade=${$('#id_grades').val() != null ? $('#id_grades').val():''}&system=${$('#id_system').val() != null ? $('#id_system').val() : ''}&turn=${$('#id_turn').val() != null ? $('#id_turn').val() : ''}`).then(response => {
+          response.data.forEach(classe => {
+            this.classes.push({ id: classe.id, name: classe.name, students: classe.students, unity_name: classe.unity_name })
+            let newOption = $(new Option(classe.name, classe.id, true, true));
+            newOption.data('data', { id: classe.id, text: classe.name, students_count: classe.students_count, unity_name: classe.unity_name, selected: true })
+            inputSchoolClass.append(newOption).trigger('change');
+          })
+        })
+      }else{
+        self.classes = []
+        inputSchoolClass.val(null).trigger('change')
+      }
+    })
+
+    inputSystem.change((e) => inputGrades.trigger('change'))
+    inputTurn.change((e) => inputGrades.trigger('change'))
+
+    inputInspectors.select2({
+      placeholder: 'Buscar nome do fiscal...',
+      closeOnSelect: false,
+      minimumInputLength: 3,
+      ajax: {
+        url: '{% url "inspectors:inspectors_list_api" %}',
+        delay: 800,
+        data: function (params) {
+          return {
+            search: params.term
+          }
+        },
+        processResults: function(results) {
+            let new_results = $.map(results, function(element) {
+                element.text = element.name
+                return element 
+            })
+    
+            return {
+                results: new_results,
+            }
+        }
+      }
+    });
+    
+    inputStudents.select2({
+      placeholder: 'Buscar pelo nome do aluno...',
+      closeOnSelect: false,
+      minimumInputLength: 3,
+      allowClear: true,
+      escapeMarkup: function (text) {
+        return text;
+      },
+      ajax: {
+        url: '{% url "students:students_list_api" %}',
+        delay: 800,
+        data: function (params) {
+          return {
+            search: params.term
+          }
+        },
+        processResults: function(results) {
+            let new_results = $.map(results, function(element) {
+                element.text = element.name
+                return element 
+            })
+            return {
+                results: new_results,
+            }
+        }
+      },
+      templateSelection: (data) => {
+        
+        if(data.text) {
+          result = `<span class="font-weight-bold ">
+            <span>${data.text}</span>`
+    
+          if (data.classes){
+            result += "<p class='m-0'>"
+            data.classes.forEach(element => {
+              result += `<span class="badge badge-primary font-weight-bold mr-1">${element.name}</span>`
+            });
+            result += "</p>"
+          }
+          result += "</span>"
+          return result
+        }else{
+          return "Buscar pelo nome do aluno..."
+        }
+      },
+      templateResult: (data) => {
+        if(data.text){
+        result = `<span class="font-weight-bold">
+          <span class="mr-1">${data.text}</span>`
+    
+          if (data.classes){
+            result += "<p class='m-0'>"
+            data.classes.forEach(element => {
+              result += `<span class="badge mr-1 badge-primary font-weight-bold">${element.name}</span>`
+            });
+            result += "</p>"
+          }
+          result += "</span>"
+          return result
+        }else{
+          return "Buscar pelo nome do aluno..."
+        }
+      }
+    })
+    
+    inputExam.select2({
+      placeholder: 'Buscar pelo nome da prova...',
+      closeOnSelect: false,
+      minimumInputLength: 3,
+      escapeMarkup: function (text) {
+        return text;
+      },
+      ajax: {
+        url: function () {
+          url = self.selectedExamType == 'Exams' ? '{% url "exams:exams_api_list" %}':'{% url "exams:exams_template_api_list" %}'
+          return url + '?created_at__year={{year|force_escape}}'
+        },
+        delay: 800,
+        data: function (params) {
+          return {
+            search: params.term
+          }
+        },
+        processResults: function(results) {
+            let new_results = $.map(results, function(element) {
+                element.text = element.name
+                return element 
+            })
+            return {
+                results: new_results,
+            }
+        }
+      },
+      templateSelection: (data) => {
+        if(data.text) {
+          let text = `<span class="font-weight-bold"><span class="mr-1">${data.text}</span>`
+
+          if(data.status) {
+            text += `<span class="badge badge-primary font-weight-bold">${data.questions_count} Questões</span>
+            <span class="badge badge-primary font-weight-bold">${data.status}</span>
+            </span>`
+          }
+
+          return text
+          
+        } else {
+          return "Buscar pelo nome do caderno de provas..."
+        }
+      },
+      templateResult: (data) => {
+        if (data.text){
+          return `
+            <div class="row mb-0">
+              <div class="col-12 mb-0">
+                <div class="font-weight-bold">
+                  ${data.text}
+                  <span class="badge badge-primary font-weight-bold">${data.questions_count} Questões</span>
+                  <span class="badge badge-primary font-weight-bold">${data.status}</span>
+                </div>
+              </div>
+          `
+        } else {
+          return "Buscando caderno..."
+        }
+      }
+    });
+
+    $("#id_min_time_finish").mask('00:00:00')
+    $("#id_min_time_pause").mask('00:00:00')
+    $("#id_max_time_tolerance").mask('00:00:00')
+    
+    $("#id_date_end").prop("min", moment().format('YYYY-MM-DD'))
+    
+    {% if form.errors %}
+      setTimeout(() => {
+        $('label[class=text-danger]').hide()
+        this.validateForm()
+      }, 6000)
+    {% else %}
+      $("#{{form.student_stats_permission_date.auto_id}}").prop("min", moment().format('YYYY-MM-DDT00:00:00')).val(moment().add(1, 'days').format('YYYY-MM-DDT00:00:00'))
+      $("#{{form.date.auto_id}}").val(moment().format('YYYY-MM-DD'))
+      $("#{{form.deadline_to_request_review.auto_id}}").val(moment().add(7, 'days').format('YYYY-MM-DD'))
+    {% endif %}
+
+    if('{{form.exam.value|default_if_none:""|safe}}') {
+      axios.get('{% url "exams:exam_api_detail" pk=form.exam.value|default_if_none:"00000000-0000-0000-0000-000000000000"|safe %}').then(response => {
+        let exam = response.data
+        let newOption = $(new Option(exam.name, exam.id, true, true));
+        newOption.data('data', { id: exam.id, text: exam.name, questions_count: exam.questions_count, status: exam.status, selected: true })
+        inputExam.append(newOption).trigger('change');
+      })
+    }
+    $("#{{form.date.auto_id}}, #{{form.end.auto_id}}, #{{form.date_end.auto_id}}").on('change', () => {
+      if(this.selectedCategory == 4) {
+        $("#{{form.student_stats_permission_date.auto_id}}").prop("min", moment().format(`${$("#{{form.date_end.auto_id}}").val()}T${$("#{{form.end.auto_id}}").val()}`))
+      } else {
+        $("#{{form.student_stats_permission_date.auto_id}}").prop("min", moment().format(`${$("#{{form.date.auto_id}}").val()}T${$("#{{form.end.auto_id}}").val()}`))
+      }
+    })
+    if(this.classesPkOnly.length > 0) {
+      axios.get(`{% url "classes:classes_list_api" %}?year={{year|force_escape}}&id__in=${this.classesPkOnly}`).then(response => {
+        response.data.forEach(classe => {
+          this.classes.push({ id: classe.id, name: classe.name, students: classe.students })
+          let newOption = $(new Option(classe.name, classe.id, true, true));
+          newOption.data('data', { id: classe.id, text: classe.name, students_count: classe.students_count, unity_name: classe.unity_name, selected: true })
+          inputSchoolClass.append(newOption).trigger('change');
+        })
+      }).finally(() => { 
+        $("[data-type=student]").prop('checked', false)
+        this.students.forEach(student => $(`:checkbox[value=${student.id}]`).prop('checked', true))
+        this.fetchStudentsNotInClasse().then((e) => {
+        })
+      })
+    }
+    
+    if(this.studentsPkOnly.length > 0) {
+      
+      axios.get(`{% url "students:students_list_api" %}?id__in=${this.studentsPkOnly}`).then(response => {
+        response.data.forEach(student => {
+          let newOption = $(new Option(student.name, student.id, true, true));
+          newOption.data('data', { id: student.id, text: student.name, classes: student.classes, selected: true})
+          inputStudents.append(newOption).trigger('change');
+        })
+      }).finally(() => {
+        if(this.classesPkOnly.length > 0) {
+          inputStudents.val(null).trigger('change')
+          let students = []
+          this.studentNotInClasse.forEach((student) => students.push(student.id))
+          inputStudents.val(students).trigger('change')
+        }
+      })
+    }
+
+    if(this.inspectorsPkOnly.length > 0) {
+      let ids = ""
+      this.inspectorsPkOnly.forEach(id => ids += `pk=${id}&`)
+        
+      axios.get(`{% url "inspectors:inspectors_list_api" %}?id__in=${this.inspectorsPkOnly}`).then(response => {
+        response.data.forEach(inspectors => {
+          let newOption = $(new Option(inspectors.name, inspectors.id, true, true));
+          newOption.data('data', { id: inspectors.id, text: inspectors.name, selected: true })
+          inputInspectors.append(newOption).trigger('change');
+        })
+      })
+    }
+
+    this.inicializeOnTemplateSelected()
+    this.inicializeOnExamSelected()    
+  },
+
+})
+</script>
+{% endblock %}

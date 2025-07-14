@@ -1,0 +1,923 @@
+{% extends 'redesign/base.html' %}
+{% load permissions %}
+{% load cleaned_params %}
+{% load permissions %}
+
+{% load static %}
+
+{% block title %}Listagem de membros - Lize{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'administration/lib/datatables.net-responsive-dt/css/responsive.dataTables.min.css' %}">
+<link rel="stylesheet" href="https://unpkg.com/@sjmc11/tourguidejs/dist/css/tour.min.css">
+<style>
+  .tg-backdrop{
+    z-index: 9999 !important;
+  }
+  .select2-selection__choice__remove {
+    display: none !important;
+  }
+</style>
+
+{% endblock %}
+
+{% block content-fixed %}
+<div class="tw-flex tw-justify-center">
+  <div class="ard cer dcv tw-pb-8 tw-max-w-[100rem] tw-flex-1">
+    <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1.5rem; justify-content: space-between;">
+      <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-6 sm:tw-flex-nowrap tw-w-full">
+        <h1 class="tw-text-xl tw-font-semibold tw-leading-7 tw-text-[#374151] sm:tw-truncate sm:tw-text-2xl sm:tw-tracking-tight tw-mb-0">
+          Membros da coordenação
+        </h1>
+        <div class="tw-order-last tw-flex tw-w-full tw-gap-x-8 tw-text-sm tw-font-semibold tw-leading-6 sm:tw-order-none sm:tw-w-auto sm:tw-border-l sm:tw-border-gray-200 sm:tw-pl-6 sm:tw-leading-7">
+          <button data-tg-title="Filtros detalhados" data-tg-order="2" data-tg-tour="Agora você pode acessar a janela de filtros detalhados clicando aqui." data-tg-group="default-member-list" type="button" class="tw-flex tw-items-center tw-text-[#667085] tw-off-canvas-menu" id="headlessui-slider-over-button-1" data-toggle-off-canvas="#right-off-canvas" @click="filters.createNewFilter = false">
+            <span>Filtrar</span>
+            <span class="ml-2">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M5 10H15M2.5 5H17.5M7.5 15H12.5" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </button>
+        </div>          
+        <div class="tw-ml-auto tw-flex tw-gap-3">
+          {% if user|has_perm:'clients.can_export_coodinator' %}
+          <a href="{% url 'clients:export_members_csv' %}?{{request.GET.urlencode}}" @click="generateCSVFile($event.target.href)" class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold hover:tw-text-white tw-shadow-sm hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600" title="Exporte membros filtrados">
+            Exportar Membros
+          </a>
+          {% endif %} 
+          {% if user|has_perm:'clients.add_coordinationmember' %}
+            <a href="{% url 'clients:members_create' %}" class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600 hover:tw-text-white">
+              Cadastrar membro
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div data-tg-title="Filtros aplicados" data-tg-order="2" data-tg-tour='Visualize os filtros já aplicados nesta listagem, remova-os individualmente clicando no "x" ou todos de uma vez clicando em "Limpar filtro".' data-tg-group="default-member-list" v-if="filters.selected || {{ count_filters|default:0|safe }}" class="tw-bg-white sm:tw-rounded-lg tw-py-5 tw-border tw-border-[#E5E7EA] tw-mb-4">
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8" >
+        <div class="tw-flex tw-justify-between">
+          <div class="tw-flex tw-items-center">
+            <p class="tw-pl-4 tw-pr-3 tw-m-0 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900 sm:tw-pl-0">
+              Filtrando por
+            </p>
+            <div class="tw-space-x-2">
+              <span class="tw-inline-flex tw-items-center tw-gap-x-0.5 tw-rounded tw-bg-[#F9FAFA] tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-text-[#384250]" v-for="filter in filters.labels()">
+                <button type="button" class="tw-group tw-relative tw--ml-1 tw-h-3.5 tw-w-3.5 tw-rounded-sm hover:tw-bg-gray-500/20">
+                  <span class="tw-sr-only">Remove</span>
+                  <svg viewBox="0 0 14 14" class="tw-h-3.5 tw-w-3.5 tw-stroke-gray-700/50 group-hover:tw-stroke-gray-700/75">
+                    <path d="M4 4l6 6m0-6l-6 6" />
+                  </svg>
+                  <span class="tw-absolute tw--inset-1"></span>
+                </button>
+                ${ filter.label }<template v-if="filter.showValues">:<span v-if="!filter.showCount">${ filter.values.join(', ') }</span><span v-else>${ filter.values.length }</span></template>
+              </span>
+            </div>
+          </div>
+          <div class="tw-flex tw-items-center">
+            <button type="button" class="tw-text-left tw-text-sm tw-font-semibold tw-text-[#667085] tw-flex tw-items-center" @click="cleanFilter">
+              Limpar filtro
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="tw-ml-2">
+                <path d="M15 5L5 15M5 5L15 15" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- main -->
+    <div class="tw-bg-white sm:tw-rounded-lg tw-pt-5 tw-border tw-border-[#E5E7EA]">
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8">
+        <div class="tw-flow-root">
+          <div class="tw--mx-4 tw--my-2 tw-overflow-x-auto sm:tw--mx-6 lg:tw--mx-8">
+            <div class="tw-inline-block tw-min-w-full tw-py-2 tw-align-middle sm:tw-px-6 lg:tw-px-8">
+              <div class="tw-relative">
+                <div v-if="selectionList.length > 0" class="tw-absolute tw-top-0 tw-left-14 tw-flex tw-h-12 tw-items-center tw-space-x-3 tw-bg-white sm:tw-left-12">
+                  <button type="button" class="tw-inline-flex tw-items-center tw-rounded tw-bg-white tw-px-2 tw-py-1 tw-text-sm tw-font-semibold tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 disabled:tw-cursor-not-allowed disabled:tw-opacity-30 disabled:hover:tw-bg-white" @click="disableAllSelected()">Remover selecionadas</button>
+                </div>
+                <table class="tw-min-w-full tw-min-h-[172px] tw-table-fixed tw-divide-y tw-divide-gray-300">
+                  <thead>
+                    <tr>
+                      <th data-tg-title="Selecione vários" data-tg-order="2" data-tg-tour="Selecione vários membros ao mesmo tempo e aplique ações em massa." data-tg-group="default-member-list" scope="col" class="tw-relative tw-px-7 sm:tw-w-12 sm:tw-px-6">
+                        <input type="checkbox" class="tw-absolute tw-left-4 tw-top-1/2 tw--mt-2 tw-h-4 tw-w-4 tw-rounded tw-border-gray-300 tw-text-primary-600 focus:tw-ring-primary-600" :checked="isIndeterminate || selectionList.length === members.length" :indeterminate.prop="isIndeterminate" @change="selectionList = $event.target.checked ? members.map((e) => e.pk) : []" />
+                      </th>
+                      <th scope="col" class="tw-min-w-[12rem] tw-py-3.5 tw-pr-3 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900">Nome</th>
+                      <th scope="col" class="tw-px-3 tw-py-3.5 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900">Unidades</th>
+                      <th scope="col" class="tw-relative tw-py-3.5 tw-pl-3 tw-pr-4 sm:tw-pr-3">
+                        <span class="tw-sr-only">Ações</span>
+                      </th>
+                      <th scope="col" class="tw-relative tw-py-3.5 tw-pl-3 tw-pr-4 sm:tw-pr-3">
+                        <span class="tw-sr-only">Opções</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody class="tw-divide-y tw-divide-gray-200 tw-bg-white">
+                    {% for member in object_list %}
+                      <tr id="tr-{{ member.pk }}" :class="[selectionList.includes('{{ member.pk }}') && 'bg-gray-50']">
+                        <td class="tw-relative tw-px-7 sm:tw-w-12 sm:tw-px-6">
+                            <div v-if="selectionList.includes('{{ member.pk }}')" class="tw-absolute tw-inset-y-0 tw-left-0 tw-w-0.5 tw-bg-primary-600"></div>
+                            <input type="checkbox" class="tw-absolute tw-left-4 tw-top-1/2 tw--mt-2 tw-h-4 tw-w-4 tw-rounded tw-border-gray-300 tw-text-primary-600 focus:tw-ring-primary-600" value="{{ member.pk }}" v-model="selectionList" />
+                        </td>
+                        <td :class="['tw-py-4 tw-pr-3 tw-text-sm tw-font-medium', selectionList.includes('{{ member.pk }}') ? 'tw-text-primary-600' : 'tw-text-gray-900']">
+                          <div class="tw-font-medium tw-text-gray-900 tw-flex tw-flex-col tw-gap-1">
+                            <span>{{ member.name }}</span>
+                            <span class="tw-text-gray-500">{{ member.email }}</span>
+                          </div>
+                        </td>
+                        <td class="tw-whitespace-nowrap tw-px-3 tw-py-4 tw-text-sm">
+                          {% include 'includes/tooltip.html' with list=member.get_unities_data shown_number=1 object_attr="name" object_total_attr="coordinations_in_unity" object_total_count_class="tw-bg-gray-500 tw-text-white tw-rounded-full d-flex align-items-center justify-content-center mx-2" object_class="tw-inline-flex tw-px-4 tw-items-center tw-justify-center tw-rounded-full tw-border-gray-300 tw-border-2 py-1" more_objects_class="w-inline-flex tw-items-center tw-justify-center tw-rounded-full tw-border-gray-300 px-2 tw-border-2 py-1" %}
+                        </td>
+                        <td class="tw-pl-4">
+                          <div class="tw-flex tw-gap-3">
+                            {% if user|has_perm:'clients.change_coordinationmember' and member.is_active %}
+                              <a 
+                              {% if forloop.counter == 1  %}
+                              data-tg-title="Revise os itens" data-tg-order="2" data-tg-tour="Acesse rapidamente a edição de membros." data-tg-group="default-member-list"
+                              {% endif %}
+                                href="{% url 'clients:members_update' member.pk %}" class="tw-rounded-full tw-bg-[#F9FAFA] tw-p-2 tw-text-primary-600 tw-shadow-sm hover:tw-bg-[#fff4ec] focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:outline-offset-2 focus-visible:tw-outline-[#ffdec7]" data-toggle="tooltip" data-placement="top" title="Editar Membro">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="tw-h-5 tw-w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              </a>
+                            {% endif %}
+                            {% if user|has_perm:'accounts.can_change_permissions' and member.is_active %}
+                              <a href="{% url 'accounts:user_permissions' member.pk %}" class="tw-rounded-full tw-bg-[#F9FAFA] tw-p-2 tw-text-primary-600 tw-shadow-sm hover:tw-bg-[#fff4ec] focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:outline-offset-2 focus-visible:tw-outline-[#ffdec7]" data-toggle="tooltip" data-placement="top" title="Editar permissões">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="tw-h-5 tw-w-5" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
+                                  <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              </a>
+                            {% endif %}
+                          </div>
+                        </td>
+                        <td>
+                          <div class="tw-flex tw-gap-3">
+                            <div class="{% if object_list.count == 1 %} dropup {% else %} dropdown {% endif %}">
+                              <button class="tw-inline-flex tw-w-fit tw-justify-center tw-gap-x-1.5 tw-rounded-md tw-bg-white tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-[#667085] tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50" type="button" id="dropdownMenuButton-{{ member.pk }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Opções
+                                <svg class="tw--mr-1 tw-h-5 tw-w-5 tw-text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                  <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                                </svg>
+                              </button>
+                              <div class="dropdown-menu dropdown-menu-right tw-absolute tw-right-0 tw-z-10 tw-mt-2 tw-origin-top-right tw-divide-y tw-divide-gray-100 tw-rounded-md tw-bg-white tw-shadow-lg tw-ring-1 tw-ring-black tw-ring-opacity-5 focus:tw-outline-none tw-text-inherit tw-m-0 tw-p-0 tw-border-0" aria-labelledby="dropdownMenuButton-{{ exam.pk }}" style="font-size: inherit;">
+                                <div class="tw-flex tw-gap-1">
+                                <div class="tw-py-1" role="none">
+                                  <p class="tw-px-4" style="font-size: 10px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Inter UI', Roboto, sans-serif; letter-spacing: .7px; color: #8392a5; text-transform: uppercase;">
+                                    Geral
+                                  </p>
+                                  {% if user|has_perm:'clients.change_coordinationmember' and member.is_active %}
+                                    <a href="{% url 'clients:members_update' member.pk %}" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" id="menu-item-2">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file" style="margin-right: 0.5rem;"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                                      Editar
+                                    </a>
+                                  {% endif %}
+                                  {% if user|has_perm:'accounts.can_change_permissions' and member.is_active %}
+                                    <a href="{% url 'accounts:user_permissions' member.pk %}" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;" stroke-linecap="round" stroke-linejoin="round" >
+                                        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>
+                                      </svg>
+                                      Permissões
+                                    </a>
+                                  {% endif %}
+                                  {% if user|has_perm:'clients.delete_coordinationmember' %}
+                                    {% if member.is_active %}
+                                      <a href="javascript:void(0)" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" id="menu-item-6" @click="disableMember('{{ member.pk }}')">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" style="margin-right: 0.5rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-lock-keyhole"><circle cx="12" cy="16" r="1"/><rect x="3" y="10" width="18" height="12" rx="2"/><path d="M7 10V7a5 5 0 0 1 10 0v3"/></svg>
+                                        Desativar Usuário
+                                      </a>
+                                    {% else %}
+                                      <a href="javascript:void(0)" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" id="menu-item-6" @click="activateMember('{{ member.pk }}')">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" style="margin-right: 0.5rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-unlock-keyhole"><circle cx="12" cy="16" r="1"/><rect x="3" y="10" width="18" height="12" rx="2"/><path d="M7 10V7a5 5 0 0 1 9.33-2.5"/></svg>
+                                        Ativar Usuário
+                                      </a>
+                                    {% endif %}
+                                  {% endif %}
+                                  {% if member.is_active %}
+                                    <a href="javascript:void(0)" @click="reset('{% url 'clients:members_password_reset' member.pk %}?{% if params %}{{params}}{% endif %}', '{{member.email}}')" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;"  stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/>
+                                      </svg>
+                                      Resetar Senha
+                                    </a>
+                                  {% endif %}
+                                  {% if user|has_perm:'accounts.can_use_hijack' and member.is_active %}
+                                    <form action="{% url 'core:hijack-login-user' %}" method="POST" class="tw-flex tw-items-center ">
+                                      {% csrf_token %}
+                                      <input type="hidden" name="user_pk" value="{{ member.pk }}">
+                                      <input type="hidden" name="next" value="{{ request.path }}">
+                                      <button type="submit" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke-width="2" style="margin-right: 0.5rem;" stroke-linecap="round" stroke-linejoin="round" >
+                                          <path d="M6 17C6 17.93 6 18.395 6.10222 18.7765C6.37962 19.8117 7.18827 20.6204 8.22354 20.8978C8.60504 21 9.07003 21 10 21H16.2C17.8802 21 18.7202 21 19.362 20.673C19.9265 20.3854 20.3854 19.9265 20.673 19.362C21 18.7202 21 17.8802 21 16.2V7.8C21 6.11984 21 5.27976 20.673 4.63803C20.3854 4.07354 19.9265 3.6146 19.362 3.32698C18.7202 3 17.8802 3 16.2 3H10C9.07003 3 8.60504 3 8.22354 3.10222C7.18827 3.37962 6.37962 4.18827 6.10222 5.22354C6 5.60504 6 6.07003 6 7M12 8L16 12M16 12L12 16M16 12H3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        Logar com o membro
+                                      </button>
+                                    </form>
+                                  {% endif %}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                        </td>
+                      </tr>
+                    {% empty %}
+                      <tr>
+                        <td colspan="4"><p class="tw-py-4">Nenhum membro encontrado</p></td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% include 'redesign/includes/pagination.html' %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content-fixed %}
+
+{% block slide-over %}
+<div class="tw-relative tw-z-[1000] tw-off-canvas tw-off-canvas-right tw-invisible" aria-labelledby="slide-over-title" role="dialog" aria-modal="true" id="right-off-canvas">
+  <div class="tw-fixed tw-inset-0 tw-bg-[#9BA3AF] tw-bg-opacity-60 tw-transition-opacity"></div>
+  <div class="tw-fixed tw-inset-0 tw-overflow-hidden">
+    <div class="tw-absolute tw-inset-0 tw-overflow-hidden">
+      <div class="tw-pointer-events-none tw-fixed tw-inset-y-0 tw-right-0 tw-flex tw-max-w-full tw-pl-10" v-click-outside="onClickOutsideFilters">
+        <div class="tw-pointer-events-auto tw-w-screen tw-max-w-xs" v-if="filters.list.length > 0">
+          <div class="tw-flex tw-h-full tw-flex-col tw-overflow-y-scroll tw-bg-[#F9FAFA] tw-py-6 tw-shadow-xl">
+            <div class="tw-px-4 sm:tw-px-6">
+              <h2 class="tw-text-base tw-font-semibold tw-leading-6 tw-text-gray-900">
+                Filtros salvos
+              </h2>
+            </div>
+            <div class="tw-px-4 sm:tw-px-6 tw-mb-5">
+              <label for="id-search-filter" class="tw-sr-only">Pesquisar</label>
+              <div class="tw-relative tw-mt-6 tw-flex-1">
+                <div class="tw-relative tw-mt-2 tw-rounded-md tw-shadow-sm">
+                  <input type="text" name="search-filter" id="id-search-filter" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pr-10 tw-text-gray-900 tw-bg-transparent tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" placeholder="Pesquisar filtro" v-model="searchFilter" />
+                  <div class="tw-pointer-events-none tw-absolute tw-inset-y-0 tw-right-0 tw-flex tw-items-center tw-pr-3">
+                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="tw-h-5 tw-w-5 tw-text-gray-400" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="tw-space-y-3 tw-px-4 sm:tw-px-6">
+              <div class="tw-bg-white tw-border tw-rounded" v-for="filter in filteredList">
+                <div class="tw-px-2 tw-py-5 sm:tw-px-4">
+                  <div class="tw-flex tw-space-x-3 tw-mb-3">
+                    <div class="tw-min-w-0 tw-flex-1">
+                      <p class="tw-text-sm tw-font-semibold tw-text-gray-900">
+                        ${ filter.name }
+                      </p>
+                    </div>
+                    <div class="tw-flex tw-flex-shrink-0 tw-self-center">
+                      <div class="tw-relative tw-inline-block tw-text-left">
+                        <button type="button" class="tw--m-2 tw-flex tw-items-center tw-rounded-full tw-p-2 tw-text-gray-400 hover:tw-text-gray-600" :id="`dropdownMenuButton-${ filter.id }`" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                          <span class="tw-sr-only">Open options</span>
+                          <svg class="tw-h-5 tw-w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM10 8.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM11.5 15.5a1.5 1.5 0 10-3 0 1.5 1.5 0 003 0z" />
+                          </svg>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right tw-absolute tw-right-0 tw-z-10 tw-mt-2 tw-w-56 tw-origin-top-right tw-rounded-md tw-bg-white tw-shadow-lg tw-ring-1 tw-ring-black tw-ring-opacity-5 focus:tw-outline-none" role="menu" aria-orientation="vertical" :aria-labelledby="`dropdownMenuButton-${ filter.id }`" tabindex="-1">
+                          <div class="tw-py-1" role="none">
+                            <button type="button" class="tw-text-gray-700 tw-flex tw-px-4 tw-py-2 tw-text-sm tw-w-full hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" id="menu-0-item-0" @click="applyFilter(`${filter.fullUrl}&selected_filter=${filter.id}`)">
+                              <span>Aplicar filtro</span>
+                            </button>
+                            <button type="button" class="tw-text-gray-700 tw-flex tw-px-4 tw-py-2 tw-text-sm tw-w-full hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" id="menu-0-item-1" @click="removeDefaultFilter(filter)">
+                              <span>Deletar filtro</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="tw-space-y-2">
+                    <span class="tw-inline-flex tw-items-center tw-justify-between tw-gap-x-0.5 tw-rounded-md tw-bg-[#F9FAFA] tw-px-3 tw-py-2 tw-text-sm tw-font-medium tw-text-[#667085] tw-w-full" v-for="filter in filters.parseParamsInLabels(filter.params)" v-html="filter" v-if="filter.length">
+                      <!-- <span>Disciplina do caderno</span><span>1</span> -->
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tw-pointer-events-auto tw-w-screen tw-max-w-md">
+          <div class="tw-flex tw-h-full tw-flex-col tw-divide-y tw-divide-gray-200 tw-bg-white tw-border-l">
+            <div class="tw-h-0 tw-flex-1 tw-overflow-y-auto">
+              <div class="tw-px-4 tw-pt-6 sm:tw-px-6">
+                <div class="tw-flex tw-items-center tw-justify-between">
+                  <h2 class="tw-text-base tw-font-semibold tw-leading-6 tw-text-gray-900" id="slide-over-title">
+                    Filtrar membros
+                  </h2>
+                  <div class="tw-ml-3 tw-flex tw-h-7 tw-items-center">
+                    <button type="button" class="tw-relative tw-rounded-md tw-bg-white tw-text-gray-400 hover:tw-text-gray-500 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-primary-500 focus:tw-ring-offset-2 tw-off-canvas-close" id="headlessui-slider-over-close-button-1">
+                      <span class="tw-absolute tw--inset-2.5"></span>
+                      <span class="tw-sr-only">Close panel</span>
+                      <svg class="tw-h-6 tw-w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="tw-mt-1">
+                  <p class="tw-text-sm tw-text-gray-500">
+                    Adicione abaixo os filtros que você deseja aplicar na listagem.
+                  </p>
+                </div>
+              </div>
+              <form id="filterForm" method="GET" class="tw-flex tw-flex-1 tw-flex-col tw-justify-between">
+                <div class="tw-divide-y tw-divide-gray-200 tw-px-4 sm:tw-px-6">
+                    <div class="tw-space-y-6 tw-pb-5 tw-pt-6">
+                        <div>
+                          <label for="member_name_email_id" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Nome ou e-mail</label>
+                          <div class="tw-mt-2">
+                              <input type="text" id="member_name_email_id" name="q_name_email" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" value="{{ q_name_email }}" placeholder="Digite o nome ou email do membro" />
+                          </div>
+                        </div>
+                        <div>
+                          <label for="coordination_id" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Coordenação</label>
+                          <div class="tw-mt-2">
+                              <select id="coordination_id" name="q_coordination" class="tw-mt-2 tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pl-3 tw-pr-10 tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" multiple="multiple">
+                                {% for coordination in coordinations %}
+                                <option value="{{coordination.pk}}" {% if coordination.pk|stringformat:'s' in q_coordination %}selected="selected"
+                                  {% endif %}>
+                                  {{ coordination }}
+                                </option>
+                                {% endfor %}
+                              </select>
+                          </div>
+                        </div>
+                        <div class="custom-control custom-switch" >
+                          <input {% if q_deactivated %}checked="checked"{% endif %} type="checkbox" id="q_deactivated_id" name="q_deactivated" class="custom-control-input">
+                          <label class="custom-control-label" for="q_deactivated_id">Apenas membros desativados</label>
+                        </div>
+                    </div>
+                </div>
+              </form>
+            </div>
+            <div class="tw-flex tw-flex-wrap tw-space-y-3 sm:tw-space-x-3 sm:tw-space-y-0 tw-px-4 tw-py-4">
+              <button type="submit" class="tw-inline-flex tw-w-full tw-flex-shrink-0 tw-items-center tw-justify-center tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600 sm:tw-flex-1" v-if="!filters.createNewFilter" form="filterForm">
+                Aplicar filtro
+              </button>
+              <template v-if="filters.selected">
+                <button type="button" class="tw-inline-flex tw-w-full tw-flex-1 tw-items-center tw-justify-center tw-rounded-md tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-primary-600 tw-border tw-border-primary-600 tw-shadow-sm hover:tw-text-white hover:tw-bg-primary-600" @click="saveFilter(filters.selected)">
+                  Atualizar filtro padrão
+                </button>
+              </template>
+              <template v-else>
+                <button type="button" class="tw-inline-flex tw-w-full tw-flex-1 tw-items-center tw-justify-center tw-rounded-md tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-primary-600 tw-border tw-border-primary-600 tw-shadow-sm hover:tw-text-white hover:tw-bg-primary-600" @click="saveFilter()">
+                  Criar filtro padrão
+                </button>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock slide-over %}
+
+{% block js-additional %}
+  <script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+  <script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.20/lodash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+  <script src="{% static 'js/tippy/popper.min.js' %}"></script>
+  <script src="{% static 'js/tippy/tippy.min.js' %}"></script>
+  <script src="{% static 'administration/lib/datatables.net-responsive-dt/js/responsive.dataTables.min.js' %}"></script>
+  <script src="{% static 'administration/lib/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+  <script src="https://unpkg.com/@sjmc11/tourguidejs/dist/tour.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+    var app = new Vue({
+      delimiters: ['${', '}'],
+      components: {
+        {% include 'includes/components/vue-filters.html' %}
+      },
+      el: '#app',
+      data: {
+        members: [
+          {% for member in object_list %}
+            { pk: "{{ member.pk }}" },
+          {% endfor %}
+        ],
+        getMemberByPk(pk) {
+          return this.members.find((member) => member.pk === pk);
+        },
+        updateStatusFetchStatus: 'idle',
+        searchFilter: '',
+        filters: {
+          selected: null,
+          list: [],
+          createNewFilter: false,
+          selectedParams: '',
+          parseParamsInLabels(params) {
+            let query = {}, labels = [];
+            let pairs = (params[0] === '?' ? params.substr(1) : params).split('&');
+            for (var i = 0; i < pairs.length; i++) {
+              var pair = pairs[i].split('=');
+              query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+            }
+            for(key in query) {
+              if(query[key]) {
+                const count = params.match(new RegExp(`\\b(${key})\\b`, 'g')).length;
+                let input = $(`[name="${key}"]`), inputId = input.attr('id'), label = `${$(`[for="${inputId}"]`).text()}`
+                if(input.prop('type') == 'select-multiple') {
+                  label += `: <span class="badge badge-dark rounded-circle">${count}</span>`
+                } else {
+                  if(input.prop('type') == 'select-one') {
+                    label += `: ${input.find(`option[value=${query[key]}]`).text()}`
+                  }
+                  if(input.prop('type') == 'text') {
+                    label += `: ${query[key]}`
+                  }
+                }
+                labels.push(label)
+              }
+            }
+            return labels
+          },
+          labels() {
+            let labels = []
+            
+            $('#filterForm').find('select, input').each((index, input) => {
+              let values = [], showValues = true, showCount = false
+              if(input.id) {
+                if(input.type.includes('select')  ) {
+                  if(input.type == 'select-multiple') {
+                    showCount = true
+                  }
+                  values = $(`#${input.id} option:selected`).toArray().map(item => item.text)
+                }
+                else if(input.type == 'checkbox' || input.type == 'radio') {
+                  value = $(`#${input.id}:checked`).val()
+                  if(value == 'on' || value === true) {
+                    showValues = false
+                    values.push(true)
+                  }
+                } else {
+                  values.push($(`#${input.id}`).val())
+                }
+                if(values.filter(value => value).length) {
+                  labels.push({
+                    label: $(`[for=${input.id}]`).text(),
+                    showValues: showValues,
+                    showCount: showCount,
+                    values: values,
+                  })
+                }
+              }
+            })
+            return labels
+          },
+        },
+        selectionList: [],
+      },
+      methods: {
+        reset(url, email) {
+          Swal.fire({
+            title: 'Informação importante!',
+            html: `Você resetará o acesso do membro da equipe para os seguintes dados <br /> <br />
+                  <strong>Usuário:</strong> ${email} <br /><strong>Senha:</strong> ${email}`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Ok, Resetar!'
+            }).then((result) => {
+              if (result.isConfirmed) {
+                window.location.href = url
+              }
+          })
+        },
+        filterFormChanged() {
+          let params = ''
+          $('#filterForm').find('select, input').each((index, input) => {
+            if(input.id) {
+              if(input.type.includes('select')  ) {
+                let name = $(`#${input.id}`).attr('name')
+                let values = $(`#${input.id} option:selected`).toArray().map(item => item.value)
+                if(values.length){
+                  values.forEach((value, index) => {
+                    params += `${name}=${value}&`
+                  })
+                }
+              }else if(input.type == 'checkbox' || input.type == 'radio') {
+                name = $(`#${input.id}`).attr('name')
+                value = $(`#${input.id}:checked`).val()
+                if(value == 'on' || value === true) {
+                  params += `${name}=true&`
+                }
+              } else {
+                name = $(`#${input.id}`).attr('name')
+                value = $(`#${input.id}`).val()
+                if(value) {
+                  params += `${name}=${value}&`
+                }
+              }
+              
+            }
+          })
+          this.filters.selectedParams = params
+        },
+        cleanFilter() {
+          window.location.href = {% url 'clients:members_list' %};
+        },
+        applyFilter(url) {
+          window.location.href = url;
+        },
+        activeCancelSelection(param) {
+          if (param == true) {
+            $("#btn-remove").show();
+            $('.check-selection').show();
+            $("#btn-cancel-selection").show();
+            $("#btn-change-status").show();
+            $('.selectbox').show();
+            $("#btn-selection-all").hide();
+          } else {
+            $('.check-selection').hide();
+            $("#btn-remove").hide();
+            $("#btn-cancel-selection").hide();
+            $("#btn-change-status").hide();
+            $("#btn-selection-all").show();
+            $('.selectbox').hide().prop('checked', false)
+            this.selectionList = []
+          }
+        },
+        disableMember(pk){
+          Swal.fire({
+            title: 'Tem certeza?',
+            text: "Confirme que deseja desativar este membro.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sim, desabilitar!'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              urls = "{% url 'clients:disable-coordination-member' pk='00000000-0000-0000-0000-000000000000' %}"
+              axios.post(urls.replace("00000000-0000-0000-0000-000000000000", pk))
+              .then(response => {
+                Swal.fire({
+                  title: 'Sucesso!',
+                  text: "Membro desativado com sucesso.",
+                  icon: 'success',
+                  showConfirmButton: false,
+                  timer: 1500,
+                  timerProgressBar: true,
+                  toast: true,
+                  position: 'top-end',
+                })
+                $(`#tr-${pk}`).remove()
+              })
+            }
+          })
+        },
+        activateMember(pk){
+          Swal.fire({
+            title: 'Tem certeza?',
+            text: "Confirme que deseja ativar este membro.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sim, ativar!'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              urls = "{% url 'clients:active-coordination-member' pk='00000000-0000-0000-0000-000000000000' %}"
+              axios.post(urls.replace("00000000-0000-0000-0000-000000000000", pk))
+              .then(response => {
+                Swal.fire({
+                  title: 'Sucesso!',
+                  text: "Membro ativado com sucesso.",
+                  icon: 'success',
+                  showConfirmButton: false,
+                  timer: 1500,
+                  timerProgressBar: true,
+                  toast: true,
+                  position: 'top-end',
+                })
+                $(`#tr-${pk}`).remove()
+                this.cleanFilter()
+              })
+            }
+          })
+        },
+        disableAllSelected(){
+          if (this.selectionList.length > 0){
+            Swal.fire({
+              title: 'Tem certeza?',
+              text: "Confirme que deseja desativar todos os membros selecionados.",
+              icon: 'warning',
+              showCancelButton: true,
+              confirmButtonColor: '#3085d6',
+              cancelButtonColor: '#d33',
+              confirmButtonText: 'Sim, desabilitar!'
+            }).then((result) => {
+              if (result.isConfirmed) {
+                this.selectionList.forEach((item, index) => {
+                  urls = "{% url 'api2:disable-coordination-member' pk='00000000-0000-0000-0000-000000000000' %}"
+                  axios.post(urls.replace("00000000-0000-0000-0000-000000000000", item ))
+                  .then(response => {
+                    $(`#tr-${item}`).remove()
+                    $(".selectbox").prop("checked", false)
+                    this.selectionList = [];
+                  })
+                }) 
+              }
+            })   
+          } else {
+            Swal.fire(
+            'Atenção!',
+            'Não há membros selecionados.',
+            'warning'
+            )
+          }
+        },
+        getUrl(url, id) {
+          return url.replace("00000000-0000-0000-0000-000000000000", id)
+        },
+        getParamsSerialized() {
+          let params = new URL(document.location).searchParams;
+          return '?' + params.toString()
+        },
+        saveFilter(filter) {
+          Swal.fire({
+            title: this.filters.createNewFilter ? 'Nome para o filtro':'Nome do filtro',
+            text: 'Digite um nome para facilitar a localização do filtro personalizado',
+            input: 'text',
+            inputValue: this.filters.selected ? this.filters.selected.name:'',
+            focusConfirm: false,
+            confirmButtonText: this.filters.createNewFilter ? "Criar filtro":"Atualizar filtro",
+          }).then((result) => {
+            if(result.isConfirmed && result.value) {
+              if(filter) {
+                window.history.pushState({}, '', `?${this.filters.selectedParams}&selected_filter=${filter.id}`)
+                axios.patch(filter.urls.apiDetail, { name: result.value, params: this.filters.selectedParams}).then((response) => {
+                  this.alertTop('O filtro foi atualizado, e será aplicado')
+                  window.location.reload()
+                }).catch((e) => {
+                  this.alertTop('Ocorreu um erro ao tentar atualizar o filtro, tente novamente, caso o erro persista entre em contato com o suporte', 'error')
+                })
+                return
+              }
+              const newFilter = {
+                user: '{{user.id}}',
+                name: result.value,
+                url: '{{request.resolver_match.app_name}}:{{request.resolver_match.url_name}}',
+                params: this.filters.selectedParams,
+              }
+  
+              axios.post("{% url 'api:clients:custom-filters-list' %}", newFilter).then((response) => {
+                window.history.pushState({}, '', `?${this.filters.selectedParams}&selected_filter=${response.data.id}`)
+                this.alertTop('O filtro personalizado foi criado com sucesso.')
+                window.location.reload()
+              }).catch((e) => {
+                this.alertTop('Ocorreu um erro ao tentar atualizar o filtro, tente novamente, caso o erro persista entre em contato com o suporte', 'error')
+              })
+            }
+          })
+        },
+        alertTop(text) {
+          Swal.fire({
+            position: 'top-end',
+            text: text,
+            icon: 'success',
+            showConfirmButton: false,
+            timer: 1500,
+            toast: true,
+            timerProgressBar: true,
+          })
+        },
+        showToast(html, time = 1500) {
+          const wrapper = document.createElement('div');
+          wrapper.setAttribute('aria-live', 'assertive');
+          wrapper.classList.add('tw-pointer-events-none', 'tw-fixed', 'tw-inset-0', 'tw-flex', 'tw-items-end', 'tw-px-4', 'tw-py-6', 'sm:tw-items-start', 'sm:tw-p-6');
+          wrapper.innerHTML = `<div class="tw-flex tw-w-full tw-flex-col tw-items-center tw-space-y-4 sm:tw-items-end">${html}</div>`;
+          document.body.appendChild(wrapper);
+  
+          const progressBar = document.getElementById('toast-progressbar');
+          progressBar.style.display = 'flex';
+          progressBar.style.transition = `width ${time/1000}s linear 0s`;
+          setTimeout(function() { progressBar.style.width = '0%'; }, 1);
+          setTimeout(function() { wrapper.remove(); }, time);
+        },
+        getStatusClass(status) {
+          switch(status) {
+            case 'Em análise':
+              return 'bg-warning'
+            case 'Aberta':
+              return 'bg-warning'
+            case 'Fechada':
+              return 'bg-success'
+            case 'Revisão Gráfica':
+              return 'bg-primary'
+          }
+          return 'bg-info'
+        },
+        removeDefaultFilter(filter) {
+          Swal.fire({
+            title: "Confirmação",
+            icon: "info",
+            text: "Você tem certeza que deseja remover este filtro? a operação não poderá ser disfeita.",
+            showCancelButton: true,
+            confirmButtonText: 'Sim, confirmo!',
+            cancelButtonText: 'Cancelar',
+          }).then((result) => {
+            if(result.isConfirmed) {
+              axios.delete(filter.urls.apiDetail).then((response) => {
+                this.filters.list.splice(this.filters.list.indexOf(filter), 1)
+                if(this.filters.selected == filter) {
+                  this.filters.selected = null
+                }
+                this.alertTop('Filtro padrão removido com sucesso.')
+              }).catch((e) => {
+                this.alertTop('Ocorreu um erro ao tentar remover o filtro, tente novamente, caso o erro persista entre em contato com o suporte.')
+              })
+            }
+          })
+        },
+        onClickOutsideFilters(event) {
+          const target = event.target
+          const button = document.getElementById('headlessui-slider-over-button-1')
+  
+          const select2DropdownAbove = document.getElementsByClassName('select2-dropdown--above')[0]
+          const select2DropdownBelow = document.getElementsByClassName('select2-dropdown--below')[0]
+          if (select2DropdownAbove || select2DropdownBelow) {
+            return
+          }
+  
+          if (!(target === button || button.contains(target))) {
+            const rightOffCanvasContent = document.getElementById('right-off-canvas')
+            if (rightOffCanvasContent.classList.contains('tw-show')) {
+              rightOffCanvasContent.classList.remove('tw-show')
+            }
+          }
+        },
+        getPrintDefaults() {
+          axios.get("{% url 'api:clients:print-configs-list' %}").then((response) => {
+            this.printDefaults = response.data
+          }).finally(() => {
+            this.loadedPrintDefaults = true
+          })
+        },
+        generateCSVFile(link) {
+          Swal.fire({
+            title: "Gerando Exportação dos Dados",
+            html: "Estamos gerando o arquivo CSV com a lista de Membros da Coordenação, aguarde um momento.",
+            timerProgressBar: true,
+            showConfirmButton: false
+          
+      
+          });
+          var xhr = new XMLHttpRequest();
+          xhr.open('HEAD',link, true);
+          xhr.onreadystatechange = function() {
+              if (xhr.readyState === 4) {
+                  if (xhr.status === 200) {
+                    Swal.fire({
+                      icon: 'success',
+                      title: 'Download Concluído!',
+                      text: 'Seu arquivo CSV foi gerado com sucesso.',
+                    });
+                  } else {
+                    Swal.fire({
+                      icon: 'erro',
+                      title: 'Falha ao realizar Download!',
+                      text: 'Ocorreu um erro ao gerar sua exportação, por favor, tente novamente.',
+                    });
+                  }
+              }
+          };
+          xhr.send();
+        }
+      },
+      {% comment %} updated() {
+        tippy('.tooltips', {
+          placement: 'bottom',
+          allowHTML: true,
+          maxWidth: 500,
+        })
+      }, {% endcomment %}
+      mounted() {
+        self = this
+        
+        {% include 'help/includes/tour_guide.js' with group_guide_name='default-member-list' %}
+  
+        $("#headlessui-slider-over-button-1").click()
+  
+        $('#filterForm').find('input,select').change(this.filterFormChanged)
+        
+        this.activeCancelSelection()
+  
+        $("[data-selectall=true]").change((e) => {
+          if ($(e.target).prop("checked")) {
+            $(".selectbox").prop("checked", true)
+            setTimeout(() => {
+              $('.selectbox:checked').each((index, element) => { 
+                let id = $(element).attr('id')
+                if(id) {
+                  this.selectionList.push(id)
+                }
+              })
+            }, 200)
+          } else {
+            $('.selectbox').prop('checked', false)
+            this.selectionList = []
+          }
+        });
+  
+        $('#coordination_id').select2({
+          placeholder: "Selecione uma opção",
+          closeOnSelect: false,
+        });
+        $('.tw-off-canvas-menu').on('click', function (e) {
+          e.preventDefault();
+          var target = $(this).attr('data-toggle-off-canvas');
+          $(target).addClass('tw-show');
+        });
+    
+        $('.tw-off-canvas .tw-off-canvas-close').on('click', function (e) {
+          e.preventDefault();
+          $(this).closest('.tw-off-canvas').removeClass('tw-show');
+        })
+      
+        $(document).on('click touchstart', function (e) {
+          if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+            return
+          }
+          e.stopPropagation();
+          if (!$(e.target).closest('.tw-off-canvas-menu').length) {
+            var offCanvas = $(e.target).closest('.tw-off-canvas').length;
+            if (!offCanvas) {
+              $('.tw-off-canvas.tw-show').removeClass('tw-show');
+            }
+          }
+        });
+        
+        axios.get("{% url 'api:clients:custom-filters-list' %}?url={{request.resolver_match.app_name}}:{{request.resolver_match.url_name}}").then((response) => {
+          this.filters.list = response.data
+        }).finally(() => {
+          {% if selected_filter %}
+            this.filters.selected = this.filters.list.find(filter => filter.id == '{{selected_filter}}')
+          {% endif %}
+          if(this.filters.list.length) {
+            $('#datatableFilters').DataTable({
+              language: {
+                  url: "//cdn.datatables.net/plug-ins/1.10.22/i18n/Portuguese-Brasil.json"
+              },
+            });
+          }
+        }) 
+        
+        tippy('.tooltips', {
+          placement: 'bottom',
+          allowHTML: true,
+          maxWidth: 500,
+        })
+      },
+      computed: {
+        filteredList() {
+          return this.filters.list.filter(item =>
+            item.name.toLowerCase().includes(this.searchFilter.toLowerCase())
+          );
+        },
+        isIndeterminate() {
+          return this.selectionList.length > 0 && this.selectionList.length < this.members.length
+        },
+      },
+      directives: {
+        'click-outside': {
+          bind: function(el, binding, vNode) {
+            // Provided expression must evaluate to a function.
+            if (typeof binding.value !== 'function') {
+              const compName = vNode.context.name
+              let warn = `[Vue-click-outside:] provided expression '${binding.expression}' is not a function, but has to be`
+              if (compName) { warn += `Found in component '${compName}'` }
+  
+              console.warn(warn)
+            }
+            // Define Handler and cache it on the element
+            const bubble = binding.modifiers.bubble
+            const handler = (e) => {
+              if (bubble || (!el.contains(e.target) && el !== e.target)) {
+                binding.value(e)
+              }
+            }
+            el.__vueClickOutside__ = handler
+  
+            // add Event Listeners
+            document.addEventListener('click', handler)
+          },
+  
+          unbind: function(el, binding) {
+            // Remove Event Listeners
+            document.removeEventListener('click', el.__vueClickOutside__)
+            el.__vueClickOutside__ = null
+          }
+        }
+      },
+    })
+  </script>
+{% endblock js-additional %}

@@ -1,0 +1,132 @@
+<div class="col-12 col-sm-6 col-md-4 col-lg-3">
+    <div class="card card-event mb-2">
+        <div class="card-body pb-1 tx-13">
+            {% if application_student.application.get_category_display == 'Online' %}
+                <span class="badge badge-primary">Prova</span>
+            {% elif application_student.application.get_category_display == 'Lista de Exercício' %}
+                <span class="badge badge-success">Lista de Exercício</span>
+            {% endif %}
+            <h5 class="mb-0">
+                {{application.exam.name}}
+            </h5>
+            <p class="float-right">
+                {% if application.can_be_done_pc %}
+                <i class="fas fa-desktop"></i>
+                {% endif %}
+                {% if application.can_be_done_cell %}
+                <i class="fas fa-mobile-alt"></i>
+                {% endif %}
+                {% if application.can_be_done_tablet %}
+                <i class="fas fa-tablet-alt"></i>
+                {% endif %}
+
+            </p>
+
+            {% if application_student.application.get_category_display == 'Online' %}
+                <p class="mg-b-0">{{application.date}}</p>
+                <span class="tx-12 tx-color-03">de {{application.start}} até às {{application.end}}</span>
+            {% elif application_student.application.get_category_display == 'Lista de Exercício' %}
+                <p class="mg-b-0"><span class="font-weight-bold"> Encerra:</span> {{application.date_end|date:'d/m/Y'}} às {{application.end}}</p>
+                <h6 class="mb-0 mt-2">Progresso:</h6>
+                <div class="progress mb-3">
+                    <div class="progress-bar text-dark" role="progressbar" aria-valuenow="0" aria-valuemin="0"
+                        style="width: {{application_student.get_progress}}%;" :aria-valuenow="{{application_student.get_progress}}"
+                        aria-valuemax="100">
+                        {{application_student.get_progress}}%
+                    </div>
+                </div>              
+            {% endif %}
+
+        </div>
+        <div class="card-footer tx-13">
+            {% if application_student.application.get_category_display == 'Online' and not application_student.end_time and not application_student.is_blocked_by_tolerance and not application_student.application.is_time_finished %}
+                <a id="buttom-{{application.pk}}"
+                    href="{% url 'applications:applications_orientations_student' pk=application_student.pk %}"
+                    class="btn btn-primary btn-block font-weight-bold d-none">
+                    <i class="fas fa-pencil-alt"></i> Começar prova
+                </a>
+            {% endif %}
+            {% if application_student.application.get_category_display == 'Lista de Exercício' and not application_student.application.is_time_finished %}
+                <a id="buttom-{{application.pk}}" href="{% url 'applications:applications_homework_student' pk=application_student.pk %}" class="btn btn-success btn-block font-weight-bold d-none">
+                    <i class="fas fa-pencil-alt"></i> Começar Atividade
+                </a>
+            {% endif %}
+            
+                {% if application_student.application.get_category_display == 'Online' %}
+                    
+                    {% if application_student.end_time %}
+                        <button type="button" disabled="disabled" class="btn btn-danger disabled btn-block font-weight-bold">
+                            Aplicação já realizada
+                        </button>
+                    {% elif application_student.application.is_time_finished %}
+                        <button type="button" disabled="disabled" class="btn btn-danger disabled btn-block font-weight-bold">
+                            Horário de prova encerrado!
+                        </button>
+                    {% elif application_student.is_blocked_by_tolerance %}
+                        <button type="button" disabled="disabled" class="btn btn-danger disabled btn-block font-weight-bold">
+                            Tempo de tolerância esgotado!
+                        </button>
+                    {% else %}
+                        <span id="span-count-down-{{application.pk}}" class="d-none">
+                            <span class="text-muted">Liberação em:</span>
+                            <h5 id="count-down-{{application.pk}}" class="font-weight-bold">
+                                -
+                            </h5>
+                        </span>
+                    {% endif %}
+
+                {% elif application_student.application.get_category_display == 'Lista de Exercício' %}
+                        
+                    {% if application_student.application.is_time_finished %}
+                        <button type="button" disabled="disabled" class="btn btn-danger disabled btn-block font-weight-bold">
+                            Horário de prova encerrado!
+                        </button>
+                    {% endif %}
+
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    function countDown() {
+        var time = ""
+
+        $("#span-count-down-{{application.pk}}").toggleClass("d-none");
+
+        // var countDownDate = moment("{{application.date_time_start_tz|date:'Y-m-d H:i:s'}}", 'YYYY-MM-DD HH:mm:ss')
+        //     .toDate().getTime()
+
+        var countDownDate = moment("{{application_student.date_time_start_tz|date:'Y-m-d H:i:s'}}", 'YYYY-MM-DD HH:mm:ss')
+            .toDate().getTime()
+
+        var now_datetime = moment("{% now 'Y-m-d H:i:s' %}", 'YYYY-MM-DD HH:mm:ss')
+
+        var x = setInterval(function () {
+
+            var now = now_datetime.toDate().getTime()
+
+            var distance = countDownDate - now;
+
+            if (distance < 0) {
+                clearInterval(x);
+                $("#span-count-down-{{application.pk}}").toggleClass("d-none");
+                $("#buttom-{{application.pk}}").toggleClass("d-none");
+            } else {
+                var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                time = ('0' + hours).slice(-2) + ":" + ('0' + minutes).slice(-2) + ":" + ('0' + seconds).slice(-
+                    2);
+
+                $("#count-down-{{application.pk}}").html(time)
+
+                now_datetime = now_datetime.add(1, 'seconds')
+            }
+
+        }, 1000);
+    }
+
+    countDown();
+</script>

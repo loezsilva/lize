@@ -1,0 +1,869 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+{% load format_date_input %}
+
+{% block title %}Modificar aplicação - Lize{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<link rel="stylesheet" href="{% static 'administration/lib/quill/quill.snow.css' %}">
+<link href="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.css' %}" rel="stylesheet">
+<link href="{% static 'administration/assets/css/boostrap5.css' %}" rel="stylesheet">
+<style>
+  .disabled-input {
+    opacity: 0.9;
+    cursor: not-allowed;
+    pointer-events: none;
+    background: #f5f6fa;
+}
+</style>
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="{% url 'applications:applications_list' %}">APLICAÇÕES</a></li>
+          <li class="breadcrumb-item active" aria-current="page">EDITAR</li>
+        </ol>
+      </nav> 
+      <h4>Editar aplicação</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+<div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+  <nav class="ls" aria-label="Breadcrumb">
+    <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+      <li>
+        <div>
+          <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+              <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+            </svg>
+            <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+          </a>
+        </div>
+      </li>
+      <li>
+        <div class="ls yu">
+          <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+            <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+          </svg>
+          <a href="{% url 'applications:applications_list' %}?category=online" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Aplicações</a>
+        </div>
+      </li>
+      <li>
+        <div class="ls yu">
+          <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+            <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+          </svg>
+          <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Editar</a>
+        </div>
+      </li>
+    </ol>
+  </nav>
+  <div class="d-none d-md-block">
+    <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+      <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+    </a>
+  </div>
+</div>
+
+<div class="row">
+    <div class="col-md-9">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+              <div>
+                <h6 class="mg-b-5">Agende uma nova aplicação</h6>
+                <p class="tx-13 tx-color-03 mg-b-5">Informe os dados abaixo e agende sua aplicação</p>
+              </div>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="form-row">  
+                        <div class="form-group col-md-4">
+                          Data da aplicação
+                          <input type="date" name="date" id="id_date" class="form-control {% if not object.duplicate_application %} disabled-input{% endif %} " value="{{ form.instance.date|format_date_input }}">                          
+                        </div>         
+                        <div class="form-group col-md-4">
+                          {{ form.start.label }}
+                          {% render_field form.start class="form-control" type="time" %}
+                          <small class="form-text text-muted">
+                              {{ form.start.help_text }}
+                          </small>
+                          {% if form.start.errors %}
+                              <label class="text-danger">
+                              {{ form.start.errors.0 }}</label>
+                          {% endif %}
+                          
+                        </div>
+                        <div class="form-group col-md-4">
+                          {{ form.end.label }}
+                          {% render_field form.end class="form-control" type="time" %}
+                          <small class="form-text text-muted">
+                              {{ form.end.help_text }}
+                          </small>
+                          {% if form.end.errors %}
+                              <label class="text-danger">
+                              {{ form.end.errors.0 }}</label>
+                          {% endif %}
+                        </div>
+                    </div>
+                      
+                    {% if form.initial.category != 3 %}
+                      
+                      <div class="form-row {% if form.initial.category == 4 %}d-none{% endif %}">
+                          <div class="form-group col-md-4">
+                            {{ form.min_time_finish.label }}
+                            {% render_field form.min_time_finish class="form-control" placeholder="HH:MM:SS" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}"  %}
+                            <small class="form-text text-muted">
+                                {{ form.min_time_finish.help_text }}
+                            </small>
+                            {% if form.min_time_finish.errors %}
+                                <label class="text-danger">
+                                {{ form.min_time_finish.errors.0 }}</label>
+                            {% endif %}
+                          </div>
+                          <div class="form-group col-md-4">
+                            {{ form.min_time_pause.label }}
+                            {% render_field form.min_time_pause class="form-control" placeholder="HH:MM:SS" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}"  %}
+                            <small class="form-text text-muted">
+                                {{ form.min_time_pause.help_text }}
+                            </small>
+                            {% if form.min_time_pause.errors %}
+                                <label class="text-danger">
+                                {{ form.min_time_pause.errors.0 }}</label>
+                            {% endif %}
+                          </div>
+                          <div class="form-group col-md-4">
+                            {{ form.max_time_tolerance.label }}
+                            {% render_field form.max_time_tolerance class="form-control" placeholder="HH:MM:SS" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}"  %}
+                            <small class="form-text text-muted">
+                                {{ form.max_time_tolerance.help_text }}
+                            </small>
+                            {% if form.max_time_tolerance.errors %}
+                                <label class="text-danger">
+                                {{ form.max_time_tolerance.errors.0 }}</label>
+                            {% endif %}
+                          </div>
+                      </div>
+
+                    {% endif %}
+
+                    {% if form.initial.category == 4 %}      
+                        <div class="form-row">
+                          <div class="form-group col-md-4">
+                            {{ form.date_end.label }}
+                            <input type="date" required="required" name="date_end" id="id_date_end" class="form-control" value="{{form.date_end.value|format_date_input}}">
+                            <small class="form-text text-muted">
+                              {{ form.date_end.help_text }}
+                            </small>
+                            {% if form.date_end.errors %}
+                              <label class="text-danger">
+                              {{ form.date_end.errors.0 }}</label>
+                            {% endif %}
+                          </div>
+                        </div>
+                      {% endif %}
+                      
+                      <div class="form-group">
+                        <div class="custom-control custom-checkbox">
+                          <input
+                            type="checkbox"
+                            class="custom-control-input"
+                            id="{{ form.release_result_at_end.auto_id }}"
+                            name="{{ form.release_result_at_end.name }}"
+                            checked="{{ form.release_result_at_end.value }}"
+                            v-model="releaseResultAtEnd"
+                          />
+                          <label
+                            class="custom-control-label"
+                            for="{{ form.release_result_at_end.auto_id }}"
+                          >
+                            {{ form.release_result_at_end.label }}
+                          </label>
+                        </div>
+                      </div>
+
+                      <div class="form-row">
+                        <div class="form-group col-md-4">
+                          <label for="{{form.student_stats_permission_date.auto_id}}">{{ form.student_stats_permission_date.label }}</label>
+                          <input type="datetime-local" name="student_stats_permission_date" id="id_student_stats_permission_date" class="form-control" :required="!releaseResultAtEnd" :disabled="releaseResultAtEnd" />
+                          <small class="form-text text-muted">
+                            {{ form.student_stats_permission_date.help_text }}
+                          </small>
+                          {% if form.student_stats_permission_date.errors %}
+                            <label class="text-danger">
+                            {{ form.student_stats_permission_date.errors.0 }}</label>
+                          {% endif %}
+                        </div>
+                        
+                        {% if user.client_has_wrongs %}
+                          <div class="form-group col-md-4">
+                            <label for="{{form.deadline_to_request_review.auto_id}}">Date limite para o aluno solicitar correção da resposta</label>
+                            <input type="date" name="{{form.deadline_to_request_review.name}}" id="{{form.deadline_to_request_review.auto_id}}" class="form-control" value="{{form.deadline_to_request_review.value|format_date_input}}">
+                            <small class="form-text text-muted">
+                              {{ form.deadline_to_request_review.help_text }}
+                            </small>
+                            {% if form.deadline_to_request_review.errors %}
+                              <label class="text-danger">
+                              {{ form.deadline_to_request_review.errors.0 }}</label>
+                            {% endif %}
+                          </div>
+                        {% endif %}
+                        <div class="form-group col-md-4">
+                          <label for="{{form.deadline_for_correction_of_responses.auto_id}}">Data limite para os professores corrigirem as respostas</label>
+                          <div class="tw-flex tw-gap-1">
+                            <input type="date" name="{{form.deadline_for_correction_of_responses.name}}" id="{{form.deadline_for_correction_of_responses.auto_id}}" class="form-control" value="{{form.deadline_for_correction_of_responses.value|format_date_input}}">
+                            {% if user.client_allow_add_exception_deadline_correction_response %}
+                              <button type="button" class="tw-rounded-md tw-bg-primary-600 tw-p-1.5 tw-text-white tw-shadow-sm hover:tw-bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600" data-toggle="modal" data-target="#exampleModal">
+                                <svg class="tw-h-5 tw-w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                  <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+                                </svg>
+                              </button>
+                            {% endif %}
+                          </div>
+                          <small class="form-text text-muted">
+                            {{ form.deadline_for_correction_of_responses.help_text }}
+                          </small>
+                          {% for error in form.deadline_for_correction_of_responses.errors %}
+                            <label class="text-danger">{{ error }}</label>
+                          {% endfor %}
+                        </div>
+                        <div class="form-group col-md-4">
+                          <label for="{{form.deadline_for_sending_response_letters.auto_id}}">Data limite para envio dos cartões resposta</label>
+                          <input type="date" name="{{form.deadline_for_sending_response_letters.name}}" id="{{form.deadline_for_sending_response_letters.auto_id}}" class="form-control" value="{{form.deadline_for_sending_response_letters.value|format_date_input}}">
+                        <small class="form-text text-muted">
+                          {{ form.deadline_for_sending_response_letters.help_text }}
+                        </small>
+                        {% for error in form.deadline_for_sending_response_letters.errors %}
+                          <label class="text-danger">
+                          {{ error }}</label>
+                        {% endfor %}
+                        </div>
+                      </div>
+
+                      {% if form.initial.category != 3 and form.initial.category != 4 %}
+                        <div class="form-row mb-4">
+                          <div class="col-md-12">
+                            <div class="custom-control custom-switch ">
+                              {% render_field form.block_after_tolerance class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.block_after_tolerance.auto_id}}">
+                                <i class="fas fa-lock"></i>
+                                {{ form.block_after_tolerance.label }}</label>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.block_after_tolerance.help_text }}
+                              </small>
+                              {% if form.block_after_tolerance.errors %}
+                              <label class="text-danger">
+                                {{ form.block_after_tolerance.errors.0 }}
+                              </label>
+                              {% endif %}
+                            </div>
+                          </div>
+                        </div>                        
+                        <div class="form-row mb-3">
+                            <div class="col-md-4">
+                              <div class="custom-control custom-switch ">
+                                {% render_field form.can_be_done_pc class="custom-control-input" %}
+                                <label class="custom-control-label" for="{{form.can_be_done_pc.auto_id}}">
+                                  <i class="fas fa-desktop"></i>
+                                  {{ form.can_be_done_pc.label }}</label>
+                                <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                  {{ form.can_be_done_pc.help_text }}
+                                </small>
+                                {% if form.can_be_done_pc.errors %}
+                                <label class="text-danger">
+                                  {{ form.can_be_done_pc.errors.0 }}
+                                </label>
+                                {% endif %}
+                              </div>
+                            </div>
+
+                            <div class="col-md-4">
+                              <div class="custom-control custom-switch">
+                                {% render_field form.can_be_done_cell class="custom-control-input" %}
+                                <label class="custom-control-label" for="{{form.can_be_done_cell.auto_id}}">
+                                  <i class="fas fa-mobile-alt"></i>
+                                  {{ form.can_be_done_cell.label }}
+                                </label>
+                                <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                  {{ form.can_be_done_cell.help_text }}
+                                </small>
+                              {% if form.can_be_done_cell.errors %}
+                                  <label class="text-danger">
+                                    {{ form.can_be_done_cell.errors.0 }}
+                                  </label>
+                              {% endif %}
+                              </div>
+                            </div>
+
+                            <div class="col-md-4">
+                              <div class="custom-control custom-switch">
+                                  {% render_field form.can_be_done_tablet class="custom-control-input" %}
+                                  <label class="custom-control-label" for="{{form.can_be_done_tablet.auto_id}}">
+                                    <i class="fas fa-tablet-alt"></i>
+                                    {{ form.can_be_done_tablet.label }}</label>
+                                  <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                    {{ form.can_be_done_tablet.help_text }}
+                                  </small>
+                                {% if form.can_be_done_tablet.errors %}
+                                    <label class="text-danger">
+                                      {{ form.can_be_done_tablet.errors.0 }}
+                                    </label>
+                                {% endif %}
+                              </div>
+                            </div>
+                            
+                        </div>
+                      {% endif %}
+
+                      
+                      <div class="row mt-3">
+                        <div class="col-12">
+                          <div class="custom-control custom-switch">
+                              {% render_field form.show_result_only_for_started_application class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.show_result_only_for_started_application.auto_id}}">
+                                <i  class="fas fa-tv"></i>
+                                {{ form.show_result_only_for_started_application.label }}</label>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.show_result_only_for_started_application.help_text }}
+                              </small>
+                            {% if form.show_result_only_for_started_application.errors %}
+                                <label class="text-danger">
+                                  {{ form.show_result_only_for_started_application.errors.0 }}
+                                </label>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                    
+                      {% if user.client_has_template and form.initial.category != 4 %}
+                        <div class="form-row">
+                          <div class="form-group col-12 mb-0">
+                            Escolha o tipo de exame
+                            <div class="d-flex">
+
+                              <input type="radio" name="exam_type" value="Exams" class="btn-check" id="exam_type_exam" autocomplete="off" checked>
+                              <label class="btn btn-outline-primary btn-sm mt-1 mr-1"
+                                for="exam_type_exam"> <i class="fas fa-file-alt"></i> Caderno de Prova</label>
+
+                              <input type="radio" name="exam_type" value="Templates" class="btn-check" id="exam_type_template" autocomplete="off">
+                              <label class="btn btn-outline-primary btn-sm mt-1 ml-1"
+                                for="exam_type_template"> <i class="fas fa-grip-vertical"></i> Gabarito avulso</label>
+                            </div>
+                            <small class="form-text text-muted">
+                              {{ form.category.help_text }}
+                            </small>
+                            {% if form.category.errors %}
+                            <label class="text-danger">
+                              {{ form.category.errors.0 }}
+                            </label>
+                            {% endif %}
+                          </div>
+                        </div>
+                      {% endif %}
+
+                      <div id="exam-select" class="form-group">
+                          <div id="type_exams">
+                            {{ form.exam.label }}
+                          </div>
+                          <label for="id_exam" class="mb-0 d-none" id="type_templates">
+                            Gabarito que será aplicado
+                          </label>
+
+                          <select 
+                              name="{{ form.exam.html_name }}"
+                              id="{{ form.exam.id_for_label }}"
+                              class="form-control"
+                          >
+                          {% if form.exam.value %}
+                            <option value="{{ form.exam.value }}" selected>{{ form.instance.exam.name }}</option>
+                          {% endif %}
+                          </select>
+                          <small class="form-text text-muted">
+                              {{ form.exam.help_text }}
+                          </small>
+                          {% if form.exam.errors %}
+                              <label class="text-danger">
+                              {{ form.exam.errors.0 }}</label>
+                          {% endif %}
+                      </div>
+
+                      {% if form.initial.category == 2 %}
+                        <div class="form-group">
+                            <label for="">{{ form.orientations.label }}</label>
+                            <div id="editor-container" class="ht-200"></div>
+                            <small class="form-text text-muted">
+                              {{ form.orientations.help_text }}
+                            </small>
+                            {% render_field form.orientations %}
+                        </div>
+                        <div class="form-group">
+                            {{ form.subject.label }}
+                            <div data-label="Example" class="df-example demo-forms">
+                                {% render_field form.subject class="form-control" data-role="tagsinput" style="width: 100%;" %}
+                                <small class="form-text text-muted">
+                                  {{ form.subject.help_text }}
+                                </small>
+                                {% if form.subject.errors %}
+                                    <label class="text-danger">
+                                    {{ form.subject.errors.0 }}</label>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="form-row mb-3">
+                          <div class="col-md-4">
+                            <div class="custom-control custom-switch">
+                              {% render_field form.inspectors_fiscallize class="custom-control-input" %}
+                              <label class="custom-control-label" for="{{form.inspectors_fiscallize.auto_id}}">
+                                <i class="fa fa-users"></i>
+                                {{ form.inspectors_fiscallize.label }}</label>
+                              <small class="form-text text-muted mt-0" style="line-height: initial;">
+                                {{ form.inspectors_fiscallize.help_text }}
+                              </small>
+                              {% if form.inspectors_fiscallize.errors %}
+                              <label class="text-danger">
+                                {{ form.inspectors_fiscallize.errors.0 }}
+                              </label>
+                              {% endif %}
+                            </div>
+                          </div>
+                        </div>
+                        {% if form.initial.category != 4 %}
+                          <div data-verification="valid" class="form-group">
+                            {{ form.inspectors.label }}
+                            <select 
+                              name="{{ form.inspectors.html_name }}"
+                              id="{{ form.inspectors.id_for_label }}"
+                              class="form-control"
+                              multiple="multiple"
+                            >
+                            {% for inspector in form.instance.inspectors.all %}
+                              <option value="{{ inspector.pk }}" selected="selected">{{ inspector.name }}</option>
+                            {% endfor %}                   
+                            </select>
+                            <small class="form-text text-muted">
+                                {{ form.inspectors.help_text }}
+                            </small>
+                            {% if form.inspectors.errors %}
+                                <label class="text-danger">
+                                {{ form.inspectors.errors.0 }}</label>
+                            {% endif %}
+                          </div>
+                        {% endif %}
+                      {% endif %}
+                    <button type="submit" class="btn btn-primary float-right">Salvar aplicação</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block extra-modal %}
+<div class="modal fade" id="exampleModal" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog sm:tw-max-w-2xl sm:tw-my-8" role="document">
+    <div class="modal-content" style="background: inherit; border: inherit; border-radius: inherit;">
+      <div class="tw-flex tw-min-h-full tw-items-end tw-justify-center tw-p-4 tw-text-center sm:tw-items-center sm:tw-p-0">
+        <div class="tw-relative tw-transform tw-overflow-hidden tw-rounded-lg tw-bg-white tw-px-4 tw-pb-4 tw-pt-5 tw-text-left tw-shadow-xl tw-transition-all sm:tw-w-full sm:tw-max-w-2xl sm:tw-p-6">
+          <div class="tw-absolute tw-right-0 tw-top-0 tw-hidden tw-pr-4 tw-pt-4 sm:tw-block">
+            <button type="button" class="tw-rounded-md tw-bg-white tw-text-gray-400 hover:tw-text-gray-500 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-primary-500 focus:tw-ring-offset-2" data-dismiss="modal">
+              <span class="tw-sr-only">Close</span>
+              <svg class="tw-h-6 tw-w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <form
+            @submit="saveDeadlineCorrectionResponseException"
+            method="post"
+          >
+            <div>
+              <div class="tw-mt-3 tw-text-center sm:tw-mt-0 sm:tw-text-left">
+                <h3 class="tw-text-base tw-font-semibold tw-leading-6 tw-text-gray-900" id="modal-title">
+                  Adicionar exceção para professor
+                </h3>
+
+                <hr />
+
+                <div class="tw-mt-4 tw-grid tw-grid-cols-1 tw-gap-x-6 tw-gap-y-4 sm:tw-grid-cols-6">
+                  <div class="tw-col-span-full">
+                    <label for="id_exception_date_teachers" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">
+                      Professores
+                    </label>
+                    <div class="tw-mt-2">
+                      <select id="id_exception_date_teachers" name="exception_date_teachers" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6">
+                        <option value="">Buscar professor</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="tw-col-span-full">
+                    <div v-for="deadlineCorrectionResponseException in deadlineCorrectionResponseExceptions">
+                      <div class="tw-flex tw-items-center tw-border-t tw-border-slate-400/20 tw-py-3">
+                        <span class="tw-w-2/5 tw-flex-none">${deadlineCorrectionResponseException.text}</span>
+                        <span>
+                          <input type="date" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" required v-model="deadlineCorrectionResponseException.date" />
+                        </span>
+                        <span class="tw-ml-auto tw-flex tw-items-center tw-font-medium tw-text-primary-600">
+                          <button
+                            type="button"
+                            class="tw-pointer-events-auto hover:tw-text-primary-500"
+                            @click="removeDeadlineCorrectionResponseException(deadlineCorrectionResponseException.id, deadlineCorrectionResponseException.teacher)"
+                          >
+                            Remover
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+            <div class="tw-mt-5 sm:tw-mt-4 sm:tw-grid sm:tw-grid-flow-row-dense sm:tw-grid-cols-1 sm:tw-gap-3">
+              <button
+                type="submit"
+                class="tw-inline-flex tw-w-full tw-justify-center tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 not-disable"
+                v-if="deadlineCorrectionResponseExceptions.length > 0"
+              >
+                Salvar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock extra-modal %}
+
+{% block js-additional %}
+
+<script src="{% static 'administration/lib/typeahead.js/typeahead.bundle.min.js' %}"></script>
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'administration/assets/vendor/jquery.mask.min.js' %}"></script>
+
+<script>
+
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {
+      releaseResultAtEnd: {{form.release_result_at_end.value|default_if_none:"false"|lower}},
+      deadlineCorrectionResponseExceptions: [
+        {% for deadline_exception in object.deadline_exceptions.all %}
+          {
+            id: '{{ deadline_exception.pk }}',
+            text: '{{ deadline_exception.teacher.name }}',
+            teacher: '{{ deadline_exception.teacher.pk }}',
+            date: '{{ deadline_exception.date|date:"Y-m-d" }}',
+          },
+        {% endfor %}
+      ],
+      deadlineCorrectionResponseExceptionSelected: null,
+      statusDeadlineCorrectionResponseExceptionSubmit: 'idle',
+    },
+    mounted() {
+      const vm = this
+      $('#id_exception_date_teachers').select2({
+        language: {
+          errorLoading: function () {
+            return 'Os resultados não puderam ser carregados.'
+          },
+          inputTooLong: function (args) {
+            var overChars = args.input.length - args.maximum
+
+            var message = 'Apague ' + overChars + ' caracter'
+
+            if (overChars != 1) {
+              message += 'es'
+            }
+
+            return message
+          },
+          inputTooShort: function (args) {
+            var remainingChars = args.minimum - args.input.length
+
+            var message = 'Digite ' + remainingChars + ' ou mais caracteres'
+
+            return message
+          },
+          loadingMore: function () {
+            return 'Carregando mais resultados…'
+          },
+          maximumSelected: function (args) {
+            var message = 'Você só pode selecionar ' + args.maximum + ' ite'
+
+            if (args.maximum == 1) {
+              message += 'm'
+            } else {
+              message += 'ns'
+            }
+
+            return message
+          },
+          noResults: function () {
+            return 'Nenhum resultado encontrado'
+          },
+          searching: function () {
+            return 'Buscando…'
+          },
+          removeAllItems: function () {
+            return 'Remover todos os itens'
+          },
+          removeItem: function () {
+            return 'Remover item'
+          },
+          search: function() {
+            return 'Buscar'
+          },
+        },
+        width: '100%',
+        placeholder: 'Buscar pelo nome do professor/disciplina...',
+        minimumInputLength: 3,
+        ajax: {
+          url: '{% url "api:teacher-list-view" %}',
+          delay: 800,
+          data: function(params) {
+            return { search: params.term }
+          },
+          processResults: function(data) {
+            const results = data.map(item => {
+              return { id: item.id, text: item.name }
+            })
+            return { results }
+          },
+        },
+      })
+      $('#id_exception_date_teachers').on('select2:select', function(e) {
+        vm.deadlineCorrectionResponseExceptionSelected = e.params.data
+        if (!vm.deadlineCorrectionResponseExceptions.map(item => item.id).includes(vm.deadlineCorrectionResponseExceptionSelected.id)) {
+          vm.deadlineCorrectionResponseExceptions.push({
+            id: null,
+            text: vm.deadlineCorrectionResponseExceptionSelected.text,
+            teacher: vm.deadlineCorrectionResponseExceptionSelected.id,
+            date: null,
+          })
+        }
+        vm.deadlineCorrectionResponseExceptionSelected = null
+        $('#id_exception_date_teachers').val(null).trigger('change')
+      })
+    },
+    methods: {
+      // addDeadlineCorrectionResponseException() {
+        // if (!this.deadlineCorrectionResponseExceptions.map(item => item.id).includes(this.deadlineCorrectionResponseExceptionSelected.id)) {
+        //   this.deadlineCorrectionResponseExceptions.push({
+        //     id: this.deadlineCorrectionResponseExceptionSelected.id,
+        //     text: this.deadlineCorrectionResponseExceptionSelected.text,
+        //     date: null,
+        //   })
+        // }
+        // this.deadlineCorrectionResponseExceptionSelected = null
+        // $('#id_exception_date_teachers').val(null).trigger('change')
+      // },
+      async removeDeadlineCorrectionResponseException(id, deadlineCorrectionResponseExceptionId) {
+        if (id !== null) {
+          try {
+
+            const url = `{% url "api:application-deadline-correction-response-exception-instance" application_id=object.pk pk='00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', id)
+
+            const response = await fetch(url, {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            })
+            if (!response.ok) {
+              throw new Error('Failed to delete object')
+            }
+          } catch (error) {
+            console.error(error)
+          }
+        }
+        this.deadlineCorrectionResponseExceptions = this.deadlineCorrectionResponseExceptions.filter(item => item.teacher !== deadlineCorrectionResponseExceptionId)
+      },
+      async saveDeadlineCorrectionResponseException(e) {
+        e.preventDefault()
+
+        if (this.statusDeadlineCorrectionResponseExceptionSubmit === 'loading') {
+          return
+        }
+
+        this.statusDeadlineCorrectionResponseExceptionSubmit = 'loading'
+        const payload = this.deadlineCorrectionResponseExceptions.map(item => {
+          return {
+            teacher: item.teacher,
+            date: item.date,
+          }
+        })
+        try {
+          const response = await fetch('{% url "api:application-deadline-correction-response-exception" object.pk %}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          })
+          const json = await response.json()
+          this.statusDeadlineCorrectionResponseExceptionSubmit = 'success'
+          $('#exampleModal').modal('hide')
+          this.showMessage('Exceção salva com sucesso!')
+        } catch (error) {
+          console.error(error)
+          this.statusDeadlineCorrectionResponseExceptionSubmit = 'error'
+        }
+      },
+      showMessage(message, time = 1500) {
+        this.showToast(`<div class="tw-pointer-events-auto tw-w-full tw-max-w-sm tw-overflow-hidden tw-rounded-lg tw-bg-white tw-shadow-lg tw-ring-1 tw-ring-black tw-ring-opacity-5"><div class="tw-p-4"><div class="tw-flex tw-items-start"><div class="tw-flex-shrink-0"><svg class="tw-h-6 tw-w-6 tw-text-green-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div><div class="tw-ml-3 tw-w-0 tw-flex-1 tw-pt-0.5"><p class="tw-text-sm tw-font-medium tw-text-gray-900 tw-mb-0">${message}</p></div></div></div><div class="tw-relative tw-h-1 tw-overflow-hidden tw--mt-1"><div id="toast-progressbar" class="tw-w-full tw-h-1 tw-rounded-b-md tw-bg-[#00000033]"></div></div></div>`, time);
+      },
+      showToast(html, time) {
+        const wrapper = document.createElement('div');
+        wrapper.setAttribute('aria-live', 'assertive');
+        wrapper.classList.add('tw-pointer-events-none', 'tw-fixed', 'tw-inset-0', 'tw-flex', 'tw-items-end', 'tw-px-4', 'tw-py-6', 'sm:tw-items-start', 'sm:tw-p-6');
+        wrapper.innerHTML = `<div class="tw-flex tw-w-full tw-flex-col tw-items-center tw-space-y-4 sm:tw-items-end">${html}</div>`;
+        document.body.appendChild(wrapper);
+
+        const progressBar = document.getElementById('toast-progressbar');
+        progressBar.style.display = 'flex';
+        progressBar.style.transition = `width ${time/1000}s linear 0s`;
+        setTimeout(function() { progressBar.style.width = '0%'; }, 1);
+        setTimeout(function() { wrapper.remove(); }, time);
+      },
+    },
+  });
+
+var quill2 = new Quill('#editor-container', {
+  modules: {
+    toolbar: [
+      ['bold', 'italic'],
+      ['link', 'blockquote', 'code-block', 'image'],
+      [{ list: 'ordered' }, { list: 'bullet' }]
+    ]
+  },
+  placeholder: 'Adicione as orientações que serão apresentados aos seus alunos',
+  theme: 'snow'
+});
+
+var selectedExamType = "Exams"
+
+// $(document).ready(function(){
+//   quill2.root.innerHTML = document.getElementById('id_orientations').value;
+// })
+
+// let form = document.querySelector('form');
+// form.onsubmit = function() {
+//     document.getElementById('id_orientations').value = quill2.root.innerHTML;
+// }
+
+$('#{{form.inspectors.auto_id}}').select2({
+  placeholder: 'Buscar...',
+  closeOnSelect: false,
+  minimumInputLength: 3,
+  ajax: {
+    url: '{% url "inspectors:inspectors_list_api" %}?year={{year|force_escape}}',
+    delay: 250,
+    data: function (params) {
+      return {
+        search: params.term
+      }
+    },
+    processResults: function(results) {
+        let new_results = $.map(results, function(element) {
+            element.text = element.name
+            return element 
+        })
+
+        return {
+            results: new_results,
+        }
+    }
+  }
+});
+
+if($('#id_inspectors_fiscallize').is(':checked')){
+  $('[data-verification="valid"]').hide()
+}
+
+$('#id_inspectors_fiscallize').change(function() {
+  if($(this).prop('checked')) {
+    $('[data-verification="valid"]').hide(900)
+  } else {
+    $('[data-verification="valid"]').show(900)
+  }
+})
+
+$('#{{form.exam.auto_id}}').select2({
+  placeholder: 'Buscar...',
+  minimumInputLength: 3,
+  closeOnSelect: false,
+  ajax: {
+    url: function () {
+      url = selectedExamType == 'Exams' ? '{% url "exams:exams_api_list" %}':'{% url "exams:exams_template_api_list" %}'
+      return url + '?created_at__year={{year|force_escape}}'
+    },
+    delay: 250,
+    data: function (params) {
+      return {
+        search: params.term
+      }
+    },
+    processResults: function(results) {
+        let new_results = $.map(results, function(element) {
+            element.text = element.name
+            return element 
+        })
+
+        return {
+            results: new_results,
+        }
+    }
+  }
+});
+
+$('#{{form.category.auto_id}}').change(function(){
+    if( $(this).val() == 0) {
+        $('#exam-select').hide();
+    } else {
+        $('#exam-select').show();
+    }
+})
+
+$("#id_min_time_finish").mask('00:00:00')
+$("#id_min_time_pause").mask('00:00:00')
+$("#id_max_time_tolerance").mask('00:00:00')
+$("#{{form.student_stats_permission_date.auto_id}}").val(moment('{{form.student_stats_permission_date.value|safe}}').format("YYYY-MM-DDTHH:mm"))
+
+  $('[name="exam_type"]').on('change', (e) => {
+    $('#{{form.exam.auto_id}}').val(null).trigger('change')
+    selectedExamType = $(e.target).val()
+    $('#type_exams, #type_templates').toggleClass('d-none')
+  })
+  $("#{{form.date.auto_id}}, #{{form.end.auto_id}}, #{{form.date_end.auto_id}}").on('change', () => {
+    {% if object.category == 4 %}
+      $("#{{form.student_stats_permission_date.auto_id}}").prop("min", moment().format(`${$("#{{form.date_end.auto_id}}").val()}T${$("#{{form.end.auto_id}}").val()}`))
+    {% else %}
+      $("#{{form.student_stats_permission_date.auto_id}}").prop("min", moment().format(`${$("#{{form.date.auto_id}}").val()}T${$("#{{form.end.auto_id}}").val()}`))
+    {% endif %}
+  })
+
+
+</script>
+{% endblock %}

@@ -1,0 +1,717 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}  
+  Lista de grupos de permissões - Lize
+{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<style>
+  .text {
+    font-family: Inter;
+    font-weight: 600;
+    line-height: 20px;
+    letter-spacing: 0em;
+    text-align: left;
+  }
+  .hovable:hover {
+    color: #fea464 !important;
+    cursor: pointer;
+  }
+</style>
+{% endblock css-additional %}
+
+{% block content-fixed %}
+  <div class="tw-flex tw-justify-center">
+    <div class="ard cer dcv tw-pb-8 tw-max-w-[100rem] tw-flex-1 tw-mb-16">
+      <!-- Header -->
+      <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1.5rem; justify-content: space-between;">
+        <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-6 sm:tw-flex-nowrap tw-w-full">
+          <h1 class="tw-text-xl tw-font-semibold tw-leading-7 tw-text-[#374151] sm:tw-truncate sm:tw-text-2xl sm:tw-tracking-tight tw-mb-0">
+            Lista de grupos
+          </h1>
+          <div class="tw-order-last tw-flex tw-w-full tw-gap-x-8 tw-text-sm tw-font-semibold tw-leading-6 sm:tw-order-none sm:tw-w-auto sm:tw-border-l sm:tw-border-gray-200 sm:tw-pl-6 sm:tw-leading-7">
+            <button data-tg-title="Filtros detalhados" data-toggle-off-canvas="#right-off-canvas" data-tg-order="2" data-tg-tour="Agora você pode acessar a janela de filtros detalhados clicando aqui." data-tg-group="default-exam-list" type="button" class="tw-flex tw-items-center tw-text-[#667085] tw-off-canvas-menu" id="headlessui-slider-over-button-1" data-toggle-off-canvas="#right-off-canvas">
+              <span>Filtrar</span>
+              <span class="ml-2">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M5 10H15M2.5 5H17.5M7.5 15H12.5" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </button>
+          </div>
+          <div class="tw-ml-auto tw-flex tw-gap-3">
+            <a href="{% url 'accounts:groups_create' %}" class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600 hover:tw-text-white">
+              Adicionar grupo
+            </a>
+          </div>
+        </div>
+      </div>
+      {% if q_name or q_default or q_segment %}
+        <!-- Filtros aplicados -->
+        <div data-tg-title="Filtros aplicados" data-tg-order="2" data-tg-tour='Visualize os filtros já aplicados nesta listagem, remova-os individualmente clicando no "x" ou todos de uma vez clicando em "Limpar filtro".' data-tg-group="default-exam-list" class="tw-bg-white sm:tw-rounded-lg tw-py-5 tw-border tw-border-[#E5E7EA] tw-mb-4">
+          <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8" >
+            <div class="tw-flex tw-justify-between">
+              <div class="tw-flex tw-items-center">
+                <p class="tw-pl-4 tw-pr-3 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900 sm:tw-pl-0">
+                  Filtrando por
+                </p>
+                <div class="tw-space-x-2">
+                  {% if q_name %}
+                    <span class="tw-inline-flex tw-items-center tw-gap-x-0.5 tw-rounded tw-bg-[#F9FAFA] tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-text-[#384250]">
+                      <button @click="removeFilter('q_name')" type="button" class="tw-group tw-relative tw--ml-1 tw-h-3.5 tw-w-3.5 tw-rounded-sm hover:tw-bg-gray-500/20">
+                        <span class="tw-sr-only">Remove</span>
+                        <svg viewBox="0 0 14 14" class="tw-h-3.5 tw-w-3.5 tw-stroke-gray-700/50 group-hover:tw-stroke-gray-700/75">
+                          <path d="M4 4l6 6m0-6l-6 6" />
+                        </svg>
+                        <span class="tw-absolute tw--inset-1"></span>
+                      </button>
+                      Nome: {{q_name}}
+                    </span>
+                  {% endif %}
+                  {% if q_default %}
+                    <span class="tw-inline-flex tw-items-center tw-gap-x-0.5 tw-rounded tw-bg-[#F9FAFA] tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-text-[#384250]">
+                      <button @click="removeFilter('q_default')" type="button" class="tw-group tw-relative tw--ml-1 tw-h-3.5 tw-w-3.5 tw-rounded-sm hover:tw-bg-gray-500/20">
+                        <span class="tw-sr-only">Remove</span>
+                        <svg viewBox="0 0 14 14" class="tw-h-3.5 tw-w-3.5 tw-stroke-gray-700/50 group-hover:tw-stroke-gray-700/75">
+                          <path d="M4 4l6 6m0-6l-6 6" />
+                        </svg>
+                        <span class="tw-absolute tw--inset-1"></span>
+                      </button>
+                      É grupo padrão
+                    </span>
+                  {% endif %}
+                  {% for segment in q_segment %}
+                    <span class="tw-inline-flex tw-items-center tw-gap-x-0.5 tw-rounded tw-bg-[#F9FAFA] tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-text-[#384250]">
+                      <button @click="removeFilter('q_segment', '{{segment}}')" type="button" class="tw-group tw-relative tw--ml-1 tw-h-3.5 tw-w-3.5 tw-rounded-sm hover:tw-bg-gray-500/20">
+                        <span class="tw-sr-only">Remove</span>
+                        <svg viewBox="0 0 14 14" class="tw-h-3.5 tw-w-3.5 tw-stroke-gray-700/50 group-hover:tw-stroke-gray-700/75">
+                          <path d="M4 4l6 6m0-6l-6 6" />
+                        </svg>
+                        <span class="tw-absolute tw--inset-1"></span>
+                      </button>
+                      ${segments['{{segment}}']}
+                    </span>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="tw-flex tw-items-center">
+                <button type="button" class="tw-text-left tw-text-sm tw-font-semibold tw-text-[#667085] tw-flex tw-items-center" @click="cleanFilters()">
+                  Limpar filtro
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="tw-ml-2">
+                    <path d="M15 5L5 15M5 5L15 15" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+      <template v-if="groups && groups.results.length">
+        <!-- Grupos -->
+        <div class="tw-bg-white sm:tw-rounded-lg tw-pt-5 tw-border tw-border-[#E5E7EA]">
+          <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8">
+            <div class="tw-flow-root">
+              <div class="tw--mx-4 tw--my-2 tw-overflow-x-auto sm:tw--mx-6 lg:tw--mx-8">
+                <div class="tw-inline-block tw-min-w-full tw-py-2 tw-align-middle sm:tw-px-6 lg:tw-px-8 tw-pb-6">
+                  <div class="tw-relative">
+                    <table class="tw-min-w-full tw-table-fixed tw-divide-y tw-divide-gray-300">
+                      <thead>
+                        <tr>
+                          <th scope="col" class="tw-min-w-[10rem] tw-w-full tw-py-3.5 tw-pr-3 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900">Grupo</th>
+                          <th scope="col" class="tw-py-3.5 tw-pl-3 tw-pr-4 sm:tw-pr-3">
+                            <span class="">Padrão</span>
+                          </th>
+                          <th scope="col" class="tw-py-3.5 tw-pl-3 tw-pr-4 sm:tw-pr-3">
+                            <span class="">Ações</span>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody class="tw-divide-y tw-divide-gray-200 tw-bg-white" v-if="shownGroups.length">
+                        <tr v-for="group in shownGroups">
+                          <td class="tw-text-primary-600">
+                            <div class="tw-flex tw-items-center">
+                              <div>
+                                <div class="tw-font-medium tw-text-gray-900">${ group.name }</div>
+                                <div class="tw-flex tw-mt-1">
+                                  
+                                  <span class="mx-2 tw-text-[#9BA3AF] d-flex justify-content-center align-items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-shield-off mr-2"><path d="M19.69 14a6.9 6.9 0 0 0 .31-2V5l-8-3-3.16 1.18"></path><path d="M4.73 4.73L4 5v7c0 6 8 10 8 10a20.29 20.29 0 0 0 5.62-4.38"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>                                    
+                                    ${group.permissions.length} ${group.permissions.length > 1 ? "Permissões":"Permissão"}
+                                  </span>
+                                  
+                                  <span class="mx-2 tw-text-[#9BA3AF] d-flex justify-content-center align-items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag mr-2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                                    ${segments[group.segment]}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <div class="tw-flex tw-items-center tw-justify-center tw-space-x-4">
+                              <span :style="{ backgroundColor: group.default ? '#41C5881A':'#F9FAFA' }" class="tw-rounded-full tw-p-2 tw-text-primary-600 tw-shadow-sm focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:outline-offset-2 focus-visible:tw-outline-[#ffdec7]" data-toggle="tooltip" data-placement="top" :title="group.default ? 'Grupo marcado como padrão para o segmento':'O grupo não é padrão para o segmento'">
+                                <svg class="tw-h-5 tw-w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                  <path d="M22 11.0857V12.0057C21.9988 14.1621 21.3005 16.2604 20.0093 17.9875C18.7182 19.7147 16.9033 20.9782 14.8354 21.5896C12.7674 22.201 10.5573 22.1276 8.53447 21.3803C6.51168 20.633 4.78465 19.2518 3.61096 17.4428C2.43727 15.6338 1.87979 13.4938 2.02168 11.342C2.16356 9.19029 2.99721 7.14205 4.39828 5.5028C5.79935 3.86354 7.69279 2.72111 9.79619 2.24587C11.8996 1.77063 14.1003 1.98806 16.07 2.86572M22 4L12 14.01L9 11.01" :stroke="group.default ? '#41C588': '#374151A1'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              </span>
+                            </div>
+                          </td>
+                          <td>
+                            <div class="d-flex justify-content-between align-items-center my-4">
+                              <div>
+                                <button class="tw-inline-flex tw-w-full tw-justify-center tw-gap-x-1.5 tw-rounded-md tw-bg-white tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-[#667085] tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50" type="button" id="dropdownMenuButton-{{ exam.pk }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                  Opções
+                                  <svg class="tw--mr-1 tw-h-5 tw-w-5 tw-text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                                  </svg>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-right tw-absolute tw-right-0 tw-z-10 tw-mt-2 tw-origin-top-right tw-divide-y tw-divide-gray-100 tw-rounded-md tw-bg-white tw-shadow-lg tw-ring-1 tw-ring-black tw-ring-opacity-5 focus:tw-outline-none tw-text-inherit tw-m-0 tw-p-0 tw-border-0" aria-labelledby="dropdownMenuButton-{{ exam.pk }}" style="font-size: inherit;">
+                                  <div class="tw-flex tw-gap-1">
+                                  <div class="tw-py-1" role="none">
+                                    <p class="tw-px-4 tw-py-2" style="font-size: 10px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Inter UI', Roboto, sans-serif; letter-spacing: .7px; color: #8392a5; text-transform: uppercase;">
+                                      Geral
+                                    </p>
+                                    <template v-if="group.can_update">
+                                      <button type="button" @click="goTo(group.urls.update)" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" id="menu-item-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                          <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                        </svg>
+                                        Editar grupo
+                                      </button>
+                                      <button type="button" @click="group.can_be_removed ? deleteGroup(group) : openUsersModel(group)" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" id="menu-item-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                          <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                        </svg>
+                                        Remover grupo
+                                      </button>
+                                    </template>
+                                    <a href="javascript:;"  @click="viewGroupPermissions(group)" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" id="menu-item-2">
+                                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                      </svg>
+                                      Ver permissões
+                                    </a>
+                                  </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12">
+            <pagination-component :objects="groups" :label="'groups'"></pagination-component>
+          </div>
+        </div>
+      </template>
+      <div class="row" v-if="!shownGroups.length || loading">
+        <div class="col-12 d-flex align-items-center flex-column justify-content-center" style="min-height: 460px;">
+          <template v-if="loading">
+            <h2 class="">Aguarde enquanto os grupos são carregados</h2>
+            <!-- <p class="text-muted"></p> -->
+          </template>
+          <template v-else>
+            <h2 class="">Nenhum grupo de permissões encontrado</h2>
+            <p class="text-muted">Clique no botão abaixo para adicionar um novo grupo.</p>
+            <a href="{% url 'accounts:groups_create' %}" class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600 hover:tw-text-white">
+              Adicionar grupo
+            </a>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<div class="modal fade" id="modalPermissions" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="modalPermissionsLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" v-if="selectedGroup">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalPermissionsLabel">Permissões do grupo ${selectedGroup.name}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p v-for="perm in selectedGroup.permissions">${allPermissions[perm]}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn -secondary" data-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalFilters" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="modalFiltersLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalFiltersLabel">Escolha os filtros</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Aplicar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalUsers" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="modalUsersLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content" v-if="usersGroup">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalUsersLabel">Lista de usuários do groupo</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-12">
+            <div class="tw-my-2 tw-flex tw-rounded-2xl tw-p-4 tw-bg-amber-50">
+              <svg aria-hidden="true" viewBox="0 0 32 32" fill="none" class="tw-h-8 tw-w-8 tw-flex-none [--icon-foreground:theme(colors.amber.900)] [--icon-background:theme(colors.amber.100)]">
+                <defs>
+                  <radialGradient cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" id=":S5:-gradient" gradientTransform="rotate(65.924 1.519 20.92) scale(25.7391)">
+                    <stop stop-color="#FDE68A" offset=".08"></stop>
+                    <stop stop-color="#F59E0B" offset=".837"></stop>
+                  </radialGradient>
+                </defs>
+                <g>
+                  <circle cx="20" cy="20" r="12" fill="url(#:S5:-gradient)"></circle>
+                  <path d="M3 16c0 7.18 5.82 13 13 13s13-5.82 13-13S23.18 3 16 3 3 8.82 3 16Z" fill-opacity="0.5" class="tw-fill-[var(--icon-background)] tw-stroke-[color:var(--icon-foreground)]" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                  <path d="m15.408 16.509-1.04-5.543a1.66 1.66 0 1 1 3.263 0l-1.039 5.543a.602.602 0 0 1-1.184 0Z" class="tw-fill-[var(--icon-foreground)] tw-stroke-[color:var(--icon-foreground)]" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                  <path d="M16 23a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" fill-opacity="0.5" stroke="currentColor" class="tw-fill-[var(--icon-background)] tw-stroke-[color:var(--icon-foreground)]" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                </g>
+              </svg>
+              <div class="tw-ml-4 tw-flex-auto">
+                <div class="tw-prose tw-text-amber-800 [--tw-prose-underline:theme(colors.amber.400)] [--tw-prose-background:theme(colors.amber.50)] prose-a:tw-text-amber-900 prose-code:tw-text-amber-900">
+                  <p class="tw-text-sm">
+                    O <span class="tw-prose-emphasis">grupo</span> selecionado não pode ser <span class="tw-prose-emphasis">deletado</span>.
+                    <br>
+                    <span class="tw-prose-emphasis">Remova</span> os usuários do grupo e tente novamente.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12">
+            <div class="tw-bg-white sm:tw-rounded-lg tw-pt-5 tw-border tw-border-[#E5E7EA]">
+              <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8">
+                <div class="tw-flow-root">
+                  <div class="tw--mx-4 tw--my-2 tw-overflow-x-auto sm:tw--mx-6 lg:tw--mx-8">
+                    <div class="tw-inline-block tw-min-w-full tw-py-2 tw-align-middle sm:tw-px-6 lg:tw-px-8 tw-pb-6">
+                      <div class="tw-relative">
+                        <table class="tw-min-w-full tw-table-fixed tw-divide-y tw-divide-gray-300">
+                          <thead>
+                            <tr>
+                              <th scope="col" class="tw-min-w-[10rem] tw-w-full tw-py-3.5 tw-pr-3 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900">Usuário</th>
+                              <th scope="col" class="tw-py-3.5 tw-pl-3 tw-pr-4 sm:tw-pr-3">
+                                <span class="">Ações</span>
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody class="tw-divide-y tw-divide-gray-200 tw-bg-white" v-if="usersGroup.results.length">
+                            <tr v-for="user in usersGroup.results">
+                              <td class="tw-text-primary-600">
+                                <div class="tw-flex tw-items-center">
+                                  <div>
+                                    <div class="tw-font-medium tw-text-gray-900">${ user.name }</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td>
+                                <div class="d-flex justify-content-between align-items-center my-4">
+                                  <div>
+                                    <button class="tw-inline-flex tw-w-full tw-justify-center tw-gap-x-1.5 tw-rounded-md tw-bg-white tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-[#667085] tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50" type="button" id="dropdownMenuButton-{{ exam.pk }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                      Opções
+                                      <svg class="tw--mr-1 tw-h-5 tw-w-5 tw-text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                                      </svg>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-right tw-absolute tw-right-0 tw-z-10 tw-mt-2 tw-origin-top-right tw-divide-y tw-divide-gray-100 tw-rounded-md tw-bg-white tw-shadow-lg tw-ring-1 tw-ring-black tw-ring-opacity-5 focus:tw-outline-none tw-text-inherit tw-m-0 tw-p-0 tw-border-0" aria-labelledby="dropdownMenuButton-{{ exam.pk }}" style="font-size: inherit;">
+                                      <div class="tw-flex tw-gap-1">
+                                      <div class="tw-py-1" role="none">
+                                        <a :href="user.urls.permissions" target="_blank" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" id="menu-item-2">
+                                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                          </svg>
+                                          Ver permissões
+                                        </a>
+                                      </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-12">
+                <pagination-component :objects="usersGroup" :label="'usersGroup'"></pagination-component>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content-fixed %}
+
+{% block slide-over %}
+<div class="tw-relative tw-z-[1000] tw-off-canvas tw-off-canvas-right tw-invisible" aria-labelledby="slide-over-title" role="dialog" aria-modal="true" id="right-off-canvas">
+  <div class="tw-fixed tw-inset-0 tw-bg-[#9BA3AF] tw-bg-opacity-60 tw-transition-opacity"></div>
+  <div class="tw-fixed tw-inset-0 tw-overflow-hidden">
+    <div class="tw-absolute tw-inset-0 tw-overflow-hidden">
+      <div class="tw-pointer-events-none tw-fixed tw-inset-y-0 tw-right-0 tw-flex tw-max-w-full tw-pl-10" v-click-outside="onClickOutsideFilters">
+        <div class="tw-pointer-events-auto tw-w-screen tw-max-w-md">
+          <div class="tw-flex tw-h-full tw-flex-col tw-divide-y tw-divide-gray-200 tw-bg-white tw-border-l">
+            <div class="tw-h-0 tw-flex-1 tw-overflow-y-auto">
+              <div class="tw-px-4 tw-pt-6 sm:tw-px-6">
+                <div class="tw-flex tw-items-center tw-justify-between">
+                  <h2 class="tw-text-base tw-font-semibold tw-leading-6 tw-text-gray-900" id="slide-over-title">
+                    Filtrar grupos
+                  </h2>
+                  <div class="tw-ml-3 tw-flex tw-h-7 tw-items-center">
+                    <button type="button" class="tw-relative tw-rounded-md tw-bg-white tw-text-gray-400 hover:tw-text-gray-500 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-primary-500 focus:tw-ring-offset-2 tw-off-canvas-close" id="headlessui-slider-over-close-button-1">
+                      <span class="tw-absolute tw--inset-2.5"></span>
+                      <span class="tw-sr-only">Close panel</span>
+                      <svg class="tw-h-6 tw-w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="tw-mt-1">
+                  <p class="tw-text-sm tw-text-gray-500">
+                    Adiciona abaixo os filtros que você deseja aplicar na listagem abaixo.
+                  </p>
+                </div>
+              </div>
+              <form method="GET" id="filterForm" class="tw-flex tw-flex-1 tw-flex-col tw-justify-between">
+                <div class="tw-divide-y tw-divide-gray-200 tw-px-4 sm:tw-px-6">
+                  <div class="tw-space-y-6 tw-pb-5 tw-pt-6">
+                    <div>
+                      <label for="inputName" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Nome do filtro</label>
+                      <div class="tw-mt-2">
+                        <input type="text" id="inputName" name="q_name" value="{{q_name|default:''}}" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" placeholder="Digite o nome do grupo" />
+                      </div>
+                    </div>
+                    <div>
+                      <label for="inputUserType" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Segmento</label>
+                      <div class="tw-mt-2">
+                        <select id="inputUserType" name="q_segment" class="tw-mt-2 tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-pl-3 tw-pr-10 tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" multiple>
+                          <option value="coordination" {% if 'coordination' in q_segment %} selected {% endif %}>Coordenadores</option>
+                          <option value="teacher" {% if 'teacher' in q_segment %} selected {% endif %}>Professores</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" id="is_default" {% if q_default %} checked {% endif %} name="q_default" class="custom-control-input" />
+                      <label class="custom-control-label" for="is_default">Grupo padrão</label>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <div class="tw-flex tw-flex-wrap tw-space-y-3 sm:tw-space-x-3 sm:tw-space-y-0 tw-px-4 tw-py-4">
+              <button type="submit" form="filterForm" class="tw-inline-flex tw-w-full tw-flex-shrink-0 tw-items-center tw-justify-center tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600 sm:tw-flex-1">
+                Aplicar filtro
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock slide-over %}
+
+{% block js-additional %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script type="text/javascript">
+  moment.locale('pt-br');
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    components: {
+      {% include 'includes/components/vue-pagination_v2.html' %},
+    },
+    data: {
+      segments: {
+        coordination: 'COORDENADORES',
+        teacher: 'PROFESSORES',
+        inspector: 'FISCAIS',
+        student: 'ALUNOS',
+        parent: 'RESPONSÁVEIS',
+        partner: 'PARCEIROS',
+      },
+      searchFilter: '',
+      filters: {
+        name: '',
+        segments: [],
+        applied: false,
+      },
+      loading: true,
+      saving: false,
+      permissions: null,
+      permissionsList: [],
+      allPermissions: [],
+      userGroups: [],
+      userPermissions: [],
+      groups: null,
+      shownGroups: [],
+      selectedGroup: null,
+      usersGroup: null
+    },
+    directives: {
+      'click-outside': {
+        bind: function(el, binding, vNode) {
+          // Provided expression must evaluate to a function.
+          if (typeof binding.value !== 'function') {
+            const compName = vNode.context.name
+            let warn = `[Vue-click-outside:] provided expression '${binding.expression}' is not a function, but has to be`
+            if (compName) { warn += `Found in component '${compName}'` }
+
+            console.warn(warn)
+          }
+          // Define Handler and cache it on the element
+          const bubble = binding.modifiers.bubble
+          const handler = (e) => {
+            if (bubble || (!el.contains(e.target) && el !== e.target)) {
+              binding.value(e)
+            }
+          }
+          el.__vueClickOutside__ = handler
+
+          // add Event Listeners
+          document.addEventListener('click', handler)
+        },
+
+        unbind: function(el, binding) {
+          // Remove Event Listeners
+          document.removeEventListener('click', el.__vueClickOutside__)
+          el.__vueClickOutside__ = null
+        }
+      }
+    },
+    watch: {
+      groups: function(val) {
+        this.shownGroups = Object.assign([], this.groups.results)
+      }
+    },
+    methods: {
+      onClickOutsideFilters(event) {
+        const target = event.target
+        const button = document.getElementById('headlessui-slider-over-button-1')
+
+        const select2DropdownAbove = document.getElementsByClassName('select2-dropdown--above')[0]
+        const select2DropdownBelow = document.getElementsByClassName('select2-dropdown--below')[0]
+        if (select2DropdownAbove || select2DropdownBelow) {
+          return
+        }
+
+        if (!(target === button || button.contains(target))) {
+          const rightOffCanvasContent = document.getElementById('right-off-canvas')
+          if (rightOffCanvasContent.classList.contains('tw-show')) {
+            rightOffCanvasContent.classList.remove('tw-show')
+          }
+        }
+      },
+      goTo(url) {
+        window.location.href = url
+      },
+      removeParamFromURL(param, value) {
+        let url = window.location.href;
+        if (!value) {
+          // Se o valor não for fornecido, remova todos os parâmetros com o nome especificado
+          return url.replace(new RegExp('([?&])' + param + '=[^&]*(&|$)'), '$1');
+        } else {
+            // Se um valor específico for fornecido, remova apenas o parâmetro com o valor correspondente
+            return url.replace(new RegExp('([?&])' + param + '=' + value + '(?:&|$)'), '$1');
+        }
+      },  
+      removeFilter(type, value) {
+        if(type == 'q_segment') {
+          window.location.href = this.removeParamFromURL(type, value)
+        } else {
+          window.location.href = this.removeParamFromURL(type)
+        }
+      },
+      cleanFilters() {
+        window.location.href = '?'
+      },
+      deleteGroup(group) {
+        Swal.fire({
+          title: "Confirmação",
+          text: "Tem certeza de que deseja excluir o grupo selecionado? Este processo é irreversível.",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#FF8F3D",
+          cancelButtonColor: "#9BA3AF",
+          confirmButtonText: "Sim, tenho!",
+          cancelButtonText: "Cancelar",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            axios.delete(group.urls.api_delete).then((response) => {
+              Swal.fire({
+                title: "Removido!",
+                text: "O grupo foi removido com sucesso.",
+                icon: "success"
+              });
+              this.groups.results.splice(this.groups.results.indexOf(this.groups.results.find(g => g.id == group.id)), 1)
+              this.shownGroups = Object.assign([], this.groups.results)
+            }).catch((e) => {
+              Swal.fire({
+                title: "Erro ao remover!",
+                text: e.response.data,
+                icon: "error"
+              });
+            })
+          }
+        });
+      },
+      openUsersModel(group) {
+        this.selectedGroup = group
+        axios.get(group.urls.api_get_users).then((response) => {
+          this.usersGroup = response.data
+        })
+        $("#modalUsers").modal('show')
+      },
+      viewGroupPermissions(group) {
+        this.selectedGroup = group
+        $("#modalPermissions").modal("show")
+      },
+      handleChangePermission(permission) {
+        this.userPermissions.includes(permission) ? this.userPermissions.splice(this.userPermissions.indexOf(permission), 1):this.userPermissions.push(permission)
+      },
+      handleChangeGroup(group) {
+        this.userGroups.includes(group) ? this.userGroups.splice(this.userGroups.indexOf(group), 1):this.userGroups.push(group)
+      },
+      removeAllPermissions(where) {
+        if(where) {
+          for(permission in this.permissions[where].permissions) {
+            if(this.userPermissions.includes(permission)) {
+              this.userPermissions.splice(this.userPermissions.indexOf(permission), 1)
+            }
+          }
+        } else {
+          this.userPermissions = []
+        }
+      },
+      selectAllGroups() {
+        this.userGroups = this.groups.results.map((g) => g.id)
+      },
+      removeAllGroups() {
+        this.userGroups = []
+      },
+      selectAllPermissions(where) {
+        if(where) {
+          for(permission in this.permissions[where].permissions) {
+            if(!this.userPermissions.includes(permission)) {
+              this.userPermissions.push(permission)
+            }
+          }
+        } else {
+          this.userPermissions = []
+          for(key in this.permissions) {
+            for(permission in this.permissions[key].permissions) {
+              if(!this.userPermissions.includes(permission)) {
+                this.userPermissions.push(permission)
+              }
+            }
+          }
+        }
+      },
+      save() {
+        this.saving = true
+      },
+      hasGroupPermission(permission) {
+        return this.groups.results.find(g => this.userGroups.includes(g.id) && g.permissions.includes(permission))
+      }
+    },
+    mounted() {
+      axios.get("{% url 'api2:permissions-permissions' %}").then((response) => {
+        this.permissions = response.data
+        for(perm in response.data) {
+          this.allPermissions = { ...this.allPermissions, ...response.data[perm].permissions }
+        }
+      })
+      let params = "?"
+      if('{{q_name|default:""}}') {
+        params += "&q_name={{q_name}}"
+      }
+      if('{{q_default|default:""}}') {
+        params += "&q_default=true"
+      }
+      for (segment of {{q_segment|lower|default:'[]'|safe}}) {
+        params += "&q_segment=" + segment
+      }
+      
+      axios.get("{% url 'api2:permissions-groups' %}" + params).then((response) => {  
+        this.groups = response.data
+        this.loading = false
+      })
+
+      $('.tw-off-canvas-menu').on('click', function (e) {
+        e.preventDefault();
+        var target = $(this).attr('data-toggle-off-canvas');
+        $(target).addClass('tw-show');
+      });
+  
+      $('.tw-off-canvas .tw-off-canvas-close').on('click', function (e) {
+        e.preventDefault();
+        $(this).closest('.tw-off-canvas').removeClass('tw-show');
+      })
+    
+      $(document).on('click touchstart', function (e) {
+        if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+          return
+        }
+        e.stopPropagation();
+        if (!$(e.target).closest('.tw-off-canvas-menu').length) {
+          var offCanvas = $(e.target).closest('.tw-off-canvas').length;
+          if (!offCanvas) {
+            $('.tw-off-canvas.tw-show').removeClass('tw-show');
+          }
+        }
+      });
+
+      $("#inputUserType").select2({
+        closeOnSelect: false,
+      })
+    },
+  })
+
+
+</script>
+{% endblock %}

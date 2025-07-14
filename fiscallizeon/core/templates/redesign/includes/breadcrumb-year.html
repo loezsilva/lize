@@ -1,0 +1,22 @@
+{% load exclude_especific_params %}
+
+<div class="tw-flex tw-space-x-1 tw-rounded-lg tw-bg-slate-200 tw-p-0.5" role="tablist" aria-orientation="horizontal">
+  <a href="?year=2024{{ request|exclude_especific_params:'year,page' }}" class="tw-flex tw-items-center tw-rounded-md tw-py-[0.4375rem] tw-px-3 tw-text-sm tw-font-semibold{% if year == '2024' %} tw-bg-white tw-shadow{% endif %}" role="tab" aria-selected="{% if year == '2024' %}true{% else %}false{% endif %}" tabindex="{% if year == '2024' %}0{% else %}-1{% endif %}">
+    <span class="{% if year == '2024' %}tw-text-slate-900{% else %}tw-text-slate-600{% endif %}">2024</span>
+  </a>
+  <a href="?year=2025{{ request|exclude_especific_params:'year,page' }}" class="tw-flex tw-items-center tw-rounded-md tw-py-[0.4375rem] tw-px-3 tw-text-sm tw-font-semibold{% if year == '2025' %} tw-bg-white tw-shadow{% endif %}" role="tab" aria-selected="{% if year == '2025' %}true{% else %}false{% endif %}" tabindex="{% if year == '2025' %}0{% else %}-1{% endif %}">
+    <span class="{% if year == '2025' %}tw-text-slate-900{% else %}tw-text-slate-600{% endif %}">2025</span>
+  </a>
+</div>
+{% if user.user_type == 'student' or user.user_type == 'parent' %}
+  <div class="row m-0 d-flex justify-content-start">
+    <div role="group" class="btn-group btn-group-justified mx-2">
+      <a href="?{{request|exclude_especific_params:'year,page,only_scheduled'}}" class="btn {% if not only_scheduled %} btn-primary text-white {% else %} btn-outline-primary {% endif %}">
+        Resultado liberado
+      </a>
+      <a href="?only_scheduled=true{{request|exclude_especific_params:'year,page,only_scheduled'}}" class="btn {% if only_scheduled %} btn-primary {% else %} btn-outline-primary {% endif %}">
+        Provas agendadas
+      </a>
+    </div>
+  </div>
+{% endif %}

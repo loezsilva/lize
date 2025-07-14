@@ -1,0 +1,671 @@
+{% extends 'administration/base.html' %}
+
+{% load static %}
+{% load increment %}
+{% load remove_line_break %}
+{% load get_answer_file_link %}
+{% load get_exam_question %}
+
+{% block head %}
+<link
+  rel="stylesheet"
+  href="{% static 'new/administration/assets/css/dashforge.mail.css' %}"
+/>
+{% endblock head %}
+
+{% block content %}
+<div id="app" class="container-fluid" style="background-color: #f5f6fa; min-height: calc(100vh - 106px); margin-top: 60px; padding-top: 15px; padding-bottom: 15px;">
+
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item">
+            <a href="{% url 'core:redirect_dashboard' %}">Início</a>
+          </li>
+          <li class="breadcrumb-item">
+            <a href="{% url 'exams:exams_list' %}">Provas</a>
+          </li>
+          <li class="breadcrumb-item breadcrumb-item-ellipsis breadcrumb-item-sm-unset active" aria-current="page">
+            {{ object }}
+          </li>
+        </ol>
+      </nav>
+      <h4 class="mg-b-0 tx-spacing--1">Diagramar caderno</h4>
+    </div>
+    <div class="d-none d-md-block">
+      <a :href="pdfPreviewBase64" :download="convertToSlug('{{object.name}}')+'-'+'{{ object.id }}.pdf'" class="btn btn-sm pd-x-15 btn-white btn-uppercase mg-l-5">
+        <i data-feather="download" class="wd-10 mg-r-5"></i>
+        Baixar
+      </a>
+      <button
+        type="button"
+        class="btn btn-sm pd-x-15 btn-primary btn-uppercase mg-l-5"
+        @click="rebuildPdf()"
+      >
+        <i data-feather="refresh-cw" class="wd-10 mg-r-5"></i>
+        Atualizar visualização
+      </button>
+    </div>
+  </div>
+
+  <div class="row no-gutters">
+    <div class="col-12 col-md-3" style="padding-right: 5px;">
+      <div class="card">
+        <div class="card-header pd-10 d-md-flex align-items-center justify-content-between">
+          <h6 class="mg-b-0">Configuração de impressão</h6>
+        </div>
+        <div class="card-body p-0" style="height: calc(100vh - 253px); overflow-y: auto;">
+          <div class="row no-gutters">
+            <div class="col">
+              <div>
+                <div class="mail-group-body">
+                  <label class="mail-group-label">Geral</label>
+                  <ul class="list-unstyled media-list mg-b-0">
+                    <li
+                      class="media"
+                      :class="{ 'selected': kind === 'general' }"
+                      @click="handleClickGeneral()"
+                    >
+                      <div class="media-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <h6 class="tx-13">Formatar layout</h6>
+                          <div>
+                            <template v-if="examPrintConfig.editStatus === 'change'">
+                              <span class="tx-16 tx-color-03 tx-medium mg-b-0" title="As informações relacionadas a este item não foram salvas ainda.">
+                                <span class="tx-warning">
+                                  <i class="fe fe-alert-triangle"></i>
+                                </span>
+                              </span>
+                            </template>
+                          </div>
+                        </div>
+                        <p class="tx-12 tx-color-03 mg-b-0">
+                          Configure o layout geral do caderno 
+                        </p>
+                      </div>
+                    </li>
+                  </ul>
+                  <label class="mail-group-label">Questões</label>
+                  <ul class="list-unstyled media-list mg-b-0">
+                    <li
+                      v-for="question in questions"
+                      class="media"
+                      :class="{
+                        'selected': kind === 'question' && questionSelected === question.id
+                      }"
+                      @click="handleClickQuestion(question.id)"
+                    >
+                      <div class="media-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <h6 class="tx-13">Questão #{ question.numberPrint }</h6>
+                          <div>
+                            <template v-if="question.editStatus === 'change'">
+                              <span class="tx-16 tx-color-03 tx-medium mg-b-0" title="As informações relacionadas a este item não foram salvas ainda.">
+                                <span class="tx-warning">
+                                  <i class="fe fe-alert-triangle"></i>
+                                </span>
+                              </span>
+                            </template>
+                          </div>
+                        </div>
+                        <p class="tx-12 tx-color-03 mg-b-0">
+                          #{ question.enunciation }
+                        </p>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4" style="padding-right: 5px;">
+      <div class="card">
+        <div class="card-header pd-y-10 pd-r-10 d-md-flex align-items-center justify-content-between">
+          <div>
+            <h6 class="mg-b-0">Ajustes</h6>
+          </div>
+          <div>
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              style="font-size: 11px; font-weight: 600; letter-spacing: 1px; line-height: 1.454; border-width: 2px; padding: 0.16rem 0.85rem;"
+              :style="{ opacity: examPrintConfig.editStatus === 'idle' || examPrintConfig.editStatus === 'loading' ? 0.65 : 0.75 }"
+              @click="handleSubmitGeneralAndRebuildPdf()"
+              :disabled="generalEditStatus === 'idle' || generalEditStatus === 'loading'"
+            >
+              <span class="fe fe-upload-cloud" style="font-weight: 600;"></span>
+              <span>
+                <template v-if="generalEditStatus === 'loading'">Salvando...</template>
+                <template v-else>Salvar e visualizar</template>
+              </span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; line-height: 1.454; border-width: 2px; padding: 0.16rem 0.85rem;"
+              @click="handleSubmitGeneral()"
+              :disabled="generalEditStatus === 'idle' || generalEditStatus === 'loading'"
+            >
+              <span class="fe fe-upload-cloud" style="font-weight: 600;"></span>
+              <span>
+                <template v-if="generalEditStatus === 'loading'">Salvando...</template>
+                <template v-else>Salvar</template>
+              </span>
+            </button>
+          </div>
+        </div>
+        <div class="card-body" style="height: calc(100vh - 260px); overflow-y: auto;">
+          <form v-show="kind === 'general'" @change="handleExamPrintConfigEditStatus()">
+            <div class="form-group" v-if="printDefaults.length">
+              <label for="id-exam-print-config-default">Selecione o padrão de impressão</label>
+              <select class="form-control" id="id-exam-print-config-default" ref="inputPrintDefault" @change="selectPrintDefault()">
+                  <option value="">Não aplicar nenhum padrão de prova</option>
+                  <option :id="printDefault.id" v-for="printDefault in printDefaults">#{printDefault.name}</option>
+              </select>
+            </div>
+            {% include "dashboard/exams/v2/exam_configs_form.html" %}
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              style="font-size: 11px; font-weight: 600; letter-spacing: 1px; line-height: 1.454; border-width: 2px;"
+              :style="{ opacity: examPrintConfig.editStatus === 'idle' || examPrintConfig.editStatus === 'loading' ? 0.65 : 0.75 }"
+              @click="handleSubmitGeneralAndRebuildPdf()"
+              :disabled="examPrintConfig.editStatus === 'idle' || examPrintConfig.editStatus === 'loading'"
+            >
+              <span class="fe fe-upload-cloud" style="font-weight: 600;"></span>
+              <span>
+                <template v-if="examPrintConfig.editStatus === 'loading'">Salvando...</template>
+                <template v-else>Salvar e visualizar</template>
+              </span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; line-height: 1.454; border-width: 2px;"
+              @click="handleSubmitGeneral()"
+              :disabled="examPrintConfig.editStatus === 'idle' || examPrintConfig.editStatus === 'loading'"
+            >
+              <span class="fe fe-upload-cloud" style="font-weight: 600;"></span>
+              <span>
+                <template v-if="examPrintConfig.editStatus === 'loading'">Salvando...</template>
+                <template v-else>Salvar</template>
+              </span>
+            </button>
+          </form>
+          <form
+            v-for="question in questions"
+            v-show="kind === 'question' && questionSelected === question.id"
+            @change="handleExamQuestionPrintConfigEditStatus(question)"
+          >
+            <div>
+              <p class="tx-medium">Questão #{ question.numberPrint }</p>
+            </div>
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" :id="`id-print-only-enunciation-[${question.id}]`" v-model="question.printOnlyEnunciation" @>
+                <label class="custom-control-label" :for="`id-print-only-enunciation-[${question.id}]`">
+                  Imprimir apenas enunciado
+                </label>
+                <p class="tx-10 tx-gray-600">
+                  Marque esta opção se deseja remover as alternativas e espaços para resposta do aluno.
+                </p>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" :id="`id-break-enunciation-[${question.id}]`" v-model="question.breakEnunciation">
+                <label class="custom-control-label" :for="`id-break-enunciation-[${question.id}]`">
+                  Permitir quebra do enunciado
+                </label>
+                <p class="tx-10 tx-gray-600">
+                  Marque esta opção se deseja permitir que o enunciado seja separado em mais de uma coluna ou página.
+                </p>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" :id="`id-force-one-column-[${question.id}]`" v-model="question.forceOneColumn">
+                <label class="custom-control-label" :for="`id-force-one-column-[${question.id}]`">
+                  Forçar uma coluna
+                </label>
+                <p class="tx-10 tx-gray-600">
+                  Marque esta opção se deseja que esta questão seja impressa em uma única coluna.
+                </p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="quantity">Quantidade de linhas</label>
+              <input type="number" class="form-control" :id="`id-quantity-[${question.id}]`" value="20" v-model="question.quantityLines" />
+            </div>
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" :id="`id-force-break-page-[${question.id}]`" v-model="question.forceBreakPage">
+                <label class="custom-control-label" :for="`id-force-break-page-[${question.id}]`">
+                  Forçar quebra de página
+                </label>
+                <p class="tx-10 tx-gray-600">
+                  Marque esta opção se desejar que a questão esteja obrigatoriamente na próxima página ou coluna.
+                </p>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" :id="`id-number-is-hidden-[${question.id}]`" v-model="question.numberIsHidden">
+                <label class="custom-control-label" :for="`id-number-is-hidden-[${question.id}]`">
+                  Não mostrar numeração
+                </label>
+                <p class="tx-10 tx-gray-600">
+                  Marque esta opção se desejar ocultar a numeração da questão.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              style="font-size: 11px; font-weight: 600; letter-spacing: 1px; line-height: 1.454; border-width: 2px;"
+              :style="{ opacity: examPrintConfig.editStatus === 'idle' || examPrintConfig.editStatus === 'loading' ? 0.65 : 0.75 }"
+              @click="handleSubmitGeneralAndRebuildPdf()"
+              :disabled="question.editStatus === 'idle' || question.editStatus === 'loading'"
+            >
+              <span class="fe fe-upload-cloud" style="font-weight: 600;"></span>
+              <span>
+                <template v-if="question.editStatus === 'loading'">Salvando...</template>
+                <template v-else>Salvar e visualizar</template>
+              </span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; line-height: 1.454; border-width: 2px;"
+              @click="handleSubmitGeneral()"
+              :disabled="question.editStatus === 'idle' || question.editStatus === 'loading'"
+            >
+              <span class="fe fe-upload-cloud" style="font-weight: 600;"></span>
+              <span>
+                <template v-if="question.editStatus === 'loading'">Salvando...</template>
+                <template v-else>Salvar</template>
+              </span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-5" style="height: calc(100vh - 212px); overflow-y: auto;">
+      <div class="card h-100">
+        <div class="card-header pd-10 d-md-flex align-items-center justify-content-between">
+          <div class="d-flex justify-content-between w-100">
+            <div>
+              <p class="mg-b-0" style="color: #6A6B70;" v-show="pdfTotalPages !== ''">
+                #{ pdfTotalPages } página(s)
+              </p>
+            </div>
+            <div class="d-flex align-items-center">
+              <div v-show="haveUnsavedChanges()" class="card-todo">
+                <span class="badge badge-warning">Alterações ainda não foram salvas.</span>
+              </div>
+              {% if user.client_has_discursive_omr %}
+              <select id="teste" class="form-control form-control-sm ml-2" style="max-width: 200px;" v-model="pdfDocumment" @change="rebuildPdf()">
+                <option value="exam">Prova</option>
+                <option value="discursive-sheet">Folha de respostas discursivas</option>
+              </select>
+              {% endif %}
+              <a :href="pdfPreviewBase64" :download="convertToSlug('{{object.name}}')+'-'+'{{ object.id }}.pdf'" class="d-flex align-items-center justify-content-center" style="padding-left: 0.5rem; padding-right: 0.5rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 5px; color: #B5B5C0;">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+                <span style="color: #6B6C70;">
+                  Baixar PDF
+                </span>
+              </a>
+              <div style="border-left: 1px solid #E8E8EA;">
+                <button type="button" @click="rebuildPdf()" style="border: 0; background-color: transparent;">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; color: #D2D2DB;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body pd-10">
+          <div v-show="statusPreviewPdf === 'idle'" style="width: 100%; height: 100%; background-color: #525659; display: flex; justify-content: center; align-items: center; border-width: 2px; border-style: inset; border-color: initial; border-image: initial;">
+            <p style="color: #fff; display: none;">Empty</p>
+          </div>
+          <div v-show="false" style="width: 100%; height: 100%; background-color: #525659; display: flex; justify-content: center; align-items: center; border-width: 2px; border-style: inset; border-color: initial; border-image: initial;">
+            <div style="background-color: #fff; width: 100%; height: calc(100% - 2rem); margin: 1rem;">
+              <p>Carregando...</p>
+            </div>
+          </div>
+          <div v-show="statusPreviewPdf === 'loading'" style="width: 100%; height: 100%; background-color: #525659; display: flex; justify-content: center; align-items: center; border-width: 2px; border-style: inset; border-color: initial; border-image: initial;">
+            <div style="background-color: #fff; width: 100%; height: calc(100% - 0.25rem); margin: 0.25rem;">
+              <div style="height: 100%; overflow: hidden; padding: 1rem;">
+                <div style="display: flex; gap: 0.5rem;">
+                  <span class="skeleton-wrapper skeleton" style="width: 30%; height: 40px;"></span>
+                  <span class="skeleton-wrapper skeleton" style="width: 70%; height: 40px;"></span>
+                </div>
+                <div style="display: flex; margin-top: 0.5rem;">
+                  <span class="skeleton-wrapper skeleton" style="width: 100%; height: 20px;"></span>
+                </div>
+                <div style="display: flex; margin-top: 2rem;">
+                  <span class="skeleton-wrapper skeleton" style="width: 100%; height: 10px;"></span>
+                </div>
+                <div style="display: flex; margin-top: 2rem;">
+                  <span class="skeleton-wrapper skeleton" style="width: 100%; height: 40px;"></span>
+                </div>
+                <div style="display: flex; margin-top: 2rem;">
+                  <span class="skeleton-wrapper skeleton" style="width: 100%; height: 40px;"></span>
+                </div>
+                <div style="display: flex; margin-top: 2rem;">
+                  <span class="skeleton-wrapper skeleton" style="width: 100%; height: 40px;"></span>
+                </div>
+                <div style="display: flex; margin-top: 2rem;">
+                  <span class="skeleton-wrapper skeleton" style="width: 100%; height: 40px;"></span>
+                </div>
+                <div style="display: flex; margin-top: 2rem;">
+                  <span class="skeleton-wrapper skeleton" style="width: 100%; height: 40px;"></span>
+                </div>
+                <div style="display: flex; margin-top: 2rem;">
+                  <span class="skeleton-wrapper skeleton" style="width: 100%; height: 40px;"></span>
+                </div>
+                <div style="display: flex; margin-top: 2rem;">
+                  <span class="skeleton-wrapper skeleton" style="width: 100%; height: 40px;"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <iframe
+            id="pdf-preview"
+            width="100%"
+            height="100%"
+            v-show="statusPreviewPdf === 'success'"
+            src=""
+          >
+          </iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
+{% block bundle %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+<script>
+const app = new Vue({
+  delimiters: ["#{", "}"],
+  el: "#app",
+  data: {
+    examPrintConfigObject: {
+      header: '{{ object.exam_print_config.header.pk|default_if_none:"" }}',
+      backgroundImage: '{{ object.exam_print_config.background_image.pk|default_if_none:"" }}',
+      headerFormat: {% if not object.exam_print_config.header_format is None %}{{object.exam_print_config.header_format}}{% else %}1{% endif %},
+      columnType: {{ object.exam_print_config.column_type|default:0 }},
+      kind: {{ object.exam_print_config.kind|default:0 }},
+      textQuestionFormat: {% if not object.exam_print_config.text_question_format is None %}{{object.exam_print_config.text_question_format}}{% else %}1{% endif %},
+      lineHeight: {% if not object.exam_print_config.line_height is None %}{{object.exam_print_config.line_height}}{% else %}0{% endif %},
+      fontSize: {{ object.exam_print_config.font_size|default:0 }},
+      fontFamily: {{ object.exam_print_config.font_family|default:0 }},
+      printSubjectsName: {{ object.exam_print_config.print_subjects_name|yesno:'true,false' }},
+      printWithCorrectAnswers: {{ object.exam_print_config.print_with_correct_answers|yesno:'true,false' }},
+      hideQuestionsReferencies: {{ object.exam_print_config.hide_questions_referencies|yesno:'true,false' }},
+      hideAlternativesIndicator: {{ object.exam_print_config.hide_alternatives_indicator|yesno:'true,false' }},
+      hideKnowledgeAreasName: {{ object.exam_print_config.hide_knowledge_areas_name|yesno:'true,false' }},
+      printBlackAndWhiteImages: {{ object.exam_print_config.print_black_and_white_images|yesno:'true,false' }},
+      hyphenate: {{ object.exam_print_config.hyphenate|yesno:'true,false' }},
+      discursiveLineHeight: {% if not object.exam_print_config.discursive_line_height is None %}{{object.exam_print_config.discursive_line_height|safe}}{% else %}1{% endif %},
+      uppercaseLetters: {{ object.exam_print_config.uppercase_letters|yesno:'true,false' }}
+
+      editStatus: 'idle',
+    },
+    examPrintConfig: {},
+    generalEditStatus: 'idle',
+    pdfDocumment: 'exam',
+
+    pdfPreviewBase64: '',
+    pdfTotalPages: '',
+
+    kind: 'general',
+    questionSelected: '',
+    statusPreviewPdf: 'idle',
+
+    questions: [
+      {% regroup questions by subject.knowledge_area as knowledge_areas %}
+      {% for knowledge_area in knowledge_areas %}
+        {% regroup knowledge_area.list by subject as subjects %}
+        {% for subject in subjects %}
+          {% for question in subject.list %}
+            {
+              id: '{{ question.pk }}',
+              numberPrint: {% if not question.number_is_hidden %}{{ question|number_print_question:exam }}{% else %}''{% endif %},
+              enunciation: '{{ question.get_enunciation_str|truncatechars:80|remove_line_break }}',
+              // questionPrintConfig
+              editStatus: 'idle',
+              printOnlyEnunciation: {{ question.print_only_enunciation|lower }},
+              breakEnunciation: {{ question.break_enunciation|lower }},
+              forceOneColumn: {{ question.force_one_column|lower }},
+              quantityLines: {{ question.quantity_lines|lower }},
+              forceBreakPage: {{ question.force_break_page|lower }},
+              numberIsHidden: {{ question.number_is_hidden|lower }},
+            },
+          {% endfor %}
+        {% endfor %}
+      {% endfor %}
+    ],
+    printDefaults: [],
+    printConfigControl: false,
+    selectedPrintDefault: null,
+  },
+  mounted() {
+    axios.get("{% url 'api:clients:print-configs-list' %}").then((response) => this.printDefaults = response.data)
+    this.examPrintConfig = Object.assign({}, this.examPrintConfigObject)
+    this.rebuildPdf();
+  },
+  methods: {
+    haveUnsavedChanges() {
+      return this.examPrintConfig.editStatus === 'change' || this.questions.some(question => question.editStatus === 'change');
+    },
+    async handleSubmitExamPrintConfig() {
+      this.generalEditStatus = 'loading';
+      this.examPrintConfig.editStatus = 'loading';
+      const url = '{% url "api:exams-api:exam-print-config-update" exam_id=object.id %}';
+      
+      let body = {
+        header: this.examPrintConfig.header || null,
+        headerFormat: this.examPrintConfig.headerFormat,
+        columnType: this.examPrintConfig.columnType,
+        kind: this.examPrintConfig.kind,
+        textQuestionFormat: this.examPrintConfig.textQuestionFormat,
+        lineHeight: this.examPrintConfig.lineHeight,
+        discursiveLineHeight: this.examPrintConfig.discursiveLineHeight,
+        fontSize: this.examPrintConfig.fontSize,
+        fontFamily: this.examPrintConfig.fontFamily,
+        printSubjectsName: this.examPrintConfig.printSubjectsName,
+        printWithCorrectAnswers: this.examPrintConfig.printWithCorrectAnswers,
+        hideQuestionsReferencies: this.examPrintConfig.hideQuestionsReferencies,
+        hideAlternativesIndicator: this.examPrintConfig.hideAlternativesIndicator,
+        hideKnowledgeAreasName: this.examPrintConfig.hideKnowledgeAreasName,
+        printBlackAndWhiteImages: this.examPrintConfig.printBlackAndWhiteImages,
+        hyphenate: this.examPrintConfig.hyphenate,
+      }
+
+      if(this.selectedPrintDefault) {
+        axios.patch(this.selectedPrintDefault.urls.apiDetail, body).then((response) => {
+          this.generalEditStatus = 'success';
+          this.examPrintConfig.editStatus = 'success';
+        }).catch((e) => {
+          this.generalEditStatus = 'error';
+          this.examPrintConfig.editStatus = 'error';
+        })
+        return
+      }
+
+      try {
+        const res = await fetch(url, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        this.generalEditStatus = 'success';
+        this.examPrintConfig.editStatus = 'success';
+        this.examPrintConfigObject = this.examPrintConfig
+      } catch (error) {
+        console.error(error);
+        this.generalEditStatus = 'error';
+        this.examPrintConfig.editStatus = 'error';
+      }
+    },
+    handleExamPrintConfigEditStatus() {
+      if(this.printConfigControl) {
+        this.printConfigControl = false
+        return
+      }
+      this.generalEditStatus = 'change';
+      this.examPrintConfig.editStatus = 'change';
+    },
+    async handleSubmitExamQuestionPrintConfig(question) {
+      this.generalEditStatus = 'loading';
+      question.editStatus = 'loading';
+      const baseUrl = '{% url "api:exams-api:exam-question-print-config-update" exam_id=object.id question_id="00000000-0000-0000-0000-000000000000" %}';
+      const url = baseUrl.replace('00000000-0000-0000-0000-000000000000', question.id);
+      
+      try {
+        const res = await fetch(url, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            printOnlyEnunciation: question.printOnlyEnunciation,
+            breakEnunciation: question.breakEnunciation,
+            forceOneColumn: question.forceOneColumn,
+            quantityLines: question.quantityLines,
+            forceBreakPage: question.forceBreakPage,
+            numberIsHidden: question.numberIsHidden,
+          }),
+        });
+        const data = await res.json();
+
+        this.generalEditStatus = 'success';
+        question.editStatus = 'success';
+      } catch (error) {
+        console.error(error);
+        this.generalEditStatus = 'error';
+        question.editStatus = 'error';
+      }
+    },
+    handleExamQuestionPrintConfigEditStatus(question) {
+      this.generalEditStatus = 'change';
+      question.editStatus = 'change';
+    },
+    async handleSubmitGeneralAndRebuildPdf() {
+      await this.handleSubmitGeneral()
+      this.rebuildPdf()
+    },
+    async handleSubmitGeneral() {
+      if (this.kind === 'general') {
+        await this.handleSubmitExamPrintConfig()
+      } else {
+        const question = this.questions.find(question => question.id === this.questionSelected)
+        await this.handleSubmitExamQuestionPrintConfig(question)
+      }
+    },
+    handleClickGeneral() {
+      this.kind = 'general';
+    },
+    handleClickQuestion(questionId) {
+      this.kind = 'question';
+      this.questionSelected = questionId;
+    },
+    convertBase64ToBlob(dataURI) {
+      const byteString = atob(dataURI.split(',')[1])
+      
+      const arrayBuffer = new ArrayBuffer(byteString.length)
+      let uint8Array = new Uint8Array(arrayBuffer)
+      
+      for (let i = 0; i < byteString.length; i++) {
+        uint8Array[i] = byteString.charCodeAt(i)
+      }
+      return arrayBuffer
+    },
+    async convertBase64ToBlobWithFetch(dataURI) {
+      const r = await fetch(dataURI)
+      const blob = await r.blob()
+      return blob
+    },
+    sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    },
+    async rebuildPdf() {
+
+      this.statusPreviewPdf = 'loading';
+
+      var iframePreview = document.getElementById('pdf-preview');
+      iframePreview.src = '';
+
+
+      const examPreviewUrl = `/api/v1/exams/{{ object.pk }}/pdf-preview/`
+      const discursiveSheetPreviewUrl = `{% url 'omr:omr_discursive_print_preview' exam_id=object.pk %}`
+      
+      await this.sleep(1000);
+
+      const res = await fetch(this.pdfDocumment == 'exam' ? examPreviewUrl : discursiveSheetPreviewUrl)
+      const data = await res.json()
+
+      const blob = await this.convertBase64ToBlobWithFetch(data.url)
+
+      const file = new Blob([blob], {type: 'application/pdf'})
+      const fileURL = URL.createObjectURL(file)
+
+      this.pdfPreviewBase64 = data.url;
+      this.pdfTotalPages = data.totalPages;
+
+      iframePreview.src = fileURL + '#toolbar=0&navpanes=0';
+      await this.sleep(1000);
+      this.statusPreviewPdf = 'success';
+
+    },
+    selectPrintDefault() {
+      const id = $(this.$refs['inputPrintDefault']).children(":selected").attr("id")
+      const printDefault = this.printDefaults.find(_default => _default.id == id)
+      
+      if(printDefault) {
+        this.getConfig(printDefault).then((response) => {
+          this.examPrintConfig = response.data
+          this.selectedPrintDefault = response.data
+        })
+      } else { 
+        this.selectedPrintDefault = null
+        this.examPrintConfig = Object.assign({}, this.examPrintConfigObject)
+      }
+
+      this.printConfigControl = true
+    },
+    getConfig(printDefault) {
+      return axios.get(printDefault.urls.getConfig)
+    },
+    convertToSlug(str) {
+      str = str.replace(/^\s+|\s+$/g, ''); // trim
+      str = str.toLowerCase();
+      // remove accents, swap ñ for n, etc
+      var from = "ãàáäâẽèéëêìíïîõòóöôùúüûñç·/_,:;";
+      var to   = "aaaaaeeeeeiiiiooooouuuunc------";
+      for (var i = 0, l = from.length; i < l; i++) {
+          str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i));
+      }
+  
+      str = str.replace(/[^a-z0-9 -]/g, '') // remove invalid chars
+          .replace(/\s+/g, '-') // collapse whitespace and replace by -
+          .replace(/-+/g, '-'); // collapse dashes
+      return str;
+    },
+  },
+});
+</script>
+{% endblock bundle %}

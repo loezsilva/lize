@@ -1,0 +1,321 @@
+{% extends 'redesign/base.html' %}
+{% load split %}
+{% load permissions %}
+
+{% block title %}
+  Pendências de correção de provas - Lize
+{% endblock title %}
+
+{% block css-additional %}
+<style>
+
+  @media print {
+    * {
+      overflow: hidden !important;
+    }
+    .content-header {
+      display: none;
+    }
+    .no-print {
+      display: none;
+    }
+    body, .content {
+      height: auto;
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content-body %}<div id="app" class="content-body p-0 m-0" style="overflow-x: hidden;">{% endblock content-body %}
+
+{% block content-fixed %}
+<div class="tw-bg-white">
+  
+    <div class="tw-pb-8 tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" style="background-color: #F8FAFC; padding-bottom: 10px;">
+      <div class="tw-pt-8 container-xxl">
+        <a href="javascript:;" onclick="history.back()">
+          <h3 class="d-flex align-items-center">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15 8H1M1 8L8 15M1 8L8 1" stroke="#9BA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg> 
+            <span class="mx-4" style="color: #374151; font-family: Inter; font-size: 14px; font-weight: 400; line-height: 24px; text-align: left;">Voltar</span>
+          </h3>
+        </a>
+        <div class="tw-grid tw-grid-cols-1">
+          <div class="row mt-4">
+            <div class="col-6">
+              <div class="d-flex align-items-center">
+                <div>
+                  <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="0.5" y="0.5" width="59" height="59" rx="11.5" fill="white"/>
+                    <rect x="0.5" y="0.5" width="59" height="59" rx="11.5" stroke="#E5E7EA"/>
+                    <path d="M38 30.5V24.8C38 23.1198 38 22.2798 37.673 21.638C37.3854 21.0735 36.9265 20.6146 36.362 20.327C35.7202 20 34.8802 20 33.2 20H26.8C25.1198 20 24.2798 20 23.638 20.327C23.0735 20.6146 22.6146 21.0735 22.327 21.638C22 22.2798 22 23.1198 22 24.8V35.2C22 36.8802 22 37.7202 22.327 38.362C22.6146 38.9265 23.0735 39.3854 23.638 39.673C24.2798 40 25.1198 40 26.8 40H30M32 29H26M28 33H26M34 25H26M32.5 37L34.5 39L39 34.5" stroke="#FD853A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="mx-3">
+                  <h3 class="mb-1" style="font-family: Inter; font-size: 30px; font-weight: 500; line-height: 34px; letter-spacing: -0.01em;">
+                    Correções
+                  </h3>
+                  <span style="color: #667085; font-family: Inter; font-size: 14px; font-weight: 400; line-height: 20px;">
+                    #{totalPending} cadern#{totalPending > 1 ? 'os':'o' } aguardando correção 
+                  </span>
+                  <p class="text-muted mb-0" style="font-size: .8rem;">Os cartões de pendências são atualizados automaticamente a cada 10 minutos.</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-6 d-flex align-items-center justify-content-end">
+              <div data-chart="elaborationDonut"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tw-pb-8 tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" style="padding-bottom: 40px;">
+      <div class="tw-pt-8 container-xxl">
+        <h3 class="no-print" style="font-size: 16px; line-height: 24px; font-weight: 500; color: #101828; margin-bottom: 16px;">
+          Encontramos para você
+        </h3>
+        <div class="tw-grid tw-grid-cols-1">
+          <form method="get">
+            <input type="hidden" name="v" value="2">
+            <div class="row">
+              <div class="col-8">
+                <div class="search-form">
+                  <input type="search" style="height: 72px;" v-model="controls.search" value="{{q_name|default:''}}" name="q_name" placeholder="Buscar por nome do caderno" class="text-truncate tw-block tw-w-full tw-border-0 tw-p-6 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6 rounded">
+                </div>
+              </div>
+              <div class="col-4">
+                <select style="height: 72px;" v-model="controls.status" name="q_status" class="form-control text-truncate tw-block tw-w-full tw-border-0 tw-p-6 tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6 rounded">
+                  <option value="">Todos os cadernos</option>
+                  <option value="0">Elaborando</option>  
+                  <option value="1">Revisão de itens</option>  
+                  <option value="2">Fechada</option>  
+                  <option value="3">Diagramação</option>  
+                  <option value="4">Revisão de texto</option>  
+                  <option value="5">Pronto para impressão</option>  
+                  <option value="6">Revisão de PDF</option>  
+                </select>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <hr style="z-index: 1; margin: 0; border-color: #E5E7EA;" />
+
+    <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem] mt-3">
+      <div class="container-xxl">
+        <div class="row">
+          <template v-for="exam in cardCorrections.filter(exam => controls.status ? exam.status == controls.status : true && exam.name.toLowerCase().includes(controls.search.toLowerCase()))"> 
+            <div class="col-12 col-xl-6 col-xxl-4 my-2">
+              <div class="card" style="border: 1px solid #E5E7EA; border-radius: 12px;">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col">
+                      <div class="d-flex">
+                        <svg width="19" height="20" viewBox="0 0 19 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M15.8332 10.4167V5.66669C15.8332 4.26656 15.8332 3.56649 15.5743 3.03171C15.3466 2.56131 14.9833 2.17885 14.5364 1.93917C14.0284 1.66669 13.3633 1.66669 12.0332 1.66669H6.9665C5.63638 1.66669 4.97132 1.66669 4.46328 1.93917C4.01639 2.17885 3.65306 2.56131 3.42536 3.03171C3.1665 3.56649 3.1665 4.26656 3.1665 5.66669V14.3334C3.1665 15.7335 3.1665 16.4336 3.42536 16.9683C3.65306 17.4387 4.01639 17.8212 4.46328 18.0609C4.97132 18.3334 5.63638 18.3334 6.9665 18.3334H9.49984M11.0832 9.16669H6.33317M7.9165 12.5H6.33317M12.6665 5.83335H6.33317M11.479 15.8334L13.0623 17.5L16.6248 13.75" stroke="#D2D6DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="mx-2" style="color: #9BA3AF; font-family: Inter; font-size: 14px; font-weight: 400; line-height: 20px;">Correção</span>
+                      </div>
+                    </div>
+                    <div class="col text-right">
+                      <span class="mx-2" style="color: #D92D20; font-family: Inter; font-size: 14px; font-weight: 400; line-height: 18px;">
+                        #{moment(exam.deadline + 'T23:59:59').fromNow()} 
+                      </span>
+                    </div>
+                  </div>
+                  {% comment %} <div class="row my-2">
+                    <div class="col-12">
+                      <h6 style="color: #FD853A; font-family: Inter; font-size: 16px; font-weight: 600; line-height: 24px;">{{object.teacher_subject.subject.name}}</h6>
+                    </div>
+                  </div> {% endcomment %}
+                  <div class="row mt-2 mb-0">
+                    <div class="col-12">
+                      <h6 class="mb-0" style="color: #374151; font-family: Inter; font-size: 18px; font-weight: 600; line-height: 22px;">#{exam.name}</h6>
+                    </div>
+                  </div>
+                  {% comment %} <div class="row">
+                    <div class="col-12">
+                      <span style="color: #9BA3AF; font-family: Inter; font-size: 14px; font-weight: 400; line-height: 20px;">{{object.grade}}</span>
+                    </div>
+                  </div> {% endcomment %}
+                  <div class="row my-2 mt-3">
+                    <div class="col-12 d-flex">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14.5 2.75H10C9.62516 2.74988 9.25428 2.82664 8.91028 2.97552C8.56628 3.12441 8.25647 3.34227 8 3.61563C7.74353 3.34227 7.43372 3.12441 7.08972 2.97552C6.74572 2.82664 6.37484 2.74988 6 2.75H1.5C1.30109 2.75 1.11032 2.82902 0.96967 2.96967C0.829018 3.11032 0.75 3.30109 0.75 3.5V12.5C0.75 12.6989 0.829018 12.8897 0.96967 13.0303C1.11032 13.171 1.30109 13.25 1.5 13.25H6C6.33152 13.25 6.64946 13.3817 6.88388 13.6161C7.1183 13.8505 7.25 14.1685 7.25 14.5C7.25 14.6989 7.32902 14.8897 7.46967 15.0303C7.61032 15.171 7.80109 15.25 8 15.25C8.19891 15.25 8.38968 15.171 8.53033 15.0303C8.67098 14.8897 8.75 14.6989 8.75 14.5C8.75 14.1685 8.8817 13.8505 9.11612 13.6161C9.35054 13.3817 9.66848 13.25 10 13.25H14.5C14.6989 13.25 14.8897 13.171 15.0303 13.0303C15.171 12.8897 15.25 12.6989 15.25 12.5V3.5C15.25 3.30109 15.171 3.11032 15.0303 2.96967C14.8897 2.82902 14.6989 2.75 14.5 2.75ZM6 11.75H2.25V4.25H6C6.33152 4.25 6.64946 4.3817 6.88388 4.61612C7.1183 4.85054 7.25 5.16848 7.25 5.5V12.0506C6.86311 11.8526 6.43463 11.7495 6 11.75ZM13.75 11.75H10C9.56525 11.7497 9.13671 11.8532 8.75 12.0519V5.5C8.75 5.16848 8.8817 4.85054 9.11612 4.61612C9.35054 4.3817 9.66848 4.25 10 4.25H13.75V11.75Z" fill="#94A3B8"/>
+                      </svg>                        
+                      <span class="mx-2" style="color: #9BA3AF; font-family: Inter; font-size: 14px; font-weight: 400; line-height: 20px;">
+                        <template v-if="exam.category == 0">
+                          Caderno de Prova
+                        </template>
+                        <template v-else>
+                          Caderno de atividade
+                        </template>
+                      </span>
+                    </div>
+                  </div> 
+                  <div class="row my-2">
+                    <div class="col-12 d-flex">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14.6477 10.625C14.7469 10.7969 14.7739 11.0011 14.7228 11.1929C14.6718 11.3846 14.5468 11.5484 14.3752 11.6481L8.37523 15.1481C8.26047 15.2151 8.12998 15.2504 7.9971 15.2504C7.86422 15.2504 7.73373 15.2151 7.61898 15.1481L1.61898 11.6481C1.44708 11.5479 1.32204 11.3836 1.27134 11.1912C1.22065 10.9988 1.24846 10.7941 1.34866 10.6222C1.44887 10.4503 1.61325 10.3253 1.80565 10.2746C1.99805 10.2239 2.20271 10.2517 2.3746 10.3519L7.9996 13.6319L13.6252 10.3519C13.7971 10.253 14.0012 10.2261 14.1929 10.2773C14.3845 10.3285 14.548 10.4535 14.6477 10.625ZM13.6252 7.35189L8.00023 10.6319L2.37835 7.35189C2.20695 7.25986 2.00648 7.23804 1.81929 7.29103C1.6321 7.34402 1.47282 7.46768 1.37508 7.6359C1.27735 7.80411 1.2488 8.00373 1.29547 8.1926C1.34215 8.38147 1.46039 8.54481 1.62523 8.64814L7.62523 12.1481C7.73998 12.2151 7.87047 12.2504 8.00335 12.2504C8.13623 12.2504 8.26672 12.2151 8.38148 12.1481L14.3815 8.64814C14.5534 8.54785 14.6784 8.38339 14.729 8.19093C14.7797 7.99847 14.7518 7.79378 14.6515 7.62189C14.5512 7.45 14.3867 7.32498 14.1943 7.27435C14.0018 7.22371 13.7971 7.2516 13.6252 7.35189ZM1.25023 5.00001C1.25047 4.8686 1.28524 4.73955 1.35106 4.6258C1.41687 4.51206 1.51142 4.4176 1.62523 4.35189L7.62523 0.85189C7.74011 0.785269 7.87055 0.750183 8.00335 0.750183C8.13615 0.750183 8.2666 0.785269 8.38148 0.85189L14.3815 4.35189C14.4948 4.4179 14.5889 4.51249 14.6543 4.62622C14.7197 4.73995 14.7541 4.86883 14.7541 5.00001C14.7541 5.1312 14.7197 5.26008 14.6543 5.37381C14.5889 5.48754 14.4948 5.58213 14.3815 5.64814L8.38148 9.14814C8.26672 9.21513 8.13623 9.25043 8.00335 9.25043C7.87047 9.25043 7.73998 9.21513 7.62523 9.14814L1.62523 5.64814C1.51142 5.58243 1.41687 5.48797 1.35106 5.37422C1.28524 5.26048 1.25047 5.13143 1.25023 5.00001ZM3.48898 5.00001L8.00023 7.63189L12.5115 5.00001L8.00023 2.36814L3.48898 5.00001Z" fill="#94A3B8"/>
+                      </svg>                       
+                      <span class="mx-2" style="color: #9BA3AF; font-family: Inter; font-size: 14px; font-weight: 400; line-height: 20px;">
+                        #{exam.completed} de #{exam.incompleted} respostas
+                      </span>
+                    </div>
+                  </div>
+                  <div class="row my-2">
+                    <div class="col-12 d-flex">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14.6477 10.625C14.7469 10.7969 14.7739 11.0011 14.7228 11.1929C14.6718 11.3846 14.5468 11.5484 14.3752 11.6481L8.37523 15.1481C8.26047 15.2151 8.12998 15.2504 7.9971 15.2504C7.86422 15.2504 7.73373 15.2151 7.61898 15.1481L1.61898 11.6481C1.44708 11.5479 1.32204 11.3836 1.27134 11.1912C1.22065 10.9988 1.24846 10.7941 1.34866 10.6222C1.44887 10.4503 1.61325 10.3253 1.80565 10.2746C1.99805 10.2239 2.20271 10.2517 2.3746 10.3519L7.9996 13.6319L13.6252 10.3519C13.7971 10.253 14.0012 10.2261 14.1929 10.2773C14.3845 10.3285 14.548 10.4535 14.6477 10.625ZM13.6252 7.35189L8.00023 10.6319L2.37835 7.35189C2.20695 7.25986 2.00648 7.23804 1.81929 7.29103C1.6321 7.34402 1.47282 7.46768 1.37508 7.6359C1.27735 7.80411 1.2488 8.00373 1.29547 8.1926C1.34215 8.38147 1.46039 8.54481 1.62523 8.64814L7.62523 12.1481C7.73998 12.2151 7.87047 12.2504 8.00335 12.2504C8.13623 12.2504 8.26672 12.2151 8.38148 12.1481L14.3815 8.64814C14.5534 8.54785 14.6784 8.38339 14.729 8.19093C14.7797 7.99847 14.7518 7.79378 14.6515 7.62189C14.5512 7.45 14.3867 7.32498 14.1943 7.27435C14.0018 7.22371 13.7971 7.2516 13.6252 7.35189ZM1.25023 5.00001C1.25047 4.8686 1.28524 4.73955 1.35106 4.6258C1.41687 4.51206 1.51142 4.4176 1.62523 4.35189L7.62523 0.85189C7.74011 0.785269 7.87055 0.750183 8.00335 0.750183C8.13615 0.750183 8.2666 0.785269 8.38148 0.85189L14.3815 4.35189C14.4948 4.4179 14.5889 4.51249 14.6543 4.62622C14.7197 4.73995 14.7541 4.86883 14.7541 5.00001C14.7541 5.1312 14.7197 5.26008 14.6543 5.37381C14.5889 5.48754 14.4948 5.58213 14.3815 5.64814L8.38148 9.14814C8.26672 9.21513 8.13623 9.25043 8.00335 9.25043C7.87047 9.25043 7.73998 9.21513 7.62523 9.14814L1.62523 5.64814C1.51142 5.58243 1.41687 5.48797 1.35106 5.37422C1.28524 5.26048 1.25047 5.13143 1.25023 5.00001ZM3.48898 5.00001L8.00023 7.63189L12.5115 5.00001L8.00023 2.36814L3.48898 5.00001Z" fill="#94A3B8"/>
+                      </svg>                       
+                      <p class="mx-2 mb-0 text-truncate" style="color: #9BA3AF; font-family: Inter; font-size: 14px; font-weight: 400; line-height: 20px;">
+                        #{exam.classe_name}
+                      </p>
+                    </div>
+                  </div>
+                  <div class="row mb-1 mt-4">
+                    <div class="col-12 d-flex justify-content-between">
+                      <div class="d-flex justify-content-between align-items-end">
+                        <div class="d-flex">
+                          <template v-for="color in getLines(exam.completed, exam.total, exam.deadline)">
+                            <div :style="{ backgroundColor: color }" style="width: 36px; height: 6px; border-radius: 4px; margin-left: 4px;"></div>
+                          </template>
+                          <div v-for="i in 4 - getLines(exam.completed, exam.total, exam.deadline).length" style="background-color: #E5E7EA; width: 36px; height: 6px; border-radius: 4px; margin-left: 4px;"></div>
+                        </div>
+                      </div>
+                      <a :href="`{% url 'exams:exams_detail_v2' pk='00000000-0000-0000-0000-000000000000' %}?turma=${exam.classe_id}`.replace('00000000-0000-0000-0000-000000000000', exam.id)" class="btn btn-white" style="height: 32px; padding: 5px 16px; border-radius: 8px; border: 1px solid #10182833;">
+                        <span style="font-family: Inter; font-size: 14px; font-weight: 600; line-height: 20px;">Corrigir</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    {% comment %} 
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem] mt-3">
+        <div class="container-xxl">
+          <div class="row">
+            <div class="col-12">
+              {% include 'redesign/includes/pagination.html' %}
+            </div>
+          </div>
+        </div>
+      </div> 
+    {% endcomment %}
+
+</div>
+
+
+{% endblock content-fixed %}
+
+
+{% block js-additional %}
+  <script src="https://cdn.jsdelivr.net/momentjs/latest/moment-with-locales.min.js"></script>
+  <script>
+    moment.locale('pt-br')
+    var app = new Vue({
+      delimiters: ['#{', '}'],
+      el: '#app',
+      data: {
+        controls: {
+          loadingCorretions: true,
+          search: '',
+          status: '',
+        },
+        cardCorrections: [],
+        unities: [
+          {% for unity in unities %}
+            {
+              id: "{{unity.id}}",
+              name: "{{unity.name}}"
+            },
+          {% endfor %}
+        ],
+      },
+      computed: {
+        totalPending() {
+          return this.cardCorrections.reduce((a, b) => a + b.incompleted, 0)
+        },
+      },
+      watch: {
+        
+      },
+      methods: {
+        getLines(inserted, total, deadline) {
+          let color = '#D92D20'
+          let lines = []
+          let percent = (inserted / total) * 100
+          if (percent > 0) {
+            lines.push(color)
+          }
+          if (percent >= 50) {
+            lines.push(color)
+          }
+
+          if (percent >= 75) {
+            lines.push(color)
+          }
+
+          if (percent >= 100) {
+            lines.push(color)
+          }
+          return lines
+        },
+        startDonut(elementID, value) {
+          let color = {
+            light: value >= 50 && value < 70 ? '#FEF7EF' : value >= 70 ? '#ECF9F3':'#FBEAE9', 
+            accent: value >= 50 && value < 70 ? '#F3B364' : value >= 70 ? '#41C588':'#D92D20'
+          }
+
+          let elaborationDataChartElement = $(`[data-chart="${elementID}"]`)
+
+          elaborationDataChartElement.html(`
+            <svg width="64" height="64" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+              <path stroke="${color.light}" stroke-linecap="round" stroke-width="3.8" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+              <path stroke="${color.accent}" stroke-linecap="round" stroke-width="3.8" stroke-dasharray="${value.toFixed(0)}, 100" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+              <text x="50%" y="50%" fill="#101828" font-size="8" font-size="16px"  alignment-baseline="middle" text-anchor="middle" style="line-height: 24px; font-weight: 500;">${value.toFixed(0)}%</text>
+            </svg>
+          `)
+        },
+        moment(date) {
+          return moment(date)
+        },
+        getCardsCorrections() {
+          axios({
+            method: 'POST',
+            url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+            data: {
+              "who": "school",
+              "who_ids": ["{{user.client.id}}"],
+              "operation": "get_teacher_corrections",
+              "what": 'unities',
+              "what_ids": null,
+              "filters": {
+                "teacher": "{{user.inspector.id}}",
+                "user_unities": this.unities.map((u) => u.id),
+              }
+            }
+          }).then((response) => {
+            this.cardCorrections = response.data[0]
+          }).finally(() => {
+            this.controls.loadingCorretions = false
+          })
+        },
+      },
+      async mounted() {
+        // this.startDonut('elaborationDonut', 40)
+        this.getCardsCorrections()
+      }
+    })
+  </script>
+{% endblock js-additional %}

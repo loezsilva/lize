@@ -1,0 +1,376 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+  Lize - Simulados ENEM 2025
+{% endblock %}
+
+{% block meta-seo %}
+    <!-- Twitter -->
+    <meta name="twitter:site" content="https://app.lizeedu.com.br">
+    <meta name="twitter:creator" content="Lize Edu">
+    <meta name="twitter:card" content="Listas de questões diárias e simulados ENEM online grátis!">
+    <meta name="twitter:title" content="Lize Edu">
+    <meta name="twitter:description" content="Listas de questões diárias e simulados ENEM online grátis!">
+    <!-- <meta name="twitter:image" content="#"> -->
+
+    <!-- Facebook -->
+    <meta property="og:url" content="https://app.lizeedu.com.br">
+    <meta property="og:title" content="Lize Edu">
+    <meta property="og:description" content="Listas de questões diárias e simulados ENEM online grátis!">
+{% endblock %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700;800&display=swap');
+</style>
+<style>
+  form i.togglePassword {
+    cursor: pointer;
+    top: -30px;
+    float: right;
+    margin-right: 17px;
+    font-size: 16px;
+    margin-bottom: p;
+    position: relative;
+  }
+  .linhaComTexto {
+    width: 100%;
+    height: 20px;
+    border-bottom: 1.5px solid rgb(174, 174, 174);
+    text-align: center;
+  }
+
+  .linhaComTexto > span {
+    font-size: 12px;
+    background-color: white;
+    position: relative;
+    top: 9px;
+    padding: 0 14px;
+    color: rgb(131, 131, 131);
+    font-weight: 700;
+  }
+  .content-div{
+    max-width: 65%;
+  }
+  @media only screen and (max-width: 600px) {
+    .content-div{
+      max-width: 85%;
+    }
+}
+  *{
+    font-family: 'Poppins', sans-serif;
+  }
+  input{
+    padding: 22px 15px 22px 15px !important;
+  }
+
+  .btn{
+    padding-top: 10px !important;
+    padding-bottom: 10px !important; 
+  }
+</style>
+{% endblock css-additional %}
+
+{% block js-header-additional %}
+  <!-- Meta Pixel Code -->
+  <script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '340788518509482');
+  fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=340788518509482&ev=PageView&noscript=1"
+  /></noscript>
+  <!-- End Meta Pixel Code -->
+  <meta name="facebook-domain-verification" content="9hhd0dw6154r3ajq35svdi85849a7j" />
+
+  <!-- Meta Pixel Code -->
+  <script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '1014374073291111');
+  fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=1014374073291111&ev=PageView&noscript=1"
+  /></noscript>
+  <!-- End Meta Pixel Code -->
+{% endblock js-header-additional %}
+
+{% block content %}
+<div class="row mr-0 ml-0" style="min-height: 100%;">
+  <div class="col-12 col-md-6 bg-white d-flex justify-content-center align-items-center">
+      <form class="content-div" method="POST" action=".">
+        {% csrf_token %}
+         <div class="sign-wrapper">
+          <div class="wd-100p py-3">
+                          
+            {% if object.logo %}
+              <img src="{{object.logo.url}}" style="max-width:300px; width: 100%;" class="mb-4 mt-4">
+            {% endif %}
+
+            <h3 class="mb-3">Listas de questões diárias e simulados online grátis!</h3>
+
+
+            <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%; margin-bottom: 20px;">
+                <iframe src="https://www.youtube.com/embed/dlgwPGQn5vk" 
+                        frameborder="0" 
+                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen>
+                </iframe>
+            </div>
+
+            <h5 class="mb-3 mt-3 text-weight-bold">Cadastre-se agora e comece sua jornada rumo à aprovação</h5>
+
+              {% include 'includes/messages.html' with messages=messages only %}
+            
+            {% if form.non_field_errors %}
+            <p class="text-danger">
+              <em>Seu <strong>usuário</strong> e <strong>senha</strong> não correspondem. Por favor, tente novamente.</em>
+            </p>
+            {% endif %}
+
+            {% render_field form.school_class value=object.pk %}
+                  
+                  <div class="form-group">
+                    <label for="{{ form.name.id_for_label }}" class="font-weight-medium">{{ form.name.label }}</label>
+                    
+                      {% render_field form.name class="form-control" %}
+                    
+                    {% if form.name.errors %}
+                      {% for error in form.name.errors %}
+                        <div class="text-danger">{{ error|escape }}</div>
+                      {% endfor %}
+                    {% endif %}
+                  </div>
+
+                  <div class="form-group">
+                    <label for="{{ form.email.id_for_label }}" class="font-weight-medium">{{ form.email.label }}</label>
+                    
+                      {% render_field form.email class="form-control" %}
+                    
+                    {% if form.email.errors %}
+                      {% for error in form.email.errors %}
+                        <div class="text-danger">{{ error|escape }}</div>
+                      {% endfor %}
+                    {% endif %}
+                  </div>
+
+                  <div class="form-group">
+                    <label for="{{ form.username.id_for_label }}" class="font-weight-medium">{{ form.username.label }}</label>
+                    
+                      {% render_field form.username class="form-control" %}
+                    
+                    {% if form.username.errors %}
+                      {% for error in form.username.errors %}
+                        <div class="text-danger">{{ error|escape }}</div>
+                      {% endfor %}
+                    {% endif %}
+                  </div>
+                  <div class="form-group">
+                    <label for="{{ form.password.id_for_label }}" class="font-weight-medium">{{ form.password.label }}</label>
+                    
+                      {% render_field form.password class="form-control" %}
+                      <i class="far fa-eye-slash togglePassword" id="togglePassword" ></i>
+                    {% if form.password.errors %}
+                      {% for error in form.password.errors %}
+                        <div class="text-danger">{{ error|escape }}</div>
+                      {% endfor %}
+                    {% endif %}
+
+                  </div>
+                  <div class="form-group">
+                    <label for="{{ form.confirm_password.id_for_label }}" class="font-weight-medium">{{ form.confirm_password.label }}</label>
+                    
+                      {% render_field form.confirm_password onkeyup="checkPasswordMatch();" class="form-control" %}
+                      <i class="far fa-eye-slash togglePassword" id="togglePasswordConfirm" ></i>
+                    {% if form.confirm_password.errors %}
+                      {% for error in form.confirm_password.errors %}
+                        <div class="text-danger">{{ error|escape }}</div>
+                      {% endfor %}
+                    {% endif %}
+                    <div  class="text-danger password-error"></div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="{{ form.state.id_for_label }}" class="font-weight-medium">{{ form.state.label }}</label>
+                    
+                      {{ form.state }}
+                    
+                    {% if form.state.errors %}
+                      {% for error in form.state.errors %}
+                        <div class="text-danger">{{ error|escape }}</div>
+                      {% endfor %}
+                    {% endif %}
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="{{ form.school_name.id_for_label }}" class="font-weight-medium">{{ form.school_name.label }}</label>
+                      {% render_field form.school_name class="form-control" %}
+                   
+                    {% if form.school_name.errors %}
+                      {% for error in form.school_name.errors %}
+                        <div class="text-danger">{{ error|escape }}</div>
+                      {% endfor %}
+                    {% endif %}
+                  </div>
+                  <div class="row">
+                    <div class="col-12">
+                      Ao utilizar essa plataforma estou ciente e de acordo com o <a href="{% url 'terms' slug='aviso-privacidade' %}" target="_blank"> Aviso de Privacidade
+                      </a> e
+
+                      <a href="{% url 'terms' slug='condicoes-uso' %}" target="_blank"> Condições de Uso</a>
+                    </div>
+                  </div>
+                 
+                  <button type="submit" class="btn btn-block btn-orange font-weight-medium">
+                    Criar conta e começar simulado ENEM
+                  </button>
+                  <p class="tx-10 mt-2 text-justify">
+                    Os dados coletados através desse formulário serão utilizados para viabilizar o acesso dos participantes ao Simulado ENEM, desenvolvido pela Lize Edu e seus parceiros, e para o envio de informações comerciais sobre os produtos e serviços destes. Para mais informações sobre a utilização de seus dados pessoais, acesse nosso Aviso de Privacidade.
+                  </p>
+            
+          </div>
+        </div> 
+      </form>
+  </div>
+  <div class="col-12 col-md-6 d-flex justify-content-center py-5" 
+    style="box-shadow: -7px 8px 20px 0px #a0a0a0; border-top-left-radius: 35px; background-color: #FF8F3E !important;">
+    <div class="content-div pt-5">
+        {% include 'redesign/includes/logo.html' with width=90  height=90  fill="white" %}
+
+      <div class="mb-5 d-flex align-content-baseline mt-3">
+        <img src="{% static 'accept.png' %}" style="width:40px;height:40px;">
+        <h3 style="color: white;" class="font-weight-medium ml-3">
+          Novas listas todos os dias</h3>
+      </div>
+      <div class="mb-5 d-flex align-content-baseline">
+        <img src="{% static 'accept.png' %}" style="width:40px;height:40px;">
+        <h3 style="color: white;" class="font-weight-medium ml-3">Listão de revisão toda sexta</h3>
+      </div>
+      <div class="mb-5 d-flex align-content-baseline">
+        <img src="{% static 'accept.png' %}" style="width:40px;height:40px;">
+        <h3 style="color: white;" class="font-weight-medium ml-3">2 simulados completos com correção TRI</h3>
+      </div>
+      <div class="mb-5 d-flex align-content-baseline">
+        <img src="{% static 'accept.png' %}" style="width:40px;height:40px;">
+        <h3 style="color: white;" class="font-weight-medium ml-3">Cadernos organizados por áreas do conhecimento e nível de dificuldade</h3>
+      </div>
+      <div class="mb-5 d-flex align-content-baseline">
+        <img src="{% static 'accept.png' %}" style="width:40px;height:40px;">
+        <h3 style="color: white;" class="font-weight-medium ml-3">Questões comentadas por especialistas com curadoria Master Soluções</h3>
+      </div>
+    </div>
+  </div>
+</div>
+
+  {% if not disable_support_chat %}
+    {% include 'includes/chatwoot.html' with user_type="anonimo" %}
+  {% endif %}
+  <script src="{% static 'administration/lib/jquery/jquery.min.js' %}"></script>
+  <script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+   <script>
+        function checkPasswordMatch() {
+          console.log("teste")
+            var password = document.getElementById("id_password").value;
+            var confirmPassword = document.getElementById("id_confirm_password").value;
+
+            if (password != confirmPassword) {
+                console.log("n")
+                $(".password-error").html("As senhas não coincidem.")
+            } else {
+                $(".password-error").html("")
+            }
+        }
+    </script>
+  <script>
+    $(document).ready(function() {
+          $('.select2').select2();
+      });
+  </script>
+
+<script type="text/javascript">
+  const togglePassword = document.querySelector("#togglePassword");
+  const togglePasswordConfirm = document.querySelector("#togglePasswordConfirm");
+
+  const password = document.querySelector("#id_password");
+  const passwordConfirm = document.querySelector("#id_confirm_password");
+
+
+  togglePassword.addEventListener("click", function () {
+      // toggle the type attribute
+      const type = password.getAttribute("type") === "password" ? "text" : "password";
+      password.setAttribute("type", type);
+      
+      // toggle the icon
+      this.classList.toggle("fa-eye-slash");
+      this.classList.toggle("fa-eye");
+  });
+
+  togglePasswordConfirm.addEventListener("click", function () {
+      // toggle the type attribute
+      const type = passwordConfirm.getAttribute("type") === "password" ? "text" : "password";
+      passwordConfirm.setAttribute("type", type);
+      
+      // toggle the icon
+      this.classList.toggle("fa-eye-slash");
+      this.classList.toggle("fa-eye");
+  });
+
+
+  // delete cookies if key start with "_sleek_"
+  function delete_cookie(key) {
+    document.cookie = key + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+  }
+  function delete_all_cookies() {
+    var cookies = document.cookie.split(";");
+    for (var i = 0; i < cookies.length; i++) {
+      var cookie = cookies[i];
+      var eqPos = cookie.indexOf("=");
+      var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+      if (name.indexOf("_sleek_") == 0) {
+        delete_cookie(name);
+      }
+    }
+  }
+
+  delete_all_cookies()
+
+  // delete local storage if key start with "_sleek_"
+  function delete_local_storage(key) {
+    localStorage.removeItem(key);
+  }
+
+  function delete_all_local_storage() {
+    console.log(key)
+    var keys = Object.keys(localStorage);
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      if (key.indexOf("_sleek_") == 0) {
+        delete_local_storage(key);
+      }
+    }
+  }
+
+  delete_all_local_storage()
+
+  
+</script>
+{% endblock %}

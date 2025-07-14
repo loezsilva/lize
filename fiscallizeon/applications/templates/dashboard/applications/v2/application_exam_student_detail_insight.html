@@ -1,0 +1,1025 @@
+{% extends request.user.get_base_url|default:'redesign/base.html' %}
+{% comment %} {% extends request.user.get_base_url|default:'administration/base.html' %} {% endcomment %}
+
+{% load static %}
+{% load increment %}
+{% load call_method %}
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+      <nav class="ls" aria-label="Breadcrumb">
+        <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+          <li>
+            <div>
+              <a href="{% url 'core:dashboard_student' %}" class="axk bks">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                  <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+              </a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="{% url 'applications:application_student_list' %}?category=online" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Provas</a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal;">
+                {{ object.application.exam }}
+              </a>
+            </div>
+          </li>
+        </ol>
+      </nav>
+      <div>
+        <div class="d-none d-sm-flex">
+          <div class="contact-content-header rounded" style="border: 1px solid rgba(72, 94, 144, 0.16);">
+            <nav class="nav">
+              <a href="{% url 'applications:application_exam_student_detail_v2' pk=object.pk %}" class="nav-link">Informações gerais</a>
+              <a href="{% url 'applications:application_exam_student_detail_insight' pk=object.pk %}" class="nav-link active">Questões para revisar</a>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h4 class="tx-spacing--1">Questões para revisar</h4>
+    </div>
+    <hr />
+    <div class="row row-xs">
+      <div class="col-12 mg-t-10">
+        <div>
+          <h5 class="mg-b-15">Disciplinas que você poderia melhorar</h5>
+        </div>
+        <div
+          :style="{
+            'overflow-y': showAllSubjects ? 'unset' : 'hidden',
+          }"
+          :class="[showAllSubjects ? 'max-h-full' : 'max-h-[18.375rem] md:max-h-[7.5rem]']"
+        >
+          {% for subject in subjects %}
+            <div
+              class="card card-body cursor-pointer px-0 mb-2"
+              @click="showQuestions('{% url 'api:applications-student:question-list' application_student_id=object.pk %}?subject={{ subject.id }}', 'subject')"
+            >
+              <div class="d-md-flex align-items-center justify-content-between">
+                <div class="d-md-flex align-items-center justify-content-between flex-2 px-4">
+                  <div class="media align-sm-items-center">
+                    <div class="media-body">
+                      <h6 class="mg-b-5" style="font-size: 1rem;" data-pk="{{ subject.id }}">
+                        {{ subject.name|default_if_none:"Sem disciplina" }}
+                      </h6>
+                      <p class="tx-12 tx-color-03 w-64 mg-b-0" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ subject.knowledge_area|default_if_none:"Sem disciplina" }}
+                      </p>
+                    </div>
+                  </div>
+                  <div class="d-flex justify-content-center px-4 mg-t-20 mg-md-t-0">
+                    <span class="peity-donut" data-peity='{ "fill": ["#009ede","#e5e9f2"], "height": 60, "width": 60, "innerRadius": 26 }'>{{ subject.max_diff_level.performance|floatformat:0 }},100</span>
+                    <div class="d-flex flex-column align-items-center justify-content-center ml-2">
+                      <h3 class="tx-rubik tx-spacing--1 mg-b-0" style="font-variant-numeric: tabular-nums;">{{ subject.max_diff_level.performance|floatformat:2 }}%</h3>
+                      <span class="tx-9 tx-semibold tx-sans tx-color-03 tx-uppercase">Desempenho</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex-1 mg-t-20 mg-md-t-0 bd-sm-l px-4">
+                  <p class="mb-0">Acertou {{ subject.max_diff_level.correct }} questão(ões) {{ subject.max_diff_level.name|lower }}</p>
+                  <div class="d-flex align-items-center">
+                    <div class="progress ht-5 w-100">
+                      <div class="progress-bar" role="progressbar" aria-valuenow="{{ subject.max_diff_level.performance }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ subject.max_diff_level.performance }}%;"></div>
+                    </div>
+                    <div class="ml-2">
+                      <p class="mb-0">
+                        {{ subject.max_diff_level.correct }}/{{ subject.max_diff_level.total }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex-1 mg-t-20 mg-md-t-0 bd-sm-l px-4">
+                  <div class="card-widget card-todo">
+                    <div class="card-footer bg-transparent bd-t-0 p-0">
+                      <a v-if="countSubjectRetryAnswer('{{subject.id}}') < {{subject.total_open_questions}}" href="#" role="button" class="btn btn-block">
+                        <span class="fe fe-rotate-ccw tx-bold mr-2"></span>Revisar questões
+                      </a>
+                      <a v-else href="#" role="button" class="btn btn-primary btn-block text-white disabled" style="border-style: none;">
+                        <span class="fe fe-check tx-bold mr-2"></span>Questões revisadas
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        <div>
+          <div class="divider-text">
+            {% if subjects|length > 1 %}
+              <button
+                type="button"
+                class="btn btn-xs btn-primary rounded-pill"
+                @click="toggleShowAllSubjects()"
+              >
+                <template v-if="showAllSubjects">
+                  Ocultar disciplinas
+                </template>
+                <template v-else>
+                  Ver todas disciplinas
+                </template>
+                <i class="icon mg-l-5 mg-t-3 tx-12" :class="showAllSubjects ? 'ion-ios-arrow-up' : 'ion-ios-arrow-down'"></i>
+              </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      {% if questions %}
+        <div class="col-12 mg-t-10">
+          <div>
+            <h5 class="mg-b-15">Questões fáceis que você poderia ter acertado</h5>
+          </div>
+          <div
+            :style="{
+              'overflow-y': showAllQuestions ? 'unset' : 'hidden',
+            }"
+            :class="[showAllQuestions ? 'max-h-full' : 'max-h-[14.125rem] md:max-h-[14.125rem]']"
+          >
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {% for exam_question in questions %}
+                <div class="card card-body cursor-pointer mb-2" @click="questionHasRetryAnswers('{{exam_question.object.pk}}') ? () => {} : showQuestionDetail('{% call_method exam_question.object.question 'get_absolute_url' object.pk %}', false)">
+                  <div class="media">
+                    <div class="media-body card-todo">
+                      <div class="d-flex align-items-md-center justify-content-between flex-column flex-md-row mb-2">
+                        <div class="d-flex">
+                          <button type="button" class="btn btn-xs btn-outline-danger" style="padding: 2px 10px; font-size: 8px;">{{ exam_question.object.question|number_print_question:object.application.exam }}ª Questão</button>
+                          <span class="badge badge-primary ml-2">{{ exam_question.object.question.subject.name }}</span>
+                        </div>
+                        <div class="d-flex">
+                          {% if exam_question.kind == 'level' %}
+                            <span class="badge badge-danger mt-2 mt-md-0 ml-md-2">
+                              Questão fácil (definida pelo professor)
+                            </span>
+                          {% else %}
+                            <span class="badge badge-danger mt-2 mt-md-0 ml-md-2">
+                              {{ exam_question.performance_total|floatformat:2 }}% dos alunos acertaram essa questão
+                            </span>
+                          {% endif %}
+                        </div>
+                      </div>
+                      <h6
+                        class="mg-b-10"
+                        style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;"
+                      >
+                        {{ exam_question.object.question.get_enunciation_str }}
+                      </h6>
+                      <div class="d-flex my-2" style="flex-wrap: wrap; gap: 0.2rem; min-height: 16px;">
+                        {% if exam_question.object.question.topics.all|length != 0 %}
+                          <span class="badge bg-dark text-white">
+                            {{ exam_question.object.question.topics.all|length }} assunto(s)
+                          </span>
+                        {% endif %}
+                        {% if exam_question.object.question.abilities.all|length != 0 %}
+                          <span class="badge bg-dark text-white">
+                            {{ exam_question.object.question.abilities.all|length }} habilidade(s)
+                          </span>
+                        {% endif %}
+                        {% if exam_question.object.question.competences.all|length != 0 %}
+                          <span class="badge bg-dark text-white">
+                            {{ exam_question.object.question.competences.all|length }} competência(s)
+                          </span>
+                        {% endif %}
+                      </div>
+                      <div class="card-widget card-todo">
+                        <div class="card-footer bg-transparent bd-t-0 p-0">
+                          <a v-if="!questionHasRetryAnswers('{{exam_question.object.pk}}')" href="#" role="button" class="btn btn-block">
+                            <span class="fe fe-rotate-ccw tx-bold mr-2"></span>Revisar questão
+                          </a>
+                          <a v-else href="#" role="button" class="btn btn-primary btn-block text-white disabled" style="border-style: none;">
+                              <span class="fe fe-check tx-bold mr-2"></span>Questão revisada
+                            </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div>
+            <div class="divider-text">
+              {% if questions|length > 1 %}
+                <button
+                  type="button"
+                  class="btn btn-xs btn-primary rounded-pill{% if questions|length == 2 %} d-md-none{% endif %}"
+                  @click="toggleShowAllQuestions()"
+                >
+                  <template v-if="showAllQuestions">
+                    Ocultar questões
+                  </template>
+                  <template v-else>
+                    Ver todas questões
+                  </template>
+                  <i class="icon mg-l-5 mg-t-3 tx-12" :class="showAllQuestions ? 'ion-ios-arrow-up' : 'ion-ios-arrow-down'"></i>
+                </button>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if topics %}
+        <div class="col-12 mg-t-10">
+          <div>
+            <h5 class="mg-b-15">Assuntos que você poderia melhorar</h5>
+          </div>
+          <div
+            :style="{
+              'overflow-y': showAllTopics ? 'unset' : 'hidden',
+            }"
+            :class="[showAllTopics ? 'max-h-full' : 'max-h-44 md:max-h-[14.125rem]']"
+          >
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+              {% for topic in topics %}
+                <div
+                  @click="showQuestions('{% url 'api:applications-student:question-list' application_student_id=object.pk %}?topic={{ topic.id }}', 'topic', '{{ topic.name }}')"
+                >
+                  <div class="card card-body cursor-pointer" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
+                    <div class="media">
+                      <div class="media-body">
+                        <div>
+                          <span class="card-todo">
+                              <span class="badge bg-success tx-white mb-1">Assunto abordado</span>
+                              <span class="badge bg-primary tx-white mb-1">{{ topic.subject }}</span>
+                          </span>
+                          <h6
+                            data-pk="{{ topic.id }}"
+                            style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 35px;"
+                          >
+                            {{ topic.name }}
+                          </h6>
+                        </div>
+                        <div class="d-flex align-items-end justify-content-between">
+                          <div class="d-flex">
+                            <h2>{{ topic.performance }}</h2>
+                            <span class="tx-12 tx-color-03 mb-2 ml-2" style="line-height: 1.2;">
+                              {{ topic.diff|floatformat:2 }}<br /> pontos perdidos
+                            </span>
+                          </div>
+                          <div>
+                            <div class="card-widget card-todo mb-2 ml-2">
+                              <div class="card-footer bg-transparent bd-t-0 p-0">
+                                <a v-if="countGenericRetryAnswer('{{topic.id}}', 'topics') < {{topic.count_incorrect}}" href="#" role="button" class="btn btn-block">
+                                  <span class="fe fe-rotate-ccw tx-bold mr-2"></span>Revisar
+                                </a>
+                                <a v-else href="#" role="button" class="btn btn-primary btn-block text-white disabled" style="border-style: none;">
+                                  <span class="fe fe-check tx-bold mr-2"></span>Revisada
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="progress ht-5">
+                          <div class="progress-bar progress-danger" role="progressbar" style="width: {{topic.performance}};" aria-valuemin="0" aria-valuemax="100"></div>  
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div>
+            <div class="divider-text">
+              {% if topics|length > 1 %}
+                <button
+                  type="button"
+                  class="btn btn-xs btn-primary rounded-pill{% if topics|length == 3 %} d-md-none{% endif %}"
+                  @click="toggleShowAllTopics()"
+                >
+                  <template v-if="showAllTopics">
+                    Ocultar assuntos
+                  </template>
+                  <template v-else>
+                    Ver todas assuntos
+                  </template>
+                  <i class="icon mg-l-5 mg-t-3 tx-12" :class="showAllTopics ? 'ion-ios-arrow-up' : 'ion-ios-arrow-down'"></i>
+                </button>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if commons %}
+        <div class="col-12 mg-t-10">
+          <div>
+            <h5 class="mg-b-15">Habilidades e competências que você poderia melhorar</h5>
+          </div>
+          <div
+            :style="{
+              'overflow-y': showAllCommons ? 'unset' : 'hidden',
+            }"
+            :class="[showAllCommons ? 'max-h-full' : 'max-h-[13.25rem] md:max-h-[12.625rem]']"
+          >
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {% for common in commons %}
+                <div
+                  @click="showQuestions('{% url 'api:applications-student:question-list' application_student_id=object.pk %}?{% if common.kind == 0 %}ability{% else %}competence{% endif %}={{ common.id }}', '{% if common.kind == 0 %}ability{% else %}competence{% endif %}', '{{ common.name }}')"
+                >
+                  <div class="card card-body cursor-pointer" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
+                    <div class="media">
+                      <div class="media-body">
+                        <div>
+                          <span class="card-todo">
+                            {% if common.kind == 0 %}
+                              <span class="badge bg-warning mb-1">Habilidade</span>
+                            {% else %}
+                              <span class="badge bg-orange tx-white mb-1">Competência</span>
+                            {% endif %}
+                          </span>
+                          <h6 data-pk="{{ common.id }}" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">{{ common.name }}</h6>
+                        </div>
+                        <div class="d-flex align-items-end justify-content-between">
+                          <div class="d-flex">
+                            <h2>{{ common.performance }}</h2>
+                            <span class="tx-12 tx-color-03 mb-2 ml-2" style="line-height: 1.2;">
+                              {{ common.diff|floatformat:2 }}<br /> pontos perdidos
+                            </span>
+                          </div>
+                          <div>
+                            <div class="card-widget card-todo mb-2 ml-2">
+                              <div class="card-footer bg-transparent bd-t-0 p-0">
+                                <a v-if="countGenericRetryAnswer('{{common.id}}', {% if common.kind == 0 %}
+                                  'abilities'
+                                {% else %}
+                                  'competences'
+                                {% endif %}) < {{common.count_incorrect}}" href="#" role="button" class="btn btn-block">
+                                  <span class="fe fe-rotate-ccw tx-bold mr-2"></span>Revisar questões
+                                </a>
+                                <a v-else href="#" role="button" class="btn btn-primary btn-block text-white disabled" style="border-style: none;">
+                                <span class="fe fe-check tx-bold mr-2"></span>Questões revisadas
+                              </a>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="progress ht-5">
+                          <div class="progress-bar progress-danger" role="progressbar" aria-valuenow="{{ common.performance }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ common.performance_progress }}%;"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div>
+            <div class="divider-text">
+              {% if commons|length > 1 %}
+                <button
+                  type="button"
+                  class="btn btn-xs btn-primary rounded-pill{% if commons|length == 2 %} d-md-none{% endif %}"
+                  @click="toggleShowAllCommons()"
+                >
+                  <template v-if="showAllCommons">
+                    Ocultar habilidades
+                  </template>
+                  <template v-else>
+                    Ver todas habilidades
+                  </template>
+                  <i class="icon mg-l-5 mg-t-3 tx-12" :class="showAllCommons ? 'ion-ios-arrow-up' : 'ion-ios-arrow-down'"></i>
+                </button>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <div
+      class="modal fade"
+      id="modalQuestions"
+      tabindex="-1"
+      role="dialog"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-body pd-x-25 pd-sm-x-30 pd-t-40 pd-sm-t-20 pd-b-15 pd-sm-b-20">
+            <h4 class="tx-18 tx-sm-20 mg-b-3">Questões</h4>
+            <template v-if="modalQuestions.status === 'loading'">
+              <div style="width: 160px; min-height: 24px; background-image: linear-gradient(270deg,#fafafa,#eaeaea,#eaeaea,#fafafa); background-size: 400% 100%; border-radius: 5px;"></div>
+            </template>
+            <template v-else>
+              <p class="mg-b-20 tx-color-03">
+                <template v-if="modalQuestions.kind === 'subject'">
+                  #{ modalQuestions.data[0]?.knowledgeArea }
+                </template>
+                <template v-else>
+                  #{ modalQuestions.subtitle }
+                </template>
+              </p>
+            </template>
+            <a href="#" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </a>
+
+            <div>
+              <div
+                class="d-flex justify-content-center align-items-center"
+                :style="{
+                  visibility: modalQuestions.status === 'loading' ? 'visible' : 'hidden',
+                  minHeight: modalQuestions.status === 'loading' ? '150px' : '0px',
+                  height: modalQuestions.status === 'loading' ? 'unset' : '0px',
+                  marginTop: modalQuestions.status === 'loading' ? '20px' : '0px',
+                }"
+              >
+                <div class="spinner-border text-primary" role="status">
+                  <span class="sr-only">Carregando...</span>
+                </div>
+              </div>
+              <div :style="{visibility: modalQuestions.status === 'loading' ? 'hidden' : 'visible'}">
+                <div class="card-todo">
+                  <ul
+                    class="list-group list-group-flush grid grid-cols-1 gap-4 md:grid-cols-3"
+                  >
+                    <template v-for="(question, index) in modalQuestions.data">
+                      <li
+                        class="list-group-item border rounded"
+                        :class="{'cursor-pointer': !question.alreadyRetry}"
+                        @click="question.alreadyRetry ? () => {} : showQuestionDetail(question.absoluteUrl)"
+                      >
+                        <h6 class="todo-title" style="margin-top: 5px;">
+                          <a href="#" role="button" class="link-01">
+                            #{ question.numberPrint }&#170; Questão
+                          </a>
+                        </h6>
+                        <p class="todo-date">
+                          <template v-if="modalQuestions.kind !== 'subject'">
+                            #{ question.knowledgeArea }
+                          </template>
+                        </p>
+                        <span class="badge badge-danger mb-2">
+                          Pontos perdidos: #{ question.weight }
+                        </span>
+                        <div class="d-flex align-items-center justify-content-between">
+                          <div
+                            v-if="question.topics.length > 0"
+                            class="avatar-group"
+                            data-toggle="tooltip"
+                            data-placement="top"
+                            :title="question.topics.map(topic => topic.name).join(', ').replace(/, ([^,]*)$/, ' e $1')"
+                          >
+                            <div class="avatar avatar-xs">
+                              <span class="avatar-initial rounded-circle">
+                                #{ question.topics.length }
+                              </span>
+                            </div>
+                            <span class="tx-11 ml-2">Assunto<template v-if="question.topics.length > 1">s</template> definido</span>
+                          </div>
+                          <div v-else><span class="tx-12">Assuntos não definidos</span></div>
+                        </div>
+                        <div class="card-footer bg-transparent bd-t-0 p-0 mt-2">
+                          <template v-if="questionHasRetryAnswers(question.id)">
+                            <a href="#" role="button" class="btn btn-primary btn-block text-white disabled" style="border-style: none;">
+                              <span class="fe fe-check tx-bold mr-2"></span>Questão revisada
+                            </a>
+                          </template>
+                          <template v-else>
+                            <a href="#" role="button" class="btn btn-block">
+                              <span class="fe fe-rotate-ccw tx-bold mr-2"></span>Revisar questão
+                            </a>
+                          </template>
+                        </div>
+                      </li>
+                    </template>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="modal fade"
+      id="modalQuestion"
+      tabindex="-1"
+      role="dialog"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered mx-wd-sm-650" role="document">
+        <div class="modal-content">
+          <div class="modal-body pd-x-25 pd-sm-x-30 pd-t-40 pd-sm-t-20 pd-b-15 pd-sm-b-20">
+            <a href="#" role="button" class="close pos-absolute t-15 r-15 z-index-10" data-dismiss="modal" aria-label="Fechar">
+              <span aria-hidden="true">&times;</span>
+            </a>
+  
+            <div
+              class="d-flex justify-content-center align-items-center"
+              :style="{
+                visibility: modalQuestion.status === 'loading' ? 'visible' : 'hidden',
+                minHeight: modalQuestion.status === 'loading' ? '150px' : '0px',
+                height: modalQuestion.status === 'loading' ? 'unset' : '0px',
+                marginTop: modalQuestion.status === 'loading' ? '20px' : '0px',
+              }"
+            >
+              <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Carregando...</span>
+              </div>
+            </div>
+  
+            <div :style="{visibility: modalQuestion.status === 'loading' ? 'hidden' : 'visible'}">
+              <div>
+                <h4>#{ modalQuestion.data.numberPrint } &#170; Questão</h4>
+                <p class="mb-2">#{ modalQuestion.data.subject }</p>
+              </div>
+              <div class="nav-wrapper mg-b-5 tx-13">
+                <div>
+                  <nav class="nav nav-line tx-medium">
+                    <a href="#question" class="nav-link active" data-toggle="tab">Questão</a>
+                    <a href="#question-answer" class="nav-link" data-toggle="tab">Resposta comentada</a>
+                    <a href="#info-topics" class="nav-link" data-toggle="tab">Assuntos abordados</a>
+                    <a href="#info-abilities" class="nav-link" data-toggle="tab">Habilidades</a>
+                    <a href="#info-competences" class="nav-link" data-toggle="tab">Competências</a>
+                  </nav>
+                </div>
+              </div>
+  
+              <div class="tab-content">
+                <div id="question" class="tab-pane fade active show">
+                  <div class="row no-gutters">
+                    <div class="col-12 bg-white rounded-right">
+                      <div class="ht-100p d-flex flex-column justify-content-center">
+                        <div class="alert alert-warning" role="alert">
+                          <p class="mb-0">Revise o conteúdo dessa questão e valide o seu conhecimento respondendo logo abaixo.</p>
+                        </div>
+                        <div
+                          class="tx-14 tx-md-16 tx-color-02 clean-v-html"
+                          v-html="modalQuestion.data.enunciation"
+                          style="display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;"
+                          :style="{
+                            '-webkit-line-clamp': modalQuestion.showFullEnunciation ? 'unset' : '3'
+                          }"
+                        ></div>
+                        <button
+                          v-if="modalQuestion.data.enunciation"
+                          type="button"
+                          class="btn btn-link d-inline-flex align-items-center justify-content-center p-0 my-2"
+                          @click="toggleShowFullEnunciation()"
+                        >
+                          <template v-if="modalQuestion.showFullEnunciation">
+                            Fechar enunciado
+                          </template>
+                          <template v-else>
+                            Mostrar enunciado completo
+                          </template>
+                          <i class="icon mg-l-5 mg-t-3 tx-12" :class="modalQuestion.showFullEnunciation ? 'ion-ios-arrow-up' : 'ion-ios-arrow-down'"></i>
+                        </button>
+                        <template v-if="!modalQuestion.data.enunciation">
+                          <div class="tx-14 tx-md-16 tx-color-02">
+                            <p>Esta questão não possui enunciado</p>
+                          </div>
+                        </template>
+                  
+                        <h6 class="tx-uppercase tx-spacing-1 tx-semibold tx-10 tx-color-03 mg-b-0">
+                          Pontos perdidos: <span class="tx-12 tx-color-02">#{ modalQuestion.data.weight }</span>
+                        </h6>
+                  
+                        <div v-if="modalQuestion.data.category === 'Discursiva' || modalQuestion.data.category === 'Arquivo anexado'">
+                          <hr />
+                        </div>
+                  
+                        <template v-if="modalQuestion.data.category === 'Arquivo anexado'">
+                          <template v-if="modalQuestion.data.fileAnswer">
+                              <a
+                                v-if="modalQuestion.data.fileAnswer"
+                                :href="modalQuestion.data.fileAnswer"
+                                class="btn btn-primary btn-sm"
+                                target="_blank"
+                              >
+                                Ver arquivo enviado
+                              </a>
+                          </template>
+                          <template v-else>
+                            <span class="text-danger">Sem arquivo anexado</span>
+                          </template>
+                        </template>
+                  
+                        <template v-if="modalQuestion.data.category === 'Discursiva'">
+                          <span class="font-weight-bold">Sua resposta:</span>
+                          <p v-if="modalQuestion.data.textualAnswer" class="mb-0">#{ modalQuestion.data.textualAnswer }</p>
+                          <span v-else class="text-danger">Sem resposta</span>
+                        </template>
+                  
+                        <table
+                          v-if="modalQuestion.data.alternatives.length > 0"
+                          class="table table-sm table-border-end tx-13 my-4 mg-b-0"
+                        >
+                          <tbody>
+                            <tr
+                              v-for="(alternative, index) in modalQuestion.data.alternatives"
+                              class="cursor-pointer"
+                              @click="handleRetryAnswer(alternative.id, alternative.isCorrect)"
+                            >
+                              <td
+                                :class="{
+                                  'tx-medium': modalQuestion.retryAnswer === alternative.id || (modalQuestion.retryStatus === 'show-answer' && alternative.isCorrect),
+                                }"
+                                style="border-radius: 0.375rem;"
+                                :style="{
+                                  backgroundColor: modalQuestion.retryAnswer === alternative.id ? '#dff6ff' : modalQuestion.retryStatus === 'show-answer' && alternative.isCorrect ? '#8ddbad' : 'unset',
+                                }"
+                              >
+                                <div class="d-flex align-items-center">
+                                  <div
+                                    class="wd-15 ht-15 rounded-circle bd bd-3 mr-2"
+                                    :class="{
+                                      'bd-primary': modalQuestion.retryAnswer === alternative.id,
+                                      'bd-success': modalQuestion.retryStatus === 'show-answer' && alternative.isCorrect,
+                                    }"
+                                  ></div>
+                                  <div class="w-100 clean-v-html" v-html="alternative.text"></div>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+
+                        <template v-if="modalQuestion.retryStatus === 'idle'">
+                          <div
+                            v-if="modalQuestion.retryAnswer !== ''"
+                            style="margin-bottom: 1.5rem;"
+                          >
+                            <div class="alert alert-warning" role="alert">
+                              Lembrando que ao verificar a questão, não será feita nenhuma mudança na sua <a href="#" class="alert-link">nota</a>, este recurso tem intuito de apenas lhe auxiliar nos estudos.
+                            </div>
+                            <div class="text-center">
+                              <button
+                                type="button"
+                                @click="submitRetryAnswer()"
+                                class="btn btn-outline-primary"
+                                style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; line-height: 1.454; border-width: 2px;"
+                              >
+                                <span class="fe fe-check-circle" style="font-weight: 600;"></span>
+                                <span>Verificar resposta</span>
+                              </button>
+                            </div>
+                          </div>
+                        </template>
+
+                        <template v-else-if="modalQuestion.retryStatus === 'loading'">
+                          <div>Carregando...</div>
+                        </template>
+                        <template v-else-if="modalQuestion.retryStatus === 'success'">
+                          <div class="text-center">
+                            <img src="{% static 'new/administration/assets/img/successfully-done.png' %}" alt="" width="100" height="100" />
+                            <p>Muito bem!</p>
+                            <a href="#" role="button" class="btn btn-outline-primary" style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; line-height: 1.454; border-width: 2px;" data-dismiss="modal" aria-label="Fechar">
+                              <span class="fe fe-repeat" style="font-weight: 600;"></span>
+                              <span>Revisar outra questão</span>
+                            </a>
+                          </div>
+                        </template>
+                        <template v-else-if="modalQuestion.retryStatus === 'error'">
+                          <div class="text-center">
+                            <img src="{% static 'new/administration/assets/img/failure.png' %}" alt="" width="100" height="100" />
+                            <p>Resposta errada!</p>
+                            <button
+                              type="button"
+                              @click="tryAgainAnswer()"
+                              class="btn btn-outline-primary"
+                              style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; line-height: 1.454; border-width: 2px;"
+                            >
+                              <span class="fe fe-repeat" style="font-weight: 600;"></span>
+                              <span>Tentar novamente</span>
+                            </button>
+                            <button
+                              type="button"
+                              @click="showAnswer()"
+                              class="btn btn-outline-secondary"
+                              style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; line-height: 1.454; border-width: 2px;"
+                            >
+                              <span class="fe fe-eye" style="font-weight: 600;"></span>
+                              <span>Ver resposta correta</span>
+                            </button>
+                          </div>
+                        </template>
+
+                        <div v-if="modalQuestion.data.category === 'Discursiva' || modalQuestion.data.category === 'Arquivo anexado'"><hr /></div>
+                  
+                        <h6 v-if="modalQuestion.data.teacherFeedback" class="tx-uppercase tx-spacing-1 tx-semibold tx-10 tx-color-02 mg-b-5">Correção do professor</h6>
+                        <div v-if="modalQuestion.data.teacherFeedback" class="tx-12 tx-md-13 tx-color-03 mg-b-15 clean-v-html">
+                          <p>#{ modalQuestion.data.teacherFeedback }</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div id="question-answer" class="tab-pane fade">
+                  <h6 v-if="modalQuestion.data.embbededAnswerVideo" class="mt-3 tx-uppercase tx-spacing-1 tx-semibold tx-10 tx-color-02 mg-b-5">Resposta em vídeo</h6>
+                  <div style="position: relative; overflow: hidden; width: 100%; padding-top: 56.25%;" v-if="modalQuestion.data.embbededAnswerVideo" v-html="modalQuestion.data.embbededAnswerVideo"></div>
+                  
+                  <h6 v-if="modalQuestion.data.commentedAwnser" class="tx-uppercase tx-spacing-1 tx-semibold mt-3 tx-10 tx-color-02 mg-b-5">Resposta comentada</h6>
+                  <div v-if="modalQuestion.data.commentedAwnser" class="tx-12 tx-md-13 tx-color-03 mg-b-15 clean-v-html" v-html="modalQuestion.data.commentedAwnser"></div>
+            
+                  <h6 v-if="modalQuestion.data.feedback" class="tx-uppercase tx-spacing-1 tx-semibold mt-3 tx-10 tx-color-02 mg-b-5">Feedback do professor</h6>
+                  <div v-if="modalQuestion.data.feedback" class="tx-12 tx-md-13 tx-color-03 mg-b-15 clean-v-html" v-html="modalQuestion.data.feedback"></div>
+                
+                </div>
+                <div id="info-topics" class="tab-pane fade">
+                  <div v-if="modalQuestion.data.topics.length === 0">
+                    <p class="mg-t-10 mb-0">Esta questão não tem assuntos definidos.</p>
+                  </div>
+                  <div v-if="modalQuestion.data.topics.length > 0">
+                    <table class="table table-sm tx-13 mg-b-0">
+                      <tbody>
+                        <tr v-for="(topic, index) in modalQuestion.data.topics">
+                          <td
+                            class="tx-medium pl-0"
+                            :class="index === 0 ? 'border-top-0' : ''"
+                          >
+                            #{ topic.name }
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div id="info-abilities" class="tab-pane fade">
+                  <div v-if="modalQuestion.data.abilities.length === 0">
+                    <p class="mg-t-10 mb-0">Esta questão não tem habilidades definidas.</p>
+                  </div>
+                  <div v-if="modalQuestion.data.abilities.length > 0">
+                    <table class="table table-sm tx-13 mg-b-0">
+                      <tbody>
+                        <tr v-for="(ability, index) in modalQuestion.data.abilities">
+                          <td
+                            class="tx-medium pl-0"
+                            :class="index === 0 ? 'border-top-0' : ''"
+                          >
+                            #{ ability.text }
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div id="info-competences" class="tab-pane fade">
+                  <div v-if="modalQuestion.data.competences.length === 0">
+                    <p class="mg-t-10 mb-0">Esta questão não tem competências definidas.</p>
+                  </div>
+                  <div v-if="modalQuestion.data.competences.length > 0">
+                    <table class="table table-sm tx-13 mg-b-0">
+                      <tbody>
+                        <tr v-for="(competence, index) in modalQuestion.data.competences">
+                          <td
+                            class="tx-medium pl-0"
+                            :class="index === 0 ? 'border-top-0' : ''"
+                          >
+                            #{ competence.text }
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script type="text/javascript" src="{% static 'new/administration/lib/peity/jquery.peity.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/js-confetti@latest/dist/js-confetti.browser.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script>
+  const app = new Vue({
+    delimiters: ["#{", "}"],
+    el: "#app",
+    data: {
+      showAllSubjects: false,
+      showAllQuestions: false,
+      showAllTopics: false,
+      showAllCommons: false,
+      openModalQuestionsOnClose: false,
+      modalQuestions: {
+        open: false,
+        status: 'idle',
+        data: [],
+        kind: '',
+        subtitle: '',
+      },
+      modalQuestion: {
+        open: false,
+        status: 'idle',
+        data: {
+          category: '',
+          feedback: '',
+          topics: [],
+          abilities: [],
+          competences: [],
+          alternatives: [],
+        },
+        retryStatus: 'idle',
+        retryAnswer: '',
+        answerIsCorrect: false,
+        viewer: '',
+        showFullEnunciation: false,
+        url: '',
+      },
+      retryAnswers: [
+        {% for retry_answer in retry_answers %}
+          {{retry_answer|safe}},
+        {% endfor %}
+      ]
+    },
+    mounted() {
+      $('.peity-donut').peity('donut');
+
+      self = this;
+      $('#modalQuestion').on('hidden.bs.modal', function() {
+        self.modalQuestion.showFullEnunciation = false;
+        if (self.openModalQuestionsOnClose) {
+          $('#modalQuestions').modal('show');
+        }
+      });
+
+      $('#modalQuestion').on('shown.bs.modal', function() {
+        $('body').addClass('modal-open');
+      });
+    },
+    updated() {
+      MathJax.typeset();
+    },
+    methods: {
+      especialNotification() {
+        axios.post("{% url 'notifications:api-especial-notification' %}", { where: "after_student_review_questions" })
+      },
+      countGenericRetryAnswer(gerenic_pk, reletad_name){
+        return this.retryAnswers.filter((element) => element[reletad_name].includes(gerenic_pk)).length
+      },
+      countSubjectRetryAnswer(subject_pk){
+        return this.retryAnswers.filter((element) => element['subject'] == subject_pk).length
+      },
+      questionHasRetryAnswers(exam_question_pk){
+        return this.retryAnswers.find(function(element){
+          return element['exam_question_pk'] == exam_question_pk || element['question_pk'] == exam_question_pk
+        })
+      },
+      allQuestionHasRetryAnswers(list_exam_questions_pk){
+        self=this
+        list_exam_questions_pk.every(element => {
+          return self.retryAnswers.includes(element);
+        });
+      },
+      toggleShowAllSubjects() {
+        this.showAllSubjects = !this.showAllSubjects;
+      },
+      toggleShowAllQuestions() {
+        this.showAllQuestions = !this.showAllQuestions;
+      },
+      toggleShowAllTopics() {
+        this.showAllTopics = !this.showAllTopics;
+      },
+      toggleShowAllCommons() {
+        this.showAllCommons = !this.showAllCommons;
+      },
+      toggleShowFullEnunciation() {
+        this.modalQuestion.showFullEnunciation = !this.modalQuestion.showFullEnunciation;
+      },
+      async showQuestions(url, kind, subtitle) {
+        if (url.substr(url.length - 13) === '?subject=None') {
+          url = url.substr(0, url.length - 13) + '?empty=True';
+        }
+
+        $('#modalQuestions').modal('show');
+  
+        this.modalQuestions.open = true;
+        this.modalQuestions.status = 'loading';
+        this.modalQuestions.kind = kind;
+        this.modalQuestions.subtitle = subtitle;
+
+        {% if is_external %}
+          const res = await fetch(url, {
+            headers: {
+              'Content-Type': 'application/json',
+              'hash': '{{ object.hash_access }}'
+            }
+          });
+        {% else %}
+          const res = await fetch(url);
+        {% endif %}
+          
+        const data = await res.json();
+  
+        this.modalQuestions.status = 'success';
+        this.modalQuestions.data = data;
+      },
+      async showQuestionDetail(url, openModalQuestionsOnClose = true) {
+        $('#modalQuestions').modal('hide');
+
+        $('#modalQuestion a[href="#question"]').tab('show');
+        $('#modalQuestion').modal('show');
+  
+        this.openModalQuestionsOnClose = openModalQuestionsOnClose;
+        this.modalQuestion.url = url;
+        this.modalQuestion.open = true;
+        this.modalQuestion.status = 'loading';
+        this.modalQuestion.retryStatus = 'idle';
+        this.modalQuestion.retryAnswer = '';
+        this.modalQuestion.answerIsCorrect = false;
+  
+        {% if is_external %}
+          const res = await fetch(url, {
+            headers: {
+              'Content-Type': 'application/json',
+              'hash': '{{ object.hash_access }}'
+            }
+          });
+        {% else %}
+          const res = await fetch(url);
+        {% endif %}
+  
+        const data = await res.json();
+  
+        this.modalQuestion.status = 'success';
+        this.modalQuestion.data = data;
+      },
+      handleRetryAnswer(retryAnswer, answerIsCorrect) {
+        if (this.modalQuestion.retryStatus === 'idle') {
+          this.modalQuestion.retryAnswer = retryAnswer;
+          this.modalQuestion.answerIsCorrect = answerIsCorrect;
+        }
+      },
+      async submitRetryAnswer() {
+        this.modalQuestion.retryStatus = 'loading';
+
+        const res = await fetch(this.modalQuestion.url + 'retry/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({option: this.modalQuestion.retryAnswer}),
+        });
+        const data = await res.json();
+
+        if(!this.retryAnswers.find((element) => element['exam_question_pk'] == this.modalQuestion.data.id)){
+          this.retryAnswers.push({
+            'question_pk': this.modalQuestion.data.questionPk, 
+            'exam_question_pk': this.modalQuestion.data.id, 
+            'subject': this.modalQuestion.data.subjectPk, 
+            'abilities': this.modalQuestion.data.abilities.map((abilitie) => abilitie.id), 
+            'competences': this.modalQuestion.data.competences.map((competence) => competence.id), 
+            'topics': this.modalQuestion.data.topics.map((topic) => topic.id)
+          })
+        }
+
+        if (this.modalQuestion.answerIsCorrect) {
+          var canvas = document.createElement('canvas');
+          canvas.style.position = 'fixed';
+          canvas.style.width = '100%';
+          canvas.style.height = '100%';
+          canvas.style.top = '0';
+          canvas.style.left = '0';
+          canvas.style.zIndex = '1050';
+          canvas.style.pointerEvents = 'none';
+          document.body.appendChild(canvas);
+
+          var jsConfetti = new JSConfetti({ canvas });
+          jsConfetti.addConfetti();
+
+          this.modalQuestion.retryStatus = 'success';
+        } else {
+          this.modalQuestion.retryStatus = 'error';
+        }
+
+        this.especialNotification()
+
+      },
+      tryAgainAnswer() {
+        this.modalQuestion.retryStatus = 'idle';
+      },
+      showAnswer() {
+        this.modalQuestion.retryStatus = 'show-answer';
+      },
+    },
+  });
+</script>
+{% endblock js-additional %}

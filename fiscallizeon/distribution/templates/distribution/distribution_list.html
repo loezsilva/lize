@@ -1,0 +1,1003 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load cdn_url %}
+
+{% block title %}Listagem de ensalamentos - Lize{% endblock title %}
+
+{% block css-additional %}
+  <link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+  <style>
+    .tippy-box[data-theme~='custom'] {
+      background-color: #fff;
+      border: 1px solid #E1E5ED;
+      padding: .3rem;
+    }
+    .tippy-box[data-theme~='custom'][data-placement^='bottom'] > .tippy-arrow::before {
+      border-bottom-color: #E1E5ED;
+    }
+    .form-control:focus {
+      border: 0 !important;
+      box-shadow: inset 0 0 0 0px #fff, inset 0 0 0 calc(2px + 0px ) rgb(255 143 62 / 1 ), 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+    }
+  </style>
+{% endblock %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+<div class="row mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div class="col-12">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="#">ENSALAMENTOS</a></li>
+          <li class="breadcrumb-item active" aria-current="page">LISTAGEM</li>
+        </ol>
+      </nav> 
+      <h4>Seus ensalamentos</h4>
+    </div>
+    
+    <div class="col-12">
+      <form method="GET">
+        <div class="form-group row m-0 d-flex align-items-center justify-content-between">
+          <div class="col-6 col-xl-6 px-0">
+            <input class="form-control form-control-sm" type="text" name="q_prova" value="{{q_prova}}" placeholder="Busque pela prova">
+          </div>
+          <div class="col-3 col-xl-2">
+            <button class="btn btn-primary btn-sm" type="submit">
+              <i class="fas fa-search d-block d-sm-block d-md-block d-lg-none"></i>
+              <span class="d-none d-lg-block d-xl-block"><i class="fas fa-search"></i> Filtrar</span>
+            </button>
+          </div>
+          <div class="col-3 col-xl-4 text-right">
+            <a href="{% url 'distribution:distribution_create' %}" class="btn btn-sm pd-x-15 btn-primary btn-uppercase">
+              <i data-feather="plus" class="d-block d-sm-block d-md-none"></i> 
+              <span class="d-none d-lg-block d-xl-block"><i data-feather="plus" class="mg-r-5"></i> Cadastrar ensalamento</span>
+            </a> 
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+<div class="tw-flex tw-justify-center">
+	<div class="ard cer dcv tw-pb-8 tw-max-w-[100rem] tw-flex-1"> 
+		<div class="ls" style="margin-top: 1.25rem; margin-bottom: 1.5rem; justify-content: space-between;">
+			<div class="tw-flex tw-flex-wrap tw-items-center tw-gap-6 sm:tw-flex-nowrap tw-w-full">
+        <h1 class="tw-text-xl tw-font-semibold tw-leading-7 tw-text-[#374151] sm:tw-truncate sm:tw-text-2xl sm:tw-tracking-tight tw-mb-0">
+          Ensalamentos
+        </h1>
+				<div class="tw-order-last tw-flex tw-w-full tw-gap-x-8 tw-text-sm tw-font-semibold tw-leading-6 sm:tw-order-none sm:tw-w-auto sm:tw-border-l sm:tw-border-gray-200 sm:tw-pl-6 sm:tw-leading-7">
+          <button data-tg-title="Filtrar gabaritos" data-tg-order="1" data-tg-tour='Acesse os filtros da listagem de gabaritos clicando aqui.' data-tg-group="default-template-list" type="button" class="tw-flex tw-items-center tw-text-[#667085] off-canvas-menu" id="headlessui-slider-over-button-1" data-toggle-off-canvas="#right-off-canvas">
+            <span>Filtrar</span>
+            <span class="ml-2">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M5 10H15M2.5 5H17.5M7.5 15H12.5" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </button>
+	      </div>
+        <div class="tw-ml-auto tw-flex tw-gap-3">
+          <a href="{% url 'distribution:distribution_create' %}" class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-blue-600 hover:tw-text-white">
+            Cadastrar ensalamento
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="ls" style="margin-top: 1.25rem; margin-bottom: 1rem; justify-content: space-between;">
+      <div style="flex: 1;">
+        <form method="GET">
+          <div class="mb-0 tw-bg-white sm:tw-rounded-lg tw-py-5 tw-border tw-border-[#E5E7EA] tw-mb-4">
+            <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8" >
+              <div class="tw-flex tw-justify-between">
+                <div class=" flex-1 tw-flex tw-items-center">
+                  <input class="form-control form-control-sm border border-gray-300 focus:border-transparent focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none" type="text" name="q_prova" value="{{q_prova}}" placeholder="Busque pela prova">
+                </div>
+                <div class="tw-flex tw-items-end tw-ml-2">
+                  <button class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold hover:tw-text-white tw-shadow-sm hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600" type="submit">
+                    <i class="fas fa-search d-block d-sm-block d-md-block d-lg-none"></i>
+                    <span class="d-none d-lg-block d-xl-block"><i class="fas fa-search"></i> Filtrar</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% if count_filters > 0 %}
+    <div class="tw-bg-white sm:tw-rounded-lg tw-py-5 tw-border tw-border-[#E5E7EA] tw-mb-4">
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8" >
+        <div class="tw-flex tw-justify-between">
+          <div class="tw-flex tw-items-center">
+            <p class="mb-0 tw-pl-4 tw-pr-3 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900 sm:tw-pl-0">
+              Filtros aplicados 			
+            </p>
+            <div class="tw-space-x-2">
+              {% if q_data %}
+                <span class="tw-inline-flex tw-items-center tw-gap-x-0.5 tw-rounded tw-bg-[#F9FAFA] tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-text-[#384250]">
+                  <button @click="removeFilter('q_data')" type="button" class="tw-group tw-relative tw--ml-1 tw-h-3.5 tw-w-3.5 tw-rounded-sm hover:tw-bg-gray-500/20">
+                    <span class="tw-sr-only">Remove</span>
+                    <svg viewBox="0 0 14 14" class="tw-h-3.5 tw-w-3.5 tw-stroke-gray-700/50 group-hover:tw-stroke-gray-700/75">
+                      <path d="M4 4l6 6m0-6l-6 6" />
+                    </svg>
+                    <span class="tw-absolute tw--inset-1"></span>
+                  </button>
+                  Data da Prova: {{q_data}}
+                <!-- &{ filter.label }<template v-if="filter.showValues">:<span v-if="!filter.showCount">${ filter.values.join(', ') }</span><span v-else>${ filter.values.length }</span></template> -->
+                </span>
+              {% endif %}
+              {% if q_prova %}
+                <span class="tw-inline-flex tw-items-center tw-gap-x-0.5 tw-rounded tw-bg-[#F9FAFA] tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-text-[#384250]">
+                  <button @click="removeFilter('q_prova')" type="button" class="tw-group tw-relative tw--ml-1 tw-h-3.5 tw-w-3.5 tw-rounded-sm hover:tw-bg-gray-500/20">
+                    <span class="tw-sr-only">Remove</span>
+                    <svg viewBox="0 0 14 14" class="tw-h-3.5 tw-w-3.5 tw-stroke-gray-700/50 group-hover:tw-stroke-gray-700/75">
+                      <path d="M4 4l6 6m0-6l-6 6" />
+                    </svg>
+                    <span class="tw-absolute tw--inset-1"></span>
+                  </button>
+                  Prova: {{q_prova}}
+                  <!-- &{ filter.label }<template v-if="filter.showValues">:<span v-if="!filter.showCount">${ filter.values.join(', ') }</span><span v-else>${ filter.values.length }</span></template> -->
+                </span>
+              {% endif %}
+              {% if q_salas %}
+                <span class="tw-inline-flex tw-items-center tw-gap-x-0.5 tw-rounded tw-bg-[#F9FAFA] tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-text-[#384250]">
+                <button @click="removeFilter('q_salas')" type="button" class="tw-group tw-relative tw--ml-1 tw-h-3.5 tw-w-3.5 tw-rounded-sm hover:tw-bg-gray-500/20">
+                  <span class="tw-sr-only">Remove</span>
+                  <svg viewBox="0 0 14 14" class="tw-h-3.5 tw-w-3.5 tw-stroke-gray-700/50 group-hover:tw-stroke-gray-700/75">
+                    <path d="M4 4l6 6m0-6l-6 6" />
+                  </svg>
+                  <span class="tw-absolute tw--inset-1"></span>
+                </button>
+                Salas:
+                {% for sala in salas %}
+                  {% if sala.pk|stringformat:'s' in q_salas %}
+                    {{ sala }}
+                  {% endif %}
+                {% endfor %}
+              </span>
+              {% endif %}
+              {% if q_is_unprecedented %}
+                <span class="tw-inline-flex tw-items-center tw-gap-x-0.5 tw-rounded tw-bg-[#F9FAFA] tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-text-[#384250]">
+                  <button type="button" class="tw-group tw-relative tw--ml-1 tw-h-3.5 tw-w-3.5 tw-rounded-sm hover:tw-bg-gray-500/20">
+                    <span class="tw-sr-only">Remove</span>
+                    <svg viewBox="0 0 14 14" class="tw-h-3.5 tw-w-3.5 tw-stroke-gray-700/50 group-hover:tw-stroke-gray-700/75">
+                      <path d="M4 4l6 6m0-6l-6 6" />
+                    </svg>
+                    <span class="tw-absolute tw--inset-1"></span>
+                  </button>
+                  Gabaritos inéditos: sim
+                </span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="tw-flex tw-items-center">
+            <a href="{% url 'distribution:distribution_list' %}"   class="tw-text-left tw-text-sm tw-font-semibold tw-text-[#667085] tw-flex tw-items-center hover:tw-text-[#667085]">
+            Limpar filtro
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="tw-ml-2">
+                <path d="M15 5L5 15M5 5L15 15" stroke="#FF8F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+     </div>
+    {% endif %}
+    <div class="tw-bg-white sm:tw-rounded-lg tw-pt-5 tw-border tw-border-[#E5E7EA]">
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8">
+        <div class="tw-flow-root">
+          <div class="tw--mx-4 tw--my-2 tw-overflow-x-auto sm:tw--mx-6 lg:tw--mx-8">
+            <div class="tw-inline-block tw-min-w-full tw-py-2 tw-align-middle sm:tw-px-6 lg:tw-px-8">
+              <div class="tw-relative">
+                <table style="min-height: 200px;" class="tw-min-w-full tw-table-fixed tw-divide-y tw-divide-gray-300">
+                  <thead>
+                    <tr>
+                    <th scope="col" class="tw-min-w-[12rem] tw-py-3.5 tw-pr-3 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900">Provas</th>
+                    <th data-tg-title="Provas" data-tg-order="4" data-tg-tour='Saiba se o gabarito cadastrado já está totalmente qualificado com assuntos, habilidades e competências.' data-tg-group="default-template-list" scope="col" class="tw-py-3.5 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900">Salas Envolvidas</th>
+                    <th data-tg-title="Salas Envolvidas	" data-tg-order="5" data-tg-tour='Visualize e altere a situação do gabarito diretamente da listagem.' data-tg-group="default-template-list" scope="col" class="tw-px-3 tw-py-3.5 tw-text-left tw-text-sm tw-font-semibold tw-text-gray-900">Situação</th>
+                    <th scope="col" class="tw-relative tw-py-3.5 tw-pl-12 tw-pr-4 sm:tw-pr-3">
+                      <span class="tw-sr-only">Ações</span>
+                    </th>
+                    </tr>
+                  </thead>
+                  <tbody class="tw-divide-y tw-divide-gray-200 tw-bg-white">
+                    <tr v-for="distribution in distributions">
+                      <td class="tw-py-4 tw-pr-3 tw-text-sm tw-font-medium tw-text-gray-900 tw-flex flex-col tw-items-center " style="max-width:20rem;">
+                        <div>
+                          <a :href="getUrl(urls.distributionDetail, distribution.id)" v-for="exam in distribution.applicationExams" :title="exam.name">
+                            <strong class="tw-font-medium tw-text-gray-900">${exam.name.toUpperCase()}</strong>
+                            <br />
+                          </a>
+                          <div class="tw-flex tw-mt-1">
+                            <span class="text-muted">
+                              ${momentRef(distribution.date).format('DD/MM/YYYY')} de ${distribution.start} às ${distribution.end}
+                            </span>
+                          <br />
+                          </div>
+                        </div>
+                      </td>
+                      <td class="tw-pr-3 tw-text-sm tw-font-medium tw-truncate max-w-72">
+                        <template v-for="(room, index) in distribution.rooms" v-if="index < 3">
+                          <span class="tw-truncate badge badge-secondary tw-font-medium max-w-64" :title="room.name" style="max-width:16rem;">
+                            ${room.name.toUpperCase()}
+                          </span>
+                          <br />
+                        </template>
+                        <span class="badge badge-secondary tooltips" :data-tippy='distribution.id' v-if="distribution.rooms.length > 3">mais...</span>
+                        <br />
+                      </td>
+
+                      <td class="tw-whitespace-nowrap tw-px-3 tw-py-4 tw-font-medium tw-text-gray-900">
+                        <template v-if="!(distribution.status == 3 && distribution.examsBagLink)">
+                          <span class="tw-text-[#667085] text-center">
+                            ${distribution.statusDescription}
+                            <i class="fas fa-spinner fa-spin" v-if="distribution.status == 2"></i>
+                          </span>
+                          <div class="progress mt-2" style="height: 10px;" v-if="distribution.status == 2">
+                            <div
+                                class="progress-bar progress-bar-striped progress-bar-animated" 
+                                role="progressbar"
+                                :style="{ width: distribution.progress + '%' }"
+                            >
+                            </div>
+                          </div>
+                        </template>
+                        <div class="text-center" v-if="distribution.status == 3 && distribution.examsBagLink">
+                          <a :href="distribution.examsBagLink" target="_blank">
+                            <div class="d-flex justify-content-center tw-flex-wrap tw-gap-1">
+                              <span class="tw-inline-flex tw-items-center tw-rounded-full tw-px-3 tw-py-1 tw-text-xs tw-font-medium tw-text-primary-600 hover:tw-bg-[#fff4ec] tw-ring-1 tw-ring-inset tw-ring-[#E5E7EA] tooltips" data-tippy-content="Baixar Malote">
+                                <svg width="18" height="18" class="mx-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M13 7L11.8845 4.76892C11.5634 4.1268 11.4029 3.80573 11.1634 3.57116C10.9516 3.36373 10.6963 3.20597 10.4161 3.10931C10.0992 3 9.74021 3 9.02229 3H5.2C4.0799 3 3.51984 3 3.09202 3.21799C2.71569 3.40973 2.40973 3.71569 2.21799 4.09202C2 4.51984 2 5.0799 2 6.2V7M2 7H17.2C18.8802 7 19.7202 7 20.362 7.32698C20.9265 7.6146 21.3854 8.07354 21.673 8.63803C22 9.27976 22 10.1198 22 11.8V16.2C22 17.8802 22 18.7202 21.673 19.362C21.3854 19.9265 20.9265 20.3854 20.362 20.673C19.7202 21 18.8802 21 17.2 21H6.8C5.11984 21 4.27976 21 3.63803 20.673C3.07354 20.3854 2.6146 19.9265 2.32698 19.362C2 18.7202 2 17.8802 2 16.2V7ZM9 14L12 17M12 17L15 14M12 17V11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>                              
+                                Baixar malote
+                              </span>
+                            </div>
+                          </a>
+                          <span class="text-muted text-center">Gerado ${ distribution.examsBagLastExportDate }</span>
+                        </div>
+                        <p v-if="distribution.is_printed" class="tw-mt-1 tw-font-medium tw-text-gray-900 text-success tx-bold text-center"> Impresso <i class="fas fa-check">
+                      </td>
+                        <td class="tw-whitespace-nowrap tw-py-4 tw-pl-3 tw-pr-4 tw-text-sm tw-font-medium sm:tw-pr-3">
+                          <div class="tw-flex tw-items-center tw-justify-end tw-space-x-4">
+                            <div class="dropdown m-1" >
+                              <button class="tw-ml-5 tw-inline-flex tw-w-full tw-justify-center tw-gap-x-1.5 tw-rounded-md tw-bg-white tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-[#667085] tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50" type="button" data-toggle="dropdown" aria-expanded="false">
+                                Opções
+                                <svg class="tw--mr-1 tw-h-5 tw-w-5 tw-text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                  <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                                </svg>
+                              </button>
+                              <div class="dropdown-menu dropdown-menu-right tw-absolute tw-right-0 tw-z-10 tw-mt-2 tw-origin-top-right tw-divide-y tw-divide-gray-100 tw-rounded-md tw-bg-white tw-shadow-lg tw-ring-1 tw-ring-black tw-ring-opacity-5 focus:tw-outline-none tw-text-inherit tw-m-0 tw-p-0 tw-border-0" aria-labelledby="dropdownMenuButton-{{ exam.pk }}" style="font-size: inherit;">
+                                <div class="tw-flex tw-gap-1">
+                                  <div class="tw-py-1" role="none">
+                                    <p class="tw-px-4 tw-py-2" style="font-size: 10px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Inter UI', Roboto, sans-serif; letter-spacing: .7px; color: #8392a5; text-transform: uppercase;">
+                                      Geral
+                                    </p>
+                                    <a :href="getUrl(urls.distributionUpdate, distribution.id)" class="dropdown-item tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" id="menu-item-0">
+                                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                      </svg>
+                                      Editar
+                                    </a>
+                                    <a :href="getUrl(urls.distributionDetail, distribution.id)" class="dropdown-item tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" id="menu-item-1">
+                                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                      </svg>
+                                      Ver alunos
+                                    </a>
+                                    <a href="javascript:void(0)" @click="confirmCancel(getUrl(urls.distributionDelete, distribution.id))" data-toggle="tooltip" data-placement="top" title="Deletar" class="dropdown-item tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" id="menu-item-1">
+                                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                      </svg>
+                                      Remover
+                                    </a>
+                                    {% comment %} <a class="dropdown-item" href="javascript:void(0)" @click="confirmCancel(getUrl(urls.distributionDelete, distribution.id))" data-toggle="tooltip" data-placement="top" title="Deletar">Excluir ensalamento</a>  {% endcomment %}
+                                  </div>
+                                  <div class="py-1" role="none" v-if="distribution.rooms.length > 0">
+                                    <p class="tw-px-4 tw-py-2" style="font-size: 10px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Inter UI', Roboto, sans-serif; letter-spacing: .7px; color: #8392a5; text-transform: uppercase;">
+                                      Impressão
+                                    </p>
+                                    <a href="javascript:void(0)" class="dropdown-item tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" @click="changeIsPrinted(distribution)">
+                                      <span v-if="distribution.is_printed" class="tw-flex tw-items-center">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                                        <span class="tw-ml-2" >Desmarcar como já impresso</span>
+                                      </span>
+                                      <span v-else class="tw-flex tw-items-center">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                                        <span class="tw-ml-2">Marcar como já impresso</span>
+                                      </span>
+                                    </a>
+                                    <button class="dropdown-item tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" target="_blank" @click="showPrintPatioListModal(distribution.id)">
+                                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z" />
+                                      </svg>
+                                      Imprimir lista de pátio
+                                    </button>
+                                    <a href="javascript:void(0)" v-if="distribution.is_printed" class="tw-text-gray-700 tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" @click.prevent.default="showConfirmationRePrintExam(distribution)">
+                                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16" style="margin-right: 0.5rem;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                      </svg>
+                                      Imprimir malote novamente
+                                    </a>
+                                    <template v-else>
+                                        <div class="dropdown-item tw-flex tw-items-center tw-text-gray-700 tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900">
+                                          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg>
+                                          <a
+                                            class="tw-text-gray-700 tw-flex tw-items-center tw-px-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" 
+                                            href="#" 
+                                            @click.prevent.default="showPrintModal(distribution)"
+                                          >
+                                          Imprimir malote
+                                          </a>
+                                      </div>
+                                    </template>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr v-if="distributions.length == 0">
+                        <td colspan="4">Não há ensalamentos cadastrados até o momento.</td>
+                      </tr>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          {% include 'redesign/includes/pagination.html' with objects=object_list %}
+        </div>
+		</div>
+  </div>
+</div>
+{% endblock content-fixed %}
+
+{% block off-canvas %}
+  <div id="right-off-canvas" class="off-canvas off-canvas-right wd-400 bg-white"
+    style="overflow-y: auto; overflow-x: hidden;">
+    <form action="" method="GET">
+    <div class="row p-3">
+      <div class="col-12">
+        <h5>Filtrar Ensalamentos</h5>
+        <p>Adiciona abaixo os filtros que você deseja aplicar na listagem abaixo</p>
+  
+      </div>
+      
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="distribution_data" class="mb-1">Data</label>
+            <input type="date" value="{{q_data|safe}}" id="distribution_data" name="q_data" class="form-control">
+          </div>
+        </div>
+
+        <div class="col-12">
+            <div class="form-group mb-3">
+              <label for="q_prova_id" class="mb-1">Prova</label>
+              <input type="text" value="{{q_prova}}" id="q_prova_id" name="q_prova" class="form-control" placeholder="Digite o nome da prova aqui">
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="form-group mb-3">
+              <label for="classe_id" class="mb-1">Salas Envolvidas</label>
+              <select name="q_salas" id="classe_id" class="form-control" multiple="multiple">
+                {% for sala in salas %}
+                  <option value="{{sala.pk}}" {% if sala.pk|stringformat:'s' in q_salas %}selected="selected" {% endif %} >
+                    {{sala.name}}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+        <div class="col-12 mt-5">
+          <button type="submit" class="btn btn-primary btn-block">
+            <i class="fas fa-search"></i>
+            Aplicar filtro
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+{% endblock %}
+
+{% block extra-modal %}
+    {% include 'includes/confirm_modal.html' %}
+    
+    <div class="modal fade" id="configurePrintModal" role="dialog" tabindex="-1">
+        <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Configure a impressão do malote nesta exportação</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" style="max-height: fit-content; height: fit-content;">
+                    <div class="form-group">
+                        <div class="btn-group btn-group-toggle">
+                            <label class="btn btn-outline-primary btn-lg" :class="{active: answer_sheet_model == 'fiscallize'}">
+                            <input type="radio" name="enem" value="fiscallize" v-model="answer_sheet_model">
+                            <i class="fas fa-file fa-lg"></i>
+                            <span>
+                                Folha de respostas Lize
+                            </span>
+                            </label>
+                            <label class="btn btn-outline-primary btn-lg" :class="{active: answer_sheet_model == 'enem'}">
+                                <input type="radio" name="enem" value="enem" v-model="answer_sheet_model">
+                                <i class="fas fa-file fa-lg"></i>
+                                <span>
+                                Folha de respostas ENEM
+                                </span>
+                            </label>
+                            {% if user.client_has_sum_questions %}
+                            <label class="btn btn-outline-primary btn-lg" :class="{active: answer_sheet_model == 'sum'}">
+                              <input type="radio" name="sum" value="sum" v-model="answer_sheet_model">
+                              <i class="fas fa-file fa-lg"></i>
+                              <span>
+                                  Modelo somatório
+                              </span>
+                            </label>
+                            {% endif %}
+                            {% if user.client_has_hybrid_omr %}
+                            <label class="btn btn-outline-primary btn-lg" :class="{active: answer_sheet_model == 'hybrid'}">
+                                <input type="radio" name="enem" value="hybrid" v-model="answer_sheet_model">
+                                <i class="fas fa-file fa-lg"></i>
+                                <span>
+                                Modelo Híbrido
+                                </span>
+                            </label>
+                            {% endif %}
+                            {% if user.client_has_reduced_model %}
+                            <template v-if="getCanPrintSubjectsAllowedMaxQuestions()" >
+                              <label class="btn btn-outline-primary btn-lg" :class="{active: answer_sheet_model == 'reduced'}">
+                                <input type="radio" name="reduced" value="reduced" v-model="answer_sheet_model">
+                                <i class="fas fa-file fa-lg"></i>
+                                <span>
+                                Modelo Reduzido
+                                </span>
+                              </label>
+                            </template>
+                            {% endif %}
+                            {% if user.client_has_subjects_answer_sheet %}
+                            <label class="btn btn-outline-primary btn-lg" :class="{active: answer_sheet_model == 'subjects'}">
+                              <input type="radio" name="subjects" value="subjects" v-model="answer_sheet_model">
+                              <i class="fas fa-file fa-lg"></i>
+                              <span>
+                                EFAI
+                              </span>
+                            </label>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning" v-if="answer_sheet_model == 'subjects'">
+                      <span class="font-weight-bold">Atenção!</span> 
+                      O modelo EFAI não irá funcionar caso existam disciplinas com mais de 15 questões ou opção de língua estrangeira habilitada em algum caderno
+                    </div>
+
+                    <div class="form-group">
+                        <input type="checkbox" name="blank-pages" v-model="blank_pages" :checked="!blank_pages" id="blank-pages">
+                        <label class="mb-0" for="blank-pages">Impressão frente e verso</label>
+                        <small class="form-text text-muted mt-0 mb-2" style="line-height: initial;">
+                            Marque esta opção caso deseje exportar o arquivo do malote para ser impresso em modo frente e verso (folha em branco após as folhas de respostas e listas).
+                        </small>
+                    </div>
+
+                    {% if user.client_has_discursive_omr %}
+                        <div class="form-group">
+                            <input type="checkbox" name="print-discursives" v-model="includeDiscursives" :checked="!includeDiscursives" id="print-discursives">
+                            <label class="mb-0" for="print-discursives">Incluir folhas de respostas discursivas</label>
+                            <small class="form-text text-muted mt-0 mb-2" style="line-height: initial;">
+                            Marque esta opção caso deseje exportar as folhas de resposta discursivas.
+                            </small>
+                        </div>
+
+                        <template v-if="includeDiscursives">
+                            <h6 class="mt-3">Separar disciplinas:</h6>
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                            <label class="btn btn-outline-primary btn-lg" :class="{'active': !discursiveOptions.split_subjects }" @click="discursiveOptions.split_subjects = false">
+                                <input type="radio" name="split_subjects" id="split_subjects_false" value="0" autocomplete="off" :checked="!discursiveOptions.split_subjects">
+                                <i class="fas fa-times fa-lg"></i>
+                                Não
+                            </label>
+                            <label class="btn btn-outline-primary btn-lg" :class="{'active': discursiveOptions.split_subjects }" @click="discursiveOptions.split_subjects = true">
+                                <input type="radio" name="split_subjects" id="split_subjects_true" value="1" autocomplete="off" :checked="discursiveOptions.split_subjects">
+                                <i class="fas fa-check fa-lg"></i>
+                                Sim, separar!
+                            </label>
+                            </div>
+                            <small class="form-text text-muted mt-0 mb-3">
+                            Marque esta opção se deseja separar as folhas de respostas discursivas por disciplina
+                            </small>
+                        </template>
+                    {% endif %}
+
+                    {% if exam_custom_pages %}
+                      <h6>Página customizada:</h6>
+                      <select name="custom_page" id="id_custom_page" class="form-control" multiple>
+                          {% for custom_page in exam_custom_pages %}
+                              <option value="{{custom_page.id}}">{{custom_page.name}} - {{custom_page.get_location_display}}</option>
+                          {% endfor %}
+                      </select>
+                    {% endif %}
+
+                    {% if user.client_has_exam_elaboration %}
+                    <div class="form-group mt-3">
+                        <input type="checkbox" name="print-exam" v-model="includeExams" :checked="!includeExams" id="print-exam">
+                        <label class="mb-0" for="print-exam">Incluir cadernos de prova</label>
+                        <small class="form-text text-muted mt-0 mb-2" style="line-height: initial;">
+                            Marque esta opção caso deseje exportar os cadernos de prova além das folhas de resposta, lista de presença e lista de pátio.
+                        </small>
+                    </div>
+                    <template v-if="includeExams">
+                        <div class="alert alert-warning">
+                            <span class="font-weight-bold">Atenção!</span> Caso a prova esteja marcada com parâmetros de randomização de questões, alternativas ou disciplinas, os alunos terão cadernos de prova distintos entre si. 
+                        </div>
+                        {% include 'dashboard/exams/includes/exam/print/modal_print.html' %}
+                    </template>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <div class="form-buttons-w text-right">
+                        <button class="btn btn-primary not-disable" @click="generateExamsBag(selectedDistribution)">
+                            <i class="os-icon os-icon-check"></i>
+                            <span>Imprimir malote</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div aria-hidden="true" class="modal  fade" id="patioPrintConfig" role="dialog" tabindex="-1">
+      <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title text-truncate">Layout da listagem de alunos</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button> 
+          </div>
+          <div class="modal-body" style="max-height: fit-content; height: fit-content;">
+            <div id="cabecalho">
+              <h6>Quantas colunas as tabelas de alunos devem utilizar?</h6>
+              <div class="btn-group btn-group-toggle">
+                <label class="btn btn-outline-primary btn-lg" :class="{active: twoColumnsPatioList == 'one'}">
+                  <input type="radio" name="one-column" value="one" v-model="twoColumnsPatioList">
+                  <span>
+                    <i class="far fa-window-maximize"></i>
+                    Uma coluna
+                  </span>
+                </label>
+                <label class="btn btn-outline-primary btn-lg" :class="{active: twoColumnsPatioList == 'two'}">
+                  <input type="radio" name="two-column" value="two" v-model="twoColumnsPatioList">
+                  <span>
+                    <i class="fas fa-columns"></i>
+                    Duas colunas
+                  </span>
+                </label>
+            </div>
+            </div>
+
+          </div>
+          <div class="modal-footer justify-content-center">
+            <button class="btn btn-primary" @click="printPatiolist()">Gerar listagem de pátio</button>
+          </div>
+        </div>
+      </div>
+    </div>
+{% endblock extra-modal %}
+
+
+{% block js-additional %}
+<script src="{% static 'js/tippy/popper.min.js' %}"></script>
+<script src="{% static 'js/tippy/tippy.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+
+<script>
+    var app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        components: {
+          {% comment %} {% include 'includes/vue-tooltip.html' %}, {% endcomment %}
+        },
+        data: {
+            showDiagrammingOptions: 0,
+            verifica: true,
+            selectedDistribution: null,
+            answer_sheet_model: "fiscallize",
+            blank_pages: false,
+            includeExams: false,
+            includeDiscursives: false,
+            discursiveOptions: {
+                split_subjects: 0,
+            },
+            examPrintConfigObject: {
+                header: '',
+                backgroundImage: '',
+                customPages: [],
+                headerFormat: 1,
+                columnType: 0,
+                kind: 0,
+                textQuestionFormat: 1,
+                lineHeight: 0,
+                fontSize: 0,
+                fontFamily: 0,
+                printSubjectsName: false,
+                printWithCorrectAnswers: false,
+                hideAlternativesIndicator: false,
+                hideQuestionsReferencies: false,
+                hideKnowledgeAreasName: false,
+                printBlackAndWhiteImages: false,
+                hyphenate: false,
+                addPageNumber: false,
+                discursiveLineHeight: 1,
+                language: 0,
+            },
+            examPrintConfig: {},
+            printDefaults: [],
+            urls: {
+                distributionDetail: "{% url 'distribution:distribution_detail' pk='00000000-0000-0000-0000-000000000000' %}",
+                distributionUpdate: "{% url 'distribution:distribution_update' pk='00000000-0000-0000-0000-000000000000' %}",
+                distributionDelete: "{% url 'distribution:distribution_delete' pk='00000000-0000-0000-0000-000000000000' %}",
+                distributionPatioList: "{% url 'distribution:distribution_patio_list' pk='00000000-0000-0000-0000-000000000000' %}",
+                distributionGenerateExamsBag: "{% url 'distribution:export_distribution_exams_bag' pk='00000000-0000-0000-0000-000000000000' %}",
+                distributionExportStatus: "{% url 'distribution:get_export_distribution_exams_bag_status' pk='00000000-0000-0000-0000-000000000000' %}",
+                taskStatus: "{% url 'core:get_generic_task_status' %}",
+            },
+            distributions: [
+                {% for distribution in object_list %}
+                    {
+                        id: '{{ distribution.pk }}',
+                        date: '{{ distribution.application_set.all.0.date|safe|default_if_none:'-' }}',
+                        start: '{{ distribution.application_set.all.0.start }}',
+                        end: '{{ distribution.application_set.all.0.end }}',
+                        status: {{ distribution.status }},
+                        statusDescription: '{{ distribution.get_status_display }}',
+                        examsBagLink: {% if distribution.exams_bag %}'{{  distribution.exams_bag.url|cdn_url|safe }}'{% else %}null{% endif %},
+                        examsBagLastExportDate: moment( "{{ distribution.last_exams_bag_generation|safe }}").locale('pt-br').fromNow(),
+
+                        {% if distribution.get_exams.exists %}
+                            first_exam: {
+                                urls: {{distribution.get_exams.first.urls|safe}}
+                            },
+                        {% else %}
+                            first_exam: null,
+                        {% endif %}
+                        progress: 0,
+                        applicationExams: [
+                            {% for application in distribution.get_applications %}
+                                {
+                                    id: '{{ application.exam.pk }}',
+                                    name: '{{ application.exam.name }}',
+                                    canPrintSubjectsAllowedMaxQuestions: {{ application.exam.is_reduced_allowed_max_questions|yesno:'true,false' }}
+
+                                },
+                            {% endfor %}
+                        ], 
+                        rooms: [
+                            {% for room in distribution.get_rooms_in_use %}
+                                {
+                                    name: '{{ room }}',
+                                },
+                            {% endfor %}
+                        ],
+                        is_printed: {{distribution.is_printed|default:False|lower}},
+                        urls: {{distribution.urls|safe}}
+                    },
+                {% endfor %}
+            ],
+            twoColumnsPatioList: '',
+            selectedDistributionId: '',
+            loadedPrintDefaults: false,
+        },
+        methods: {
+          getCanPrintSubjectsAllowedMaxQuestions() {
+            if (this.selectedDistribution && this.selectedDistribution.applicationExams && this.selectedDistribution.applicationExams.length > 0) {  
+              return this.selectedDistribution.applicationExams[0].canPrintSubjectsAllowedMaxQuestions;
+            }
+            return false; 
+          },
+            removeFilter(filter) {
+              const url = new URL(window.location.href);
+              const urlParams = url.searchParams;
+              urlParams.delete(filter);
+              url.search = urlParams.toString();
+              window.location.href = url.href;
+            },
+            confirmCancel(url) {
+              document.getElementById('id_confirm_cancel_form').action = url;
+              $("#confirmCancelModal").modal("show");
+            },
+            momentRef(args) {
+              return moment(args)
+            },
+            showPrintPatioListModal(distributionId) {
+              this.selectedDistributionId = distributionId
+              $('#patioPrintConfig').modal('show')
+            },
+            printPatiolist() {
+              let url = this.getUrl(this.urls.distributionPatioList, this.selectedDistributionId)
+              if (this.twoColumnsPatioList == 'two') {
+                url = url + '?two_columns=true'
+              }
+              window.open(url, '_blank')
+            },
+            selectPrintDefault() {
+                const id = $(this.$refs['inputPrintDefault']).children(":selected").attr("id")
+                const printDefault = this.printDefaults.find(_default => _default.id == id)
+                
+                if(printDefault) {
+                  this.getConfig(printDefault).then((response) => {
+                    this.examPrintConfig = response.data
+                    this.selectedPrintDefault = response.data
+                  })
+                } else { 
+                  if(this.examPrintConfig.customPages.length) {
+                    $("#id_custom_page").val([]).trigger('change')
+                  }
+                  this.selectedPrintDefault = null
+                  this.examPrintConfig = Object.assign({}, this.examPrintConfigObject)
+                }
+                this.printConfigControl = true
+            },
+            getConfig(printDefault) {
+              return axios.get(printDefault.urls.getConfig)
+            },
+            getUrl(url, id) {
+                return url.replace("00000000-0000-0000-0000-000000000000", id)
+            },
+            showConfirmationRePrintExam(distribution) {
+                Swal.fire({
+                    title: 'Confirmação?',
+                    text: "O malote já foi impresso, você deseja imprimir novamente?",
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Sim!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.showPrintModal(distribution)
+                    }
+                })   
+            },
+            showPrintModal(distribution) {
+                this.includeExams = false
+                this.selectedDistribution = distribution
+                this.examPrintConfig.customPages = []
+                $("#id_custom_page").val([]).trigger('change')
+                $('#configurePrintModal').modal('show')
+            },
+            generateExamsBag(distribution) {
+                let url = this.getUrl(this.urls.distributionGenerateExamsBag, distribution.id)
+                axios.post(url, {
+                    sheet_model: this.answer_sheet_model,
+                    exam_params: {useCustomParams: parseInt(this.showDiagrammingOptions), ...this.examPrintConfig},
+                    discursive_params: this.discursiveOptions,
+                    include_exams: this.includeExams,
+                    include_discursives: this.includeDiscursives,
+                    blank_pages: this.blank_pages,
+                }).then((response) => {
+                    distribution.status = 2
+                    $('#configurePrintModal').modal('hide')
+                }).catch((error) => {
+                    console.log(error)
+                    Swal.fire({
+                        position: 'top-end',
+                        icon: 'error',
+                        text: error.response.data,
+                        showConfirmButton: false,
+                        timer: 3000,
+                        backdrop: false,
+                        allowOutsideClick: false,
+                        timerProgressBar: true,
+                    })
+                })
+            },
+            fetchDistibutionStatusBag(pendingDistributions) {
+                const self = this
+                pendingDistributions.map(function(distribution) {
+                    fetch(self.getUrl(self.urls.distributionExportStatus, distribution.id))
+                    .then(response => response.json())
+                    .then(data => {
+                        switch (data.task_status) {
+                            case 'STARTED':
+                                distribution.status = 2
+                                distribution.statusDescription = 'Exportando malote'
+                                distribution.progress = Math.round(data.percent * 100)
+                                self.$forceUpdate()
+                                break
+                            case 'SUCCESS':
+                                distribution.status = 3
+                                distribution.statusDescription = 'Malote exportado'
+                                distribution.examsBagLink = data.file_link
+                                distribution.examsBagLastExportDate =  moment().fromNow()
+                                self.$forceUpdate()
+                                break
+                            case 'ERROR':
+                                distribution.status = 0
+                                distribution.statusDescription = 'Erro na exportação'
+                                self.$forceUpdate()
+                                break;
+                        }
+                    })
+                })
+            },
+            fetchDistibutionStatusGeneration(pendingDistributions) {
+                const self = this
+                pendingDistributions.map(function(distribution) {
+                    fetch(`${self.urls.taskStatus}?task_id=DISTRIBUTE_STUDENTS_${distribution.id}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data)
+                        switch (data.status) {
+                            case 'SUCCESS':
+                                distribution.status = 1
+                                distribution.rooms = [{'name': 'Salas'}]
+                                distribution.statusDescription = 'Aguardando exportação'
+                                self.$forceUpdate()
+                                break
+                            case 'ERROR':
+                                distribution.status = 0
+                                distribution.statusDescription = 'Erro na operação'
+                                self.$forceUpdate()
+                                break;
+                        }
+                    })
+                })
+            },
+            alertTop(text) {
+                Swal.fire({
+                    position: 'top-end',
+                    text: text,
+                    icon: 'success',
+                    showConfirmButton: false,
+                    timer: 1500,
+                    toast: true,
+                    timerProgressBar: true,
+                })
+            },
+            changeIsPrinted(distribution) {
+                let url = distribution.urls.api_roomdistribution_update
+                axios.patch(url, { is_printed: !distribution.is_printed }).then((response) => {
+                this.alertTop('O malote foi marcado como impresso.')
+                window.location.reload()
+                }).catch((e) => {
+                this.alertTop('Ocorreu um erro ao tentar alterar o malote, tente novamente, caso o erro persista entre em contato com o suporte.')
+                })
+            },
+            getExamPrintConfigs(url) {
+                return axios.get(url).then((response) => {
+                  const customPages = this.examPrintConfig.customPages.length ? this.examPrintConfig.customPages : response.data.customPage
+                  this.examPrintConfig = response.data
+                  this.examPrintConfig.customPages = customPages
+                })
+            },
+            getPrintDefaults() {
+              axios.get("{% url 'api:clients:print-configs-list' %}").then((response) => {
+                this.printDefaults = response.data
+              }).finally(() => {
+                this.loadedPrintDefaults = true
+              })
+            }
+        },
+        watch: {
+            includeExams: function(val) {
+                if(val && !this.loadedPrintDefaults) {
+                  this.getPrintDefaults()
+                }
+                if(val && this.selectedDistribution.first_exam) {
+                    this.getExamPrintConfigs(this.selectedDistribution.first_exam.urls.print_configs)
+                }
+            },
+            showDiagrammingOptions: function(val) {
+              if(val == 0) {
+                if(!this.loadedPrintDefaults) {
+                  this.getPrintDefaults()
+                }
+                if(this.selectedDistribution.first_exam) {
+                    this.getExamPrintConfigs(this.selectedDistribution.first_exam.urls.print_configs)
+                }
+              }
+            },
+        },
+        mounted(){
+            self = this
+
+            this.examPrintConfig = Object.assign({}, this.examPrintConfigObject)
+            
+            setInterval(() => {
+                const pendingDistributionsBag = this.distributions.filter(distribution => distribution.status == 2)
+
+                if(pendingDistributionsBag) {
+                    this.fetchDistibutionStatusBag(pendingDistributionsBag)
+                }
+
+                const pendingDistributionsGeneration = this.distributions.filter(distribution => distribution.status == 5)
+
+                if(pendingDistributionsGeneration) {
+                    this.fetchDistibutionStatusGeneration(pendingDistributionsGeneration)
+                }
+            }, 20000)
+
+            {% comment %} tippy('.tooltips', {
+                placement: 'bottom',
+                followCursor: true,
+                followCursor: 'horizontal',
+                allowHTML: true,
+                theme: 'custom',
+                onShow(instance) {
+                    room_list = []
+                    self.distributions.forEach(function(distribution) {
+                        if(distribution.id == instance.reference.dataset.tippy){
+                            distribution.rooms.forEach(function(room){
+                                room_list.push('<span class="badge badge-secondary m-1">'+room.name+'</span>')
+                            })
+                        }
+                    })
+                    instance.setContent(room_list.slice(3))
+                },                
+            }); {% endcomment %}
+
+            $('#status_id').select2({
+                placeholder: "Selecione uma opção",
+                closeOnSelect: false
+            })
+
+            $('#id_custom_page').select2({
+              placeholder: "Selecione uma opção",
+              closeOnSelect: false,
+              width: '100%',
+            }).on('change', () => {
+              self.examPrintConfig.customPages = $("#id_custom_page").val()
+            })
+
+            $('#classe_id').select2({
+                placeholder: "Selecione uma opção",
+                closeOnSelect: false
+            })
+
+            $('#provas_id').select2({
+                placeholder: "Selecione uma opção",
+                closeOnSelect: false
+            })
+            
+        
+            $('.off-canvas-menu').on('click', function (e) {
+                e.preventDefault();
+                var target = $(this).attr('data-toggle-off-canvas');
+                $(target).addClass('show');
+            });
+        
+            $('.off-canvas .close').on('click', function (e) {
+                e.preventDefault();
+                $(this).closest('.off-canvas').removeClass('show');
+            })
+        
+            $(document).on('click touchstart', function (e) {
+                if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+                    return
+                  }
+                e.stopPropagation();
+        
+                if (!$(e.target).closest('.off-canvas-menu').length) {
+                var offCanvas = $(e.target).closest('.off-canvas').length;
+                if (!offCanvas) {
+                    $('.off-canvas.show').removeClass('show');
+                }
+                }
+            });
+        },
+        updated: function() {
+        },
+
+    })
+</script>
+{% endblock js-additional %}

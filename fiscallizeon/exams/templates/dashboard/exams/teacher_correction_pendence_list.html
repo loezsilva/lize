@@ -1,0 +1,196 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load math %}
+{% load exams_tags %}
+
+{% block title %}Pendências de correção de provas - Lize{% endblock title %}
+
+
+{% block css-additional %}
+  <style>
+    .loading {
+      animation: is-rotating 1s infinite;
+      border: 6px solid #e5e5e5;
+      border-radius: 50%;
+      border-top-color: #51d4db;
+      height: 50px;
+      width: 50px;
+      top: 47.5%;
+      left: 47.5%;
+      position: fixed;
+      z-index: 9;
+    }
+    @keyframes is-rotating {
+      to {
+        transform: rotate(1turn);
+      }
+    }
+  </style>
+{% endblock css-additional %}
+  
+{% block content %}
+<div class="loading d-none"></div>
+<div class="ard cer dcv tw-mb-16">
+  <div class="ls" style="margin-top: 0.625rem; margin-bottom: 1rem; justify-content: space-between;">
+    <!-- Empty -->
+  </div>
+  <form method="get">
+    <div class="row row-xs mb-0">
+      <div class="col-12 col-md-6 mb-2 mb-md-0">
+        <div class="d-flex flex-column">
+          <h4 class="mb-0 tx-spacing--1" style="font-size: 18px; font-weight: 500; color: #001737;">
+            Pendências de correção
+          </h4>
+          <p class="text-muted mb-0">Os cartões de pendências são atualizados automaticamente a cada 10 minutos.</p>
+        </div>
+      </div>
+      <div class="col-12 col-md-3 mb-2 mb-md-0">
+        <select class="custom-select" v-model="controls.status" name="q_status">
+          <option value="">Todos os cadernos</option>
+          <option value="0">Elaborando</option>  
+          <option value="1">Revisão de itens</option>  
+          <option value="2">Fechada</option>  
+          <option value="3">Diagramação</option>  
+          <option value="4">Revisão de texto</option>  
+          <option value="5">Pronto para impressão</option>  
+          <option value="6">Revisão de PDF</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-3 mb-2 mb-md-0">
+        <div class="search-form">
+          <input type="search" v-model="controls.search" class="form-control" value="{{q_name|default:''}}" name="q_name" placeholder="Buscar por nome do caderno">
+          <button class="btn" type="submit" style="background-color: #fff;">
+            <i data-feather="search"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <template v-if="cardCorrections.length">
+    <div class="row row-xs mb-0" style="margin-top: 32px;">
+      <template v-for="exam in cardCorrections.filter(exam => controls.status ? exam.status == controls.status : true && exam.name.toLowerCase().includes(controls.search.toLowerCase()))">
+        <div class="col-sm-6 col-lg-3" style="margin-bottom: 25px; ">
+          <!-- border: 1px solid #009EDD;  -->
+          <div class="card card-body" style="padding: 16px; border-radius: 12px; box-shadow: unset;">
+            <div class="d-flex justify-content-between" style="margin-bottom: 8px;">
+              <div style="margin-bottom: 8px; line-height: 15px;">
+                  <p class="m-0" style="font-size: 18px; font-weight: 500; color: #001737;">
+                    ${exam.incompleted}
+                  </p>
+                  <span class="text-muted tx-10 m-0">Correções pendentes</span>  
+              </div>
+                <span style="color: rgb(121, 135, 161);" data-toggle="tooltip" :title="'Prazo de correção até '+ exam.name">
+                  <i data-feather="calendar" class="wd-15"></i> 
+                  <span class="pt-1">
+                    ${moment_vue(moment(exam.deadline + 'T23:59:59').format("YYYY-MM-DD"))}
+                  </span>
+                </span>
+            </div>
+            <div class="mb-3">
+              <p style="margin-bottom: 0; font-size: 14px; font-weight: 500;" class="text-truncate text-uppercase">${exam.name}</p>
+              <p style="margin-bottom: 0; font-size: 10px; color: #7987A1;" class="text-muted text-truncate">${exam.classe_name}</p>
+            </div>
+            <div>
+              <a :href="`{% url 'exams:exams_detail_v2' pk='00000000-0000-0000-0000-000000000000' %}?turma=${exam.classe_id}`.replace('00000000-0000-0000-0000-000000000000', exam.id)" type="button" class="btn btn-primary btn-block"><i data-feather="edit"></i> Corrigir respostas</a>
+            </div>
+          </div>
+        </div>
+      </template>
+      
+      {% comment %}
+      <div class="col-12">
+        {% include 'includes/vue-pagination_v2.html' with objects=object_list %}
+      </div>
+      {% endcomment %}
+        
+    </div> 
+  </template>
+  <template v-else>
+    <template v-if="controls.loadingCorretions">
+      <div class="container d-flex justify-content-center ht-100p">
+        <div class="w-100 bg-transparent shadow-0 border-0">
+          <div class="card-body">
+            <div class="row d-flex justify-content-center">
+              <div class="col-12 col-lg-5">
+                <div class="d-flex flex-column justify-content-center align-items-center" style="min-height: calc(100vh - 280px);">
+                  <h2 class="tx-center">Não há pendências de correção para você.</h2>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+  </template>
+</div>
+{% endblock content %}
+
+{% block js-additional %}
+  <script>
+    $('form').on('submit', () => {
+      $('.loading').removeClass('d-none')
+    })
+  </script>
+  <script>
+  moment.locale('pt-br')
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    components: {
+      
+    },
+    el: '#app',
+    data: {
+      controls: {
+        loadingCorretions: true,
+        search: '',
+        status: '',
+      },
+      cardCorrections: [],
+      unities: [
+        {% for unity in unities %}
+          {
+            id: "{{unity.id}}",
+            name: "{{unity.name}}"
+          },
+        {% endfor %}
+      ],
+    },
+    methods: {
+      moment_vue(date){
+        const finalDate = moment(date+" 23:59:59");
+        return moment(finalDate).fromNow(false)
+      },
+      moment(date){
+        return moment(date)
+      },
+      getCardsCorrections() {
+        axios({
+          method: 'POST',
+          url: `{% url 'dashboards:get-data-from-service' user.client.id %}`,
+          data: {
+            "who": "school",
+            "who_ids": ["{{user.client.id}}"],
+            "operation": "get_teacher_corrections",
+            "what": 'unities',
+            "what_ids": null,
+            "filters": {
+              "teacher": "{{user.inspector.id}}",
+              "user_unities": this.unities.map((u) => u.id),
+            }
+          }
+        }).then((response) => {
+          this.cardCorrections = response.data[0]
+        }).finally(() => {
+          this.controls.loadingCorretions = false
+        })
+      },
+    },
+    mounted() {
+      $('[data-toggle="tooltip"]').tooltip()
+      this.getCardsCorrections()
+    },
+  })
+</script>
+{% endblock js-additional %}

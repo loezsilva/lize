@@ -1,0 +1,24 @@
+{% load permissions %}
+<header>
+    <nav class="ls add afa agv arx" style="display: flex; overflow-x: auto; border-width: 0px; border-style: solid; border-color: rgb(229, 231, 235); border-bottom-width: 1px; border-color: #E2E5ED; padding-top: 1rem; padding-bottom: 1rem;">
+        <ul role="list" class="ls tn uj aad ard avv awb awk axk cer dcv" style="list-style: none; margin: 0px; min-width: 100%; flex: 0 0 auto; column-gap: 1.5rem; font-size: 0.875rem; line-height: 1.5rem; font-weight: 500;">
+        {% if user|has_perm:'clients.change_clientteacherobligationconfiguration' %}
+            <li><a href="{% url 'clients:obligation_teacher_configuration' %}" class="axz font-display" style="{% if request.resolver_match.url_name == 'obligation_teacher_configuration' %}color: #FEA464;{% else %}color: #9CA3AF;{% endif %}">Campos obrigatórios</a></li>
+        {% endif %}
+        {% if user|has_perm:'clients.change_confignotification' %}
+            <li><a href="{% url 'clients:config_notifications_create' %}" class="font-display" style="{% if request.resolver_match.url_name == 'change_confignotification' or request.resolver_match.url_name == 'config_notifications_update' %}color: #FEA464;{% else %}color: #9CA3AF;{% endif %}">Notificações</a></li>
+        {% endif %}
+        {% if user|has_perm:'clients.change_clientteacherobligationconfiguration' %}
+            <li><a href="{% url 'clients:update_client_omr_configuration' user.client.id %}" class="font-display" style="{% if request.resolver_match.url_name == 'update_client_omr_configuration' %}color: #FEA464;{% else %}color: #9CA3AF;{% endif %}">Malotes</a></li>
+        {% endif %}
+        {% if user|has_perm:'clients.change_clientquestionsconfiguration' %}
+            <li><a href="{% url 'clients:questions_configurations' %}" class="font-display" style="{% if request.resolver_match.url_name == 'questions_configurations' %}color: #FEA464;{% else %}color: #9CA3AF;{% endif %}">Questões</a></li>
+        {% endif %}
+        {% if user.client_has_integration %}
+            {% if user|has_perm:'integrations.view_integration' %}
+                <li><a href="{% url 'integrations:integration_create_update' %}" class="font-display" style="{% if request.resolver_match.url_name == 'integration_create_update' %}color: #FEA464;{% else %}color: #9CA3AF;{% endif %}">Integrações</a></li>
+            {% endif %}
+        {% endif %}
+        </ul>
+    </nav>
+</header>

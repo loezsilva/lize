@@ -1,0 +1,148 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Adicionar ou alterar chave de acesso - Lize{% endblock title %}
+
+{% block css-additional %}
+
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="{% url 'students:students_list' %}">CHAVES</a></li>
+          <li class="breadcrumb-item active" aria-current="page">GERENCIAR</li>
+        </ol>
+      </nav> 
+      <h4>Gerenciamento de chaves de acesso</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+{% block top-menu %}
+{% include "includes/configurations_header.html" %}
+{% endblock top-menu %}
+
+{% block content-fixed %}
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 0.5rem; margin-bottom: 1rem; justify-content: space-between;">
+      <!-- Empty -->
+    </div>
+<div class="row">
+    <div class="col-md-9">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+              <div>
+                <h6 class="mg-b-5">Chave de acesso</h6>
+                <p class="tx-13 tx-color-03 mg-b-5">Informe os dados da chave abaixo</p>
+              </div>
+              <div>
+                <a href="{% url 'integrations:integration_synconizations' %}" class="nav-sub-link ">
+                  <i data-feather="refresh-cw"></i> Sincronizar alunos e turmas
+                </a>
+              </div>
+              <div>
+                <a href="{% url 'integrations:integration-notes' %}" class="nav-sub-link ">
+                  <i data-feather="refresh-cw"></i> Composição de notas
+                </a>
+              </div>
+            </div>
+            <div class="card-body">
+                <form method="POST" class="not-disable">
+                    {% csrf_token %}
+                    <div class="row">
+                      <div class="col-lg-6">
+                        <div class="form-group">
+                          {{ form.erp.label }}
+                          <div class="df-example demo-forms">
+                              {% render_field form.erp class="form-control col-xl-6" %}
+                              <small class="form-text text-muted">
+                                {{ form.erp.help_text }}
+                              </small>
+                              {% if form.erp.errors %}
+                                  <label class="text-danger">
+                                  {{ form.erp.errors.0 }}</label>
+                              {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-12">
+                        <div class="form-group">
+                          {% if fake_token %}
+                            <p for="{{form.token.auto_id}}" class="text-muted">Token atual: {{fake_token}}</p>
+                          {% endif %}
+                          
+                          {{ form.token.label }}
+                          
+                          {% if fake_token %}
+                            <br>
+                            <small class="text-muted">
+                              Digite um novo token abaixo para substituir o atual
+                            </small>
+                          {% endif %}
+                          <div class="df-example demo-forms">
+                              <textarea rows="2" name="{{form.token.name}}" id="{{form.token.auto_id}}" class="form-control" placeholder="Digite um token"></textarea>
+                              <small class="form-text text-muted">
+                                {{ form.token.help_text }}
+                              </small>
+                              {% for error in form.token.errors %}
+                                  <label class="text-danger">{{ error }}</label>
+                              {% endfor %}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-lg-6">
+                        <div class="form-group">
+                          {{ form.school_code.label }}
+                          <div class="df-example demo-forms">
+                              {% render_field form.school_code class="form-control col-xl-6" %}
+                              <small class="form-text text-muted">
+                                {{ form.school_code.help_text }}
+                              </small>
+                              {% for error in form.school_code.errors %}
+                                  <label class="text-danger">{{ error }}</label>
+                              {% endfor %}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <button type="submit" class="btn btn-warning float-right not-disable">Salvar Chave</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+<script>
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {
+
+    },
+    methods: {
+      
+    },
+    mounted: function(){
+      
+    }
+  })
+</script>
+
+
+{% endblock %}

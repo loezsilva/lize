@@ -1,0 +1,8 @@
+<div class="rounded" style="background-color: #fff; border: 1px solid rgba(72, 94, 144, 0.16); padding: 0 1rem;">
+  <nav class="nav nav-line tx-medium">
+    <a href="{% url 'exams:dash_exam_teacher_detail_questions' pk=object.pk %}" class="nav-link text-uppercase{% if page == 'questions' %} active{% endif %}">Por questão</a>
+    <a href="{% url 'exams:dash_exam_teacher_detail_students' pk=object.pk %}" class="nav-link text-uppercase{% if page == 'students' %} active{% endif %}">Por aluno</a>
+    <a href="{% url 'exams:dash_exam_teacher_detail_general' pk=object.pk %}" class="nav-link text-uppercase{% if page == 'general' %} active{% endif %}">Dados agrupados</a>
+    <a href="{% url 'exams:dash_exam_teacher_detail_bncc' pk=object.pk %}" class="nav-link text-uppercase{% if page == 'comparations' %} active{% endif %}">Comparativos (turma e unidade)</a>
+  </nav>
+</div>

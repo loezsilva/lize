@@ -1,0 +1,797 @@
+{% extends 'dashboard/base_without_header.html' %}
+{% load static %}
+{% load compress %}
+{% load remove_line_break %}
+
+{% block title %}
+    Lize - Prévia da prova
+{% endblock title %}
+
+{% block css-additional %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+<style>
+    html {
+        scroll-behavior: smooth;
+    }
+    body {
+        font-family: "IBM Plex Sans", sans-serif !important;
+    }
+
+    *::-webkit-media-controls-panel {
+        display: none !important;
+        -webkit-appearance: none;
+    }
+
+    /* Old shadow dom for play button */
+
+    *::-webkit-media-controls-play-button {
+        display: none !important;
+        -webkit-appearance: none;
+    }
+    button{
+        margin: 0px 4px;
+    }
+    @media screen and (max-width:480px) {
+        button {
+            width: auto;
+            margin-left: 33%;
+            margin-right: 4%;
+            margin-top: 3px;
+        }
+    }
+
+    /* New shadow dom for play button */
+
+    /* This one works! */
+
+    *::-webkit-media-controls-start-playback-button {
+        display: none !important;
+        -webkit-appearance: none;
+    }
+
+    /* #local-stream {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        min-width: 100%;
+        min-height: 100%;
+        max-width: 100%;
+    } */
+    .content {
+        bottom: 0;
+        color: #f1f1f1;
+        width: 100%;
+        padding: 20px;
+    }
+
+    .btn-circle {
+        width: 60px;
+        height: 60px;
+        padding: 6px 0px;
+        border-radius: 30px;
+        text-align: center;
+        font-size: 12px;
+        line-height: 1.42857;
+        margin: 2px;
+    }
+
+    .modal-body {
+        max-height: 70vh;
+        height: 70vh;
+        overflow: auto;
+    }
+
+    @media (max-width: 767px) {
+
+        .modal-dialog {
+            width: 100%;
+            height: 100%;
+            max-height: 100%;
+            margin: 0;
+            padding: 0;
+            max-width: inherit !important;
+        }
+
+        .modal-content {
+            height: auto;
+            min-height: 100%;
+            max-height: 100%;
+            overflow: auto;
+            border-radius: 0;
+            background: white;
+            border: 0;
+        }
+
+        .modal-body {
+            padding: 5px;
+            padding-top: 65px;
+            padding-bottom: 100px;
+
+            max-height: inherit;
+            height: inherit;
+            overflow: auto;
+        }
+
+        .modal-header {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 0;
+            z-index: 1030;
+        }
+
+        .modal-footer {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1030;
+        }
+
+    }
+
+
+    @keyframes fa-blink {
+        0% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.75;
+        }
+
+        100% {
+            opacity: 0.4;
+        }
+    }
+
+    .fa-blink {
+        -webkit-animation: fa-blink 1.05s linear infinite;
+        -moz-animation: fa-blink 1.05s linear infinite;
+        -ms-animation: fa-blink 1.05s linear infinite;
+        -o-animation: fa-blink 1.05s linear infinite;
+        animation: fa-blink 1.05s linear infinite;
+    }
+
+    .notification {
+        position: relative;
+    }
+
+    .notification .badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        border-radius: 100%;
+        background: red;
+        color: white;
+        font-weight: bold;
+    }
+
+    .opacity {
+        background-color: rgba(256, 256, 256, 0.5)
+    }
+
+    .list-orientations ul {
+        padding-left: 15px;
+    }
+
+    .list-orientations li {
+        margin: 0;
+        margin-top: 4px;
+        line-height: 15px;
+    }
+
+    span.question-number {
+        width: 25px;
+        height: 25px;
+        line-height: 25px;
+        border-radius: 50%;
+        color: #fff;
+        display: inline-block;
+        text-align: center;
+        margin: 5px;
+        background: #000;
+    }
+
+    div.question {
+        padding-bottom: 15px;
+    }
+
+    div.alternatives p {
+        margin: 0 !important;
+    }
+
+    .cd-horizontal-timeline .events a.answered::after {
+        border: 2px solid #0064fd !important;
+        background-color: #0064fd;
+         !important;
+    }
+
+
+    div.question.font-1x * {
+        font-size: 13px !important;
+    }
+
+    div.question.font-2x *:not(.katex *) {
+        font-size: 16px !important;
+    }
+
+
+    div.question.font-3x * {
+        font-size: 19px !important;
+    }
+
+    div.question.font-4x * {
+        font-size: 23px !important;
+    }
+
+    .bg-black {
+        background-color: #000 !important;
+    }
+
+    .bg-black * {
+        color: white !important;
+    }
+
+
+    .question * {
+        white-space: unset !important;
+    }
+
+    .katex * {
+        white-space: nowrap !important;
+    }
+
+    label.alternative-scratched,
+    label.alternative-scratched * {
+        color: #dc3545 !important;
+        text-decoration: line-through;
+    }
+
+    label.question-alternative:not(.alternative-scratched) * {
+        color: #000 !important;
+        text-decoration: auto;
+    }
+
+    @media only screen and (max-width: 850px) {
+        .df-settings-body {
+            width: 290px;
+        }
+
+        .df-settings.show {
+            right: 244px;
+        }
+
+        .question img {
+            max-width: 250px !important;
+            /* min-width: 100% !important; */
+        }
+    }
+
+    .modal {
+        z-index: 9999 !important;
+    }
+
+    .alternatives label *,
+    .alternatives label::after,
+    .alternatives label::before {
+        cursor: pointer;
+    }
+
+
+
+    .upload-btn-wrapper {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+        cursor: pointer !important;
+
+    }
+
+    .upload-btn-wrapper .btn {
+        cursor: pointer !important;
+        padding: 10px 19px;
+        font-size: 15px;
+    }
+
+    .upload-btn-wrapper input[type=file] {
+        font-size: 100px;
+        z-index: -1px;
+        position: absolute;
+        left: 0;
+        top: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    input[type=file],
+    input[type=file]::-webkit-file-upload-button {
+        cursor: pointer;
+    }
+
+    mjx-container.MathJax {
+        font-size: 120% !important;
+    }
+
+    img {
+        max-width: 100%;
+    }
+
+    body {
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
+    @media print {
+        .question {
+            page-break-inside: avoid;
+        }
+
+        .textual-question {
+            margin-bottom: 5cm;
+        }
+
+        @page {
+            margin: 15mm;
+            margin-top: 25mm;
+        }
+    }
+</style>
+
+
+<link rel="stylesheet" href="{% static 'timeline/css/style.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+    integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+{% endblock %}
+
+{% block js-header-additional %}
+<script src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
+    integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4" crossorigin="anonymous">
+</script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
+    integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa" crossorigin="anonymous">
+</script>
+{% endblock %}
+
+{% block content %}
+
+
+<div class="container-fluid d-flex flex-column">
+
+    <div class="row mb-0 pt-4 pb-3 d-print-none">
+        <div class="col pd-md-l-110 pd-md-r-110 pd-l-10 pd-r-10">
+            {% with object.coordinations.all.0.unity.client.logo as logo %}
+                {% if logo %}
+                    <img class="mb-3" style="max-height: 10rem;" src="{{ logo.url }}" alt="">
+                {% endif %}
+            {% endwith %}
+            <h1 class="text-bold title mb-0 ">
+                {{object.name}} {{iterator.count}}
+            </h1>
+        </div>
+    </div>
+    <div class="row sticky-top mb-0 d-print-none" style="background-color: #00c5fd; z-index: 998;">
+        <div class="col">
+            <section class="cd-horizontal-timeline">
+                <div class="timeline">
+                    <div class="events-wrapper">
+                        <div class="events">
+                            <ol>
+                                <template v-for="knowledgeArea in knowledgeAreas">
+                                    <template v-for="subject in knowledgeArea.subjects">
+                                        <li v-for="question in subject.questions">
+                                            <a :href="'#question-'+question.id" :data-date="question.number+'/00/00'"
+                                                :class="{'selected' : question.number == 1, 'answered': question.answerId}">
+                                                ${question.number_print ? question.number_print : '&nbsp;-&nbsp;'}
+                                            </a>
+                                        </li>
+                                    </template>
+                                </template>
+                            </ol>
+                            <span class="filling-line" aria-hidden="true"></span>
+                        </div>
+                    </div>
+
+                    <ol class="cd-timeline-navigation">
+                        <li><a href="#0" class="prev inactive">
+                            </a></li>
+                        <li><a href="#0" class="next">
+                            </a></li>
+                    </ol>
+                </div>
+            </section>
+        </div>
+    </div>
+    <div class="row pt-3 bg-white">
+        <div class="col">
+            <div class="exam-content pd-md-l-110 pd-md-r-110 pd-l-10 pd-r-10 text-justify">
+                {% if object.get_base_text_location_display == 'Textos base no início do caderno' or object.application.exam.get_base_text_location_display == 'Textos base no início do caderno' %}        
+                    {% include "dashboard/exams/includes/base_texts/exam_top_bottom.html" %}
+                {% endif %}
+                <template v-for="knowledgeArea in knowledgeAreas">
+                    <h5 class="mb-0">
+                        ${knowledgeArea.name}
+                    </h5>
+                    <template v-for="subject in knowledgeArea.subjects">
+                        <h6 class="text-muted mt-0 mb-3">${subject.name}</h6>
+                        <div class="question" :id="'question-'+question.id" v-for="question in subject.questions">
+                            <div class="row justify-content-md-center">
+                                <div class="col-12">
+                                    {% if object.get_base_text_location_display == 'Textos base por questão' or object.application.exam.get_base_text_location_display == 'Textos base por questão' %}
+                                        {% include "dashboard/exams/includes/base_texts/per_questions.html" %}
+                                    {% endif %}
+                                </div>
+                                <div class="col-1 d-print-none">
+                                    <span @click="openModal('/questoes/'+question.id+'/editar/?is_popup=1');"  :class="{'question-number': question.number_print}">
+                                        ${ question.number_print }
+                                    </span>
+                                </div>
+                                <div class="col">
+
+                                    <div class="row d-print-none">
+                                        <div class="col-12">
+
+                                            {% if user_type == 'coordination' or user_type == 'teacher' and user.inspector.is_discipline_coordinator %}
+                                                <button data-type="avaliable" 
+                                                    @click="openModal('{% url 'exams:exams_update' object.pk %}?is_popup=1&exam_teacher_subject='+question.examTeacherSubject+'&exam_question='+question.examQuestion);"
+                                                    class="btn btn-secondary btn-sm float-right">
+                                                    <i class="fas fa-clipboard"></i> Revisar questão
+                                                </button>
+                                            {% endif %}
+                                            {% if preview_mode != 'inspector' %}
+                                                <button @click="openModal('/questoes/'+question.id+'/editar/?is_popup=1');"
+                                                    class="btn btn-primary btn-sm float-right">
+                                                    <i class="fas fa-edit"></i> Editar questão
+                                                </button>
+                                            {% endif %}
+                                            <template v-if="question.annuled">
+                                                <span class="badge badge-danger">A QUESTÃO FOI ANULADA</span>
+                                            </template>
+
+                                            <template v-if="question.category == 'Objetiva' && !question.hasFeedback">
+                                                <span class="badge badge-danger">Sem gabarito cadastrado</span>
+                                            </template>
+
+                                            <span class="badge badge-info" v-if="question.grade && question.grade != 'None'">
+                                                ${question.grade}
+                                            </span>
+
+                                            <span class="badge badge-info" v-if="question.knowledgeArea">
+                                                ${question.knowledgeArea}
+                                            </span>
+
+                                            <span class="badge badge-info" v-if="question.subject">
+                                                ${question.subject}
+                                            </span>
+                                            <span class="badge badge-info">
+                                                ${question.level}
+                                            </span>
+                                            </br>
+                                            <span data-toggle="tooltip" :original-title="ability.text" :title="ability.text" v-for="ability in question.abilities" class="badge badge-secondary mr-1">
+                                                ${ability.code}
+                                            </span>
+                                            
+                                        </div>
+                                    </div>
+
+                                    {% include "dashboard/exams/includes/base_texts/text_relation.html" %}
+                                    
+                                    <template v-if="question.annuled">
+                                        <del><question-enunciation ref="refEnuntiation" :question="question"></question-enunciation></del>
+                                    </template>
+                                    <template v-else>
+                                        <question-enunciation ref="refEnuntiation" :question="question"></question-enunciation>
+                                    </template>
+                                    <template v-if="!question.print_only_enunciation">
+                                        <div class="alternatives" v-if="question.category == 'Objetiva' || question.category == 'Somatório'">
+                                            <table class="table table-striped">
+                                                <tbody>
+
+                                                    <tr v-for="(alternative, index) in question.alternatives">
+                                                        <td style="width: 1%;">
+                                                            <div class="custom-control custom-radio">
+
+                                                                <input type="radio" :id="'alternative-'+alternative.id"
+                                                                    :name="'alternatives-'+question.id"
+                                                                    class="custom-control-input"
+                                                                    :checked="alternative.id == question.answerId"
+                                                                    :disabled="question.saving || alternative.scratched">
+
+                                                                <label
+                                                                    class="custom-control-label question-alternative font-weight-bold"
+                                                                    v-bind:class="{'alternative-scratched' : alternative.scratched }"
+                                                                    :for="'alternative-'+alternative.id">
+                                                                    ${generateAlternativeOrder(index, question.category == 'Somatório')})
+                                                                </label>
+
+                                                            </div>
+                                                        </td>
+                                                        <td class="pl-0">
+                                                            
+                                                            <label class="question-alternative"
+                                                                :for="'alternative-'+alternative.id"
+                                                                v-bind:class="{'alternative-scratched' : alternative.scratched }"
+                                                                v-html="generateAlternativeText(alternative, index)">
+                                                            </label>
+
+                                                        </td>
+                                                        <td style="width: 1%;">
+                                                            <i v-if="alternative.id != question.answerId"
+                                                                @click="alternative.scratched = !alternative.scratched"
+                                                                class="fas fa-cut d-print-none" style="cursor: pointer;"></i>
+                                                        </td>
+                                                    </tr>
+
+                                                </tbody>
+                                            </table>
+
+                                        </div>
+                                        <div class="textual-question" v-if="question.category == 'Discursiva'">
+                                            <div class="form-group d-print-none">
+                                                <label :for="'answer_text_area_'+question.id"
+                                                    class="font-weight-bold">Digite sua resposta abaixo
+                                                </label>
+
+
+                                                <!-- <textarea v-model="question.answerContent" @input="saveAnswersDiscursive(question)" class="form-control question-answer" :id="'answer_text_area_'+question.id" rows="3"></textarea> -->
+
+                                                <editor :question="question"></editor>
+
+                                                <label v-if="question.answerId && !question.saving"
+                                                    class="text-info">Resposta enviada</label>
+                                                <label v-if="question.saving" class="text-info">Salvando... </label>
+                                            </div>
+                                        </div>
+                                        <div class="textual-question" v-if="question.category == 'Arquivo anexado'">
+                                            <div class="form-group d-print-none">
+                                                <label v-if="question.answerId && !question.saving"
+                                                    class="font-weight-bold text-left">
+                                                    Sua resposta atual:
+                                                    <a :href="question.answerContent" target="_blank"
+                                                        class="font-weight-bold">
+                                                        ${question.answerContent.replace(/^.*[\\\/]/,
+                                                        '').replace('?'+question.answerContent.split("?").pop(), "")}
+                                                    </a>
+
+                                                </label>
+                                                <br />
+
+                                                <label class="text-muted">Ao selecionar o arquivo abaixo ele será enviado
+                                                    automaticamente.</label><br />
+
+
+                                                <div
+                                                    style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center; align-content: center;">
+                                                    <div class="upload-btn-wrapper">
+                                                        <button :disabled="question.saving" type="button"
+                                                            class="btn btn-large btn-primary">
+                                                            <template v-if="question.saving" class="text-info">
+                                                                <i class="fas fa-spinner fa-spin"></i>
+                                                                Enviando seu arquivo...
+                                                            </template>
+                                                            <template v-else>
+                                                                <i class="fas fa-file-upload mr-1"></i>
+                                                                Enviar novo arquivo com resposta
+                                                            </template>
+                                                        </button>
+                                                        <input :disabled="question.saving" style="cursor: pointer;"
+                                                            :ref="'file'+question.id" :id="'file'+question.id"
+                                                            type="file" />
+                                                    </div>
+                                                    <div>
+                                                        <label
+                                                            v-if="question.answerId && !question.saving && !question.fileMessage"
+                                                            class="text-info m-0 ml-2">Resposta enviada!</label>
+                                                    </div>
+                                                </div>
+                                                <label for="" class="text-muted mt-1"><b>Tamanho máximo:</b> 10MB |
+                                                    <b>Tipos:</b> .jpeg, .jpg, .png, .doc, .docx, .pdf</label>
+
+                                                <br />
+
+                                                <label v-if="question.fileMessage && !question.saving" class="text-danger"
+                                                    v-html="question.fileMessage">
+                                                </label>
+
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+                {% if object.get_base_text_location_display == 'Textos base no final do caderno' or object.application.exam.get_base_text_location_display == 'Textos base no final do caderno' %}        
+                    {% include "dashboard/exams/includes/base_texts/exam_top_bottom.html" %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if object.get_status_display == "Enviada para revisão" and preview_mode != 'inspector' %}
+    <div class="row">
+        <div class="col-12 text-center ">
+            <form action="" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-check"></i> Concluir revisão da prova
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock content %}
+
+{% block extra-modal %}
+    {% include "dashboard/exams/includes/base_texts/modals/detail.html" %}
+{% endblock extra-modal %}
+
+{% block js-additional %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.3.5/split.min.js"></script>
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="{% static 'timeline/js/timeline.js' %}"></script>
+<script src="{% static 'administration/assets/js/zoom.js' %}"></script>
+
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+
+<script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<script src="{% static 'js/autoresize.js' %}"></script>
+
+
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous">
+</script>
+
+<script src="{% static 'js/tippy/popper.min.js' %}"></script>
+
+
+{% compress js %}
+<script type="application/javascript">
+    Vue.config.devtools = false
+
+    var questionEnunciation = Vue.component('question-enunciation', {
+        props: ['question', ],
+        data: function () {
+            return {
+                timer: false
+            }
+        },
+        template: `
+      <div class="enunciation" :timing="question.timing" ref="enunciationEl" v-html="question.enunciation"></div>
+    `,
+        methods: {
+            isInViewport() {
+
+                const {
+                    top,
+                    right,
+                    bottom,
+                    left,
+                    width,
+                    height
+                } = this.$refs.enunciationEl.getBoundingClientRect();
+
+                return bottom > 250 &&
+                    window.innerWidth - left > 0 &&
+                    window.innerHeight - top > 250 &&
+                    right > 0;
+            }
+        },
+        mounted() {
+            self = this
+        }
+    })
+
+    var editor = Vue.component('editor', {
+        props: ['question'],
+        data: function () {
+            return {}
+        },
+        template: `<textarea placeholder="Digite aqui sua resposta" v-model="question.answerContent"
+      class="form-control question-answer"  :id="'answer_text_area_'+question.id"></textarea>
+    `,
+        methods: {},
+        mounted() {}
+    })
+
+    var app_question = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        components: {
+            'question-enunciation': questionEnunciation,
+            'editor': editor
+        },
+        data: {
+            {% include 'dashboard/exams/exam_preview/includes/exam_data.js' with object=object iterator=iterator %}
+            baseTexts: [],
+            questions: [],
+            selectedBaseText: '',
+        },
+        methods: {
+            generateAlternativeOrder(index, isSumQuestion=false) {
+                if (isSumQuestion) {
+                    return Math.pow(2, index)
+                }
+
+                return "abcdefghij" [index]
+            },
+            generateAlternativeText(alternative, index) {
+                alpha = "abcdefghij"
+                return `${alternative.text}`
+            },
+            call(result) {
+                if(result){
+                    var question = this.findQuestion(result.pk)
+                    question.enunciation = result.enunciation_html
+                    question.grade = result.grade
+                    question.subject = result.subject
+                    question.knowledgeArea = result.knowledgeArea
+                    question.alternatives = JSON.parse(result.alternatives)
+                }else{
+                    window.location.reload()
+                }
+            },
+            findQuestion(id) {
+                let oldQuestion = null
+                this.knowledgeAreas.find(knowledgeArea => {
+                    knowledgeArea.subjects.find(subject => {
+                        subject.questions.find(question => {
+                            if (question.id == id)
+                                oldQuestion = question
+                        })
+                    })
+                })
+                return oldQuestion
+            },
+            openModal(url) {
+                window.open(
+                    url,
+                    "DescriptiveWindowName",
+                    "resizable,scrollbars,status"
+                )
+            },
+            getQuestions() {
+                if (this.knowledgeAreas.length) {
+                    this.knowledgeAreas.forEach((area) => area.subjects.forEach((subject) => subject.questions.forEach((question) => this.questions.push(question))))
+                }
+            },
+            {% include "dashboard/exams/includes/base_texts/methods/base_texts-functions.js" %}
+        },
+        mounted: function () {
+            
+            var self = this;
+            this.getQuestions()
+            this.getBaseTextsExam('{{object.pk}}').finally(() => this.gerateBaseTextNumbers())
+            
+            $(document).ready(function () {
+                $('[data-toggle="tooltip"]').tooltip()
+
+                //KATEX
+                renderMathInElement(document.body);
+
+                const customZooming = new Zooming()
+                const scaleBase = 0
+                customZooming.config({
+                    scaleBase
+                })
+                customZooming.listen('.question img')
+            })
+            setTimeout(() => {
+                $('[data-baseNumber]').each(function(index, el) {
+                    $(el).html(index + 1)
+                })
+            }, 450)
+        }
+    })
+</script>
+
+
+{% endcompress %}
+
+{% endblock js-additional %}

@@ -1,0 +1,843 @@
+{% extends "redesign/clean_base.html" %}
+
+{% load split %}
+{% load permissions %}
+{% load static %}
+
+{% block title %}
+    Desempenho de {{object.name}}
+  - Lize
+{% endblock title %}
+
+{% block css-additional %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css">
+<style>
+  /*///////////////////////////////////////////////////////////////////////////*/
+  /* SELECT2 */
+  /*///////////////////////////////////////////////////////////////////////////*/
+  span#id-students-select2.select2-container .select2-selection--single, span#id-students-select2.select2-container--default .select2-selection--single .select2-selection__rendered {
+    height: 72px;
+  }
+
+  * {
+    font-family: inter !important;
+  }
+
+  .hover-gray:hover {
+    background-color: #FAFBFC;
+    font-weight: 600 !important;
+  }
+
+  span#id-students-select2.select2-container--default.select2-container--open.select2-container--below .select2-selection--single, span#id-students-select2.select2-container--default.select2-container--open.select2-container--below .select2-selection--multiple {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  span#id-students-select2.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 100%;
+  }
+
+  span#id-students-select2.select2-container .select2-selection--single .select2-selection__rendered {
+    padding: 0;
+  }
+
+  span#id-students-select2.select2-container--default .select2-selection--single {
+    border: 1px solid #E5E7EA;
+    border-radius: 8px;
+    box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+  }
+
+  span#id-students-select2 .select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: #D0D5DD transparent transparent transparent;
+  }
+
+  span#id-students-select2 .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+    border-color: transparent transparent #D0D5DD transparent;
+  }
+
+  span#id-students-select2-dropdown .select2-dropdown {
+    border: 1px solid #E5E7EA;
+    box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+    border-bottom-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+  }
+
+  span#id-students-select2-dropdown .select2-search__field {
+    border: unset;
+  }
+
+  /*///////////////////////////////////////////////////////////////////////////*/
+  /* DATERANGEPICKER */
+  /*///////////////////////////////////////////////////////////////////////////*/
+
+  .daterangepicker .ranges li.active {
+    background-color: #FF8F3E;
+  }
+
+  .daterangepicker td.in-range {
+    background-color: #FFF6EB;
+  }
+
+  .daterangepicker td.active, .daterangepicker td.active:hover {
+    background-color: #F47605;
+  }
+
+  /*///////////////////////////////////////////////////////////////////////////*/
+  /* RESET ECHARTS TOOLTIP */
+  /*///////////////////////////////////////////////////////////////////////////*/
+
+  .reset-echarts-tooltip {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    background-color: unset !important;
+  }
+  .dropdown-toggle {
+    border: none;
+  }
+  .filter-option-inner-inner {
+    text-align: right;
+  }
+  input:focus {
+    border-color: transparent !important;
+    box-shadow: none !important;
+  }
+  @media print {
+    * {
+      overflow: hidden !important;
+    }
+    .content-header {
+      display: none;
+    }
+    .no-print {
+      display: none;
+    }
+    body, .content {
+      height: auto;
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content-body %}<div id="app" class="content-body p-0 m-0" style="overflow-x: hidden;">{% endblock content-body %}
+
+{% block content-fixed %}
+<div class="tw-max-w-[100rem] tw-flex-1">
+    <div class="tw-pb-8 tw-pt-4 tw-px-4 tw-flex tw-items-center tw-justify-between sm:tw-px-6 lg:tw-px-[8.75rem]" style="padding-bottom: 40px;">
+        <div class="tw-pt-8" :style="loadingRequest ? 'pointer-events: none;':''">
+            <h3 class="no-print" style="font-size: 16px; line-height: 24px; font-weight: 500; color: #101828; margin-bottom: 16px;">
+                Olá, {{ object.name }}. 
+            </h3>
+            <p style="font-size: 13px">Aqui estão seus resultados para {{ exam }}</p>
+        </div>
+        <div class="tw-flex tw-items-center tw-gap-5">
+          {% if object.client.logo %}
+            <img style="height: 2rem" src="{{ object.client.logo.url }}" alt="client_logo">
+            <div style="width: 1px; background-color: #cacaca; height: 32px;"></div>
+            <img style="height: 2rem" src="{% static 'logo.svg' %}" alt="lize_logo">
+          {% else %}
+            <img style="height: 2rem" src="{% static 'logo.svg' %}" alt="lize_logo">
+          {% endif %}
+        </div>
+    </div>
+    <hr style="margin: 0; border-color: #E5E7EA;" />
+    <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" style="padding-top: 40px;">
+        <h3 style="font-family: 'Inter'; font-size: 30px; line-height: 34px; font-weight: 500; color: #282F3E; letter-spacing: -0.01em; margin-bottom: 0;">
+        Desempenho Geral
+        </h3>
+    </div>
+    <div class="tw-px-4 sm:tw-px-6 lg:tw-px-[8.75rem]" style="padding-top: 24px;">
+        <div class="tw-grid tw-grid-cols-1 tw-gap-x-8 tw-gap-y-16 sm:tw-grid-cols-3">
+        <div style="display: flex; flex-direction: column; border: 1px solid #E5E7EA; height: 320px; border-radius: 12px; padding: 24px;" ref="average">
+            <div class="tw-flex tw-justify-between tw-items-center tw-pb-2">
+            <h3 style="font-size: 16px; line-height: 24px; font-weight: 500; color: #101828; margin-bottom: 0;">
+                Média geral
+            </h3>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-left: 8px;">
+                <g clip-path="url(#clip0_2002_1216)">
+                <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </g>
+                <defs>
+                <clipPath id="clip0_2002_1216">
+                    <rect width="16" height="16" fill="white"/>
+                </clipPath>
+                </defs>
+            </svg>
+            </div>
+            <div>
+            <span class="tw-flex tw-items-center">
+                <!-- Ver se essa informação é desejada para uma tela de aluno -->
+                <template v-if="schoolAverage">
+                <template v-if="schoolAverage.toFixed(0) > average.data.toFixed(0)">
+                    <span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7 7L17 17M17 17V7M17 17H7" stroke="#D92D20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    </span>
+                    <span style="font-size: 14px; font-family: 'Inter'; font-weight: 600; line-height: 20px; color: #D92D20; margin-left: 4px;">#{(schoolAverage - average.data).toFixed(0)}%</span>
+                    <span style="font-size: 12px; font-family: 'Roboto'; font-weight: 400; line-height: 16px; color: #D92D20; margin-left: 8px;">abaixo da média da escola</span>
+                </template>
+                <template v-else-if="schoolAverage.toFixed(0) < average.data.toFixed(0)">
+                    <span>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M4.66602 11.3333L11.3327 4.66666M11.3327 4.66666V11.3333M11.3327 4.66666H4.66602" stroke="#41C588" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    </span>
+                    <span style="font-size: 14px; font-family: 'Inter'; font-weight: 600; line-height: 20px; color: #41C588; margin-left: 4px;">#{(average.data - schoolAverage).toFixed(0)}%</span>
+                    <span style="font-size: 12px; font-family: 'Roboto'; font-weight: 400; line-height: 16px; color: #667085; margin-left: 8px;">melhor que a média da escola</span>
+                </template>
+                </template>
+            </span>
+            </div>
+            <div style="flex: 1;">
+            <skeleton-card v-if="['loading', 'idle'].includes(average.status)"></skeleton-card>
+            <div id="chartAvg" style="height: 100%;" :style="{ 'visibility': ['loading', 'idle'].includes(average.status) ? 'hidden':''  }"></div>
+            </div>
+        </div>
+        <div style="display: flex; flex-direction: column; border: 1px solid #E5E7EA; height: 320px; border-radius: 12px; padding-top: 24px;" ref="progressByMonth">
+            <div class="tw-flex tw-justify-between tw-items-center tw-pb-2" style="padding: 0 24px;">
+            <h3 style="font-size: 16px; line-height: 24px; font-weight: 500; color: #101828; margin-bottom: 0;">
+                Progresso
+            </h3>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-left: 8px;">
+                <g clip-path="url(#clip0_2002_1216)">
+                <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </g>
+                <defs>
+                <clipPath id="clip0_2002_1216">
+                    <rect width="16" height="16" fill="white"/>
+                </clipPath>
+                </defs>
+            </svg>
+            </div>
+            <div style="flex: 1;">
+            <skeleton-card v-if="['loading', 'idle'].includes(progressByMonth.status)"></skeleton-card>
+            <div id="chartProgressByMonth" style="height: 100%;" :style="{ 'visibility': ['loading', 'idle'].includes(progressByMonth.status) ? 'hidden':''  }"></div>
+            </div>
+        </div>
+        <div style="display: flex; flex-direction: column; border: 1px solid #E5E7EA; height: 320px; border-radius: 12px; padding: 24px;" ref="hitsAndMisses">
+            <div class="tw-flex tw-justify-between tw-items-center tw-pb-4">
+            <h3 style="font-size: 16px; line-height: 24px; font-weight: 500; color: #101828; margin-bottom: 0;">
+                Acertos e erros
+            </h3>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-left: 8px;">
+                <g clip-path="url(#clip0_2002_1216)">
+                <path d="M7.99967 10.6667V8M7.99967 5.33333H8.00634M14.6663 8C14.6663 11.6819 11.6816 14.6667 7.99967 14.6667C4.31778 14.6667 1.33301 11.6819 1.33301 8C1.33301 4.3181 4.31778 1.33333 7.99967 1.33333C11.6816 1.33333 14.6663 4.3181 14.6663 8Z" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </g>
+                <defs>
+                <clipPath id="clip0_2002_1216">
+                    <rect width="16" height="16" fill="white"/>
+                </clipPath>
+                </defs>
+            </svg>
+            </div>
+            <div style="flex: 1;">
+            <skeleton-card v-if="['loading', 'idle'].includes(hitsAndMisses.status)"></skeleton-card>
+            <div id="chartHitsAndMisses" style="height: 100%;" :style="{ 'visibility': ['loading', 'idle'].includes(hitsAndMisses.status) ? 'hidden':''  }"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% include 'dashboards/includes/student-dash-core.html' %}
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/momentjs/latest/moment-with-locales.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
+<script>
+  moment.locale('pt-br')
+  var app = new Vue({
+    delimiters: ['#{', '}'],
+    el: '#app',
+    components: {
+      'skeleton-card': Vue.component('skeleton-card', {
+          template: `
+              <div class="lize-card mb-3" style="border: none;">
+                  <div class="lize-card-body p-4">
+                      <div class="row p-3">
+                          <div class="col-3 skeleton-loader"></div>
+                          <div class="offset-6"></div>
+                          <div class="col-3 skeleton-loader"></div>
+                      </div>
+                      <div class="row">
+                          <div class="col-8">
+                              <div class="skeleton-loader"></div>
+                          </div>
+                      </div>
+                      <div class="row">
+                          <div class="col-4">
+                              <div class="skeleton-loader"></div>
+                          </div>
+                      </div>
+                      <div class="row p-3 mt-3 mb-0">
+                          <div class="col-3 skeleton-loader"></div>
+                          <div class="offset-6"></div>
+                          <div class="col-3 skeleton-loader"></div>
+                      </div>
+                  </div>
+              </div>
+          `,
+      }),
+      'select-component': Vue.component('select-component', {
+        props: [],
+        delimiters: ["#{", "}"],
+        data: function() {
+            return {
+              controls: {
+                show: false,
+                loading: false,
+              },
+              search: {
+                term: '',
+                foundedSubjects: [],
+                foundedExams: [],
+                foundedStages: [],
+              },
+              groups: {
+                subjects: {
+                  expanded: false,
+                  selecteds: [],
+                },
+                exams: {
+                  expanded: false,
+                  selecteds: [],
+                },
+                stages: {
+                  expanded: false,
+                  selecteds: [],
+                },
+                topics: {
+                  expanded: false,
+                  selecteds: [],
+                },
+                abilities: {
+                  expanded: false,
+                  selecteds: [],
+                },
+                competences: {
+                  expanded: false,
+                  selecteds: [],
+                },
+              },
+              what: '',
+              whatIDS: [],
+              availablesWhats: {
+                exams: ['exams', 'subjects', 'topics'],
+                classes: ['exams', 'subjects', 'topics'],
+              },
+            }
+        },
+        methods: {
+          resetArrays(exclude) {
+            if(!exclude == 'exams') {
+              this.groups.exams.selecteds = []
+            } 
+            if(!exclude == 'subjects') {
+              this.groups.subjects.selecteds = []
+            }
+            if(!exclude == 'stages') {
+              this.groups.stages.selecteds = []
+            }
+            if(!exclude == 'topics') {
+              this.groups.topics.selecteds = []
+            }
+            if(!exclude == 'abilities') {
+              this.groups.abilities.selecteds = []
+            }
+            if(!exclude == 'competences') {
+              this.groups.competences.selecteds = []
+            }
+          },
+          selectItem(item, itemType) {
+            let id = item.id ? item.id : item
+            this.what = itemType
+            this.resetArrays(itemType)
+            this.groups[itemType].selecteds.includes(id) ? this.groups[itemType].selecteds.splice(id, 1):this.groups[itemType].selecteds.push(id)
+          },
+          applySelection() {
+            this.whatIDS = []
+            if(this.what) {
+              this.groups[this.what].selecteds.forEach((id) => this.whatIDS.push(id))
+            }
+          },
+          getNames() {
+            let names = []
+            if(this.what == 'subjects') {
+              names = this.$parent.availablesSubjects.filter(s => this.groups.subjects.selecteds.includes(s.id)).map((s) => s.name.split(' - ')[0]).join(', ')
+            } else if(this.what == 'exams') {
+              names = this.$parent.availablesExams.filter(s => this.groups.exams.selecteds.includes(s.id)).map((s) => s.name.split(' - ')[0]).join(', ')
+            } else if(this.what == 'stages') {
+              names = this.$parent.availablesStages.filter(s => this.groups.stages.selecteds.includes(s.id)).map((s) => s.name.split(' - ')[0]).join(', ')
+            } else if(this.what == 'topics') {
+              names = this.$parent.availablesTopics.filter(s => this.groups.topics.selecteds.includes(s.id)).map((s) => s.name.split(' - ')[0]).join(', ')
+            } else if(this.what == 'abilities') {
+              names = this.$parent.availablesAbilities.filter(s => this.groups.abilities.selecteds.includes(s.id)).map((s) => s.name.split(' - ')[0]).join(', ')
+            } else if(this.what == 'competences') {
+              names = this.$parent.availablesCompetences.filter(s => this.groups.competences.selecteds.includes(s.id)).map((s) => s.name.split(' - ')[0]).join(', ')
+            }
+            return names.length ? names : 'Todas'
+          },
+          onClickOutside() {
+            this.controls.show = false
+          }
+        },
+        watch: {
+          what: function(val) {
+            this.$parent.what = val
+          },
+          'controls.show': function(val) {
+            if(val === false) {
+              this.applySelection()
+              this.$parent.resetLoadings()
+            }
+          },
+          'whatIDS.length': function(val) {
+            if(this.what == 'subjects') {
+              this.$parent.whatIDS = this.groups.subjects.selecteds
+            }
+            if(this.what == 'exams') {
+              this.$parent.whatIDS = this.groups.exams.selecteds
+            }
+            if(this.what == 'stages') {
+              this.$parent.whatIDS = this.groups.stages.selecteds
+            }
+            if(this.what == 'topics') {
+              this.$parent.whatIDS = this.groups.topics.selecteds
+            }
+            if(this.what == 'abilities') {
+              this.$parent.whatIDS = this.groups.abilities.selecteds
+            }
+            if(this.what == 'competences') {
+              this.$parent.whatIDS = this.groups.competences.selecteds
+            }
+          },
+          'search.term': function(val) {
+            if(val.length) {
+
+              this.search.foundedSubjects = this.$parent.availablesSubjects.filter(s => s.name.toLowerCase().includes(val.toLowerCase()))
+              this.search.foundedExams = this.$parent.availablesExams.filter(s => s.name.toLowerCase().includes(val))
+              this.search.foundedStages = this.$parent.availablesStages.filter(s => s.name.toLowerCase().includes(val))
+              this.search.foundedTopics = this.$parent.availablesTopics.filter(s => s.name.toLowerCase().includes(val))
+              this.search.foundedAbilities = this.$parent.availablesAbilities.filter(s => s.name.toLowerCase().includes(val))
+              this.search.foundedCompetences = this.$parent.availablesCompetences.filter(s => s.name.toLowerCase().includes(val))
+
+              this.groups.subjects.expanded = true
+              this.groups.exams.expanded = true
+              this.groups.stages.expanded = true
+              this.groups.topics.expanded = true
+              this.groups.abilities.expanded = true
+              this.groups.competences.expanded = true
+
+              this.groups.subjects.selecteds = []
+              this.groups.exams.selecteds = []
+              this.groups.stages.selecteds = []
+              this.groups.topics.selecteds = []
+              this.groups.abilities.selecteds = []
+              this.groups.competences.selecteds = []
+
+            } else {
+
+              this.groups.subjects.expanded = false
+              this.groups.exams.expanded = false
+              this.groups.stages.expanded = false
+              this.groups.topics.expanded = false
+              this.groups.abilities.expanded = false
+              this.groups.competences.expanded = false
+              
+            }
+          },
+        },
+        directives: {
+          'click-outside': {
+            bind: function(el, binding, vNode) {
+              // Provided expression must evaluate to a function.
+              if (typeof binding.value !== 'function') {
+                const compName = vNode.context.name
+                let warn = `[Vue-click-outside:] provided expression '${binding.expression}' is not a function, but has to be`
+                if (compName) { warn += `Found in component '${compName}'` }
+    
+                console.warn(warn)
+              }
+              // Define Handler and cache it on the element
+              const bubble = binding.modifiers.bubble
+              const handler = (e) => {
+                if (bubble || (!el.contains(e.target) && el !== e.target)) {
+                  binding.value(e)
+                }
+              }
+              el.__vueClickOutside__ = handler
+    
+              // add Event Listeners
+              document.addEventListener('click', handler)
+            },
+    
+            unbind: function(el, binding) {
+              // Remove Event Listeners
+              document.removeEventListener('click', el.__vueClickOutside__)
+              el.__vueClickOutside__ = null
+            }
+          },
+        },
+        template: `
+          <div style="border: 1px solid #D0D5DD; border-radius: .375rem;" v-click-outside="onClickOutside" @click="controls.show = true">
+            <div class="dropdown">
+              <div :disabled="controls.loading" data-toggle="dropdown" aria-expanded="false" class="text-truncate tw-block tw-w-full tw-border-0 tw-p-6 tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-ring-2 focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6" style="font-size: 16px; font-weight: 500; line-height: 24px;">
+                <div class="d-flex align-items-center justify-content-between">
+                  <span>#{getNames()}</span>
+                  <span>
+                    <svg width="14" height="8" viewBox="0 0 14 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M1 1L7 7L13 1" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                  </span>
+                </div>
+              </div>
+              <div class="dropdown-menu mt-0" style="background border-radius: 0 0 .375rem .375rem; border-top: none; min-width: 100%;">
+                <div class="row m-0">
+                  <div class="col-12 px-0" style="border-bottom: 1px solid #F5F6F7;">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text bg-white border-0">
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14 14L11.1 11.1M12.6667 7.33333C12.6667 10.2789 10.2789 12.6667 7.33333 12.6667C4.38781 12.6667 2 10.2789 2 7.33333C2 4.38781 4.38781 2 7.33333 2C10.2789 2 12.6667 4.38781 12.6667 7.33333Z" stroke="#E5E7EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                        </span>
+                      </div>
+                      <input type="text" v-model="search.term" style="color: #D0D5DD; font-size: 14px;" class="form-control border-0 py-4" placeholder="Pesquisar" aria-label="Pesquisar">
+                    </div>
+                  </div>
+                </div>
+                <div style="overflow-y: scroll; max-height: 260px;">
+                  <div class="row m-0" style="border-top: 1px solid #F5F6F7;" :class="{ 'd-none': search.term.length && !search.foundedSubjects.length }">
+                    <div class="col-12">
+                      <p class="d-flex justify-content-between mb-0 py-3 cp" @click="groups.subjects.expanded = !groups.subjects.expanded" style="font-size: 12px; color: #6C727F; font-weight: 400; line-height: 18px;">
+                        Disciplinas 
+                        <svg v-if="groups.subjects.expanded" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M18 15L12 9L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </p>
+                      <div class="row" v-if="groups.subjects.expanded">
+                        <div @click="selectItem(item, 'subjects')" v-for="item in search.term.length ? search.foundedSubjects : $parent.availablesSubjects" :style="groups.subjects.selecteds.includes(item.id) ? 'background-color: #FAFBFC;font-weight: 600 !important;':''" class="col-12 my-1 cp hover-gray d-flex flex-column mb-0 d-flex justify-content-center" style="height: 44px; color: #384250; font-size: 14px; font-weight: 400; line-height: 20px;">
+                          <p class="text-truncate mb-0">#{item.name.split(' - ')[0]}</p>
+                          <p class="text-muted text-truncate mb-0" style="font-size: 12px;">#{item.name.split(' - ')[1]}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row m-0" style="border-top: 1px solid #F5F6F7;" :class="{ 'd-none': search.term.length && !search.foundedExams.length }">
+                    <div class="col-12">
+                      <p class="d-flex justify-content-between mb-0 py-3 cp" @click="groups.exams.expanded = !groups.exams.expanded" style="font-size: 12px; color: #6C727F; font-weight: 400; line-height: 18px;">
+                        Instrumentos avaliativos 
+                        <svg v-if="groups.exams.expanded" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M18 15L12 9L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </p>
+                      <div class="row" v-if="groups.exams.expanded">
+                        <div @click="selectItem(item, 'exams')" v-for="item in search.term.length ? search.foundedExams : $parent.availablesExams" :style="groups.exams.selecteds.includes(item.id) ? 'background-color: #FAFBFC;font-weight: 600 !important;':''" class="col-12 my-1 cp hover-gray d-flex flex-column mb-0 d-flex justify-content-center" style="height: 44px; color: #384250; font-size: 14px; font-weight: 400; line-height: 20px;">
+                          <p class="mb-0 text-truncate">#{item.name}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row m-0" style="border-top: 1px solid #F5F6F7;" :class="{ 'd-none': search.term.length && !search.foundedStages.length }">
+                    <div class="col-12">
+                      <p class="d-flex justify-content-between mb-0 py-3 cp" @click="groups.stages.expanded = !groups.stages.expanded" style="font-size: 12px; color: #6C727F; font-weight: 400; line-height: 18px;">
+                        Etapa de ensino 
+                        <svg v-if="groups.stages.expanded" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M18 15L12 9L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </p>
+                      <div class="row" v-if="groups.stages.expanded">
+                        <div @click="selectItem(item, 'stages')" v-for="item in search.term.length ? search.foundedStages : $parent.availablesStages" :style="groups.stages.selecteds.includes(item.id) ? 'background-color: #FAFBFC;font-weight: 600 !important;':''" class="col-12 my-1 cp hover-gray d-flex flex-column mb-0 d-flex justify-content-center" style="height: 44px; color: #384250; font-size: 14px; font-weight: 400; line-height: 20px;">
+                          <p class="mb-0 text-truncate">#{item.name}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row m-0" style="border-top: 1px solid #F5F6F7;" :class="{ 'd-none': search.term.length && !search.foundedTopics.length }">
+                    <div class="col-12">
+                      <p class="d-flex justify-content-between mb-0 py-3 cp" @click="groups.topics.expanded = !groups.topics.expanded" style="font-size: 12px; color: #6C727F; font-weight: 400; line-height: 18px;">
+                        Assuntos 
+                        <svg v-if="groups.topics.expanded" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M18 15L12 9L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </p>
+                      <div class="row" v-if="groups.topics.expanded">
+                        <div @click="selectItem(item, 'topics')" v-for="item in search.term.length ? search.foundedTopics : $parent.availablesTopics" :style="groups.topics.selecteds.includes(item.id) ? 'background-color: #FAFBFC;font-weight: 600 !important;':''" class="col-12 my-1 cp hover-gray d-flex flex-column mb-0 d-flex justify-content-center" style="height: 44px; color: #384250; font-size: 14px; font-weight: 400; line-height: 20px;">
+                          <p class="mb-0 text-truncate">#{item.name}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row m-0" style="border-top: 1px solid #F5F6F7;" :class="{ 'd-none': search.term.length && !search.foundedAbilities.length }">
+                    <div class="col-12">
+                      <p class="d-flex justify-content-between mb-0 py-3 cp" @click="groups.abilities.expanded = !groups.abilities.expanded" style="font-size: 12px; color: #6C727F; font-weight: 400; line-height: 18px;">
+                        Habilidades 
+                        <svg v-if="groups.abilities.expanded" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M18 15L12 9L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </p>
+                      <div class="row" v-if="groups.abilities.expanded">
+                        <div @click="selectItem(item, 'abilities')" v-for="item in search.term.length ? search.foundedAbilities : $parent.availablesAbilities" :style="groups.abilities.selecteds.includes(item.id) ? 'background-color: #FAFBFC;font-weight: 600 !important;':''" class="col-12 my-1 cp hover-gray d-flex flex-column mb-0 d-flex justify-content-center" style="height: 44px; color: #384250; font-size: 14px; font-weight: 400; line-height: 20px;">
+                          <p class="mb-0 text-truncate">#{item.name}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row m-0" style="border-top: 1px solid #F5F6F7;" :class="{ 'd-none': search.term.length && !search.foundedCompetences.length }">
+                    <div class="col-12">
+                      <p class="d-flex justify-content-between mb-0 py-3 cp" @click="groups.competences.expanded = !groups.competences.expanded" style="font-size: 12px; color: #6C727F; font-weight: 400; line-height: 18px;">
+                        Competências 
+                        <svg v-if="groups.competences.expanded" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M18 15L12 9L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </p>
+                      <div class="row" v-if="groups.competences.expanded">
+                        <div @click="selectItem(item, 'competences')" v-for="item in search.term.length ? search.foundedCompetences : $parent.availablesCompetences" :style="groups.competences.selecteds.includes(item.id) ? 'background-color: #FAFBFC;font-weight: 600 !important;':''" class="col-12 my-1 cp hover-gray d-flex flex-column mb-0 d-flex justify-content-center" style="height: 44px; color: #384250; font-size: 14px; font-weight: 400; line-height: 20px;">
+                          <p class="mb-0 text-truncate">#{item.name}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `,
+      }),
+    },
+    data: {
+      studentName: "",
+      controls: {
+        urlsParams: {},
+        interval: null,
+        activeRequests: 0,
+      },
+      topics: {
+        status: 'idle',
+        data: []
+      },
+      abilities: {
+        status: 'idle',
+        data: []
+      },
+      competences: {
+        status: 'idle',
+        data: []
+      },
+      availablesSubjects: [],
+      availablesExams: [],
+      availablesStages: [],
+      availablesTopics: [],
+      availablesAbilities: [],
+      availablesCompetences: [],
+      availablesPeriod: [],
+      subjectsBNCCs: {
+        topics: [],
+        abilities: [],
+        competences: [],
+        selectedTopics: [],
+        selectedAbilities: [],
+        selectedCompetences: [],
+      },
+      performanceBySubjects: {
+        status: 'idle',
+        data: null,
+        error: null,
+      },
+      questionsSummary: {
+        status: 'idle',
+        data: [],
+        error: null,
+      },
+      challenges: {
+        status: 'idle',
+        data: [],
+        error: null,
+      },
+      distribution: {
+        status: 'idle',
+        data: null,
+        error: null,
+      },
+      progressByMonth: {
+        status: 'idle',
+        data: [],
+        error: null,
+      },
+      hitsAndMisses: {
+        status: 'idle',
+        data: [],
+        error: null,
+      },
+      generalHistogram: {
+        status: 'idle',
+        data: null,
+        performance: 0,
+        error: null,
+        getColor: () => {
+          let color = '#D92D20' 
+          value = app.generalHistogram.performance
+          if(value <= 40) {
+            color = '#D92D20'
+          } else if(value > 40 && value <= 60) {
+            color = '#F3B364'
+          } else if(value > 60 && value <= 75) {
+            color = '#0C7BDB'
+          } else if (value > 75) {
+            color = '#41C588'
+          }
+          return color
+        }
+      },
+      schoolAverage: 0,
+      average: {
+        status: 'idle',
+        data: 0,
+        error: null,
+      },
+      classeRanking: {
+        status: 'idle',
+        data: [],
+        error: {}
+      },
+      activeTab: 'tab-1',
+      what: '',
+      whatIDS: [],
+      period: {
+        start: moment(),
+        end: moment(),
+      },
+      loading: true,
+      unities: [
+        {% for unity in unities %}
+          {
+            id: "{{unity.id}}",
+            name: "{{unity.name}}"
+          },
+        {% endfor %}
+      ],
+    },
+    computed: {
+      loadingRequest: function() {
+        return this.controls.activeRequests > 0
+      }
+    },
+    watch: {
+      
+    },
+    methods: {
+      {% include 'dashboards/includes/functions-student-dash-core.html' %}
+      startSelectInputsAndTooltips(selector = 'select') {
+        if ($(selector).length && $(selector).data('selectpicker')) {
+          // Se já foram inicializados, apenas atualize as options
+          $(selector).each(function() {
+            var $this = $(this);
+            var options = $this.find('option');
+            $this.selectpicker('destroy');
+            $this.empty().append(options);
+            $this.selectpicker({
+              style: 'btn-white',
+              placeholder: "Selecione as disciplinas",
+              noneSelectedText: 'Nenhuma seleção',
+              noneResultsText: 'Nenhum resultado encontrado',
+            })
+          });
+        } else {
+          $(selector).selectpicker({
+            style: 'btn-white',
+            placeholder: "Selecione as disciplinas",
+            noneSelectedText: 'Nenhuma seleção',
+            noneResultsText: 'Nenhum resultado encontrado',
+          })
+        }
+        $('[data-toggle="tooltip"]').tooltip()
+      },
+      handleUrlsParamsOnInit() {
+        const urlsParams = this.controls.urlsParams
+        if(urlsParams.period) {
+          let period = urlsParams.period.split(',')
+          let start = period[0]
+          let end = period[1]
+          this.period.start = moment(start)
+          this.period.end = moment(end)
+        }
+        this.what = "{{ what }}"
+        this.whatIDS = ["{{ what_id }}"]
+        // pegar ids para a tela de aluno
+        this.who = "{{ who }}"
+        this.whoIDS = ["{{ who_id }}"]
+      },
+    },
+    async mounted() {
+      const splitName = String("{{ object.name }}").split(" ")
+      this.studentName = splitName[0] + " " + splitName[1]
+
+      axios.interceptors.request.use((config) => {
+        this.controls.activeRequests++
+        return config;
+      }, (error) => {
+        this.controls.activeRequests--
+        return Promise.reject(error);
+      });
+      axios.interceptors.response.use((response) => {
+        this.controls.activeRequests--
+        return response;
+      }, (error) => {
+          this.controls.activeRequests--;
+          return Promise.reject(error);
+      });
+      await this.fetchAvailablesFilters().then((response) => {
+          let data = response.data[0]
+          this.availablesExams = data.exams
+          this.availablesSubjects = data.subjects
+          this.availablesStages = data.stages
+          this.availablesTopics = data.topics
+          this.availablesAbilities = data.abilities
+          this.availablesCompetences = data.competences
+          this.availablesPeriod = data.period
+          this.period.start = moment(this.availablesPeriod[0])
+          this.period.end = moment(this.availablesPeriod[1])
+        }).then(() => {
+        this.$nextTick().then(() => {
+          this.buildURL()
+        }).then(() => {
+          this.controls.urlsParams = this.getURLParams()
+        }).then(() => {
+          this.handleUrlsParamsOnInit()
+        }).then(() => {
+          this.fetchData()
+          this.handleOnLoadCharts()
+        })
+      })
+      $(document).on('click', '.dropdown-menu', function (e) {
+        e.stopPropagation();
+      });
+    }
+  })
+</script>
+{% endblock js-additional %}

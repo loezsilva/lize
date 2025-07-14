@@ -1,0 +1,209 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+  {% if not object %}
+    Adicionar competência - Lize
+  {% else %}
+    Alteração de competência - Lize
+  {% endif %}
+{% endblock title %}
+
+{% block css-additional %}
+<link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+<div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                <li class="breadcrumb-item"><a href="#">COMPETÊNCIAS (BNCC)</a></li>
+                <li class="breadcrumb-item active" aria-current="page">CADASTRAR</li>
+            </ol>
+        </nav>
+        <h4>Cadastrar competência</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <button class="btn btn-sm pd-x-15 btn-white btn-uppercase" onclick="history.back();">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </button>
+    </div>
+</div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+    <div class="ard cer dcv tw-mb-16">
+      <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+        <nav class="ls" aria-label="Breadcrumb">
+          <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+            <li>
+              <div>
+                <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                    <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+                </a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="{% url 'bncc:competences_list' %}" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Competências</a>
+              </div>
+            </li>
+            <li>
+              <div class="ls yu">
+                <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+                </svg>
+                <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">{% if not object %}Cadastrar{% else %}Editar{% endif %}</a>
+              </div>
+            </li>
+          </ol>
+        </nav>
+        <div class="d-none d-md-block">
+          <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+          </a>
+        </div>
+      </div>
+<div class="row">
+    <div class="col-md-9">
+        <div class="card mg-b-10">
+            <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+                <div>
+                    <h6 class="mg-b-5">{% if not object %}Cadastrar uma nova{% else %}Editar a{% endif %} competência</h6>
+                <p class="tx-13 tx-color-03 mg-b-5">Informe os dados abaixo e {% if not object %}cadastre uma nova{% else %}edite a{% endif %} competência</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="{{ form.code.auto_id }}">{{ form.code.label }}</label>
+                            {% render_field form.code class="form-control" %}
+                            <small class="form-text text-muted">
+                                {{ form.code.help_text }}
+                            </small>
+                            {% if form.code.errors %}
+                            <label class="text-danger">
+                                {{ form.code.errors.0 }}</label>
+                            {% endif %}
+                        </div>
+                        </div>
+                        <div class="form-row">
+
+                        
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="">Área de conhecimento</label>
+                                <select name="knowledge_area" required="required" class="form-control" id="selectArea" v-model="selectedArea">
+                                    <option value="">Selecione uma Área de conhecimento</option>
+                                    <option v-for="selectedArea in knowledgeAreas" :value="selectedArea.id" v-html="selectedArea.name"></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="">Disciplina</label>
+
+                                <select name="subject" class="form-control" id="selectSubject"
+                                    v-model="selectedSubject">
+                                    <option value="">Selecione uma disciplina</option>
+                                    <option v-for="subject in subjects" :value="subject.id" v-html="subject.name">
+                                    </option>
+                                </select>
+                                <small class="form-text text-muted">
+                                    {{ form.subject.help_text }}
+                                </small>
+                                {% if form.subject.errors %}
+                                <label class="text-danger">
+                                    {{ form.subject.errors.0 }}</label>
+                                {% endif %}
+                            </div>
+                        </div>
+                        </div>
+                        <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <label for="{{ form.text.auto_id }}">{{ form.text.label }}</label>
+                            {% render_field form.text class="form-control" rows=2 %}
+                            <small class="form-text text-muted">
+                                {{ form.text.help_text }}
+                            </small>
+                            {% if form.text.errors %}
+                            <label class="text-danger">
+                                {{ form.text.errors.0 }}</label>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary float-right">Salvar competência</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+
+<script type="text/javascript">
+    var app_question = new Vue({
+        delimiters: ['${', '}'],
+        el: '#app',
+        data: {
+            knowledgeAreas: [],
+            subjects: [],
+            current_knowledge_area: "{{current_knowledge_area|default:''}}",
+            current_subject: "{{form.instance.subject.pk|default:current_subject|default:''}}",
+            selectedArea: "",
+            selectedSubject: "",          
+        },
+        watch: {
+            selectedArea: function (value) {
+                if (value) {
+                    this.fetchSubject(value)
+                }
+            },
+        },
+        methods: {
+            fetchKnowledgeArea: function () {
+                var self = this
+                var knowledgeAreaListUrl = `{% url 'subjects:knowledge_area_list_api' %}`
+                axios.get(knowledgeAreaListUrl).then(function (response) {
+                    self.knowledgeAreas = response.data
+                    self.selectedArea = self.checkExist(self.current_knowledge_area, self
+                        .knowledgeAreas)
+                })
+            },
+            fetchSubject: function (knowledgeArea) {
+                var self = this
+                var subjectListUrl = `{% url 'subjects:subject_list_api' %}?knowledge_area=${knowledgeArea}`
+                axios.get(subjectListUrl).then(function (response) {
+                    self.subjects = response.data
+                    self.selectedSubject = self.checkExist(self.current_subject, self.subjects)
+                })
+            },
+            checkExist(value, list){
+                var elementExists = list.find(element => element.id == value)
+                return elementExists ? elementExists.id : ""
+            }
+        },
+        mounted: function () {
+            var self = this;
+            self.fetchKnowledgeArea()
+        }
+    })
+</script>
+{% endblock %}

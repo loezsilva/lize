@@ -1,0 +1,313 @@
+{% extends 'redesign/base.html' %} 
+{% load static %}
+{% block content-fixed %}
+<div class="tw-p-8">
+  <div>
+    <div class="tw-py-3 tw-flex tw-items-center tw-justify-between">
+      <h2 class="tw-text-xl tw-font-semibold tw-leading-7 tw-text-gray-900">
+        Correções textuais com IA
+      </h2>
+      <div>
+        <button class="tw-flex tw-items-center tw-gap-x-1 tw-rounded-md tw-text-primary-600 tw-border tw-border-primary-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold hover:tw-text-white tw-shadow-sm hover:tw-bg-primary-600 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600" type="button" id="dropdownMenuButton-1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Modo de correção
+          <svg class="tw--mr-1 tw-h-5 tw-w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+          </svg>
+        </button>
+        <div class="dropdown-menu dropdown-menu-right tw-absolute tw-right-0 tw-z-10 tw-mt-2 tw-w-56 tw-origin-top-right tw-divide-y tw-divide-gray-100 tw-rounded-md tw-bg-white tw-shadow-lg tw-ring-1 tw-ring-black tw-ring-opacity-5 focus:tw-outline-none tw-text-inherit tw-m-0 tw-p-0 tw-border-0" aria-labelledby="dropdownMenuButton-1" style="font-size: inherit;">
+          <div class="tw-py-1" role="none">
+              <span @click="switchCorrection('essay')" class="tw-text-gray-700 tw-block tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" id="menu-item-0">
+                Redação
+              </span>
+              <span @click="switchCorrection('discursive')" class="tw-text-gray-700 tw-block tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-gray-100 hover:tw-text-gray-900" role="menuitem" tabindex="-1" id="menu-item-1">
+                Respostas discursivas
+              </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div
+    class="tw-bg-white sm:tw-rounded-lg tw-py-8 tw-border tw-border-[#E5E7EA]"
+  >
+    <div v-if="correctionType == 'essay'" class="tw-px-4 sm:tw-px-6 lg:tw-px-8">
+      <div class="tw-flex tw-items-center tw-justify-between tw-pb-6">
+        <h2 class="tw-text-base tw-font-semibold tw-leading-7 tw-text-gray-900">
+          Correção de redação
+        </h2>
+      </div>
+      <div class="tw-flex tw-items-center tw-justify-center tw-gap-8">
+        <div class="tw-flex tw-flex-col tw-gap-3 lg:tw-w-96">
+          <div>
+            <label for="essay_theme" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Tema da redação</label>
+            <div class="tw-mt-2">
+              <input type="text" id="essay_theme"  class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6"  placeholder="Digite o tema da redação" v-model="essayTheme"/>
+            </div>
+          </div>
+          <div>
+            <label for="essay_content" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Texto do aluno (opcional)</label>
+            <div class="tw-mt-2">
+              <textarea id="essay_content"  class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6"  placeholder="Texto do aluno (alternativa ao scan da redação)" v-model="essayContent"></textarea>
+            </div>
+          </div>
+          <button :disabled="loading" @click="sendEssay()" class="tw-inline-flex tw-justify-center tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500">${loading ? 'Enviando...' : 'Enviar'}</button>
+        </div>
+
+        <div class="tw-mt-2 tw-flex tw-justify-center tw-rounded-lg tw-border tw-border-dashed border-gray-900/25 tw-px-6 tw-py-10">
+          <div class="tw-text-center">
+            <svg class="tw-mx-auto tw-h-12 tw-w-12 tw-text-gray-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
+            </svg>
+            <div class="tw-mt-4 tw-flex tw-text-sm tw-leading-6 tw-text-gray-600">
+              <label for="essay-file" class="tw-relative tw-cursor-pointer tw-rounded-md tw-bg-white tw-font-semibold tw-text-primary-600 focus-within:tw-outline-none focus-within:tw-ring-2 focus-within:tw-ring-primary-600 focus-within:tw-ring-offset-2 hover:tw-text-primary-500">
+                <span>${essayFile == null ? "Ou adicione o escaneamento da redação" : essayFile.name}</span>
+                <input id="essay-file" @change="handleFileInput('essay')" type="file" class="tw-sr-only" accept="image/*" required />
+              </label>
+            </div>
+            <p class="tw-text-xs tw-leading-5 tw-text-gray-600">PNG, JPG ou JPEG</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-else>
+      <div class="tw-px-4 sm:tw-px-6 lg:tw-px-8">
+        <div class="tw-flex tw-items-center tw-justify-between tw-pb-6">
+          <h2 class="tw-text-base tw-font-semibold tw-leading-7 tw-text-gray-900">
+            Correção de respostas discursivas
+          </h2>
+        </div>
+        <div class="tw-flex tw-items-center tw-justify-center tw-gap-8">
+          <div>
+            <div class="tw-flex tw-flex-col tw-gap-3 lg:tw-w-96">
+              <div>
+                <label for="discursive_enunciation" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Enunciado da questão</label>
+                <div class="tw-mt-2">
+                  <textarea id="discursive_enunciation" v-model="discursiveEnunciation"  class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6"  placeholder="Digite o enunciado" ></textarea>
+                </div>
+              </div>
+              <div>
+                <label for="discursive_comented_answer" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Resposta comentada</label>
+                <div class="tw-mt-2">
+                  <textarea id="discursive_comented_answer" v-model="discursiveCommentedAnswer"  class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6"  placeholder="Resposta comentada" ></textarea>
+                </div>
+              </div>
+              <div>
+                <label for="discursive_student_answer" class="tw-block tw-text-sm tw-font-medium tw-leading-6 tw-text-gray-900">Resposta do aluno (opcional)</label>
+                <div class="tw-mt-2">
+                  <textarea id="discursive_student_answer"  v-model="discursiveStudentdAnswer" class="tw-block tw-w-full tw-rounded-md tw-border-0 tw-py-1.5 tw-text-gray-900 tw-shadow-sm tw-ring-1 tw-ring-inset tw-ring-gray-300 placeholder:tw-text-gray-400 focus:tw-ring-2 focus:tw-ring-inset focus:tw-ring-primary-600 sm:tw-text-sm sm:tw-leading-6"  placeholder="Resposta do aluno (alternativa ao scan da resposta)" ></textarea>
+                </div>
+              </div>
+              <button :disabled="loading" @click="sendDiscursive()" class="tw-inline-flex tw-justify-center tw-rounded-md tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-blue-500">${loading ? 'Enviando...' : 'Enviar'}</button>
+            </div>
+          </div>
+          <div class="tw-mt-2 tw-flex tw-justify-center tw-rounded-lg tw-border tw-border-dashed border-gray-900/25 tw-px-6 tw-py-10">
+            <div class="tw-text-center">
+              <svg class="tw-mx-auto tw-h-12 tw-w-12 tw-text-gray-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
+              </svg>
+              <div class="tw-mt-4 tw-flex tw-text-sm tw-leading-6 tw-text-gray-600">
+                <label for="discursive-file" class="tw-relative tw-cursor-pointer tw-rounded-md tw-bg-white tw-font-semibold tw-text-primary-600 focus-within:tw-outline-none focus-within:tw-ring-2 focus-within:tw-ring-primary-600 focus-within:tw-ring-offset-2 hover:tw-text-primary-500">
+                  <span>${discursiveFile == null ? "Ou adicione o escaneamento da resposta do aluno" : discursiveFile.name}</span>
+                  <input id="discursive-file" @change="handleFileInput('discursive')" type="file" class="tw-sr-only" accept="image/*" required />
+                </label>
+              </div>
+              <p class="tw-text-xs tw-leading-5 tw-text-gray-600">PNG, JPG ou JPEG</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- resultado -->
+  <div v-show="results" class="tw-bg-white tw-mt-4 sm:tw-rounded-lg tw-py-8 tw-border tw-border-[#E5E7EA]">
+    <div v-if="correctionType == 'essay'" class="tw-flex tw-items-center tw-flex-col tw-justify-between tw-pb-6  lg:tw-px-8">
+      <h2 class="tw-text-base tw-font-semibold tw-leading-7 tw-text-gray-900">
+        Resultado da correção (redação)
+      </h2>
+      <div class="tw-flex tw-flex-col tw-gap-3">
+        <div class="tw-flex tw-flex-col tw-items-center tw-justify-center">
+          <h2 class="tw-text-base tw-font-semibold tw-leading-7 tw-text-gray-900">
+            Competências
+          </h2>
+          <ul style="list-style-type: none;">
+            <li v-for="competence in aiResultsEssay.competences" :class="competence.err ? 'tw-text-base tw-leading-7 tw-text-white tw-p-2 tw-rounded-md tw-bg-blue-500 tw-mt-3' : 'tw-text-base tw-leading-7 tw-text-gray-900 tw-p-2 tw-rounded-md tw-bg-gray-200 tw-mt-3'">
+              ${competence.err ? competence.detail : "Nenhum erro detectado nessa competência"}
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="tw-flex tw-flex-col tw-gap-3">
+        <div class="tw-flex tw-flex-col tw-items-center tw-justify-center tw-gap-8">
+          <h2 class="tw-text-base tw-font-semibold tw-leading-7 tw-text-gray-900">
+            Imagem enviada
+          </h2>
+          <img id="essayFileDisplay" src="#" alt="imagem não carregada"/>
+        </div>
+      </div>
+
+    </div>
+    <div v-else class="tw-flex tw-items-center tw-flex-col tw-justify-between tw-pb-6  lg:tw-px-8">
+      <h2 class="tw-text-base tw-font-semibold tw-leading-7 tw-text-gray-900">
+        Resultado da correção (discursiva)
+      </h2>
+      <div class="tw-flex tw-items-center tw-flex-col tw-justify-center tw-gap-8">
+        <div class="tw-flex tw-flex-col tw-gap-3">
+          <div class="tw-flex tw-flex-col tw-items-center tw-justify-center">
+            <h2 class="tw-text-base tw-font-semibold tw-leading-7 tw-text-gray-900">
+              Similaridade
+            </h2>
+            <span>${aiResultsDiscursive.percentage}</span>
+          </div>
+          <div class="tw-flex tw-flex-col tw-items-center tw-justify-center">
+            <h2 class="tw-text-base tw-font-semibold tw-leading-7 tw-text-gray-900">
+              Avaliação geral
+            </h2>
+            <p class="tw-text-base tw-leading-7 tw-text-gray-900">
+              ${aiResultsDiscursive.comment}
+            </p>
+          </div>
+        </div>
+        <div class="tw-flex tw-flex-col tw-gap-3">
+          <div class="tw-flex tw-flex-col tw-items-center tw-justify-center tw-gap-8">
+            <h2 class="tw-text-base tw-font-semibold tw-leading-7 tw-text-gray-900">
+              Imagem enviada
+            </h2>
+            <img id="discursiveFileDisplay" src="#" alt="imagem não carregada"/>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+
+<script src="{% static 'administration/lib/typeahead.js/typeahead.bundle.min.js' %}"></script>
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'administration/assets/vendor/jquery.mask.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js"></script>
+
+<script type="text/javascript">
+  moment.locale("pt-br");
+  var app_question = new Vue({
+    delimiters: ["${", "}"],
+    el: "#app",
+    data: {
+      correctionType: "essay",
+      essayTheme: "",
+      essayContent: "",
+      essayFile: null,
+      discursiveEnunciation: "",
+      discursiveCommentedAnswer: "",
+      discursiveStudentdAnswer: "",
+      discursiveFile: null,
+      loading: false,
+      results: false,
+      aiResultsDiscursive: {},
+      aiResultsEssay: {},
+      totalEssayScore: 0
+    },
+    methods: {
+      sendEssay() {
+        this.loading = true
+        const formData = new FormData();
+        if(!this.essayTheme){
+          this.alertError("Erro ao enviar a redação", "Digite o tema da redação")
+          this.loading = false
+          return
+        }
+        formData.append('theme', this.essayTheme);
+
+        if(this.essayContent && this.essayFile) {
+          this.alertError("Erro ao enviar a redação", "Envie apenas a imagem ou o texto")
+          this.loading = false
+          return
+        }
+        if(this.essayFile) {
+          formData.append('file', this.essayFile)
+        }else{
+          formData.append('content', this.essayContent);
+        }
+        
+        const headers = { 'Content-Type': 'multipart/form-data' };
+
+        axios.post("{% url 'questions:questions-correct-essay' %}", formData, { headers }).then((response) => {
+          this.aiResultsEssay = JSON.parse(response.data)
+          this.totalEssayScore = this.aiResultsEssay.competences.reduce((acc, curr) => acc + curr.score, 0)
+          if(this.essayFile){
+            document.getElementById("essayFileDisplay").src = URL.createObjectURL(this.essayFile)
+          }
+          
+          this.loading = false
+          this.results = true
+        }).catch((error) => {
+          console.log(error)
+          this.alertError("Erro ao enviar a redação", "Tente novamente mais tarde")
+          this.loading = false
+        })
+      },
+      sendDiscursive() {
+        this.loading = true
+        const formData = new FormData();
+        if(this.discursiveFile) formData.append('file', this.discursiveFile);
+        if(this.discursiveStudentdAnswer && this.discursiveFile) {
+          this.alertError("Erro ao enviar a resposta", "Envie apenas a imagem ou o texto")
+          this.loading = false
+          return
+        }
+
+        formData.append('enunciation', this.discursiveEnunciation);
+        formData.append('commented_answer', this.discursiveCommentedAnswer);
+        formData.append('student_answer', this.discursiveStudentdAnswer);
+        const headers = { 'Content-Type': 'multipart/form-data' };
+
+        axios.post("{% url 'questions:questions-correct-textual-answer' %}", formData, { headers }).then((response) => {
+          if(this.discursiveFile){
+            document.getElementById("discursiveFileDisplay").src = URL.createObjectURL(this.discursiveFile)
+          }
+          this.aiResultsDiscursive = JSON.parse(response.data)
+          this.loading = false
+          this.results = true
+        }).catch((error) => {
+          console.log(error)
+          this.alertError("Erro ao enviar a resposta", "Tente novamente mais tarde")
+          this.loading = false
+        })
+      },
+      alertError(title, message) {
+        Swal.fire({
+          icon: 'error',
+          toast: true,
+          timer: 3000,
+          timerProgressBar: true,
+          position: 'top-end',
+          title: title,
+          text: message,
+        })
+      },
+      handleFileInput(type) {
+        if(type == "essay"){
+          this.essayFile = document.getElementById("essay-file").files[0]
+        }else{
+          this.discursiveFile = document.getElementById("discursive-file").files[0]
+        }
+      },
+      switchCorrection(type) {
+        if(type == "discursive" && Object.keys(this.aiResultsDiscursive).length === 0) {
+          this.results = false
+        }else if(type == "essay" && Object.keys(this.aiResultsEssay).length === 0) {
+          this.results = false
+        }else{
+          this.results = true
+        }
+        this.correctionType = type
+        
+      }
+    },
+  });
+</script>
+
+{% endblock js-additional %} 

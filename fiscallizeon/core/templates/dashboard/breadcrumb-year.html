@@ -1,0 +1,26 @@
+{% load exclude_especific_params %}
+
+<div class="row m-0 d-flex justify-content-start">
+    <div role="group" class="btn-group btn-group-justified">
+        <a href="?year=2024{{request|exclude_especific_params:'year,page'}}"
+            class="btn {% if year == '2024' %} btn-primary text-white {% else %} btn-outline-primary {% endif %}">
+            2024
+        </a>
+        <a href="?year=2025{{request|exclude_especific_params:'year,page'}}"
+            class="btn {% if year == '2025' %} btn-primary {% else %} btn-outline-primary {% endif %}">
+            2025
+        </a>
+    </div>
+    {% if user.user_type == 'student' or user.user_type == 'parent' %}
+        <div role="group" class="btn-group btn-group-justified mx-2">
+            <a href="?year={{ year }}{{ request|exclude_especific_params:'page,only_scheduled' }}"
+                class="btn {% if not only_scheduled %} btn-primary text-white {% else %} btn-outline-primary {% endif %}">
+                Resultado liberado
+            </a>
+            <a href="?year={{ year }}&only_scheduled=true{{ request|exclude_especific_params:'year,page,only_scheduled' }}"
+                class="btn {% if only_scheduled %} btn-primary text-white {% else %} btn-outline-primary {% endif %}">
+                Provas agendadas
+            </a>
+        </div>
+    {% endif %}
+</div>

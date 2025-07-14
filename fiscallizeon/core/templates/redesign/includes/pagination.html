@@ -1,0 +1,72 @@
+{% load getlist %}
+
+<div class="tw-flex tw-items-center tw-justify-between {% if not border %}{% else %}tw-border-t tw-border-gray-200{% endif %} {% if transparent %}tw-bg-transparent{% else %}tw-bg-white{% endif %} tw-py-3">
+  <div class="tw-flex tw-flex-1 tw-justify-between sm:tw-hidden">
+    <a href="?page={% if page_obj.has_previous %}{{ page_obj.previous_page_number }}{% endif %}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}" class="tw-relative tw-inline-flex tw-items-center tw-rounded-md tw-border tw-border-gray-300 tw-bg-white tw-px-4 tw-py-2 tw-text-sm tw-font-medium tw-text-gray-700 hover:tw-bg-gray-50 hover:tw-text-gray-700">Anterior</a>
+    <a href="{% if page_obj.has_next %}?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}{% endif %}" class="tw-relative tw-ml-3 tw-inline-flex tw-items-center tw-rounded-md tw-border tw-border-gray-300 tw-bg-white tw-px-4 tw-py-2 tw-text-sm tw-font-medium tw-text-gray-700 hover:tw-bg-gray-50 hover:tw-text-gray-700">Próximo</a>
+  </div>
+  <div class="tw-hidden sm:tw-flex sm:tw-flex-1 sm:tw-items-center sm:tw-justify-between">
+    <div>
+      <p class="tw-text-sm tw-text-gray-700 tw-mb-0">
+        Mostrando de
+        <span class="tw-font-medium">{{ page_obj.start_index }}</span>
+        até
+        <span class="tw-font-medium">{{ page_obj.end_index }}</span>
+        de
+        <span class="tw-font-medium">{{ page_obj.paginator.count }}</span>
+        resultados
+      </p>
+    </div>
+    <div>
+      <nav class="tw-isolate tw-inline-flex tw--space-x-px tw-rounded-md tw-shadow-sm" aria-label="Pagination">
+        <a href="?page={% if page_obj.has_previous %}{{ page_obj.previous_page_number }}{% endif %}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}" class="tw-relative tw-inline-flex tw-items-center tw-rounded-l-md tw-px-2 tw-py-2 tw-text-gray-400 tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 hover:tw-text-gray-400 focus:tw-z-20 focus:tw-outline-offset-0">
+          <span class="tw-sr-only">Anterior</span>
+          <svg class="tw-h-5 tw-w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+          </svg>
+        </a>
+        {% if paginator.num_pages < 12 %}
+          {% for page in paginator.page_range %}
+            <a href="?page={{page}}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}"{% if page_obj.number == page %} aria-current="page"{% endif %} class="tw-relative tw-inline-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm tw-font-semibold focus:tw-z-20 {% if page_obj.number == page %}tw-z-10 tw-bg-primary-600 tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600 hover:tw-text-white{% else %}tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 focus:tw-outline-offset-0 hover:tw-text-gray-900{% endif %}">{{ page }}</a>
+          {% endfor %}
+        {% else %}
+          {% if page_obj.number >= 1 and page_obj.number < 5 %}
+            {% for page in paginator.page_range %}
+              {% if page <= 5 %}
+                <a href="?page={{ page }}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}"{% if page_obj.number == page %} aria-current="page"{% endif %} class="tw-relative tw-inline-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm tw-font-semibold focus:tw-z-20 {% if page_obj.number == page %}tw-z-10 tw-bg-primary-600 tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600 hover:tw-text-white{% else %}tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 focus:tw-outline-offset-0 hover:tw-text-gray-900{% endif %}">{{ page }}</a>
+              {% endif %}
+            {% endfor %}
+            <span class="tw-relative tw-inline-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-gray-700 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-outline-offset-0">...</span>
+            <a href="?page={{ paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}"{% if page_obj.number == paginator.num_pages %} aria-current="page"{% endif %} class="tw-relative tw-inline-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm tw-font-semibold focus:tw-z-20 {% if page_obj.number == paginator.num_pages %}tw-z-10 tw-bg-primary-600 tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600 hover:tw-text-white{% else %}tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 focus:tw-outline-offset-0 hover:tw-text-gray-900{% endif %}">{{ paginator.num_pages }}</a>
+          {% elif page_obj.number >= 5 and page_obj.number < paginator.num_pages|add:"-3" %}
+            <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}"{% if page_obj.number == page %} aria-current="page"{% endif %} class="tw-relative tw-inline-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm tw-font-semibold focus:tw-z-20 {% if page_obj.number == page %}tw-z-10 tw-bg-primary-600 tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600 hover:tw-text-white{% else %}tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 focus:tw-outline-offset-0 hover:tw-text-gray-900{% endif %}">1</a>
+            <span class="tw-relative tw-inline-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-gray-700 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-outline-offset-0">...</span>
+            {% for page in paginator.page_range %}
+              {% if page == page_obj.number %}
+                <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}"{% if page_obj.number == page_obj.previous_page_number %} aria-current="page"{% endif %} class="tw-relative tw-inline-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm tw-font-semibold focus:tw-z-20 {% if page_obj.number == page_obj.previous_page_number %}tw-z-10 tw-bg-primary-600 tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600 hover:tw-text-white{% else %}tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 focus:tw-outline-offset-0 hover:tw-text-gray-900{% endif %}">{{ page_obj.previous_page_number }}</a>
+                <a href="?page={{ page }}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}"{% if page_obj.number == page %} aria-current="page"{% endif %} class="tw-relative tw-inline-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm tw-font-semibold focus:tw-z-20 {% if page_obj.number == page %}tw-z-10 tw-bg-primary-600 tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600 hover:tw-text-white{% else %}tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 focus:tw-outline-offset-0 hover:tw-text-gray-900{% endif %}">{{ page }}</a>
+                <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}"{% if page_obj.number == page_obj.next_page_number %} aria-current="page"{% endif %} class="tw-relative tw-inline-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm tw-font-semibold focus:tw-z-20 {% if page_obj.number == page_obj.next_page_number %}tw-z-10 tw-bg-primary-600 tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600 hover:tw-text-white{% else %}tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 focus:tw-outline-offset-0 hover:tw-text-gray-900{% endif %}">{{ page_obj.next_page_number }}</a>
+              {% endif %}
+            {% endfor %}
+            <span class="tw-relative tw-inline-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-gray-700 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-outline-offset-0">...</span>
+            <a href="?page={{ paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}"{% if page_obj.number == paginator.num_pages %} aria-current="page"{% endif %} class="tw-relative tw-inline-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm tw-font-semibold focus:tw-z-20 {% if page_obj.number == paginator.num_pages %}tw-z-10 tw-bg-primary-600 tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600 hover:tw-text-white{% else %}tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 focus:tw-outline-offset-0 hover:tw-text-gray-900{% endif %}">{{ paginator.num_pages }}</a>
+          {% elif paginator.num_pages|add:"-3" >= 1 and page_obj.number <= paginator.num_pages %}
+            <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}"{% if page_obj.number == page %} aria-current="page"{% endif %} class="tw-relative tw-inline-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm tw-font-semibold focus:tw-z-20 {% if page_obj.number == page %}tw-z-10 tw-bg-primary-600 tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600 hover:tw-text-white{% else %}tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 focus:tw-outline-offset-0 hover:tw-text-gray-900{% endif %}">1</a>
+            <span class="tw-relative tw-inline-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-gray-700 tw-ring-1 tw-ring-inset tw-ring-gray-300 focus:tw-outline-offset-0">...</span>
+            {% for page in paginator.page_range %}
+              {% if page >= paginator.num_pages|add:"-4" %}
+                <a href="?page={{page}}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}"{% if page_obj.number == page %} aria-current="page"{% endif %} class="tw-relative tw-inline-flex tw-items-center tw-px-4 tw-py-2 tw-text-sm tw-font-semibold focus:tw-z-20 {% if page_obj.number == page %}tw-z-10 tw-bg-primary-600 tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600 hover:tw-text-white{% else %}tw-text-gray-900 tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 focus:tw-outline-offset-0 hover:tw-text-gray-900{% endif %}">{{ page }}</a>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        {% endif %}
+        <a href="{% if page_obj.has_next %}?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page'%}{% for a in request.GET|get_list:key %}&{{key}}={{a}}{% endfor %}{% endif %}{% endfor %}{% endif %}" class="tw-relative tw-inline-flex tw-items-center tw-rounded-r-md tw-px-2 tw-py-2 tw-text-gray-400 tw-ring-1 tw-ring-inset tw-ring-gray-300 hover:tw-bg-gray-50 hover:tw-text-gray-400 focus:tw-z-20 focus:tw-outline-offset-0">
+          <span class="tw-sr-only">Próximo</span>
+          <svg class="tw-h-5 tw-w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+          </svg>
+        </a>
+      </nav>
+    </div>
+  </div>
+</div>

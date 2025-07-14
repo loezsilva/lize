@@ -1,0 +1,2244 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load questions_tags %}
+{% load round_to %}
+{% load math %}
+{% load proportion %}
+{% load static %}
+{% load exams_tags %}
+{% load remove_line_break %}
+{% load applications_student %}
+
+{% block css-additional %}
+  <link rel="stylesheet" href="{% static 'administration/lib/datatables.net-responsive-dt/css/responsive.dataTables.min.css' %}">
+  <link rel="stylesheet" href="{% static 'dashboard/lib/apexcharts/apexcharts.css' %}">  
+  <link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+  <style>
+    .hover-effect:hover {
+      color: #1D9EDE;
+    }
+    .blur-text {
+      background-color: rgba(87,160,230, 0.61); /* Black w/opacity/see-through */
+      font-size: 1.5rem;
+      border: 3px solid #f1f1f1;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+      width: 80%;
+      text-align: center;
+    }
+  </style>
+{% endblock css-additional %}
+  
+{% block content %}
+
+<main id="app">
+  <div class="ard cer dcv tw-mb-16">
+    <div class="ls" style="margin-top: 1rem; margin-bottom: 1rem; justify-content: space-between;">
+      <nav class="ls" aria-label="Breadcrumb">
+        <ol role="list" class="ls yu abe" style="list-style: none; margin: 0; padding: 0;">
+          <li>
+            <div>
+              <a href="{% url 'core:redirect_dashboard' %}" class="axk bks">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="nu rw uk" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
+                  <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="t" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Painel</span>
+              </a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="{% url 'exams:exams_list' %}?category=exam" class="js avv avz axm bku" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Cadernos</a>
+            </div>
+          </li>
+          <li>
+            <div class="ls yu">
+              <svg class="nu rw uk axj" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: rgb(209 213 219);">
+                <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path>
+              </svg>
+              <a href="data:text/plain," class="js avv avz axm bku" aria-current="page" style="margin-left: 1rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;">Detalhes</a>
+            </div>
+          </li>
+        </ol>
+      </nav>
+      {% include "dashboard/exams/includes/exam/exam-nav-links.html" with page="students" %}
+    </div>
+    
+    {% if object.last_performance.exists %}
+      <template v-if="recalculate.yesno || recalculate.hasProcessTime || moment(recalculate.processTime) > moment()">
+        <div class="alert alert-warning" v-if="recalculate.hasProcessTime">
+          <p class="mb-0">
+            <template v-if="moment(recalculate.processTime) > moment()">
+              O calculo de desempenho foi iniciado, o processo finaliza em aproximadamente #{moment(recalculate.processTime).fromNow(true)}
+            </template>
+            <template v-else>
+              O calculo de desempenho está demorando mais do que o esperado, mas não se preocupe, em breve você será avisado da finalização do processo!
+            </template>
+          </p>
+        </div>
+        <div class="alert alert-warning" v-else-if="recalculate.yesno && !recalculate.processFinished">
+          <p class="mb-0">O calculo de desempenho foi iniciado, mas não foi possível gerar uma estimativa, em breve concluiremos sua solicitação.</p>
+        </div>
+      </template>
+      <template v-show="!widgets.loads.optionAnswers && !widgets.loads.discursiveAnswers">
+        <div class="row row-xs">
+          <div class="col-12 mg-t-10">
+            <div class="card">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mg-b-0">CADERNO: {{ object.name }} <span class="badge badge-primary align-middle ml-2">Utilizado {{object.count_applications_count}} vez(es)</span></h6>
+                <div class="float-right text-right">
+                  <button data-toggle-off-canvas="#right-off-canvas"
+                    class="btn btn-sm btn-info m-1 btn-icon rounded-pill off-canvas-menu">
+                    <i class="fas fa-search"></i> Filtrar Resultados           
+                    {% if count_filters > 0 %}
+                    <span class="badge badge-danger">{{count_filters}} Aplicado(s)</span>
+                    {% endif %}
+                  </button>
+                  {% if count_filters > 0 %}
+                  <a href="{% url 'exams:dash_exam_teacher_detail_students' pk=object.pk %}"
+                    class="btn btn-sm btn-info m-1 btn-icon rounded-pill">
+                    <i class="fas fa-eraser"></i> Apagar filtro(s)
+                  </a>
+                  {% endif %}
+                  {% comment %} 
+                  <button title="Recalcular todos os desempenhos do caderno" v-if="!recalculate.hasProcessTime" data-toggle="modal" data-target="#modalRecalculateConfirm" class="btn btn-sm btn-info btn-icon rounded-pill">
+                    <i class="fas fa-sync"></i>
+                  </button> 
+                  {% endcomment %}
+                </div>
+              </div>
+              <div class="card-body pd-0">
+                <div class="row no-gutters">
+                  <div class="col col-sm-6 col-lg">
+                    <div class="crypto">
+                      <div class="media mg-b-10">
+                        <div class="crypto-icon bg-primary">
+                          <i class="fas fa-users"></i>
+                        </div>
+                        <div class="media-body pd-l-8">
+                          <h6 class="tx-11 tx-spacing-1 tx-uppercase tx-semibold mg-b-5">
+                            Alunos
+                          </h6>
+                          <div class="d-flex align-items-baseline tx-rubik">
+                            <h5 class="tx-20 mg-b-0">{{ total_students }} 
+                              {% with total_students_start_application|proportion:total_students as students_start %}
+                                <span class="{% if students_start > 50 %} text-success {% else %} text-danger {% endif %}text-primary op-4" style="cursor: pointer;" data-toggle="tooltip" data-placement="right" title="{% if students_start > 50%} Média de alunos que iniciaram as provas {% else %} Menos da metade dos alunos iniciaram a prova {% endif %}">({{students_start|floatformat:2}})</span></h5>                              
+                              {% endwith %}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="b-5 l-20 tx-medium">
+                        <label class="tx-9 tx-uppercase tx-sans mb-0">
+                          <span class="link-01 tx-semibold tx-success">
+                            {{ total_students_start_application }}
+                          </span> Iniciaram a prova
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col col-sm-6 col-lg bd-t bd-sm-t-0 bd-sm-l">
+                    <div class="crypto">
+                      <div class="media mg-b-10">
+                        <div class="crypto-icon bg-primary">
+                          <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <div class="media-body pd-l-8">
+                          <h6 class="tx-11 tx-spacing-1 tx-uppercase tx-semibold mg-b-5">
+                            Questões
+                          </h6>
+                          <div class="d-flex align-items-baseline tx-rubik">
+                            <h5 class="tx-20 mg-b-0">{{ total_questions_exam }}</h5>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="b-5 l-20 tx-medium">
+                        {% if total_objective_questions %}
+                          <label class="tx-9 tx-uppercase mb-0" data-toggle="tooltip" data-placement="bottom" title="Total de questões objetivas">
+                            <span class="link-01 tx-medium">
+                              {{ total_objective_questions }}
+                            </span> Questões Objetivas
+                          </label>
+                        {% endif %}
+                        
+                        {% if total_discursive_questions %}
+                          <label class="tx-9 tx-uppercase mb-0 mg-l-10" data-toggle="tooltip" data-placement="bottom" title="Total de questões discursivas">
+                            <span class="link-01 tx-medium">
+                              {{ total_discursive_questions }}
+                            </span> Questões Discursivas
+                          </label>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                  {% if not question_category or question_category == '1' %}
+                    <div class="col col-sm-6 col-lg bd-t bd-sm-t-0 bd-sm-l">
+                      <div class="crypto">
+                        <div class="media mg-b-10">
+                          <div class="crypto-icon bg-primary">
+                            <i class="far fa-dot-circle"></i>
+                          </div>
+                          <div class="media-body pd-l-8">
+                            <h6 class="tx-11 tx-spacing-1 tx-uppercase tx-semibold mg-b-5">
+                              Respostas Objetivas
+                            </h6>
+                            <div class="d-flex align-items-baseline tx-rubik">
+                              <h5 class="tx-20 mg-b-0">#{widgets.optionAnswers.total_objective_answers}  <span class="text-success op-4" style="cursor: pointer;" data-toggle="tooltip" data-placement="right" title="Média de acertos">(#{widgets.optionAnswers.total_objective_answers > 0 ? ((widgets.optionAnswers.total_correct_objective_answers / widgets.optionAnswers.total_objective_answers) * 100).toFixed(2):0} %)</span></h5>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="b-5 l-20 tx-medium">
+                          <label class="tx-9 tx-uppercase tx-sans mb-0">
+                            <span class="link-01 tx-semibold tx-success">
+                              #{widgets.optionAnswers.total_correct_objective_answers}
+                            </span> Acertos
+                          </label>
+                          <label class="tx-9 tx-uppercase tx-sans mb-0 mg-l-10">
+                            <span class="link-01 tx-semibold tx-danger">
+                              #{widgets.optionAnswers.total_incorrect_objective_answers}
+                            </span> Erros
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  {% endif %}
+                  {% if not question_category or question_category != '1' %}
+                    <div class="col col-sm-6 col-lg bd-t bd-sm-t-0 bd-sm-l">
+                      <div class="crypto">
+                        <div class="media mg-b-10">
+                          <div class="crypto-icon bg-primary">
+                            <i class="fas fa-pen"></i>
+                          </div>
+                          <div class="media-body pd-l-8">
+                            <h6 class="tx-11 tx-spacing-1 tx-uppercase tx-semibold mg-b-5">
+                              Respostas Discursivas
+                            </h6>
+                            <div class="d-flex align-items-baseline tx-rubik">
+                              <h5 class="tx-20 mg-b-0">#{widgets.discursiveAnswers.total_discursive_answers}</h5>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="b-5 l-20 tx-medium">
+                          <label class="tx-9 tx-uppercase tx-sans mb-0" data-toggle="tooltip" data-placement="right" title="Acertos">
+                            <span class="link-01 tx-semibold tx-success">
+                              #{widgets.discursiveAnswers.total_correct_discursive_answers} <span class="text-muted op-4">(#{widgets.discursiveAnswers.total_correct_discursive_answers > 0 ? ((widgets.discursiveAnswers.total_correct_discursive_answers / widgets.discursiveAnswers.total_discursive_answers) * 100).toFixed(2) : 0} %)</span>
+                            </span> Acertos
+                          </label>
+                          <label class="tx-9 tx-uppercase tx-sans mb-0" data-toggle="tooltip" data-placement="right" title="Acertos parciais">
+                            <span class="link-01 tx-semibold tx-warning">
+                              #{widgets.discursiveAnswers.total_partial_correct_discursive_answers} <span class="text-muted op-4">(#{widgets.discursiveAnswers.total_partial_correct_discursive_answers > 0 ? ((widgets.discursiveAnswers.total_partial_correct_discursive_answers / widgets.discursiveAnswers.total_discursive_answers) * 100).toFixed(2) : 0} %)</span>
+                            </span> Parcial
+                          </label>
+                          <label class="tx-9 tx-uppercase tx-sans mb-0">
+                            <span class="link-01 tx-semibold tx-danger">
+                              #{widgets.discursiveAnswers.total_discursive_answers - widgets.discursiveAnswers.total_correct_discursive_answers - widgets.discursiveAnswers.total_partial_correct_discursive_answers}
+                            </span> Erros
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 mg-t-10">
+            <div class="card">
+              <div class="card-body justify-content-between py-2">
+                <div class="row m-0">
+                  <div class="col">
+                    {% if applied_filters %}
+                      <span class="d-block">{{count_filters}} filtro(s) aplicado(s):</span>
+                      {% for applied_filter in applied_filters %}
+                      <span class="badge badge-primary">{{applied_filter}}</span>
+                      {% endfor %}
+                    {% endif %}
+                  </div>
+                  <div class="col-12 col-lg-4 d-flex justify-content-end align-items-end pr-0">
+                    <button type="button" @click="list_type = 'individually'" class="btn btn-sm m-1 pd-x-15 btn-uppercase" :class="list_type == 'individually' ? 'btn-primary':'btn-white'"> <i class="fas fa-th"></i> INDIVIDUALMENTE</button>
+                    <button type="button" @click="list_type = 'histogram'" class="btn btn-sm m-1 pd-x-15 btn-uppercase mg-l-5" :class="list_type == 'histogram' ? 'btn-primary':'btn-white'"><i class="fas fa-list"></i> HISTOGRAMA</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 mg-t-10">
+            <div v-show="list_type == 'individually'">
+              <div v-for="(student, studentIndex) in students">
+                <div class="row card-events">
+                  <div class="col-12 my-2">
+                    <div class="media-body event-panel bg-white shadow rounded ml-0 pt-0 h-100">
+                      <div class="row mb-0 pt-2">
+                        <div class="col cp" @click="selectStudent(student)">
+                          <h6 class="event-title hover-effect">#{student.name.toUpperCase()} <i class="far fa-address-card"></i></h6>
+                        </div>
+                        <div class="col">
+                          <div class="row mb-0">
+                            <div class="col-12 px-0 col-lg-4">
+                              <span class="d-block tx-10 tx-uppercase tx-medium tx-spacing-1 tx-color-03 mx-1">Desempenho no Caderno:</span>
+                            </div>
+                            <div class="col pl-0 pr-2">
+                              <div class="progress w-100 ht-4 mg-b-0" style="height: 15px;" data-toggle="tooltip" data-placement="bottom" title="Desempenho geral">
+                                <div class="progress-bar" :class="{'bg-success': student.performance >= 50, 'bg-pink': student.performance < 50}" role="progressbar" :style="'width: ' + student.performance + '%;'" :aria-valuenow="student.performance" aria-valuemin="0" aria-valuemax="100">#{student.performance.toFixed(2)} %</div>
+                                <div class="progress-bar bg-secondary op-3" role="progressbar" :style="'width: ' + (100 -student.performance) + '%;'" :aria-valuenow="(100 - student.performance)" aria-valuemin="0" aria-valuemax="100"></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <template v-if="student.detailed">
+                        <hr class="mt-1 mb-2">
+                        <div class="row mb-2">
+                          <div class="col-12">
+                            <div class="row tx-12 mb-0 justify-content-end">
+                              <div class="col-4 col-lg-2">
+                                <div class="d-flex align-items-baseline">
+                                  <span class="d-block wd-8 ht-8 rounded-circle bg-teal mr-1"></span>
+                                  <span class="d-block tx-10 tx-uppercase tx-medium tx-spacing-1 tx-color-03">Acertos: #{ student.right_questions.reduce((total = 0, question) => !question.partial ? total += 1:total, 0) }</span>
+                                </div>
+                              </div>
+                              <div class="col-4 col-lg-2">
+                                <div class="d-flex align-items-baseline">
+                                  <span class="d-block wd-8 ht-8 rounded-circle bg-gray-500 mr-1"></span>
+                                  <span class="d-block tx-10 tx-uppercase tx-medium tx-spacing-1 tx-color-03">Parciais: #{ student.right_questions.reduce((total = 0, question) => question.partial ? total += 1:total, 0) } </span>
+                                </div>
+                              </div>
+                              <div class="col-4 col-lg-2">
+                                <div class="d-flex align-items-baseline">
+                                  <span class="d-block wd-8 ht-8 rounded-circle bg-primary mr-1"></span>
+                                  <span class="d-block tx-10 tx-uppercase tx-medium tx-spacing-1 tx-color-03">Respostas: #{ student.right_questions.reduce((total = 0, question) => !question.partial ? total += 1:total, 0) + student.right_questions.reduce((total = 0, question) => question.partial ? total += 1:total, 0) }</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <template v-if="student.subjects.length || student.bncc.topics.length || student.bncc.abilities.length || student.bncc.competences.length">
+                            <div class="col">
+                              <div class="tx-13">
+                                <nav class="nav nav-line tx-medium d-flex justify-content-start">
+                                  <a :href="'#subjects'+studentIndex" v-if="student.subjects.length" class="nav-link pt-0 pb-1" :class="openActived() == 'subjects' ? 'active':''" data-toggle="tab">Disciplinas <span class="badge badge-primary" :class="{'badge-success': student.viewPoints == 'strong', 'badge-danger':student.viewPoints == 'improve'}">#{student.viewPoints ? student.subjects.filter(subject => student.viewPoints == 'strong' ? subject.performance >= 50:subject.performance < 50).length : student.subjects.length}</span></a>
+                                  <a :href="'#topics'+studentIndex" v-if="student.bncc.topics.length" class="nav-link pt-0 pb-1" :class="openActived() == 'topics' ? 'active':''" data-toggle="tab">Assuntos Abordados <span class="badge badge-primary" :class="{'badge-success': student.viewPoints == 'strong', 'badge-danger':student.viewPoints == 'improve'}">#{student.viewPoints ? student.bncc.topics.filter(topic => student.viewPoints == 'strong' ? topic.performance >= 50:topic.performance < 50).length : student.bncc.topics.length}</span></a>
+                                  <a :href="'#abilities'+studentIndex" v-if="student.bncc.abilities.length" class="nav-link pt-0 pb-1" :class="openActived() == 'abilities' ? 'active':''" data-toggle="tab">Habilidades <span class="badge badge-primary" :class="{'badge-success': student.viewPoints == 'strong', 'badge-danger':student.viewPoints == 'improve'}">#{student.viewPoints ? student.bncc.abilities.filter(ability => student.viewPoints == 'strong' ? ability.performance >= 50:ability.performance < 50).length : student.bncc.abilities.length}</span></a>
+                                  <a :href="'#competences'+studentIndex" v-if="student.bncc.competences.length" class="nav-link pt-0 pb-1" :class="openActived() == 'competences' ? 'active':''" data-toggle="tab">Competências <span class="badge badge-primary" :class="{'badge-success': student.viewPoints == 'strong', 'badge-danger':student.viewPoints == 'improve'}">#{student.viewPoints ? student.bncc.competences.filter(competence => student.viewPoints == 'strong' ? competence.performance >= 50:competence.performance < 50).length : student.bncc.competences.length}</span></a>
+                                </nav>
+                              </div>
+                            </div>
+                            <div class="col-12 d-flex justify-content-end">
+                              <nav aria-label="breadcrumb" style="position: absolute; top: -15px; cursor: pointer;">
+                                <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                                  <li class="breadcrumb-item" :class="{'active': student.viewPoints == ''}" @click="student.viewPoints = ''">Geral</li>
+                                  <li class="breadcrumb-item" :class="{'active': student.viewPoints == 'strong'}" @click="student.viewPoints = 'strong'">Pontos fortes</li>
+                                  <li class="breadcrumb-item" :class="{'active text-danger': student.viewPoints == 'improve'}" @click="student.viewPoints = 'improve'">À Melhorar</li>
+                                </ol>
+                              </nav>
+                            </div>
+                          </template>
+                        </div>
+                        <div class="tab-content mt-2" v-if="student.subjects.length || student.bncc.topics.length || student.bncc.abilities.length || student.bncc.competences.length">
+                          <div :id="'subjects'+studentIndex" class="tab-pane fade" :class="openActived() == 'subjects' ? 'active show':''">
+                            <div class="row mb-0">
+                              <div class="col-12">
+                                <div class="table-responsive">
+                                  <table class="table table-sm tx-13 tx-nowrap mg-b-0">
+                                    <thead>
+                                      <tr class="tx-13 tx-color-03 tx-uppercase">
+                                        <th></th>
+                                        <th>Texto</th>
+                                        <th>Desempenho no caderno atual</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="subject in student.viewPoints ? student.subjects.filter(subject => student.viewPoints == 'strong' ? subject.performance >= 50:subject.performance < 50) : student.subjects">
+                                        <td class="pb-0 align-middle text-truncate" style="max-width: 3rem;"><a href="javascript:void(0)" @click="selectBNCCOrSubject('subjects', subject, student)" class="text-primary" :class="{'text-success': student.viewPoints == 'strong', 'text-danger': student.viewPoints == 'improve'}">Detalhes <i class="fas fa-link"></i></a></td>
+                                        <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{subject.name}</td>
+                                        <td class="pb-0 align-middle">
+                                          <div class="wd-150 d-inline-block">
+                                            <div class="progress ht-4 mg-b-0" style="height: 15px;">
+                                              <div class="progress-bar op-5" :class="{'bg-pink': subject.performance < 50, 'bg-success': subject.performance >= 50 }" role="progressbar"  :style="'width: ' + subject.performance + '%;'" :aria-valuenow="subject.performance" aria-valuemin="0" aria-valuemax="100"><span class="tx-8">#{subject.performance.toFixed(0)} %</span></div>
+                                              <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -subject.performance) + '%;'" :aria-valuenow="(100 - subject.performance)" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div :id="'topics'+studentIndex" class="tab-pane fade" :class="openActived() == 'topics' ? 'active show':''">
+                            <div class="row mb-0">
+                              <div class="col-12">
+                                <div class="table-responsive">
+                                  <table class="table table-sm tx-13 tx-nowrap mg-b-0">
+                                    <thead>
+                                      <tr class="tx-13 tx-color-03 tx-uppercase">
+                                        <th></th>
+                                        <th>Texto</th>
+                                        <th>Desempenho no caderno atual</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="topic in student.viewPoints ? student.bncc.topics.filter(topic => student.viewPoints == 'strong' ? topic.performance >= 50:topic.performance < 50) : student.bncc.topics">
+                                        <td class="pb-0 align-middle text-truncate" style="max-width: 3rem;"><a href="javascript:void(0)" @click="selectBNCCOrSubject('topics', topic, student)" class="text-primary" :class="{'text-success': student.viewPoints == 'strong', 'text-danger': student.viewPoints == 'improve'}">Detalhes <i class="fas fa-link"></i></a></td>
+                                        <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{topic.name}</td>
+                                        <td class="pb-0 align-middle">
+                                          <div class="wd-150 d-inline-block">
+                                            <div class="progress ht-4 mg-b-0" style="height: 15px;">
+                                              <div class="progress-bar op-5" :class="{'bg-pink': topic.performance < 50, 'bg-success': topic.performance >= 50 }" role="progressbar"  :style="'width: ' + topic.performance + '%;'" :aria-valuenow="topic.performance" aria-valuemin="0" aria-valuemax="100"><span class="tx-8">#{topic.performance.toFixed(0)} %</span></div>
+                                              <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -topic.performance) + '%;'" :aria-valuenow="(100 - topic.performance)" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div :id="'abilities'+studentIndex" class="tab-pane fade" :class="openActived() == 'abilities' ? 'active show':''">
+                            <div class="row mb-0">
+                              <div class="col-12">
+                                <div class="table-responsive">
+                                  <table class="table table-borderless table-sm tx-13 tx-nowrap mg-b-0">
+                                    <thead>
+                                      <tr class="tx-13 tx-color-03 tx-uppercase">
+                                        <th class="wd-10p">Código</th>
+                                        <th>Texto</th>
+                                        <th>Desempenho no caderno atual</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="ability in student.viewPoints ? student.bncc.abilities.filter(topic => student.viewPoints == 'strong' ? topic.performance >= 50:topic.performance < 50):student.bncc.abilities">
+                                        <td class="pb-0 align-middle tx-medium text-truncate" style="max-width: 1rem;"><a href="javascript:void(0)" @click="selectBNCCOrSubject('abilities', ability, student)" class="text-primary" :class="{'text-success': student.viewPoints == 'strong', 'text-danger': student.viewPoints == 'improve'}">#{ability.code ? ability.code : 'S/Código'} <i class="fas fa-link"></i></a></td>
+                                        <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{ability.text}></td>
+                                        <td class="pb-0 align-middle">
+                                          <div class="wd-150 d-inline-block">
+                                            <div class="progress ht-4 mg-b-0" style="height: 15px;">
+                                              <div class="progress-bar op-5" :class="{'bg-pink': ability.performance < 50, 'bg-success': ability.performance >= 50 }" role="progressbar"  :style="'width: ' + ability.performance + '%;'" :aria-valuenow="ability.performance" aria-valuemin="0" aria-valuemax="100"><span class="tx-8">#{ability.performance.toFixed(0)} %</span></div>
+                                              <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -ability.performance) + '%;'" :aria-valuenow="(100 - ability.performance)" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div :id="'competences'+studentIndex" class="tab-pane fade" :class="openActived() == 'competences' ? 'active show':''">
+                            <div class="row mb-0">
+                              <div class="col-12">
+                                <div class="table-responsive">
+                                  <table class="table table-borderless table-sm tx-13 tx-nowrap mg-b-0">
+                                    <thead>
+                                      <tr class="tx-13 tx-color-03 tx-uppercase">
+                                        <th class="wd-10p">Código</th>
+                                        <th>Texto</th>
+                                        <th>Desempenho no caderno atual</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="competence in student.viewPoints ? student.bncc.competences.filter(topic => student.viewPoints == 'strong' ? topic.performance >= 50:topic.performance < 50):student.bncc.competences">
+                                        <td class="pb-0 align-middle tx-medium text-truncate" style="max-width: 1rem;"><a href="javascript:void(0)" @click="selectBNCCOrSubject('competences', competence, student)" class="text-primary" :class="{'text-success': student.viewPoints == 'strong', 'text-danger': student.viewPoints == 'improve'}">#{competence.code ? competence.code : 'S/Código'} <i class="fas fa-link"></i></a></td>
+                                        <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{competence.text}></td>
+                                        <td class="pb-0 align-middle">
+                                          <div class="wd-150 d-inline-block">
+                                            <div class="progress ht-4 mg-b-0" style="height: 15px;">
+                                              <div class="progress-bar op-5" :class="{'bg-pink': competence.performance < 50, 'bg-success': competence.performance >= 50 }" role="progressbar"  :style="'width: ' + competence.performance + '%;'" :aria-valuenow="competence.performance" aria-valuemin="0" aria-valuemax="100"><span class="tx-8">#{competence.performance.toFixed(0)} %</span></div>
+                                              <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -competence.performance) + '%;'" :aria-valuenow="(100 - competence.performance)" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </template>
+                      <div class="text-center">
+                        <hr class="my-1">
+                        <a class="tx-12 tx-color-4 d-flex align-items-center justify-content-center" href="javascript:void(0)" @click="getStudentBNCCsDetails(student)">
+                          <div v-if="student.loads.bnccDetailHasOpened == false" class="spinner-grow text-info mx-3" style="width: 20px; height: 20px;" role="status">
+                            <span class="sr-only"></span>
+                          </div>
+                          #{student.detailed ? 'Recolher detalhes':'Clique aqui para ver detalhes'} 
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-show="list_type == 'histogram'">
+              <div class="card">
+                <div class="card-body">
+                  <div class="row m-0" v-show="!loads.histogramChart">
+                    <div class="col-12 p-0">
+                      {% if not applied_filters %}
+                        <p class="text-15 tx-rubik">Desempenho dos alunos no caderno em formato de histograma</p>
+                      {% else %}
+                        <p>Desempenho dos alunos de acordo com os filtros aplicados</p>
+                      {% endif %}
+                      <div id="histogramChart"></div>
+                    </div>
+                  </div>
+                  <div class="row m-0" v-if="loads.histogramChart">
+                    <div class="col-12 text-center">
+                      <p>Aguarde enquanto carregamos os dados do histograma 
+                        <div class="spinner-grow text-info mx-3" role="status">
+                          <span class="sr-only">Desempenho dos alunos em forma de histograma</span>
+                        </div>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row m-0">
+              <div class="col-12" v-if="!students.length">
+                <div class="alert alert-secondary" role="alert">
+                  Nenhum aluno encontrado
+                </div>
+              </div>
+            </div>
+            <div class="row m-0" v-if="loads.loadStudentsData">
+              <p class="text-center">Aguarde enquanto carregamos os dados dos alunos 
+                <div class="spinner-grow text-info mx-3" role="status">
+                  <span class="sr-only"></span>
+                </div>
+              </p>
+            </div>
+            <div v-show="list_type != 'histogram'">
+              {% include 'includes/pagination.html' with objects=object_list %}
+            </div>
+        </div>
+        </div>
+      </template>
+      <div v-if="widgets.loads.optionAnswers && widgets.loads.discursiveAnswers">
+        <div class="row">
+          <div class="col-12 text-center p-5">
+            <img style="max-height: 350px;" src="{% static 'administration/assets/img/img15.svg' %}" alt="">
+          </div>
+          <div class="col-12 text-center">
+            <h5 class="text-dark p-4">
+              <strong>Aguarde enquanto buscamos os dados do caderno...</strong>
+            </h5>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div class="row">
+        <div class="col-12 text-center p-5 d-flex align-items-center justify-content-center">
+          <img style="max-height: 350px;" src="{% static 'administration/assets/img/img15.svg' %}" alt="">
+        </div>
+        <div class="col-12 text-center">
+          <h5 class="text-dark p-4">
+            {% comment %} 
+            Aguarde enquanto processamos os dados desse caderno,<br/>
+            esse processo pode demorar um pouco, mas não se preocupe<br/>
+            iremos te avisar quando estiver pronto. <br/>
+            <strong>Você pode nevegar por outras páginas enquanto espera.</strong> 
+            {% endcomment %}
+            <strong>Este caderno ainda não foi processado pelo nosso sistema, o resultado estará disponível em breve.</strong>
+          </h5>
+        </div>
+      </div>
+    {% endif %}
+      
+</div>
+</main>
+{% endblock content %}
+
+{% block extra-modal %}
+  <div class="modal fade effect-sign" id="studentDetail" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+      <div class="modal-content" v-if="selectedStudent">
+        <div class="modal-body pd-x-25 pd-sm-x-30 pd-t-40 pd-sm-t-20 pd-b-15 pd-sm-b-20">
+          <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </a>
+          <div class="d-flex align-items-center justify-content-between tx-rubik">
+            <div>
+              <h3>#{selectedStudent.name.toUpperCase()}</h3>
+            </div>
+            <div class="d-flex align-items-end">
+              <h1 class="tx-40 lh-1 tx-normal tx-spacing--2 mb-0 mg-r-5">#{selectedStudent.performance.toFixed(2)}</h1>
+            </div>
+          </div> 
+          <h6 class="tx-uppercase tx-spacing-1 tx-semibold tx-13 tx-color-02 mg-b-5">Desempenho no caderno: {{object.name}}</h6>
+          <div class="progress bg-transparent op-7 ht-10 mg-b-5">
+            <div class="progress-bar" :class="{'bg-pink': selectedStudent.performance < 50, 'bg-success': selectedStudent.performance >= 50 }" role="progressbar"  :style="'width: ' + selectedStudent.performance + '%;'" :aria-valuenow="selectedStudent.performance" aria-valuemin="0" aria-valuemax="100"></div>
+            <div class="progress-bar bg-secondary op-3" role="progressbar" :style="'width: ' + (100 -selectedStudent.performance) + '%;'" :aria-valuenow="(100 - selectedStudent.performance)" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+          {% if applied_filters %}
+            <div class="col-12 p-0">
+              <span class="d-block tx-10 tx-rubik">{{count_filters}} filtro(s) aplicado(s):</span>
+              {% for applied_filter in applied_filters %}
+                <span class="badge badge-primary">{{applied_filter}}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+          <div class="nav-wrapper mg-b-20 tx-13">
+            <div>
+              <nav class="nav nav-line tx-medium">
+                <a href="#performance" class="nav-link active" data-toggle="tab">Desempenho das avaliações</a>
+                <a href="#performance-subjects" v-if="subjects.length" class="nav-link" data-toggle="tab" @click="getDetaledPerformanceBNCCAndSubjectsStudent(true)">Disciplinas</a>
+                <a href="#performance-bnccs" v-if="topics.length || abilities.length || competences.length" class="nav-link" data-toggle="tab" @click="getDetaledPerformanceBNCCAndSubjectsStudent()">Objetos do conhecimento e BNCC</a>
+                <a href="#performance-classes" class="nav-link" data-toggle="tab" @click="!selectedStudent.classes_performance.length ? getComparateResult('classes'):''">Aluno x Turmas</a>
+                <a href="#performance-unities" class="nav-link" data-toggle="tab" @click="!selectedStudent.unities_performance.length ? getComparateResult('unities'):''">Aluno x Unidades</a>
+              </nav>
+            </div>
+          </div>
+          <div class="tab-content">
+            <div id="performance" class="tab-pane fade active show">
+              <div class="row m-0">
+                <div class="col-12 p-0 d-flex justify-content-end">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb breadcrumb-style1">
+                      <li class="breadcrumb-item cp" :class="{'active': selectedStudent.viewCharts.studentDetail == 'chart'}" @click="selectedStudent.viewCharts.studentDetail = 'chart'">Visualizar Gráfico <i class="fas fa-chart-line"></i></li>
+                      <li class="breadcrumb-item cp" :class="{'active': selectedStudent.viewCharts.studentDetail != 'chart'}" @click="selectedStudent.viewCharts.studentDetail = 'table'">Visualizar Tabela  <i class="fas fa-list"></i></li>
+                    </ol>
+                  </nav>
+                </div>
+              </div>
+              <div v-show="!selectedStudent.loads.chartExams">
+                <div class="row m-0" v-show="selectedStudent.viewCharts.studentDetail == 'chart'">
+                  <div class="col-12 p-0">
+                    <div id="studentChartExams"></div>
+                  </div>
+                </div>
+                <div class="table-responsive" v-show="selectedStudent.viewCharts.studentDetail == 'table'">
+                  <table class="table table-striped table-sm tx-13 tx-nowrap mg-b-0">
+                    <thead>
+                      <tr class="tx-13 tx-color-03 tx-uppercase">
+                        <th class="wd-10p">Caderno</th>
+                        <th>Data da aplicação</th>
+                        <th>Desempenho</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="exam in selectedStudent.exams">
+                        <td class="pb-0 align-middle tx-medium text-truncate" style="max-width: 20rem;">#{exam.name}</td>
+                        <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{exam.dates.join(',')}</span></td>
+                        <td class="pb-0 align-middle">
+                          <div class="wd-150 d-inline-block">
+                            <div class="progress ht-4 mg-b-0" style="height: 12px;">
+                              <div class="progress-bar" :class="{'bg-pink': exam.performance, 'bg-success': exam.performance >= 50 }" role="progressbar"  :style="'width: ' + exam.performance + '%;'" :aria-valuenow="exam.performance" aria-valuemin="0" aria-valuemax="100"><span class="tx-8">#{exam.performance.toFixed(0)} %</span></div>
+                              <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -exam.performance) + '%;'" :aria-valuenow="(100 - exam.performance)" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="row m-0" v-if="selectedStudent.loads.chartExams">
+                <div class="col-12 p-0">
+                  <div class="text-center">
+                    <h4 id="section8" class="mg-b-10">Carregando...</h4>
+                    <p class="mg-b-30">Aguarde enquanto carregamos os dados, isso pode demorar um pouco.</p>
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="sr-only">Loading...</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="performance-subjects" class="tab-pane fade">
+              <div class="row" v-if="selectedStudent.loaded.subjects">
+                <div class="col-12">
+                  <div class="table-responsive">
+                    <table class="table table-striped tx-nowrap mg-b-0">
+                      <thead>
+                        <tr class="tx-color-03 tx-uppercase">
+                          <th>Disciplina</th>
+                          <th class="text-truncate cp" :title="exam.name" style="max-width: 5rem;" v-for="exam in selectedStudent.detailedBNCCAndSubjects.subjects.exams">#{exam.name}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <template v-if="selectedStudent.detailedBNCCAndSubjects.subjects.list.length">
+                          <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="subject in selectedStudent.detailedBNCCAndSubjects.subjects.list">
+                            <td class="pb-0 align-middle tx-medium text-truncate" style="max-width: 20rem;" :title="subject.name"><a href="javascript:void(0)" @click="selectBNCCOrSubject('subjects', subject)">#{subject.name}</a></td>
+                            <td class="pb-0 align-middle" v-for="exam in subject.exams_performance">
+                              <div class="wd-150 d-inline-block w-100">
+                                <div class="progress ht-4 mg-b-0" style="height: 12px;">
+                                  <template v-if="exam.id">
+                                    <div class="progress-bar" :class="{'bg-pink': exam.performance, 'bg-success': exam.performance >= 50 }" role="progressbar"  :style="'width: ' + exam.performance + '%;'" :aria-valuenow="exam.performance" aria-valuemin="0" aria-valuemax="100"><span class="tx-8">#{exam.performance.toFixed(0)} %</span></div>
+                                    <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -exam.performance) + '%;'" :aria-valuenow="(100 - exam.performance)" aria-valuemin="0" aria-valuemax="100"></div>
+                                  </template>
+                                  <template v-else>
+                                    <div class="progress-bar bg-secondary" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">Não contém o assunto</div>
+                                  </template>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        </template>
+                        <template v-else>
+                          <tr>
+                            <td colspan="2">Nenhum assunto abordado</td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              <div class="row m-0" v-else>
+                <div class="col-12 p-0">
+                  <div class="text-center">
+                    <h4 id="section8" class="mg-b-10">Carregando...</h4>
+                    <p class="mg-b-30">Aguarde enquanto carregamos os dados, isso pode demorar um pouco.</p>
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="sr-only">Loading...</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="performance-bnccs" class="tab-pane fade">
+              <div class="row" v-if="selectedStudent.loaded.bnccs">
+                <div class="col-12">
+                  <nav class="nav nav-line tx-medium d-flex justify-content-start">
+                    <a href="#topics-bncc-details" class="nav-link active pt-0 pb-1" data-toggle="tab">Assuntos Abordados <span class="badge badge-primary">#{selectedStudent.detailedBNCCAndSubjects.topics.list.length}</span></a>
+                    <a href="#abilities-bncc-details" class="nav-link pt-0 pb-1" data-toggle="tab">Habilidades <span class="badge badge-primary">#{selectedStudent.detailedBNCCAndSubjects.abilities.list.length}</span></a>
+                    <a href="#competences-bncc-details" class="nav-link pt-0 pb-1" data-toggle="tab">Competências <span class="badge badge-primary">#{selectedStudent.detailedBNCCAndSubjects.competences.list.length}</span></a>
+                  </nav>
+                </div>
+                <div class="col-12">
+                  <div class="tab-content">
+                    <div id="topics-bncc-details" class="tab-pane fade active show">
+                      <div class="table-responsive">
+                        <table class="table table-striped tx-nowrap mg-b-0">
+                          <thead>
+                            <tr class="tx-color-03 tx-uppercase">
+                              <th>Texto</th>
+                              <th class="text-truncate cp" :title="exam.name" style="max-width: 5rem;" v-for="exam in selectedStudent.detailedBNCCAndSubjects.topics.exams">#{exam.name}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <template v-if="selectedStudent.detailedBNCCAndSubjects.topics.list.length">
+                              <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="topic in selectedStudent.detailedBNCCAndSubjects.topics.list">
+                                <td class="pb-0 align-middle tx-medium text-truncate" style="max-width: 20rem;" :title="topic.name"><a href="javascript:void(0)" @click="selectBNCCOrSubject('topics', topic)">#{topic.name}</a></td>
+                                <td class="pb-0 align-middle" v-for="exam in topic.exams_performance">
+                                  <div class="wd-150 d-inline-block w-100">
+                                    <div class="progress ht-4 mg-b-0" style="height: 12px;">
+                                      <template v-if="exam.id">
+                                        <div class="progress-bar" :class="{'bg-pink': exam.performance, 'bg-success': exam.performance >= 50 }" role="progressbar"  :style="'width: ' + exam.performance + '%;'" :aria-valuenow="exam.performance" aria-valuemin="0" aria-valuemax="100"><span class="tx-8">#{exam.performance.toFixed(0)} %</span></div>
+                                        <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -exam.performance) + '%;'" :aria-valuenow="(100 - exam.performance)" aria-valuemin="0" aria-valuemax="100"></div>
+                                      </template>
+                                      <template v-else>
+                                        <div class="progress-bar bg-secondary" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">Não contém o assunto</div>
+                                      </template>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            </template>
+                            <template v-else>
+                              <tr>
+                                <td colspan="2">Nenhum assunto abordado</td>
+                              </tr>
+                            </template>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <div id="abilities-bncc-details" class="tab-pane fade">
+                      <div class="table-responsive">
+                        <table class="table table-striped tx-nowrap mg-b-0">
+                          <thead>
+                            <tr class="tx-color-03 tx-uppercase">
+                              <th class="wd-10p">Código</th>
+                              <th>Texto</th>
+                              <th class="text-truncate cp" :title="exam.name" style="max-width: 5rem;" v-for="exam in selectedStudent.detailedBNCCAndSubjects.abilities.exams">#{exam.name}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <template v-if="selectedStudent.detailedBNCCAndSubjects.abilities.list.length">
+                              <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="ability in selectedStudent.detailedBNCCAndSubjects.abilities.list">
+                                <td class="pb-0 align-middle tx-medium text-truncate" style="max-width: 5rem;"><a href="javascript:void(0)" @click="selectBNCCOrSubject('abilities', ability)">#{ability.code ? ability.code:'S/Código'}</a></td>
+                                <td class="pb-0 align-middle tx-medium text-truncate" style="max-width: 20rem;" :title="ability.text">#{ability.text}</td>
+                                <td class="pb-0 align-middle" v-for="exam in ability.exams_performance">
+                                  <div class="wd-150 d-inline-block w-100">
+                                    <div class="progress ht-4 mg-b-0" style="height: 12px;">
+                                      <template v-if="exam.id">
+                                        <div class="progress-bar" :class="{'bg-pink': exam.performance, 'bg-success': exam.performance >= 50 }" role="progressbar"  :style="'width: ' + exam.performance + '%;'" :aria-valuenow="exam.performance" aria-valuemin="0" aria-valuemax="100"><span class="tx-8">#{exam.performance.toFixed(0)} %</span></div>
+                                        <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -exam.performance) + '%;'" :aria-valuenow="(100 - exam.performance)" aria-valuemin="0" aria-valuemax="100"></div>
+                                      </template>
+                                      <template v-else>
+                                        <div class="progress-bar bg-secondary" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">Não contém a habilidade</div>
+                                      </template>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            </template>
+                            <template v-else>
+                              <tr>
+                                <td colspan="3">Nenhuma habilidade</td>
+                              </tr>
+                            </template>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <div id="competences-bncc-details" class="tab-pane fade">
+                      <div class="table-responsive">
+                        <table class="table table-striped tx-nowrap mg-b-0">
+                          <thead>
+                            <tr class="tx-color-03 tx-uppercase">
+                              <th class="wd-10p">Código</th>
+                              <th>Texto</th>
+                              <th class="text-truncate cp" :title="exam.name" style="max-width: 5rem;" v-for="exam in selectedStudent.detailedBNCCAndSubjects.competences.exams">#{exam.name}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <template v-if="selectedStudent.detailedBNCCAndSubjects.competences.list.length">
+                              <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="competence in selectedStudent.detailedBNCCAndSubjects.competences.list">
+                                <td class="pb-0 align-middle tx-medium text-truncate" style="max-width: 5rem;"><a href="javascript:void(0)" @click="selectBNCCOrSubject('competences', competence)">#{competence.code ? competence.code:'S/Código'}</a></td>
+                                <td class="pb-0 align-middle tx-medium text-truncate" style="max-width: 20rem;" :title="competence.text">#{competence.text}</td>
+                                <td class="pb-0 align-middle" v-for="exam in competence.exams_performance">
+                                  <div class="wd-150 d-inline-block w-100">
+                                    <div class="progress ht-4 mg-b-0" style="height: 12px;">
+                                      <template v-if="exam.id">
+                                        <div class="progress-bar" :class="{'bg-pink': exam.performance, 'bg-success': exam.performance >= 50 }" role="progressbar"  :style="'width: ' + exam.performance + '%;'" :aria-valuenow="exam.performance" aria-valuemin="0" aria-valuemax="100"><span class="tx-8">#{exam.performance.toFixed(0)} %</span></div>
+                                        <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -exam.performance) + '%;'" :aria-valuenow="(100 - exam.performance)" aria-valuemin="0" aria-valuemax="100"></div>
+                                      </template>
+                                      <template v-else>
+                                        <div class="progress-bar bg-secondary" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">Não contém a competência</div>
+                                      </template>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            </template>
+                            <template v-else>
+                              <tr>
+                                <td colspan="3">Nenhuma competência</td>
+                              </tr>
+                            </template>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row m-0" v-else>
+                <div class="col-12 p-0">
+                  <div class="text-center">
+                    <h4 id="section8" class="mg-b-10">Carregando...</h4>
+                    <p class="mg-b-30">Aguarde enquanto carregamos os dados, isso pode demorar um pouco.</p>
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="sr-only">Loading...</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="performance-classes" class="tab-pane fade">
+              <div class="row" v-if="selectedClasses.length > 0">
+                <div class="col-12">
+                  <div class="d-flex my-2">
+                    <h6 class="mb-0">Turmas Selecionadas</h6>
+                    <span class="badge badge-primary mx-1 cp" @click="selectedClasses = []">Desselecionar todas</span>
+                  </div>
+                  <span class="badge badge-primary rounded-pill m-1 cp" v-for="classe in selectedClasses">#{classe.name} <span class="badge badge-danger rounded-circle" @click="selectClasse(classe)">x</span></span>
+                  <button class="btn btn-outline-primary btn-xs" v-if="classes.length" @click="getComparateResult('classes')">Comparar Turmas <i class="fas fa-angle-double-down"></i></button>
+                </div>
+              </div>
+              <div class="row" v-if="!(selectedClasses.length == classes.length)">
+                <div class="col-12">
+                  <div class="d-flex my-2">
+                    <h6 class="mb-0">Todas as turmas</h6>
+                    <span class="badge badge-primary mx-1 cp" @click="selectedClasses = [], classes.forEach((classe) => selectedClasses.push(classe))">Selecionar todas</span>
+                  </div>
+                  <span class="badge badge-primary rounded-pill m-1 cp" v-for="classe in classes" v-if="!selectedClasses.find((_classe) => _classe.id == classe.id)" @click="selectClasse(classe)">#{classe.name}</span>
+                </div>
+              </div>
+              <div class="row m-0" v-show="!loads.comparateClasses">
+                <div class="col-12 p-0">
+                  <div id="studentChartComparateClasses"></div>
+                </div>
+              </div>
+              <div class="row m-0" v-if="loads.comparateClasses">
+                <div class="col-12 p-0">
+                  <div class="text-center">
+                    <h4 id="section8" class="mg-b-10">Carregando...</h4>
+                    <p class="mg-b-30">Aguarde enquanto carregamos os dados, isso pode demorar um pouco.</p>
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="sr-only">Loading...</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="performance-unities" class="tab-pane fade">
+              <div class="row no-gutters" v-if="selectedUnities.length > 0">
+                <div class="col-12">
+                  <div class="d-flex my-2">
+                    <h6 class="mb-0">Unidades Selecionadas</h6>
+                    <span class="badge badge-primary mx-1 cp" @click="selectedUnities = []">Desselecionar todas</span>
+                  </div>
+                  <span class="badge badge-primary rounded-pill m-1 cp" v-for="unity in selectedUnities">#{unity.name} <span class="badge badge-danger rounded-circle" @click="selectUnity(unity)">x</span></span>
+                  <button class="btn btn-outline-primary btn-xs" v-if="unities.length" @click="getComparateResult('unities')">Comparar Unidades</button>
+                </div>
+              </div>
+              <div class="row" v-if="!(selectedUnities.length == unities.length)">
+                <div class="col-12">
+                  <div class="d-flex my-2">
+                    <h6 class="mb-0">Todas as unidades</h6>
+                    <span class="badge badge-primary mx-1 cp" @click="selectedUnities = [], unities.forEach((unity) => selectedUnities.push(unity))">Selecionar todas</span>
+                  </div>
+                  <span class="badge badge-primary rounded-pill m-1 cp" v-for="unity in unities" v-if="!selectedUnities.find((_unity) => _unity.id == unity.id)" @click="selectUnity(unity)">#{unity.name}</span>
+                </div>
+              </div>
+              <div class="row m-0" v-show="!loads.comparateUnities">
+                <div class="col-12 p-0">
+                  <div id="studentChartComparateUnities"></div>
+                </div>
+              </div>
+              <div class="row m-0" v-if="loads.comparateUnities">
+                <div class="col-12 p-0">
+                  <div class="text-center">
+                    <h4 id="section8" class="mg-b-10">Carregando...</h4>
+                    <p class="mg-b-30">Aguarde enquanto carregamos os dados, isso pode demorar um pouco.</p>
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="sr-only">Loading...</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-block btn-primary mb-2" data-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade effect-sign" id="modalBNCCDetail" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-body pd-x-30 pd-sm-x-30" v-if="selectedBNCC.id">
+          <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </a>
+          <template>
+            <div>
+              <h3 class="mb-0">{{object.name}}</h3>
+            </div>
+            <div class="d-flex align-items-center justify-content-between tx-rubik mb-3">
+              <div>
+                <h4>#{ selectedBNCC.code ? '('+selectedBNCC.code+') ' : '' } #{selectedBNCC.knowledge_object}</h4>
+                <div class="tx-14 tx-md-16 tx-color-02 clean-v-html" v-html="selectedBNCC.text"></div>
+              </div>
+              <div class="d-flex flex-column align-items-end">
+                <h1 class="tx-40 lh-1 tx-normal tx-spacing--2 mb-0 mg-r-5 text-nowrap">#{selectedBNCC.performance.toFixed(2)} %</h1>
+                <p class="tx-12 mb-0">Desempenho no caderno atual</p>
+              </div>
+            </div>
+            <h6 class="tx-uppercase tx-spacing-1 tx-semibold tx-13 tx-color-02">Desempenho do aluno   
+              <span v-if="selectedBNCC.type == 'abilities'">na habilidade selecionada</span>
+              <span v-if="selectedBNCC.type == 'competences'">na competência selecionada</span>
+              <span v-if="selectedBNCC.type == 'topics'">no assunto selecionado</span>
+            </h6>
+            <div class="progress bg-transparent op-7 ht-10 mg-b-20">
+              <div class="progress-bar" :class="{'bg-pink': selectedBNCC.performance < 50, 'bg-success': selectedBNCC.performance >= 50 }" role="progressbar"  :style="'width: ' + selectedBNCC.performance + '%;'" :aria-valuenow="selectedBNCC.performance" aria-valuemin="0" aria-valuemax="100"></div>
+              <div class="progress-bar bg-secondary op-3" role="progressbar" :style="'width: ' + (100 -selectedBNCC.performance) + '%;'" :aria-valuenow="(100 - selectedBNCC.performance)" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <div class="nav-wrapper mg-b-20 tx-13">
+              <div>
+                <nav class="nav nav-line tx-medium">
+                  <a href="#bncc-detail" class="nav-link active" data-toggle="tab">Histórico de desempenho geral do aluno 
+                    <span v-if="selectedBNCC.type == 'abilities'">na habilidade selecionada</span>
+                    <span v-if="selectedBNCC.type == 'competences'">na competência selecionada</span>
+                    <span v-if="selectedBNCC.type == 'topics'">no assunto selecionado</span></h6>
+                  </a>
+                </nav>
+              </div>
+            </div>
+            <div class="tab-content">
+              <div id="bncc-detail" class="tab-pane fade active show" v-if="selectedStudent">
+                <div class="row m-0">
+                  <div class="col-12 p-0 d-flex justify-content-end">
+                    <nav aria-label="breadcrumb">
+                      <ol class="breadcrumb breadcrumb-style1">
+                        <li class="breadcrumb-item cp" :class="{'active': selectedStudent.viewCharts.bnccDetail == 'chart'}" @click="selectedStudent.viewCharts.bnccDetail = 'chart'">Visualizar Gráfico <i class="fas fa-chart-line"></i></li>
+                        <li class="breadcrumb-item cp" :class="{'active': selectedStudent.viewCharts.bnccDetail != 'chart'}" @click="selectedStudent.viewCharts.bnccDetail = 'table'">Visualizar Tabela  <i class="fas fa-list"></i></li>
+                      </ol>
+                    </nav>
+                  </div>
+                </div>
+                <div class="row m-0">
+                  <div class="col-12 p-0" v-show="selectedStudent.viewCharts.bnccDetail == 'chart'">
+                    <div id="studentBNCCSummaryChart"></div>
+                  </div>
+                  <div class="table-responsive" v-show="selectedStudent.viewCharts.bnccDetail == 'table'">
+                    <table class="table table-striped table-sm tx-13 tx-nowrap mg-b-0">
+                      <thead>
+                        <tr class="tx-13 tx-color-03 tx-uppercase">
+                          <th class="wd-10p">Caderno</th>
+                          <th>Data da aplicação</th>
+                          <th>Desempenho</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="bncc in selectedBNCC.table_bncc_performances">
+                          <td class="pb-0 align-middle tx-medium text-truncate" style="max-width: 20rem;">#{bncc.name}</td>
+                          <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{bncc.dates.join(', ')}</span></td>
+                          <td class="pb-0 align-middle">
+                            <div class="wd-150 d-inline-block">
+                              <div class="progress ht-4 mg-b-0" style="height: 12px;">
+                                <div class="progress-bar" :class="{'bg-pink': bncc.performance, 'bg-success': bncc.performance >= 50 }" role="progressbar"  :style="'width: ' + bncc.performance + '%;'" :aria-valuenow="bncc.performance" aria-valuemin="0" aria-valuemax="100"><span class="tx-8">#{bncc.performance.toFixed(0)} %</span></div>
+                                <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -bncc.performance) + '%;'" :aria-valuenow="(100 - bncc.performance)" aria-valuemin="0" aria-valuemax="100"></div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-block btn-primary mb-2" data-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade effect-sign" id="modalBNCCAverageDetail" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-body pd-x-30 pd-sm-x-30" v-if="selectedBNCC.id">
+          <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </a>
+          <div>
+            <h3 class="mb-0">#{selectedStudent.name.toUpperCase()}</h3>
+          </div>
+          <div class="d-flex align-items-center justify-content-between tx-rubik mb-3">
+            <div>
+              <h4>
+                #{ selectedBNCC.code ? '('+selectedBNCC.code+') ' : '' } #{selectedBNCC.knowledge_object}
+              </h4>
+              <span v-if="selectedBNCC.type == 'abilities'">Habilidade:</span>
+              <span v-if="selectedBNCC.type == 'competences'">Competência:</span>
+              <span v-if="selectedBNCC.type == 'topics'">Assunto:</span>
+              <span class="tx-14 tx-md-16 tx-color-02 clean-v-html" v-html="selectedBNCC.text"></span>
+            </div>
+            <div class="d-flex flex-column align-items-end">
+              <h1 class="tx-40 lh-1 tx-normal tx-spacing--2 mb-0 mg-r-5 text-nowrap">#{selectedBNCC.averageExams().toFixed(2)} %</h1>
+              <p class="tx-12 mb-0">Média de desempenho</p>
+            </div>
+          </div>
+          <h6 class="tx-uppercase tx-spacing-1 tx-semibold tx-13 tx-color-02">Desempenho médio do aluno   
+            <span v-if="selectedBNCC.type == 'abilities'">na habilidade selecionada</span>
+            <span v-if="selectedBNCC.type == 'competences'">na competência selecionada</span>
+            <span v-if="selectedBNCC.type == 'topics'">no assunto selecionado</span>
+          </h6>
+          <div class="progress bg-transparent op-7 ht-10 mg-b-20">
+            <div class="progress-bar" :class="{'bg-pink': selectedBNCC.averageExams() < 50, 'bg-success': selectedBNCC.averageExams() >= 50 }" role="progressbar"  :style="'width: ' + selectedBNCC.averageExams() + '%;'" :aria-valuenow="selectedBNCC.averageExams()" aria-valuemin="0" aria-valuemax="100"></div>
+            <div class="progress-bar bg-secondary op-3" role="progressbar" :style="'width: ' + (100 -selectedBNCC.averageExams()) + '%;'" :aria-valuenow="(100 - selectedBNCC.averageExams())" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+          <div class="nav-wrapper mg-b-20 tx-13">
+            <div>
+              <nav class="nav nav-line tx-medium">
+                <a href="#bncc-detail" class="nav-link active" data-toggle="tab">Histórico de desempenho geral do aluno 
+                  <span v-if="selectedBNCC.type == 'abilities'">na habilidade selecionada</span>
+                  <span v-if="selectedBNCC.type == 'competences'">na competência selecionada</span>
+                  <span v-if="selectedBNCC.type == 'topics'">no assunto selecionado</span></h6>
+                </a>
+              </nav>
+            </div>
+          </div>
+          <div class="tab-content">
+            <div id="bncc-detail" class="tab-pane fade active show">
+              <div class="row m-0">
+                <div class="table-responsive">
+                  <table class="table table-striped table-sm tx-13 tx-nowrap mg-b-0">
+                    <thead>
+                      <tr class="tx-13 tx-color-03 tx-uppercase">
+                        <th class="wd-10p">Caderno</th>
+                        <th>Data da aplicação</th>
+                        <th>Desempenho</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-if="exam.id" v-for="exam in selectedBNCC.exams_performance">
+                        <td class="pb-0 align-middle tx-medium text-truncate" style="max-width: 20rem;">#{exam.name}</td>
+                        <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{exam.dates.join(', ')}</span></td>
+                        <td class="pb-0 align-middle">
+                          <div class="wd-150 d-inline-block">
+                            <div class="progress ht-4 mg-b-0" style="height: 12px;">
+                              <div class="progress-bar" :class="{'bg-pink': exam.performance, 'bg-success': exam.performance >= 50 }" role="progressbar"  :style="'width: ' + exam.performance + '%;'" :aria-valuenow="exam.performance" aria-valuemin="0" aria-valuemax="100"><span class="tx-8">#{exam.performance.toFixed(0)} %</span></div>
+                              <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -exam.performance) + '%;'" :aria-valuenow="(100 - exam.performance)" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-block btn-primary mb-2" data-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade effect-sign" id="modalSubjectDetail" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-body pd-x-30 pd-sm-x-30">
+          <template v-if="selectedSubject.id">
+            <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">×</span>
+            </a>
+            <div>
+              <h3 class="mb-0">{{object.name}}</h3>
+            </div>
+            <div class="d-flex align-items-center justify-content-between tx-rubik mb-3">
+              <div>
+                <h4>#{ selectedSubject.name }</h4>
+              </div>
+              <div class="d-flex flex-column align-items-end">
+                <h1 class="tx-40 lh-1 tx-normal tx-spacing--2 mb-0 mg-r-5 text-nowrap">#{selectedSubject.performance.toFixed(2)} %</h1>
+                <p class="tx-12 mb-0">Desempenho no caderno atual</p>
+              </div>
+            </div>
+            <h6 class="tx-uppercase tx-spacing-1 tx-semibold tx-13 tx-color-02">Desempenho do aluno na disciplina selecionada</h6>
+            <div class="progress bg-transparent op-7 ht-10 mg-b-20">
+              <div class="progress-bar" :class="{'bg-pink': selectedSubject.performance < 50, 'bg-success': selectedSubject.performance >= 50 }" role="progressbar"  :style="'width: ' + selectedSubject.performance + '%;'" :aria-valuenow="selectedSubject.performance" aria-valuemin="0" aria-valuemax="100"></div>
+              <div class="progress-bar bg-secondary op-3" role="progressbar" :style="'width: ' + (100 -selectedSubject.performance) + '%;'" :aria-valuenow="(100 - selectedSubject.performance)" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+          </template>
+          <div class="nav-wrapper mg-b-20 tx-13">
+            <div>
+              <nav class="nav nav-line tx-medium">
+                <a href="#bncc-detail" class="nav-link active" data-toggle="tab">Histórico de desempenho geral do aluno na disciplina selecionada</a>
+              </nav>
+            </div>
+          </div>
+          <div class="tab-content">
+            <div id="bncc-detail" class="tab-pane fade active show" v-if="selectedStudent">
+              <div class="row m-0">
+                <div class="col-12 p-0 d-flex justify-content-end">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb breadcrumb-style1">
+                      <li class="breadcrumb-item cp" :class="{'active': selectedStudent.viewCharts.subjectDetail == 'chart'}" @click="selectedStudent.viewCharts.subjectDetail = 'chart'">Visualizar Gráfico <i class="fas fa-chart-line"></i></li>
+                      <li class="breadcrumb-item cp" :class="{'active': selectedStudent.viewCharts.subjectDetail != 'chart'}" @click="selectedStudent.viewCharts.subjectDetail = 'table'">Visualizar Tabela  <i class="fas fa-list"></i></li>
+                    </ol>
+                  </nav>
+                </div>
+              </div>
+              <div class="row m-0" v-show="!selectedStudent.loads.chartSubject">
+                <div class="col-12 p-0" v-show="selectedStudent.viewCharts.subjectDetail == 'chart'">
+                  <div id="studentSubjectSummaryChart"></div>
+                </div>
+                <div class="table-responsive" v-show="selectedStudent.viewCharts.subjectDetail == 'table'">
+                  <table class="table table-striped table-sm tx-13 tx-nowrap mg-b-0">
+                    <thead>
+                      <tr class="tx-13 tx-color-03 tx-uppercase">
+                        <th class="wd-10p">Caderno</th>
+                        <th>Data da aplicação</th>
+                        <th>Desempenho</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="subject in selectedSubject.table_subject_performances">
+                        <td class="pb-0 align-middle tx-medium text-truncate" style="max-width: 20rem;">#{subject.name}</td>
+                        <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{subject.dates.join(', ')}</span></td>
+                        <td class="pb-0 align-middle">
+                          <div class="wd-150 d-inline-block">
+                            <div class="progress ht-4 mg-b-0" style="height: 12px;">
+                              <div class="progress-bar" :class="{'bg-pink': subject.performance, 'bg-success': subject.performance >= 50 }" role="progressbar"  :style="'width: ' + subject.performance + '%;'" :aria-valuenow="subject.performance" aria-valuemin="0" aria-valuemax="100"><span class="tx-8">#{subject.performance.toFixed(0)} %</span></div>
+                              <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -subject.performance) + '%;'" :aria-valuenow="(100 - subject.performance)" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="row m-0" v-if="selectedStudent.loads.chartSubject">
+                <div class="col-12 text-center">
+                  <div class="spinner-grow text-info mx-3" role="status">
+                    <span class="sr-only"></span>
+                  </div>
+                  <p class="text-center">Aguarde enquanto carregamos os dados dos alunos</p>
+                </div>
+              </div>
+            </div>
+          </div> 
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-block btn-primary mb-2" data-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade effect-sign" id="modalSubjectAverageDetail" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-body pd-x-30 pd-sm-x-30" v-if="selectedSubject.id">
+          <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </a>
+          <div>
+            <h3 class="mb-0">{{object.name}}</h3>
+          </div>
+          <div class="d-flex align-items-center justify-content-between tx-rubik mb-3">
+            <div>
+              <h4>#{ selectedSubject.name }</h4>
+            </div>
+            <div class="d-flex flex-column align-items-end">
+              <h1 class="tx-40 lh-1 tx-normal tx-spacing--2 mb-0 mg-r-5 text-nowrap">#{selectedSubject.averageExams().toFixed(2)} %</h1>
+              <p class="tx-12 mb-0">Desempenho no caderno atual</p>
+            </div>
+          </div>
+          <div class="progress bg-transparent op-7 ht-10 mg-b-5">
+            <div class="progress-bar" :class="{'bg-pink': selectedSubject.averageExams() < 50, 'bg-success': selectedSubject.averageExams() >= 50 }" role="progressbar"  :style="'width: ' + selectedSubject.averageExams() + '%;'" :aria-valuenow="selectedSubject.averageExams()" aria-valuemin="0" aria-valuemax="100"></div>
+            <div class="progress-bar bg-secondary op-3" role="progressbar" :style="'width: ' + (100 -selectedSubject.averageExams()) + '%;'" :aria-valuenow="(100 - selectedSubject.averageExams())" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+          {% if applied_filters %}
+            <div class="col-12 p-0">
+              <span class="d-block tx-10 tx-rubik">{{count_filters}} filtro(s) aplicado(s):</span>
+              {% for applied_filter in applied_filters %}
+                <span class="badge badge-primary">{{applied_filter}}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+          <div class="nav-wrapper mg-b-20 tx-13">
+            <div>
+              <nav class="nav nav-line tx-medium">
+                <a href="#subject-details" class="nav-link active" data-toggle="tab">Histórico de desempenho geral do aluno na disciplina selecionada
+                </a>
+              </nav>
+            </div>
+          </div>
+          <div class="tab-content">
+            <div id="subject-details" class="tab-pane fade active show">
+              <div class="table-responsive">
+                <table class="table table-striped table-sm tx-13 tx-nowrap mg-b-0">
+                  <thead>
+                    <tr class="tx-13 tx-color-03 tx-uppercase">
+                      <th class="wd-10p">Caderno</th>
+                      <th>Data da aplicação</th>
+                      <th>Desempenho</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style="border-bottom: 1px solid rgb(235, 226, 226);" v-for="exam in selectedSubject.exams_performance">
+                      <td class="pb-0 align-middle tx-medium text-truncate" style="max-width: 20rem;">#{exam.name}</td>
+                      <td class="pb-0 align-middle text-truncate" style="max-width: 20rem;">#{exam.dates.join(', ')}</span></td>
+                      <td class="pb-0 align-middle">
+                        <div class="wd-150 d-inline-block">
+                          <div class="progress ht-4 mg-b-0" style="height: 12px;">
+                            <div class="progress-bar" :class="{'bg-pink': exam.performance, 'bg-success': exam.performance >= 50 }" role="progressbar"  :style="'width: ' + exam.performance + '%;'" :aria-valuenow="exam.performance" aria-valuemin="0" aria-valuemax="100"><span class="tx-8">#{exam.performance} %</span></div>
+                            <div class="progress-bar bg-secondary op-1" role="progressbar" :style="'width: ' + (100 -exam.performance) + '%;'" :aria-valuenow="(100 - exam.performance)" aria-valuemin="0" aria-valuemax="100"></div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-block btn-primary mb-2" data-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>  
+
+  {% comment %} 
+  <div class="modal fade effect-sign" id="modalRecalculateConfirm" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-body pd-x-30 pd-sm-x-30">
+          <a href="" role="button" class="close pos-absolute r-15" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </a>
+          <div class="row">
+            <div class="col-12">
+              <div class="pd-y-20">
+                <label class="tx-uppercase tx-sans tx-16 tx-medium tx-spacing-1 tx-color-03 pd-l-10 mg-b-10">Quais os desempenhos você deseja recalcular?</label>
+                <ul class="list-group list-group-flush tx-13">
+                  <li class="list-group-item d-flex align-items-center pd-sm-x-20 cp" @click="recalculate.calculate('all')">
+                    <div class="avatar d-none d-sm-block"><span class="avatar-initial rounded-circle bg-gray-400" :class="{ 'bg-teal': recalculate.all }"><i class="icon ion-md-checkmark"></i></span></div>
+                    <div class="pd-sm-l-10">
+                      <p class="tx-medium mg-b-0">Todos</p>
+                    </div>
+                  </li>
+                  <li class="list-group-item d-flex align-items-center pd-sm-x-20 cp" @click="recalculate.calculate('only_students')">
+                    <div class="avatar d-none d-sm-block"><span class="avatar-initial rounded-circle bg-gray-400" :class="{ 'bg-teal': recalculate.only_students }"><i class="icon ion-md-checkmark"></i></span></div>
+                    <div class="pd-sm-l-10">
+                      <p class="tx-medium mg-b-0">Dos alunos</p>
+                    </div>
+                  </li>
+                  <li class="list-group-item d-flex align-items-center pd-sm-x-20 cp" @click="recalculate.calculate('only_classes')">
+                    <div class="avatar d-none d-sm-block"><span class="avatar-initial rounded-circle bg-gray-400" :class="{ 'bg-teal': recalculate.only_classes }"><i class="icon ion-md-checkmark"></i></span></div>
+                    <div class="pd-sm-l-10">
+                      <p class="tx-medium mg-b-0">Das turmas</p>
+                    </div>
+                  </li>
+                  <li class="list-group-item d-flex align-items-center pd-sm-x-20 cp" @click="recalculate.calculate('only_subjects')">
+                    <div class="avatar d-none d-sm-block"><span class="avatar-initial rounded-circle bg-gray-400" :class="{ 'bg-teal': recalculate.only_subjects }"><i class="icon ion-md-checkmark"></i></span></div>
+                    <div class="pd-sm-l-10">
+                      <p class="tx-medium mg-b-0">Das disciplinas</p>
+                    </div>
+                  </li>
+                  <li class="list-group-item d-flex align-items-center pd-sm-x-20 cp" @click="recalculate.calculate('only_bnccs')">
+                    <div class="avatar d-none d-sm-block"><span class="avatar-initial rounded-circle bg-gray-400" :class="{ 'bg-teal': recalculate.only_bnccs }"><i class="icon ion-md-checkmark"></i></span></div>
+                    <div class="pd-sm-l-10">
+                      <p class="tx-medium mg-b-0">Objetos do conhecimento e bnccs</p>
+                    </div>
+                  </li>
+                  <li class="list-group-item d-flex align-items-center pd-sm-x-20 cp" @click="recalculate.calculate('only_unities')">
+                    <div class="avatar d-none d-sm-block"><span class="avatar-initial rounded-circle bg-gray-400" :class="{ 'bg-teal': recalculate.only_unities }"><i class="icon ion-md-checkmark"></i></span></div>
+                    <div class="pd-sm-l-10">
+                      <p class="tx-medium mg-b-0">Das unidades</p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="col-12">
+              <p class="text-muted">
+                O processo pode demorar um pouco, você será informado quando o processo terminar.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer d-flex align-items-center">
+          <button class="btn btn-block btn-success mt-0" @click="recalculateExam(true)" :disabled="!recalculate.haveSomethingToCalculate() || recalculate.load">Confirmar</button>
+          <button class="btn btn-block btn-secondary mt-0" data-dismiss="modal">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div> 
+  {% endcomment %}
+{% endblock extra-modal %}
+
+{% block off-canvas %}
+  <div id="right-off-canvas" class="off-canvas off-canvas-right wd-400 bg-white"
+    style="overflow-y: auto; overflow-x: hidden;">
+    <form method="GET">
+      <div class="row p-3">
+        <div class="col-12">
+          <h5>Filtrar resultados</h5>
+          <p>Adiciona abaixo os filtros que você deseja aplicar na listagem abaixo</p>
+          <hr/>
+        </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="id_q_student_name" class="mb-1">Nome do Aluno</label>
+            <input type="text" id="id_q_student_name" name="q_student_name" placeholder="Digite o nome do aluno" class="form-control" value="{{q_student_name}}">
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="id_q_school_classes" class="mb-1">Turmas</label>
+            <select name="q_school_classes" id="id_q_school_classes" class="form-control" multiple="multiple">
+              {% for classe in classes %}
+                <option value="{{classe.id}}" {% if classe.id|stringformat:'s' in q_school_classes %} selected="selected" {% endif %}>
+                  {{classe}} com {{classe.students.count}} alunos
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="id_q_subjects" class="mb-1">Disciplinas</label>
+            <select name="q_subjects" id="id_q_subjects" class="form-control" multiple="multiple">
+              {% for subject in subjects %}
+                <option value="{{subject.id}}" {% if subject.id|stringformat:'s' in q_subjects %} selected="selected" {% endif %}>
+                  {{subject}}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="form-group mb-3">
+            <label for="id_q_unities" class="mb-1">Unidades</label>
+            <select name="q_unities" id="id_q_unities" class="form-control" multiple="multiple">
+              {% for unity in unities %}
+                <option value="{{unity.id}}" {% if unity.id|stringformat:'s' in q_unities %} selected="selected" {% endif %}>
+                  {{unity.name}}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="custom-control custom-switch ">
+            <input {% if q_all_students %} checked="checked" {% endif %} type="checkbox" id="id_q_all_students" name="q_all_students" class="custom-control-input">
+            <label class="custom-control-label" for="id_q_all_students">Mostrar todos os alunos</label>
+            <small class="form-text text-muted mt-0">Selecine caso queira mostrar todos os alunos, independende de ter iniciado a prova ou não.</small>
+          </div>
+        </div>
+        
+        <div class="col-12 mt-5">
+          <button type="submit" class="btn btn-primary btn-block">
+            <i class="fas fa-search"></i>
+            Aplicar filtro
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+{% endblock %}
+
+{% block js-additional %}
+
+<script src="{% static 'administration/lib/datatables.net-responsive-dt/js/responsive.dataTables.min.js' %}"></script>
+<script src="{% static 'administration/lib/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"></script>
+<script src="{% static 'administration/lib/bootstrap-tagsinput/bootstrap-tagsinput.min.js' %}"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'dashboard/lib/apexcharts/apexcharts.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+<script>
+  var app = new Vue({
+    delimiters: ["#{", "}"],
+    el: "#app",
+    data: {
+      urls: {
+        studentPerformanceExams: "{% url 'api:applications-student:student-analysis-get-exams-historical-performance' pk='00000000-0000-0000-0000-000000000000' %}?{{request.GET.urlencode|safe}}",
+        studentGeneralPerformance: "{% url 'api:performance:student_general_performance_retrieve' pk='00000000-0000-0000-0000-000000000000' %}?{{request.GET.urlencode|safe}}",
+        studentBNCCSummary: "{% url 'api:applications-student:student-analysis-bncc-summary' pk='00000000-0000-0000-0000-000000000000' %}?{{request.GET.urlencode|safe}}",
+        studentSubjectSummary: "{% url 'api:applications-student:student-analysis-subject-summary' pk='00000000-0000-0000-0000-000000000000' %}?{{request.GET.urlencode|safe}}",
+        studentGetCorrectQuestions: "{% url 'api:applications-student:student-analysis-get-correct-questions' %}?{{request.GET.urlencode|safe}}",
+        studentGetPerformanceInBnccs: "{% url 'api:applications-student:student-analysis-get-performance-in-bnccs-and-subjects' pk='00000000-0000-0000-0000-000000000000' %}?{{request.GET.urlencode|safe}}",
+        studentGetBNCCSAndSubjectsumaryExams: "{% url 'api:applications-student:student-analysis-get-bncc-and-subjects-summary-exams' pk='00000000-0000-0000-0000-000000000000' %}?{{request.GET.urlencode|safe}}",
+      },
+      exam: {
+        exists_performances: {{object.last_performance.exists|lower}}
+      },
+      subjects: [
+        {% for subject in subjects %}
+          {
+            id: '{{subject.id}}',
+            name: '{{subject}}',
+          },
+        {% endfor %}
+      ],
+      abilities: [
+        {% for ability in abilities.all %}
+          {
+            id: '{{ability.id}}',
+            code: '{{ability.code|default:""}}',
+            text: '{{ability.text|remove_line_break|safe}}',
+            knowledge_object: '{{ability.knowledge_object.text|default:""|remove_line_break|safe}}',
+            questions: {{ability|get_questions:object|safe}},
+            performance: 0,
+          },
+        {% endfor %}
+      ],
+      competences: [
+        {% for competence in competences.all %}
+          {
+            id: '{{competence.id}}',
+            code: '{{competence.code|default:""}}',
+            text: '{{competence.text|remove_line_break|safe}}',
+            questions: {{competence|get_questions:object|safe}},
+            performance: 0,
+          },
+        {% endfor %}
+      ],
+      topics: [
+        {% for topic in topics.all %}
+          {
+            id: '{{topic.id}}',
+            text: '{{topic.name|remove_line_break|safe}}',
+            questions: {{topic|get_questions:object|safe}},
+            performance: 0,
+          },
+        {% endfor %}
+      ],
+      students: [
+        {% if exam.last_performance.exists %}
+          {% for application_student in object_list %}
+            {
+              id: '{{application_student.id}}',
+              name: '{{application_student.student.name|upper}}',
+              total_answers: '{{application_student.total_answered_questions}}',
+              total_objetive_answers: '{{application_student.get_answered_optionanswers.count}}',
+              total_correct_objetive_answers: '{{application_student.get_correct_optionanswers.count}}',
+              total_incorrect_objetive_answers: '{{application_student.get_incorrect_optionanswers.count}}',
+              performance: {{application_student.get_performance|default:0|safe}},
+              right_questions: [],
+              viewPoints: '',
+              viewCharts: {
+                studentDetail: 'chart',
+                bnccDetail: 'chart',
+                subjectDetail: 'chart',
+              },
+              exams: [],
+              general_performance: '',
+              classes_performance: [],
+              unities_performance: [],
+              detailedBNCCAndSubjects: {
+                subjects: [],
+                topics: [],
+                abilities: [],
+                competences: [],
+              },
+              subjects: [],
+              bncc: {
+                topics: [],
+                abilitys: [],
+                competences: [],
+              },
+              detailed: false,
+              loads: {
+                chartExams: true,
+                chartSubject: true,
+                bnccDetailHasOpened: null
+              },
+              loaded: {
+                bnccs: false,
+                subjects: false,
+              },
+            },
+          {% endfor %}
+        {% endif %}
+      ],
+      classes: [
+        {% for classe in classes %}
+          {
+            id: '{{classe.id}}',
+            name: '{{classe}}',
+          },
+        {% endfor %}
+      ],
+      unities: [
+        {% for unity in unities %}
+          {
+            id: '{{unity.id}}',
+            name: '{{unity.name}}',
+          },
+        {% endfor %}
+      ],
+      selectedStudent: '',
+      selectedSubject: {
+        id: '',
+        name: '',
+        exams_performance: [],
+        students_performances: [],
+        table_subject_performances: [],
+        loads: {
+          performances_loaded: false,
+        },
+        averageExams() {
+          return this.exams_performance.reduce((total = 0, exam) => total += exam.performance, 0) / this.exams_performance.filter(exam => exam.id).length
+        }
+      },
+      selectedBNCC: {
+        id: '',
+        code: '',
+        type: '',
+        text: '',
+        performance: 0,
+        questions: [],
+        knowledge_object: '',
+        students_performances: [],
+        exams_performance: [],
+        table_bncc_performances: [],
+        loads: {
+          performances_loaded: false,
+        },
+        bncc: {
+          topic: [],
+          ability: [],
+          competence: [],
+        },
+        averageExams() {
+          return this.exams_performance.reduce((total = 0, exam) => total += exam.performance, 0) / this.exams_performance.filter(exam => exam.id).length
+        }
+      },
+      //Charts
+      studentChart: '',
+      studentChartComparateClasses: '',
+      studentChartComparateUnities: '',
+      studentBNCCSummaryChart: '',
+      studentSubjectSummaryChart: '',
+      histogramChart: '',
+      list_type: 'individually',
+      selectedClasses: [],
+      selectedUnities: [],
+      loads: {
+        loadStudentsData: true,
+        comparateClasses: true,
+        comparateUnities: true,
+        histogramChart: true,
+      },
+      widgets: {
+        optionAnswers: '',
+        discursiveAnswers: '',
+        loads: {
+          optionAnswers: true,
+          discursiveAnswers: true,
+        }
+      },
+      studentsDataTable: {
+        general: '',
+        strongs: '',
+        improves: '',
+      },
+      histogramPerformances: null,
+      recalculate: {
+        yesno: {{recalculate|default:False|lower}},
+        all: false,
+        only_students: false,
+        only_classes: false,
+        only_bnccs: false,
+        only_unities: false,
+        only_subjects: false,
+        hasProcessTime: false,
+        processFinished: false,
+        processTime: '',
+        load: false,
+        calculate(param) {
+          if(param == 'all') {
+            this.only_students = true
+            this.only_classes = true
+            this.only_bnccs = true
+            this.only_unities = true
+            this.only_subjects = true
+          } else {
+            this[param] = !this[param]
+          }
+          if(!this.only_students || !this.only_classes || !this.only_bnccs || !this.only_unities || !this.only_subjects)
+            return this.all = false
+          this.all = true
+        },
+        getParams() {
+          let params = ''
+          if(this.only_students) 
+            params += '&only_students=true'
+          if(this.only_classes) 
+            params += '&only_classes=true'
+          if(this.only_bnccs) 
+            params += '&only_bnccs=true'
+          if(this.only_unities) 
+            params += '&only_unities=true'
+          if(this.only_unities) 
+            params += '&only_subjects=true'
+
+          return params
+        },
+        haveSomethingToCalculate() {
+          return this.all || this.only_students || this.only_classes || this.only_bnccs || this.only_unities || this.only_subjects ? true:false
+        },
+        clear() {
+          this.processFinished = true
+          this.hasProcessTime = false,
+          localStorage.removeItem("RECALCULATE_EXAM_{{object.id}}")
+        }
+      },
+    },
+    methods: {
+      moment(args) {
+        return moment(args)
+      },
+      initialize() {
+        axios.get("{% url 'api:exams:optionanswers_widget' %}?{{request.GET.urlencode|safe}}&exam_pk={{object.pk}}").then((response) => {
+          this.widgets.optionAnswers = response.data
+        }).finally(() => {
+          this.widgets.loads.optionAnswers = false
+        })
+        axios.get("{% url 'api:exams:discursiveanswers_widget' %}?{{request.GET.urlencode|safe}}&exam_pk={{object.pk}}").then((response) => {
+          this.widgets.discursiveAnswers = response.data
+        }).finally(() => {
+          this.widgets.loads.discursiveAnswers = false
+        })
+        axios.get("{% url 'api:exams:exam_histograms_performance' object.id %}?{{request.GET.urlencode|safe}}").then((response) => {
+          this.createHistogramChart(response.data)
+        }).finally(() => {
+          this.loads.histogramChart = false
+        })
+        this.recalculateExam()
+      },
+      selectStudent(student) {
+        this.selectedStudent = student
+        this.selectedStudent.classes_performance = []
+        this.selectedStudent.unities_performance = []
+        $("#studentDetail").modal("show")
+        this.selectTab('performance')
+        if(student.exams.length) {
+          this.createChart('student', '#studentChartExams', student.exams)
+          return
+        }
+        else {
+          this.selectedStudent.loads.chartExams = true
+          axios.get(`${this.getUrl(this.urls.studentPerformanceExams, student.id)}&year=${new Date().getFullYear()}`).then((response) => {
+            student.exams = response.data
+            return this.createChart('student', '#studentChartExams', student.exams) 
+            
+          }).finally(() => {
+            this.selectedStudent.loads.chartExams = false
+          })
+        }
+      },
+      getStudentBNCCsDetails(student) {
+        if(student.loads.bnccDetailHasOpened) {
+          student.detailed = !student.detailed
+          return 
+        }
+        student.loads.bnccDetailHasOpened = false
+        axios.get(`${this.getUrl(this.urls.studentGetCorrectQuestions)}&applications_student=${student.id}`).then((response) => {
+          response.data.forEach(student => this.students.find(_student => _student.id == student.id).right_questions = student.right_questions)
+        })
+        axios.get(`${this.getUrl(this.urls.studentGetPerformanceInBnccs, student.id)}`).then((response) => {
+          student.subjects = response.data['subjects']
+          delete response.data['subjects']
+          student.bncc = response.data
+        }).finally(() => {
+          student.detailed = true
+          student.loads.bnccDetailHasOpened = true
+        })
+      },
+      getDetaledPerformanceBNCCAndSubjectsStudent(only_subjects) {
+        if(!this.selectedStudent.loaded.subjects || !this.selectedStudent.loaded.bnccs) {
+          let url = this.getUrl(this.urls.studentGetBNCCSAndSubjectsumaryExams, this.selectedStudent.id)
+          if(only_subjects) {
+            url += '&only_subjects=true'
+          }
+          axios.get(url).then((response) => {
+            if(only_subjects) {
+              this.selectedStudent.detailedBNCCAndSubjects.subjects = response.data.subjects
+              this.selectedStudent.loaded.subjects = true
+            } else {
+              this.selectedStudent.detailedBNCCAndSubjects.topics = response.data.topics
+              this.selectedStudent.detailedBNCCAndSubjects.abilities = response.data.abilities
+              this.selectedStudent.detailedBNCCAndSubjects.competences = response.data.competences
+              this.selectedStudent.loaded.bnccs = true
+            }
+          })
+        }
+      },
+      selectBNCCOrSubject(type, object, student) {
+        if(type == 'subjects') {
+          this.selectedSubject.exams_performance = []
+          this.selectedSubject.table_subject_performances = []
+          this.selectedSubject.id = object.id
+          this.selectedSubject.name = object.name
+          if(object.exams_performance) {
+            this.selectedSubject.exams_performance = object.exams_performance
+            $("#modalSubjectAverageDetail").modal()
+            return 
+          }
+          this.selectedStudent = student
+          let subject = student.subjects.find(subject => subject.id == object.id)
+          this.selectedSubject['performance'] = subject.performance
+          if(!subject.table_subject_performances) {
+            axios.get(`${this.getUrl(this.urls.studentSubjectSummary, student.id)}?{{request.GET.urlencode|safe}}&subject_pk=${this.selectedSubject['id']}`).then((response) => {
+              subject.table_subject_performances = response.data
+              this.selectedSubject.table_subject_performances = subject.table_subject_performances
+            }).finally(() => {
+              student.loads.chartSubject = false
+              this.createChart('subject', '#studentSubjectSummaryChart', this.selectedSubject.table_subject_performances)
+              $("#modalSubjectDetail").modal()
+            })
+          } else {
+            this.selectedSubject['table_subject_performances'] = subject.table_subject_performances
+            this.createChart('subject', '#studentSubjectSummaryChart', subject.table_subject_performances)
+            $("#modalSubjectDetail").modal()
+          }
+        
+        } else {
+          this.selectedBNCC.exams_performance = []
+          this.selectedBNCC['table_bncc_performances'] = []
+          this.selectedBNCC['id'] = object.id
+          this.selectedBNCC['code'] = object.code
+          this.selectedBNCC['type'] = type
+          this.selectedBNCC['text'] = object.text ? object.text : object.name
+          this.selectedBNCC['knowledge_object'] = object.knowledge_object
+        
+          if(object.exams_performance) {
+            this.selectedBNCC.exams_performance = object.exams_performance
+            $("#modalBNCCAverageDetail").modal()
+            return 
+          }
+        
+          if(type == 'topics') {
+            student_bncc = student.bncc.topics.find(topic => topic.id == object.id)
+          } else if(type == 'abilities') {
+            student_bncc = student.bncc.abilities.find(ability => ability.id == object.id)
+          } else if(type == 'competences') {
+            student_bncc = student.bncc.competences.find(competence => competence.id == object.id)
+          }
+          this.selectedBNCC['performance'] = student_bncc.performance
+          if(student) {
+            axios.get(`${this.getUrl(this.urls.studentBNCCSummary, student.id)}?{{request.GET.urlencode|safe}}&bncc_pk=${this.selectedBNCC.id}`).then((response) => {
+              this.selectedBNCC['table_bncc_performances'] = response.data
+              this.createChart('bncc', '#studentBNCCSummaryChart', response.data)
+            })
+            this.selectedStudent = student
+          }
+          $("#modalBNCCDetail").modal()
+          this.selectTab('bncc-detail')
+        }
+      },
+      selectTab(tab) {
+        $(`[href="#${tab}`).click()
+      },
+      getComparateResult(comparation) {
+        if(comparation == 'classes') {
+          this.loads.comparateClasses = true
+          axios.get(`${this.getUrl(this.urls.studentGeneralPerformance, this.selectedStudent.id)}&classes=${this.selectedClasses.map(classe => classe.id)}`).then((response) => {
+            this.selectedStudent.general_performance = response.data.general_performance
+            this.selectedStudent.classes_performance = response.data.classes_performance
+          }).finally(() => {
+            this.loads.comparateClasses = false
+            this.createChartComparate('classes', this.selectedStudent, this.selectedStudent.classes_performance)
+          })
+        } else if(comparation == 'unities') {
+          this.loads.comparateUnities = true
+          axios.get(`${this.getUrl(this.urls.studentGeneralPerformance, this.selectedStudent.id)}&unities=${this.selectedUnities.map(unity => unity.id)}`).then((response) => {
+            this.selectedStudent.general_performance = response.data.general_performance
+            this.selectedStudent.unities_performance = response.data.unities_performance
+          }).finally(() => {
+            this.loads.comparateUnities = false
+            this.createChartComparate('unities', this.selectedStudent, this.selectedStudent.unities_performance)
+          })
+        }
+      },
+      createChart(chart, element, data) {
+        let extraData = {
+          avg: data.reduce((total = 0, item) => total += item.performance, 0) / data.length
+        }
+        let series = [{
+          name: "Caderno",
+          data: data.map((item) => item.performance.toFixed(0))
+        }]
+        let xaxis = {
+          categories: data.map((item) => item.dates[0]),
+          title: {
+            text: 'Cadernos aplicados'
+          },
+        }
+        let annotations = {
+          yaxis: [{
+            y: extraData.avg,
+            y2: extraData.avg - 1,
+            borderColor: '#FEB01900',
+            fillColor: '#FEB019',
+            opacity: 0.2,
+            label: {
+              borderColor: '#FEB01900',
+              style: {
+                fontSize: '10px',
+                color: '#333',
+                background: '#FEB01900',
+              },
+              text: 'Média ' + extraData.avg.toFixed(0) + '%',
+            }
+          }]
+        }
+        let options = {
+          series: series,
+          chart: {
+            height: 350,
+            type: 'line',
+          },
+          annotations: annotations,
+          dataLabels: {
+            enabled: false
+          },
+          tooltip: {
+            x: {
+              show: false,
+            },
+            y: {
+              formatter: function(value, series) {
+                return String(data[series.dataPointIndex].name);
+              }
+            }
+          },
+          yaxis: {
+            labels: {
+              formatter: function (val) {
+                return val.toFixed(0) + " %";
+              },
+            },
+            title: {
+              text: 'Desempenho'
+            },
+            min: 0,
+            max: 100
+          },
+          title: {
+            text: 'Desempenho das ultimas avaliações da mesma disciplina',
+            align: 'left'
+          },
+          grid: {
+            row: {
+              colors: ['#f3f3f3', 'transparent'], // takes an array which will be repeated on columns
+              opacity: 0.5
+            },
+          },
+          xaxis: xaxis
+        };
+        if(chart == 'student') {
+          if(this.studentChart) {
+            this.studentChart.destroy()
+          }
+          this.studentChart = new ApexCharts(document.querySelector(element), options);
+          this.studentChart.render()
+          
+        } else if(chart == 'bncc') {
+          if(this.studentBNCCSummaryChart) {
+            this.studentBNCCSummaryChart.destroy();
+          }
+          this.studentBNCCSummaryChart = new ApexCharts(document.querySelector(element), options);
+          this.studentBNCCSummaryChart.render()
+        } else if(chart == 'subject') {
+          if(this.studentSubjectSummaryChart) {
+            this.studentSubjectSummaryChart.destroy();
+          }
+          this.studentSubjectSummaryChart = new ApexCharts(document.querySelector(element), options);
+          this.studentSubjectSummaryChart.render()
+        }
+      },
+      createChartComparate(chart, student, data) {
+        let options = {
+          series: [
+          {
+            name: `Desempenho da ${chart == 'classes' ? 'Turma':'Unidade'}`,
+            data: data.map((classe) => classe.performance.toFixed(0)),
+          }, {
+            name: student.name.split(' ')[0],
+            data: data.map(() => student.general_performance.toFixed(0))
+          }],
+            chart: {
+            type: 'bar',
+            height: 350
+          },
+          plotOptions: {
+            bar: {
+              horizontal: false,
+              columnWidth: '30%',
+              endingShape: 'rounded'
+            },
+          },
+          dataLabels: {
+            enabled: false
+          },
+          stroke: {
+            show: true,
+            width: 2,
+            colors: ['transparent']
+          },
+          xaxis: {
+            categories: data.map((classe) => classe.name),
+          },
+          yaxis: {
+            title: {
+              text: 'Desempenho Geral'
+            },
+            labels: {
+              formatter: function (val) {
+                return val.toFixed(0) + " %";
+              },
+            },
+            min: 0,
+            max: 100,
+          },
+          fill: {
+            opacity: 1
+          },
+          tooltip: {
+            y: {
+              formatter: function (val) {
+                return val.toFixed(0) + " %";
+              }
+            }
+          }
+        };
+        if(chart == 'classes') {
+          if(this.studentChartComparateClasses) {
+            this.studentChartComparateClasses.destroy()
+          }
+          this.studentChartComparateClasses = new ApexCharts(document.querySelector('#studentChartComparateClasses'), options);
+          this.studentChartComparateClasses.render();
+        } else if(chart == 'unities') {
+          if(this.studentChartComparateUnities) {
+            this.studentChartComparateUnities.destroy()
+          }
+          this.studentChartComparateUnities = new ApexCharts(document.querySelector('#studentChartComparateUnities'), options);
+          this.studentChartComparateUnities.render();
+        }
+      },
+      createHistogramChart(object) {
+        let options = {
+          series: [
+            {
+              name: 'Alunos',
+              data: object.data,
+            }
+          ],
+            chart: {
+            type: 'bar',
+            height: 350
+          },
+          plotOptions: {
+            bar: {
+              horizontal: false,
+              endingShape: 'rounded'
+            },
+          },
+          dataLabels: {
+            enabled: false
+          },
+          stroke: {
+            show: true,
+            width: 2,
+            colors: ['transparent']
+          },
+          xaxis: {
+            categories: object.categories,
+          },
+          yaxis: {
+            title: {
+              text: 'Desempenho Geral'
+            },
+            labels: {
+              formatter: function (val) {
+                return val.toFixed(2) + " %";
+              },
+            },
+            min: 0,
+            max: 100,
+          },
+          fill: {
+            opacity: 1
+          },
+          tooltip: {
+            y: {
+              formatter: function (val) {
+                return val.toFixed(2) + " %";
+              }
+            }
+          }
+        };
+        if(this.histogramChart) {
+          this.histogramChart.destroy();
+        }
+        this.histogramChart = new ApexCharts(document.querySelector('#histogramChart'), options);
+        this.histogramChart.render()
+      },
+      selectClasse(classe) {
+        if(this.selectedClasses.find((_classe) => _classe.id == classe.id)) {
+          this.selectedClasses.splice(this.selectedClasses.indexOf(classe), 1)
+        } else {
+          this.selectedClasses.push(classe)
+        }
+      },
+      selectUnity(unity) {
+        if(this.selectedUnities.find((_unity) => _unity.id == unity.id)) {
+          this.selectedUnities.splice(this.selectedUnities.indexOf(unity), 1)
+        } else {
+          this.selectedUnities.push(unity)
+        }
+      },
+      hasPoints(type, student) {
+        if(
+          student.bncc.topics.some(topic => type == 'strong' && topic.performance >= 50 || type == 'improve' && topic.performance < 50) ||
+          student.bncc.abilities.some(ability => type == 'strong' && ability.performance >= 50 || type == 'improve' && ability.performance < 50) ||
+          student.bncc.competences.some(competence => type == 'strong' && competence >= 50 || type == 'improve' && competence < 50)
+        ) {
+          return true
+        }
+        return false
+      },
+      openActived(withoutSubject) {
+        if(!withoutSubject) {
+          if(this.subjects.length) {
+            return 'subjects'
+          }
+        } else {
+          if(this.subjects.length) {
+            return 'subjects'
+          }
+        }
+        if(this.topics.length) {
+          return 'topics'
+        }
+        else if(this.abilities.length) {
+          return 'abilities'
+        }
+        else if(this.competences.length) {
+          return 'competences'
+        }
+      },
+      getUrl(url, id, params = false) {
+        if (params) {
+          url += params;
+        }
+        return url.replace('00000000-0000-0000-0000-000000000000', id);
+      },
+      recalculateExam(confirmation) {
+        if(confirmation) {
+          this.recalculate.load = true
+          window.location.href = `?recalculate=true${this.recalculate.getParams()}`
+        } else {
+          if(this.recalculate.yesno) {
+            window.history.pushState('', document.title, '?')
+            let exam_storage = {
+              {% if process_time %}
+                process_time: "{{process_time|safe}}"
+              {% else %}
+                process_time: null
+              {% endif %}                                               
+            }
+            localStorage.setItem("RECALCULATE_EXAM_{{object.id}}", JSON.stringify(exam_storage))
+          }
+
+          let exam = JSON.parse(localStorage.getItem("RECALCULATE_EXAM_{{object.id}}"))                                           
+          if(exam) {
+            if(exam.process_time) {
+              this.recalculate.hasProcessTime = true
+            }
+            this.recalculate.processTime = exam.process_time
+            
+            let get_task_status = setInterval(() => { 
+              axios.get("{% url 'core:get_generic_task_status' %}?task_id=RECALCULATE_EXAM_{{object.id}}").then((response) => {
+                if(response.data.status == 'SUCCESS') {
+                  this.recalculate.clear()
+                  clearInterval(get_task_status)
+                  Swal.fire({
+                    title: 'Processo concluído',
+                    icon: 'info',
+                    text: 'O recalculo de desempenho foi concluído, vamos atualizar sua página para que você possa ver o resultado.'
+                  }).then((result) => {
+                    window.location.reload()
+                  })
+                } else if(response.data.status == 'FAILURE') {
+                  this.recalculate.clear()
+                  Swal.fire({
+                    title: 'Ocorreu um erro',
+                    icon: 'warning',
+                    text: 'O recalculo de desempenho não foi concluído, vamos atualizar a página para que você possa tentar novamente.'
+                  })
+                  setTimeout(() => {
+                    window.location.reload()
+                  }, 2000)
+                }
+              })
+            }, 10000)
+          } else {
+            this.recalculate.clear()
+            {% comment %} 
+            if(!this.exam.exists_performances) {
+              window.location.href = `?recalculate=true`
+            } 
+            {% endcomment %}
+          }
+        }
+      }
+    },
+    mounted() {
+      this.initialize()
+      moment.locale('pt-br');
+      this.selectedClasses = this.classes.slice(0, 2)
+      this.selectedUnities = this.unities.slice(0, 2)
+
+      setTimeout(() => {
+        $('[data-toggle="tooltip"]').tooltip()
+        $('[data-toggle="popover"]').popover({ trigger: "hover" })
+      }, 2000)
+      this.loads.loadStudentsData = false
+      $('#id_q_school_classes').select2({
+        placeholder: "Selecione uma turma",
+        width: '100%',
+        closeOnSelect: false
+      })
+      $('#id_q_subjects').select2({
+        placeholder: "Selecione uma disciplina",
+        width: '100%',
+        closeOnSelect: false
+      })
+      $('#id_q_unities').select2({
+        placeholder: "Selecione uma unidade",
+        width: '100%',
+        closeOnSelect: false
+      })
+
+      $('.off-canvas-menu').on('click', function (e) {
+        e.preventDefault();
+        var target = $(this).attr('data-toggle-off-canvas');
+        $(target).addClass('show');
+      });
+  
+      $('.off-canvas .close').on('click', function (e) {
+        e.preventDefault();
+        $(this).closest('.off-canvas').removeClass('show');
+      })
+  
+      $(document).on('click touchstart', function (e) {
+        if($(e.target).hasClass('select2-results__option') || $(e.target).hasClass('select2-results__custom_option')) {
+          return
+        }
+        e.stopPropagation();
+  
+        if (!$(e.target).closest('.off-canvas-menu').length) {
+          var offCanvas = $(e.target).closest('.off-canvas').length;
+          if (!offCanvas) {
+            $('.off-canvas.show').removeClass('show');
+          }
+        }
+      })
+      $(document).on('show.bs.modal', '.modal', function (event) {
+          var zIndex = 1040 + (10 * $('.modal:visible').length);
+          $(this).css('z-index', zIndex);
+          setTimeout(function() {
+              $('.modal-backdrop').not('.modal-stack').css('z-index', zIndex - 1).addClass('modal-stack');
+          }, 0);
+      });
+
+      setTimeout(() => {
+        axios.post("{% url 'notifications:api-especial-notification' %}", { where: "after_view_exam_results" }) 
+      }, 8000)
+      
+    }
+  });
+</script>
+{% endblock js-additional %}
+

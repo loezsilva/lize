@@ -1,0 +1,35 @@
+{% load exams_tags %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página customizada</title>
+    <style>
+        @media print {
+            .force-pagebreak { 
+                page-break-before: always;
+                break-before: always;
+            }
+            @page {
+                size: a4;
+                margin: 5mm;
+            }
+        }
+    </style>
+</head>
+<body>
+        {% for custom_page in custom_pages %}
+            <div class="force-pagebreak"></div>
+            <div class="row m-0">
+                <div class="col-12">
+                    {% autoescape on %}
+                        {% get_content custom_page=custom_page school_classe=school_classe application_student=application_student application=application %}
+                    {% endautoescape %}
+                </div>
+            </div>
+        {% endfor %}
+</body>
+</html>

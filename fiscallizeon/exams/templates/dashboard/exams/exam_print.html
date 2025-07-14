@@ -1,0 +1,487 @@
+{% load static %}
+{% load compress %}
+{% load remove_line_break %}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <title>Lize - Impressão de prova</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@0,600;0,800;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Math&display=swap">
+    
+    <link rel="stylesheet" href="{% static 'css/exam-print.css' %}">
+
+    <style>
+        body {
+            font-size: .875rem !important;
+            {% if font_family == 0 %}
+                font-family: "IBM Plex Sans", "Noto Sans Math", sans-serif !important;
+            {% elif font_family == 1 %}
+                font-family: "Verdana", "Noto Sans Math", sans-serif !important;
+            {% elif font_family == 2 %}
+                font-family: "Times", "Noto Sans Math", sans-serif !important;
+            {% elif font_family == 3 %}
+                font-family: "Arial", "Noto Sans Math", sans-serif !important;
+            {% else %}
+                font-family: "IBM Plex Sans", "Noto Sans Math", sans-serif !important;
+            {% endif %}
+
+            margin: 0 auto;
+            font-weight: 400 !important;
+            {% if line_spacing == 1 %}
+                line-height: 1.5;
+            {% elif line_spacing == 2 %}
+            line-height: 2.5;
+            {% elif line_spacing == 3 %}
+                line-height: 3.5;
+            {% elif line_spacing %}
+                line-height: {{line_spacing}};
+            {% else %}
+                line-height: normal;
+            {% endif %}
+
+            {% if uppercase_letters  %}
+                text-transform: uppercase;
+            {% else %}
+                text-transform: none; 
+            {% endif %} 
+
+        }
+
+        .background-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            object-fit: fill;
+        }
+
+        {% if hyphenate_text %}
+            .enunciation {
+                overflow-wrap: break-word;
+                word-wrap: break-word;
+                -webkit-hyphens: auto;
+                -ms-hyphens: auto;
+                hyphens: auto;
+            }
+        {% endif %}
+        .discursive-line-height {
+            margin: 0 auto; 
+            {% if discursive_line_height %}
+                margin-top: {{discursive_line_height|safe}}cm !important;
+            {% else %}
+                margin-top: 1cm !important;
+            {% endif %}
+        }
+        .enunciation table{
+            max-width: 100% !important;
+        }
+        div.alternatives table{
+            max-width: 100% !important;
+        }
+    
+        span.question-number {
+            {% if font_size == 'default' %}
+                width: 29px;
+                height: 29px;
+                min-width: 29px;
+            {% else %}
+                width: calc(2 * {{ font_size }}px);
+                height: calc(2 * {{ font_size }}px);
+                min-width: calc(2 * {{ font_size }}px);
+                padding-top: calc(0.3 * {{ font_size }}px);
+            {% endif %}
+            
+            line-height: normal;
+            border-radius: 50%;
+            color: #fff;
+            display: inline-block;
+            text-align: center;
+            margin: 5px;
+            background: #000;
+           
+        }
+        
+        div.question {
+            padding-bottom: 0;
+        }
+    
+        div.alternatives p {
+            margin: 0 !important;
+        }
+    
+    
+        div.question.font-1x * {
+            font-size: 13px !important;
+        }
+    
+        div.question.font-2x *:not(.katex *) {
+            font-size: 16px !important;
+        }
+    
+    
+        div.question.font-3x * {
+            font-size: 19px !important;
+        }
+    
+        div.question.font-4x * {
+            font-size: 23px !important;
+        }
+    
+        .bg-black {
+            background-color: #000 !important;
+        }
+    
+        .bg-black * {
+            color: white !important;
+        }
+    
+        .question * {
+            white-space: unset !important;
+            {% if line_spacing == 1 %}
+                line-height: 1.5;
+            {% elif line_spacing == 2 %}
+            line-height: 2.5;
+            {% elif line_spacing == 3 %}
+                line-height: 3.5;
+            {% else %}
+                line-height: normal;
+            {% endif %}
+        }
+
+        .enunciation hr{
+            background-color: #000;
+            {% if discursive_line_height %}
+                margin-top: {{discursive_line_height|safe}}cm !important;
+            {% else %}
+                margin-top: 0.85cm !important;
+            {% endif %}
+        }
+    
+        mjx-container.MathJax {
+            font-size: 120% !important;
+        }
+    
+        img {
+            max-width: 100%;
+        }
+    
+        table tr td.cell-h-30 {
+            height: 30px;
+        }
+    
+        table tr td {
+            min-width: 60px;
+            vertical-align: middle !important;
+        }
+        {% if print_images_with_grayscale %}
+            img {
+                filter: gray; 
+                -webkit-filter: grayscale(1); 
+                filter: grayscale(1); 
+            }
+        {% endif %}
+        @media print {
+            {% if background_image %}
+                body {
+                    background-image: url('{{background_image}}');
+                    -webkit-print-color-adjust: exact; /* Força a cor e a imagem de fundo na impressão no Chrome */
+                    print-color-adjust: exact; /* Para outros navegadores */
+                }
+            {% endif %}
+
+            a {
+                text-decoration-line: none !important;
+                color: #000;
+            }
+            
+            div.lines-response{
+                {% if font_size <= 18 %}
+                    height: 18px !important;
+                {% else  %}
+                    height: {{font_size|add:10}}px !important;
+                {% endif %}
+            }
+
+            
+            .question > *:not(.MathJax *) {
+                {% if font_size %}
+                    font-size: {{font_size}}pt !important;
+                {% else %}    
+                    font-size: 15pt !important;
+                {% endif %}
+                {% if line_spacing == 1 %}
+                    line-height: 1.5;
+                {% elif line_spacing == 2 %}
+                    line-height: 2.5;
+                {% elif line_spacing == 3 %}
+                    line-height: 3.5;
+                {% else %}
+                    line-height: normal;
+                {% endif %}
+            }
+
+            div.force-one-column, div.force-one-column * {
+                -webkit-column-span: all;
+                column-span: all;
+            }
+            
+            div.pagebreak {
+                {% if two_columns %}
+                    break-after: page !important;
+                    -webkit-break-after: page !important;
+                    -webkit-column-break-after: page !important;
+                {% else %}
+                    clear: both;
+                    break-before: right;
+                {% endif %}
+            }
+
+            {% if two_columns %}
+            .row {
+                display: inherit !important;
+                flex-wrap: inherit !important;
+            }
+            article {
+                -webkit-column-count: 2;
+                -moz-column-count: 2;
+                column-count: 2;
+                -webkit-column-rule: 1px solid #3b4863;
+                -moz-column-rule: 1px solid #3b4863;
+                column-rule: 1px solid #3b4863;   
+                -moz-column-gap: 35px;
+                -webkit-column-gap: 35px;
+                column-gap: 35px;
+                {% comment %} 
+                    column-fill: auto; 
+                    -moz-column-fill: auto;
+                    -webkit-column-fill: auto;
+                {% endcomment %}
+            }
+
+            .textual-question {
+                padding-bottom: 6cm;
+            }
+    
+            {% else %}
+    
+            .textual-question {
+                padding-bottom: 6cm;
+            }
+    
+            {% endif %}
+    
+            article#in-question {
+                column-count: unset;
+            }
+
+            div.break-inside-auto * {
+                break-inside: auto;
+                -webkit-break-inside: auto;
+                -webkit-column-break-inside: auto;
+                column-fill: auto !important;
+                -moz-column-fill: auto;
+                column-fill: auto;
+            }
+    
+            div.break-inside-avoid  {
+                break-inside: avoid;
+                -webkit-break-inside: avoid;
+                -webkit-column-break-inside: avoid;
+                column-fill: auto !important;
+                -moz-column-fill: auto;
+                column-fill: auto;
+                {% comment %} padding-top: {{ margin_top|default:"0.6"|stringformat:".2f" }}cm;  {% endcomment %}
+            }
+
+            tr.break-alternatives{
+                break-inside: avoid !important;
+                -webkit-break-inside: avoid !important;
+                -webkit-column-break-inside: avoid !important;
+            }
+
+             {% comment %} .question-number-header  {
+                margin-top: -{{ margin_top|default:"0.6"|stringformat:".2f" }}cm !important;
+            } {% endcomment %}
+    
+            div.subject-section {
+                page-break-before: always;
+                -webkit-page-break-before: always;
+            }
+            
+            div.header{
+                margin:0mm;
+            }
+
+            .draft-area {
+                border: 2px solid black;
+                text-align: center;
+                margin-top: 2mm;
+                padding: 2mm;
+                min-height: 1cm;
+                page-break-inside: avoid;
+            }
+
+            .draft-row {
+                min-height: 7mm;
+                max-height: 7mm;
+                margin: 0;
+            }
+            
+            {% comment %} #app {
+                margin-left: {{ margin_left|default_if_none:"0.0"|stringformat:".2f" }}cm;
+                margin-top: {{ margin_top|default_if_none:"0.6"|stringformat:".2f" }}cm;
+                margin-right: {{ margin_right|default_if_none:"0.0"|stringformat:".2f" }}cm;
+                {% if show_footer %}
+                    margin-bottom: 10mm;
+                {% else %}
+                    margin-bottom: {{ margin_bottom|default_if_none:"0.6"|stringformat:".2f" }}cm;
+                {% endif %}
+            } {% endcomment %}
+            
+            @page {
+                size: a4;
+                margin-left: {{ margin_left|default_if_none:"0.0"|stringformat:".2f" }}cm;
+                margin-top: {{ margin_top|default_if_none:"0.6"|stringformat:".2f" }}cm;
+                margin-right: {{ margin_right|default_if_none:"0.0"|stringformat:".2f" }}cm;
+                {% if show_footer %}
+                    margin-bottom: 10mm;
+                {% else %}
+                    margin-bottom: {{ margin_bottom|default_if_none:"0.6"|stringformat:".2f" }}cm;
+                {% endif %}
+            }
+
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+    <script src="{% static 'js/vue.min.js' %}"></script>
+</head>
+<body>
+    
+    {% if background_image %}
+        <img src="{{background_image}}" alt="Imagem de Fundo" class="background-image">
+    {% endif %}
+        
+    <div id="app">
+        <div class="row m-0 exam-full">
+            {% if separate_subjects == 1 %}
+                {% include "dashboard/exams/includes/exam/separate_subjects.html" %}
+            {% elif separate_subjects == 2 %}
+                {% include "dashboard/exams/includes/exam/separate_category.html" %}
+            {% else %}
+                {% include "dashboard/exams/includes/exam/not_separate.html" %}
+            {% endif %}
+        </div>
+    </div>
+    <script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="application/javascript">
+        Vue.config.devtools = false
+
+        var questionEnunciation = Vue.component('question-enunciation', {
+            props: ['question', ],
+            data: function () {
+                return {
+                    timer: false
+                }
+            },
+            template: `
+                <div class="enunciation" :timing="question.timing" ref="enunciationEl"
+                    v-html="question.enunciation"></div>
+            `,
+        })
+
+        var app_question = new Vue({
+            delimiters: ['${', '}'],
+            el: '#app',
+            components: {
+                'question-enunciation': questionEnunciation,
+            },
+            data: {
+                {% include 'dashboard/exams/exam_preview/includes/exam_data.js' with object=object iterator=iterator %}
+                printConfig: {
+                    hideDisciplineName: {{hide_discipline_name|default:False|lower}},
+                    hideKnowledgeAreaName: {{hide_knowledge_area_name|default:False|lower}},
+                    hideQuestionsReferencies: {{hide_questions_referencies|default:False|lower}},
+                    showQuestionScore: {{show_question_score|yesno:'true,false'}},
+                    showQuestionBoard: {{show_question_board|yesno:'true,false'}},
+                    textQuestionFormat:{{ text_question_format|default_if_none:1 }},
+                    economyMode: {{ economy_mode|default:False|lower }},
+                    hideNumbering: {{ hide_numbering|default:False|lower }},
+                    breakEnunciation: {{ break_enunciation|default:False|lower }},
+                    breakAllQuestions: {{ break_all_questions|default:False|lower }},
+                    discursiveQuestionSpaceType: {{ discursive_question_space_type|default:0 }},
+                    forceChoicesWithStatement: {{ force_choices_with_statement|default:0 }},
+                    breakAlternatives: {{ break_alternatives|default:False|lower }},
+                },
+                baseTexts: [],
+                questions: [],
+            },
+            methods: {
+                generateAlternativeOrder(index, isSumQuestion=false) {
+                    if (isSumQuestion) {
+                        return Math.pow(2, index)
+                    }
+
+                    return "abcdefghij" [index]
+                },
+                generateAlternativeText(alternative, index) {
+                    return `${alternative.text}`
+                },
+                getQuestions() {
+                    if(this.knowledgeAreas) {
+                        if (this.knowledgeAreas.length) {
+                            this.knowledgeAreas.forEach((area) => area.subjects.forEach((subject) => subject.questions.forEach((question) => {
+                                question.enunciation = question.enunciation.replace(/pt;/g, 'pt !important;')
+                                this.questions.push(question)
+                            })))
+                        }
+                    }
+                    if (this.examTeacherSubjects) {
+                        if (this.examTeacherSubjects.length) {
+                            this.examTeacherSubjects.forEach((teacher) => teacher.questions.forEach((question) => {
+                                question.enunciation = question.enunciation.replace(/pt;/g, 'pt !important;')
+                                this.questions.push(question)
+                            }))
+                        }
+                    }
+                },
+                checkIfHasCategory(category) {
+                    return this.questions.find(question => category.includes(question.category))
+                },
+                {% include "dashboard/exams/includes/base_texts/methods/base_texts-functions.js" with base_url=base_url %}
+            },
+            mounted: function () {
+                document.title = "{{ object.name }}"
+                this.getQuestions()
+                this.getBaseTextsExam('{{object.pk}}').finally(() => this.gerateBaseTextNumbers().finally(() => {
+                    document.querySelectorAll('[data-baseNumber]').forEach(function(el, index) {
+                        el.innerHTML = index + 1
+                    })
+                    {% if not hide_dialog %}
+                        {% if answered or not application_student %}
+                            setTimeout(() => {
+                                window.print();
+                                window.onafterprint = () => window.close();
+                            }, 500) 
+                        {% endif %}
+                    {% endif %}
+                }))
+            }
+        })
+    </script>
+    <script defer>
+        document.addEventListener('DOMContentLoaded', function() {
+          let loadedElement = document.createElement('div')
+          loadedElement.id = 'loaded'
+          document.body.appendChild(loadedElement)
+        });
+    </script>
+</body>
+</html>

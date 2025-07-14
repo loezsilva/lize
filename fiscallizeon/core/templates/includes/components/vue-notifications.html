@@ -1,0 +1,355 @@
+'notifications-component': Vue.component('notifications-component', {
+    name: 'NotificationsComponent',
+    props: ["customHtml"],
+    delimiters: ["#{", "}"],
+    data: function() {
+        return {
+            notifications: [],
+            visibleNotificationsCount: 0,
+            selectedNotification: null,
+            sending: false,
+            feedback: {
+                rating: 0,
+                feedbackSent: true,
+                feedback: '',
+            },
+            minFeedbackLength: 30,
+            queue: [],
+        }
+    },
+    template: `
+        <div>
+            <div class="m-0 p-0"> 
+                <div class="headlessui-menu-button tw-flex  tw-items-center" aria-haspopup="menu" aria-expanded="false">
+                    <template v-if="customHtml">
+                        <slot></slot>
+                    </template>
+                    <template v-else>
+                        <button type="button" class="tw-appearance-none tw-bg-transparent tw-bg-none tw-border-0  tw-m-2.5 tw-hitespace-nowrap tw-overflow-hidden" aria-haspopup="menu" aria-expanded="false">
+                            <span class="tw-absolute tw-w-px tw-h-px tw-p-0 tw-m-[-1px] tw-overflow-hidden tw-clip-rect tw-whitespace-nowrap tw-border-0" style="clip: rect(0, 0, 0, 0);; overflow: hidden">
+                                View notifications
+                            </span>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="nx rz" style="width: 1.5rem; height: 1.5rem; color: rgb(156 163 175)">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"></path>
+                            </svg>
+                            <span v-if="visibleNotificationsCount" class="badge badge-primary rounded-circle lize-bg-warning tw-absolute" style="top:-5px; margin-left: -5px; font-size: 8px;">#{visibleNotificationsCount}</span>
+                        </button>
+                    </template>
+                </div>
+                <div class="headlessui-menu-items" role="menu" tabindex="0" data-headlessui-state="open" style=" background-color: #FFFFFF; overflow-y: auto; position: absolute; max-height: 80vh; right: 0px; z-index: 1000; margin-top: 0.625rem; width: 26rem; transform-origin: top right; --tw-scale-x: 1; --tw-scale-y: 1; transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y)); border-radius: 0.375rem; padding-top: 0.5rem;  --tw-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);     --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color); --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color); box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000); --tw-ring-color: rgb(17 24 39 / 0.05); border-style: solid; border-color: #e5e7eb; display: none;">
+                    <template v-for="notification in notifications">
+                        <a href="javascript:;" @click.prevent="openNotificationModalOrNPS(notification, true)"   
+                            class="navbar-item sidebar-menu-item tw-flex tw-block tw-items-center tw-text-sm tw-my-0 tw-p-2.5 "  
+                            :style="{ cursor: notification.notification.categoryDisplay === 'IA' ? 'auto' : 'pointer', borderBottom: '1px solid rgb(200, 200, 200)', borderRadius: '0px' }">
+                                <div :class="getNotificationClass(notification).class" style="background-color:#FF8F3D;"></div>
+                                <div class="media">
+                                    <div class="media-body tw-justify-between">
+                                        <div  class= "tw-flex ">
+                                            <span class="tw-mr-2" v-if= "notification.notification.categoryDisplay ==  'Função' || notification.notification.categoryDisplay ==   'Aviso'">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 1 1 0-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 0 1-1.44-4.282m3.102.069a18.03 18.03 0 0 1-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 0 1 8.835 2.535M10.34 6.66a23.847 23.847 0 0 0 8.835-2.535m0 0A23.74 23.74 0 0 0 18.795 3m.38 1.125a23.91 23.91 0 0 1 1.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 0 0 1.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 0 1 0 3.46" />
+                                                </svg>
+                                            </span>
+                                            <span  class="tw-mr-2" v-else-if= "notification.notification.categoryDisplay ==  'Pesquisa'">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0 1 18 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3 1.5 1.5 3-3.75" />
+                                                </svg>
+                                            </span> 
+                                            <span class="tw-mr-2" v-else-if= "notification.notification.categoryDisplay ==  'IA'">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
+                                                </svg>
+                                            </span> 
+                                            <h6 class="tw-mb-0 " >#{ notification.notification.title }  </h6>
+                                        </div>
+                                        <p class="tw-mb-0 tw-text-gray-400">#{ notification.notification.description }</p>
+                                    </div>
+                                </div>
+                        </a>
+                    </template>
+                    <div v-if="!notifications.length">
+                        <p class="tw-mb-2 tw-ml-2" style="font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'; font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11'; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%; -moz-tab-size: 4; -o-tab-size: 4; tab-size: 4; font-variation-settings: normal; font-size: 0.875rem; line-height: 1.5rem;">
+                        Sem novas notificações 🙂
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="modal fade pr-0" id="modalNotification">
+                    <div class="modal-dialog" :class="'modal-'+selectedNotification.notification.modalWidth" role="document" v-if="selectedNotification">
+                        <div class="modal-content" style="border-radius: 12px; z-index: 1;">
+                            <div class="modal-header tw-flex">
+                                <div class="tw-flex tw-items-center tw-justify-center tw-w-100">
+                                    <h5 class="modal-title tw-items-center tw-text-center">
+                                        #{selectedNotification.notification.title}
+                                    </h5>
+                                    <span class="badge badge-success tw-text-white tw-ml-2 ">#{ selectedNotification.notification.categoryDisplay }</span>
+                                </div>
+                                <div>
+                                    <button v-if="!selectedNotification.notification.answerIsRequired" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <i class="fas fa-times-circle"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="modal-body h-100" :style="{ height: selectedNotification.notification.modalHeight }">
+                                <div class="row mb-0" v-if="selectedNotification.notification.content">
+                                    <div class="col-12">
+                                        <div v-html="selectedNotification.notification.content"></div>
+                                    </div>
+                                </div>
+                                <div class="row tw-text-center">
+                                    <div class="col-12">
+                                        <div v-if="selectedNotification.notification.showRating" class="rating tw-mb-2 cp"></div>
+                                        <template v-if="selectedNotification.notification.showForm">
+                                            <label for="id_feedback">
+                                                Deixe uma mensagem 
+                                                <template v-if="feedbackIsRequired()">(Obrigatório)</template>
+                                                <template v-else>(Opcional)</template>
+                                            </label>
+                                            <textarea name="feedback" id="id_feedback" v-model="feedback.feedback" class="form-control" rows="5" :required="selectedNotification.notification.answerIsRequired"></textarea>
+                                        </template>
+                                        <input type="hidden" v-model="feedback.rating" id="feedback_rating" value="0">
+                                        <p class="tw-mb-0 tw-tx-12 tw-mt-2" v-if="!feedbackIsValid()">Caracters restantes: #{ feedback.feedback ? minFeedbackLength - feedback.feedback.length : minFeedbackLength}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <template v-if="!sending">
+                                    <template v-if="selectedNotification.notification.showRating || selectedNotification.notification.showForm">
+                                        <button class="tw-flex tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-lg tw-bg-primary-600 tw-px-9 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-primary-500 hover:tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600" @click="sendFeedback()" :data-dismiss="!feedbackIsRequired() ? 'modal': feedbackIsRequired() && feedbackIsValid() ? 'modal':''" :disabled="!feedback.rating">Enviar</button>
+                                    </template>
+                                    <template v-else>
+                                        <button class="tw-flex tw-items-center tw-justify-center tw-gap-x-1 tw-rounded-lg tw-bg-primary-600 tw-px-9 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-primary-500 hover:tw-text-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-primary-600" data-dismiss="modal">Entendi</button>
+                                    </template>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="position:fixed; bottom:0px; right: 100px; z-index: 100000;" v-if="selectedNotification && selectedNotification.notification.npsType == 'component'">
+                <div class="text-center" style="max-width: 480px;">
+                    <div v-if="!selectedNotification.showNPS" @click="selectedNotification.showNPS = !selectedNotification.showNPS" class="d-flex justify-content-between align-items-center cp p-1 px-3 shadow" style="background-color: white; color: #A1A8B3; border-top: 3px solid #FF8F3D; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+                        <span><i class="far fa-smile-beam tx-18"></i> <i class="fas tx-18" :class="selectedNotification.showNPS ? 'fa-chevron-down':'fa-chevron-up'"></i></span>
+                    </div>
+                    <div class="tx-16 p-3 mb-1 shadow-lg" style="background-color: #EDEDEC; border: 1px solid #ccc; border-radius: 12px;" v-else>
+                        <span class="d-flex align-items-center justify-content-center bg-white rounded-circle" style="border: 1px solid #ccc;color: #585858; position:absolute; right: -10px; top: -10px; width: 30px; height: 30px;">
+                        <i class="fas fa-times cp tx-18" @click="selectedNotification.showNPS = false, setViewed(Object.assign({}, selectedNotification))"></i>
+                        </span>
+                        <span class="tx-normal" v-html="selectedNotification.notification.content"></span>
+                        <hr class="" style="border-top: 1px solid #ccc;">
+                        <template v-if="!selectedNotification.showNPSInput">
+                            <div class="d-flex justify-content-between mt-3">
+                                <div @click="feedback.rating = 1, selectedNotification.showNPSInput = true" :style="{ backgroundColor: selectedNotification.rating >= 1 ? '#88D24B':'#CCC' }" style="border-radius: 8px; color: white; width: 30px; height: 30px;" class="d-flex align-items-center justify-content-center cp mx-1 nps-hover">1</div>
+                                <div @click="feedback.rating = 2, selectedNotification.showNPSInput = true" :style="{ backgroundColor: selectedNotification.rating >= 2 ? '#88D24B':'#CCC' }" style="border-radius: 8px; color: white; width: 30px; height: 30px;" class="d-flex align-items-center justify-content-center cp mx-1 nps-hover">2</div>
+                                <div @click="feedback.rating = 3, selectedNotification.showNPSInput = true" :style="{ backgroundColor: selectedNotification.rating >= 3 ? '#88D24B':'#CCC' }" style="border-radius: 8px; color: white; width: 30px; height: 30px;" class="d-flex align-items-center justify-content-center cp mx-1 nps-hover">3</div>
+                                <div @click="feedback.rating = 4, selectedNotification.showNPSInput = true" :style="{ backgroundColor: selectedNotification.rating >= 4 ? '#88D24B':'#CCC' }" style="border-radius: 8px; color: white; width: 30px; height: 30px;" class="d-flex align-items-center justify-content-center cp mx-1 nps-hover">4</div>
+                                <div @click="feedback.rating = 5, selectedNotification.showNPSInput = true" :style="{ backgroundColor: selectedNotification.rating >= 5 ? '#88D24B':'#CCC' }" style="border-radius: 8px; color: white; width: 30px; height: 30px;" class="d-flex align-items-center justify-content-center cp mx-1 nps-hover">5</div>
+                                <template v-if="selectedNotification.type != 'csat'">
+                                    <div @click="feedback.rating = 6, selectedNotification.showNPSInput = true" :style="{ backgroundColor: selectedNotification.rating >= 6 ? '#88D24B':'#CCC' }" style="border-radius: 8px; color: white; width: 30px; height: 30px;" class="d-flex align-items-center justify-content-center cp mx-1 nps-hover">6</div>
+                                    <div @click="feedback.rating = 7, selectedNotification.showNPSInput = true" :style="{ backgroundColor: selectedNotification.rating >= 7 ? '#F1C323':'#CCC' }" style="border-radius: 8px; color: white; width: 30px; height: 30px;" class="d-flex align-items-center justify-content-center cp mx-1 nps-hover">7</div>
+                                    <div @click="feedback.rating = 8, selectedNotification.showNPSInput = true" :style="{ backgroundColor: selectedNotification.rating >= 8 ? '#EFC42F':'#CCC' }" style="border-radius: 8px; color: white; width: 30px; height: 30px;" class="d-flex align-items-center justify-content-center cp mx-1 nps-hover">8</div>
+                                    <div @click="feedback.rating = 9, selectedNotification.showNPSInput = true" :style="{ backgroundColor: selectedNotification.rating >= 9 ? '#88D24B':'#CCC' }" style="border-radius: 8px; color: white; width: 30px; height: 30px;" class="d-flex align-items-center justify-content-center cp mx-1 nps-hover">9</div>
+                                    <div @click="feedback.rating = 10, selectedNotification.showNPSInput = true" :style="{ backgroundColor: selectedNotification.rating >= 10 ? '#8FD45B':'#CCC' }" style="border-radius: 8px; color: white; width: 30px; height: 30px;" class="d-flex align-items-center justify-content-center cp mx-1 nps-hover">10</div>
+                                </template>
+                            </div>
+                        </template>
+                        <template v-else>
+                            <div>
+                                <textarea style="border-radius: 8px;" :required="feedbackIsRequired()" v-model="feedback.feedback" class="form-control" rows="3" :placeholder="feedbackIsRequired() ? 'Por qual motivo você deu esta nota?':'Você deseja deixar alguma sugestão? (Opcional)'"></textarea>
+                                <p class="mb-0 tx-12 mt-2" v-if="!feedbackIsValid()">Caracters restantes: #{ feedback.feedback ? minFeedbackLength - feedback.feedback.length : minFeedbackLength}</p>
+                            </div>
+                        </template>
+                        <button v-if="selectedNotification.showNPSInput" class="btn btn-block btn-outline-dark mt-3" style="border-radius: 8px;" :disabled="!feedback.rating" @click="sendFeedback()">Enviar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `,
+    methods: {
+        getNotificationClass(notification) {
+            if (!notification.viewed ) {
+                return {
+                    class:"tw-w-1.5 tw-h-1.5 tw-ml-2 tw-rounded-full" ,
+                    style: {
+                        backgroundColor: '#FF8F3D;', 
+                    }
+                };
+            }
+            return {
+                class:"tw-ml-2 " ,
+                style: {
+                }
+            };
+          
+        }, 
+        feedbackIsRequired() {
+            return this.selectedNotification.type == 'csat' && this.feedback.rating <= 3 || this.selectedNotification.type == 'nps' && this.feedback.rating <= 7
+        },
+        feedbackIsValid() {
+            return this.feedbackIsRequired() ? this.feedback.feedback && this.feedback.feedback.length >= this.minFeedbackLength : true
+        },
+        alertTop(text, icon = 'success', timer = 1500) {
+            Swal.fire({
+                position: 'top-end',
+                text: text,
+                icon: icon,
+                showConfirmButton: false,
+                timer: timer,
+                timerProgressBar: true,
+                toast: true,
+            })
+        },
+        getNotificationsOnStart() {
+            this.getNotifications().then((response) => {
+                this.notifications = response.data.notifications
+                this.visibleNotificationsCount = response.data.visibleNotificationsCount
+                this.handleNotificationsFunctions()
+            }).finally(() => {
+                this.handleQueue()
+                if(!this.notifications.length) {
+                    this.getNotifications().then((response) => {
+                        this.notifications = response.data.notifications
+                        this.visibleNotificationsCount = response.data.visibleNotificationsCount
+
+                        this.handleNotificationsFunctions()
+                    }).finally(() => this.handleQueue())
+                }
+            })
+        },
+        handleNotificationsFunctions() {
+            this.notifications = this.notifications.map((e) => ({ ...e, showNPS: false, showNPSInput: false }))
+        },
+        async getNotifications() {
+            return await axios.get("{% url 'notifications:api-list' %}?url_path={{request.META.PATH_INFO}}")
+        },
+        async getNotificationAndSet() {
+            this.getNotifications().then((response) => {
+                this.notifications = response.data.notifications
+                this.visibleNotificationsCount = response.data.visibleNotificationsCount
+                this.handleNotificationsFunctions()
+            }).finally(() => this.handleQueue())
+        },
+        async selectNotification(notification) {
+            this.selectedNotification = notification
+        },
+        async openNotificationModalOrNPS(notification, forceOpen = false) {
+            if (notification.notification.categoryDisplay == 'IA' )
+                return
+
+            await this.selectNotification(notification)
+            
+            let seconds = !forceOpen ? notification.notification.delay ? notification.notification.delay * 1000:0:0
+            
+            this.feedback.feedback = notification.feedback
+
+            if(notification.notification.categoryDisplay == 'Pesquisa' && notification.notification.npsType == 'component') {
+                setTimeout(() => {
+                    notification.showNPS = true
+                }, seconds)
+            } else {
+                setTimeout(() => {
+                    $("#modalNotification").modal('show')
+                    $("#modalNotification").appendTo("body") 
+                    this.startRating()
+                }, seconds)
+            }
+        },
+        startComponentToggle() {
+
+            elementButton = $(this.$el).find('.headlessui-menu-button')[0]
+            elementItems = $(this.$el).find('.headlessui-menu-items')[0]
+
+            elementButton.addEventListener('click', () => {
+                const isVisible = elementItems.style.display === 'block';
+                elementItems.style.display = isVisible ? 'none' : 'block';
+
+                if (isVisible) {
+                    for (const notification of this.notifications) {
+                        if ((!notification.viewed && !notification.notification.displayUntilEndDate) || 
+                            (!notification.viewed)) {                        
+                            this.setViewed(notification);
+                        }
+                    }   
+                }             
+            });
+
+            document.addEventListener('click', (event) => {
+                const target = event.target;
+                if (!elementButton.contains(target) && !elementItems.contains(target)) {
+                    elementItems.style.display = 'none';
+
+                }
+            }); 
+        },
+        async setViewed(notification) {
+            return axios.patch(notification.urls.apiUpdate, { viewed: true }).then((response) => {
+                this.getNotificationAndSet()
+            })
+        },
+        resetFeedback() {
+            this.feedback.feedback = ''
+            this.selectedNotification = null
+            this.queue = []
+        },
+        async sendFeedback() {
+            if(this.feedbackIsValid()) {
+                this.sending = true
+                axios.patch(this.selectedNotification.urls.apiUpdate, this.feedback).then((response) => {
+                    $('#modalNotification').modal('hide')
+                    this.alertTop("Seu feedback foi enviado.")
+                    this.setViewed(Object.assign({}, this.selectedNotification))
+                    this.resetFeedback()
+                }).finally(() => {
+                    this.sending = false
+                })
+            } else {
+                this.alertTop(`Você deve enviar uma mensagem com no mínimo ${this.minFeedbackLength} caracters`, 'error')
+            }
+        },
+        handleQueue() {
+            this.queue = this.notifications.sort((a, b) => b.notification.delay - a.notification.delay).filter(n => n.isNps || (!n.isNps && !n.viewed && n.notification.showModal))
+            this.handleAutomaticShow()
+        },
+        handleAutomaticShow() {
+            if(this.queue.length) {
+                let firstNotification = this.queue.pop()
+                this.openNotificationModalOrNPS(firstNotification)
+            }
+        },
+        startRating() {
+            if($('.rating').length) {
+                $('.rating').starRating({
+                    starIconEmpty: 'far fa-star',
+                    starIconFull: 'fas fa-star',
+                    starColorEmpty: 'lightgray',
+                    showInfo: false,
+                    titles: ["Muito ruim", "Regular", "Normal", "Muito bom", "Excelênte"],
+                    starColorFull: '#FFC107',
+                    starsSize: 2, // em
+                    stars: this.selectedNotification.type == 'csat' ? 5 : 10,
+                });
+                $(document).on('change', '.rating', (e, stars, index) => {
+                    this.feedback.rating = stars
+                });
+            }
+        }
+    },
+    watch: {
+        selectedNotification: function(val) {
+            if(val) {
+                this.feedback.notification = val.notification.id
+            }
+        }
+    },
+    mounted() {
+
+        this.startComponentToggle()
+        this.getNotificationsOnStart()
+
+        $("#modalNotification").on('hidden.bs.modal', () => {
+            this.setViewed(Object.assign({}, this.selectedNotification))
+        })
+
+    }
+})

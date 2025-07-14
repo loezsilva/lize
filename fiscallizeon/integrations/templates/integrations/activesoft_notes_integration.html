@@ -1,0 +1,1264 @@
+{% extends 'redesign/base.html' %}
+{% comment %} {% extends 'dashboard/base_fixed.html' %} {% endcomment %}
+{% load static %}
+{% load widget_tweaks %}
+{% load students_tags %}
+
+{% block title %}Composição de notas - Lize{% endblock title %}
+
+{% block css-additional %}
+  <link href="{% static 'administration/lib/select2/css/select2.min.css' %}" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css">
+  <style>
+    .table-scroll {
+      position: relative;
+      margin: auto;
+      overflow: hidden;
+    }
+    .table-wrap {
+      overflow: auto;
+    }
+    .table-scroll table {
+      width: 100%;
+      margin: auto;
+      border-collapse: separate;
+      border-spacing:0;
+    }
+    .table-scroll th, .table-scroll td {
+      white-space: nowrap;
+      vertical-align: top;
+    }
+    .table-scroll thead, .table-scroll tfoot {
+      background:#f9f9f9;
+    }
+    .fixed-table {
+      position:absolute;
+      top:0;
+      left:0;
+      pointer-events:none;
+    }
+    .fixed-table th, .fixed-table td {
+      visibility:hidden
+    }
+    .fixed-table td, .fixed-table th {
+      border-color: transparent
+    }
+    .fixed-table tbody th {
+      visibility:visible;
+    }
+    .fixed-table .fixed-side {
+      border:1px solid rgb(214, 214, 214);
+      background:#eee;
+      visibility:visible;
+      max-width: 15rem !important;
+    }
+    .fixed-table thead, .fixed-table tfoot {
+      background: transparent;
+    }
+  </style>
+{% endblock css-additional %}
+
+{% comment %}
+{% block breadcrumb-fixed %}
+  <div class="d-sm-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-10">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+          <li class="breadcrumb-item"><a href="{% url 'integrations:integration_synconizations' %}">SINCRONIZAÇÕES</a></li>
+          <li class="breadcrumb-item active" aria-current="page">COMPOSIÇÃO</li>
+        </ol>
+      </nav> 
+      <h4>Gerenciamento composição de notas</h4>
+    </div>
+    <div class="d-none d-md-block">
+        <a href="#" onclick="history.back()" class="btn btn-sm pd-x-15 btn-white btn-uppercase">
+            <i data-feather="arrow-left" class="wd-10 mg-r-5"></i> Voltar
+        </a>
+    </div>
+  </div>
+{% endblock breadcrumb-fixed %}
+{% endcomment %}
+
+{% block content-fixed %}
+<div class="ard cer dcv tw-mb-16">
+  <div class="ls" style="margin-top: 0.625rem; margin-bottom: 0.625rem; justify-content: space-between;">
+    <!-- Empty -->
+  </div>
+  <div class="row mb-2">
+    <div class="col-12 col-lg-6">
+        <h4>Gerenciamento composição de notas</h4>
+    </div>
+    {% if user.client.integration.tokens.all.count > 1 %}
+        <div class="col-12 col-lg-6 d-flex align-items-center justify-content-end">
+            <button data-toggle="modal" data-target="#modalSelectToken" type="button" class="btn btn-primary">
+                <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 17H20M20 17L16 13M20 17L16 21M20 7H4M4 7L8 3M4 7L8 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Alterar token
+            </button>
+        </div>
+    {% endif %}
+  </div>
+<div class="card mg-b-10">
+  <div class="card-header pd-t-20 d-sm-flex align-items-start justify-content-between bd-b-0 pd-b-0">
+    <div>
+      <h3 class="mg-b-5">Enviar notas para a ACTIVESOFT</h3>
+      <p class="tx-13 tx-color-03 mg-b-5"></p>
+    </div>
+  </div>
+  <div class="card-body">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb breadcrumb-style3">
+        <li class="breadcrumb-item cp d-flex align-items-center" @click="wizzard.index > 0 ? wizzard.index = 0:''">
+          <span 
+            class="d-flex align-items-center justify-content-center badge shadow-sm tx-16 rounded-circle mx-1" 
+            style="width: 35px; height: 35px;" 
+            :class="wizzard.index > 0 ? 'badge-success' : wizzard.index === 0 ? 'badge-primary':'badge-secondary'"
+          >1</span> 
+          Turmas/Disciplinas/Fase de notas
+        </li>
+        <li class="breadcrumb-item cp d-flex align-items-center">
+          <span 
+            class="d-flex align-items-center justify-content-center badge shadow-sm tx-16 rounded-circle mx-1" 
+            style="width: 35px; height: 35px;" 
+            :class="wizzard.index === 1 ? 'badge-primary':'badge-secondary'"
+          >2</span> 
+          Confirmar importação de notas
+        </li>
+      </ol>
+    </nav>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-4">
+    <div style="position: -webkit-sticky; position: sticky; top: 100px;">
+      <div class="card mg-b-10">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h4 class="mb-1">${wizzard.index ? 'Confirmação':'Seleção de cadernos e série'}</h4>
+        </div>
+        <div class="card-body">
+          <div v-show="wizzard.index === 0">
+            <div class="form-group row">
+              <div class="col-12">
+                <label for="grade_id">Série <span class="text-danger tx-bold">*</span></label>
+                <select id="grade_id" data-container="body" v-model="composition.grade" data-live-search="true" class="selectpicker form-control" required>
+                  <option :value="grade.id" v-for="grade in grades">${grade.name}</option>
+                </select>
+                <small class="form-text text-muted" v-if="composition.errors['grade']">Este campo é obrigatório</small>
+              </div>
+            </div>
+            <div class="form-group row">
+              <div class="col-12">
+                <label for="exams_id">Cadernos <span class="text-danger tx-bold">*</span></label>
+                <select id="exams_id" data-container="body" v-model="composition.exams" data-live-search="true" data-actions-box="true" multiple required class="selectpicker form-control" multiple required :disabled="!composition.grade">
+                  <option :value="exam.id" v-for="exam in exams">${exam.name}</option>
+                </select>
+                <small class="form-text text-muted" v-if="composition.errors['exams']">Este campo é obrigatório</small>
+              </div>
+              <div class="col-12 mt-2" v-if="loadingExams">
+                <h6>Carregando cadernos <i class="fas fa-sync fa-spin"></i></h6>
+              </div>
+            </div>
+            <div class="form-group row" v-if="composition.exams.length">
+              <div class="col-12">
+                <button type="button" @click="getStudentsScore(), wizzard.index = 1, startFixedTable()" class="btn btn-primary btn-block" :disabled="!continueIsValid()"><i class="fas fa-send"></i> Continuar</button>
+              </div>
+            </div>
+            <div class="form-group row" v-if="composition.exams.length">
+              <div class="col-12">
+                <button type="button" onclick="window.location.reload()" class="btn btn-secondary btn-block"><i class="fas fa-redo"></i> Reiniciar sincronização</button>
+              </div>
+            </div>
+          </div>
+          <div v-show="wizzard.index == 1">
+            <div class="row">
+              <div class="col-12">
+                <div class="alert alert-warning">
+                  O processo de importação será iniciado após você clicar no botão
+                  "Confirmar envio de notas"
+                </div>
+              </div>
+            </div>
+            <div class="form-group row">
+              <div class="col-12">
+                <template v-if="savingComposition">
+                  <button type="button" class="btn btn-secondary btn-block" disabled><i class="fas fa-sync fa-spin"></i>
+                    Aguarde a finalização
+                  </button>
+                </template>
+                <template v-else>
+                  <button type="button" @click="sendNotes()" class="btn btn-success btn-block" :disabled="!syncIsValid()"><i class="fas fa-sync"></i> Confirmar envio de notas</button>
+                  <button type="button" @click="wizzard.index = 0" class="btn btn-secondary btn-block"><i class="fas fa-arrow-left"></i> Voltar</button>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-8">
+    <div class="card shadow-sm" v-if="!composition.exams.length">
+      <div class="card-body" style="min-width: 750px; min-height: 700px;">
+        <div class="row h-100">
+          <div class="col-12 d-flex justify-content-center align-items-center text-center">
+            <div>
+              <h2 class="text-muted tx-medium mt-3">Você precisa selecionar a série e um caderno</h2>
+              <img class="img-fluid" style="opacity: .8;" src="{% static 'administration/assets/img/empty_2.png' %}" alt="">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mb-1" v-for="(examCompositionID, examIndex) in composition.exams">
+      <div class="col-12">
+        <div class="card mg-b-10">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="text-truncate mb-0" style="max-width: 20rem;" :title="getExam(examCompositionID).name">${getExam(examCompositionID).name}</h5>
+            <div class="d-flex align-items-center">
+              <span class="tx-22 font-weight-bold mr-2">${getStudentsInSelectedClasses(getExam(examCompositionID)).length} Alunos</span>
+              <button class="btn btn-outline-danger btn-xs" @click="removeExam(examCompositionID)"><span class="tx-16"><i class="fas fa-times"></i></span></button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div v-show="wizzard.index === 0">
+              <!-- Turmas -->
+              <div class="form-group row mb-2">
+                <div class="col-12">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <label :for="'classes_id-' + examIndex">
+                      <span>
+                        Turmas <span class="text-danger tx-bold">*</span>
+                      </span>
+                    </label>
+                  </div>
+                  <select v-if="!getExam(examCompositionID).itineraryOnly" :id="'classes_id-' + examIndex" data-container="body" v-model="getExam(examCompositionID).selectedClasses" @change="getExamPhases(getExam(examCompositionID), '#examPhase-' + examIndex, $event)" data-live-search="true" data-actions-box="true" multiple required class="selectpicker form-control">
+                    <option :value="classe.id" v-for="classe in getExam(examCompositionID).classes.filter(classe => !classe.isItinerary)">${classe.name}</option>
+                  </select>
+                  <select v-else :id="'classes_id-' + examIndex" data-container="body" v-model="getExam(examCompositionID).selectedClasses" @change="getExamPhases(getExam(examCompositionID), '#examPhase-' + examIndex, $event)" data-live-search="true" data-actions-box="true" required class="selectpicker form-control">
+                    <option :value="classe.id" v-for="classe in getExam(examCompositionID).classes.filter(classe => classe.isItinerary)">${classe.name}</option>
+                  </select>
+                </div>
+                <div class="col-6 mt-2">
+                  <div class="custom-control custom-checkbox">
+                    <input @change="getExam(examCompositionID).selectedClasses = []; handlerSelectInputs('#classes_id-' + examIndex)" type="checkbox" v-model="getExam(examCompositionID).itineraryOnly" class="custom-control-input" :id="'itineraryOnly' + examIndex">
+                    <label class="custom-control-label" :for="'itineraryOnly' + examIndex">Exibir turmas itinerárias</label>
+                  </div>
+                </div>
+              </div>
+              <!-- Fim Turmas -->
+              <!-- Após selecionar as turmas -->
+              <div v-show="getExam(examCompositionID).phases.length">
+                <!-- Fases de nota -->
+                <div class="form-group row mb-2">
+                  <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <label :for="'examPhase-' + examIndex">
+                        <span>
+                          Fase de notas <span class="text-danger tx-bold">*</span>
+                        </span>
+                      </label>
+                    </div>
+                    <select :id="'examPhase-' + examIndex" data-container="body" v-model.number="getExam(examCompositionID).selectedPhase" data-live-search="true" data-actions-box="true" required class="selectpicker form-control phases" :disabled="!getExam(examCompositionID).selectedClasses.length">
+                      <option :value="phase.id" v-for="phase in getExam(examCompositionID).phases">${phase.name}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group row mb-2">
+                  <div class="col-6">
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" v-model="getExam(examCompositionID).replaceNotes" class="custom-control-input" :id="'replaceNotes' + examIndex">
+                      <label class="custom-control-label" :for="'replaceNotes' + examIndex">Substituir notas já lançadas?</label>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" v-model="getExam(examCompositionID).replaceConfirmedNotes" class="custom-control-input" :id="'replaceConfirmedNotes' + examIndex">
+                      <label class="custom-control-label" :for="'replaceConfirmedNotes' + examIndex">Substituir notas já confirmadas?</label>
+                    </div>
+                  </div>
+                </div>
+                <!-- Fim Fases de nota -->
+                <!-- NCs -->
+                <div class="form-group row mb-2">
+                  <div class="col-12 px-1">
+                    <div class="table-responsive">
+                      <table class="table mb-0">
+                        <thead>
+                          <tr v-if="getPhase(getExam(examCompositionID))">
+                            <th v-for="i in 10">
+                              <div class="custom-control custom-radio">
+                                <input type="radio" :id="'nc-'+examIndex+'-'+i" @click="getExam(examCompositionID).nc = i" :name="'ncRadio-' + examIndex" class="custom-control-input">
+                                <label class="custom-control-label text-uppercase" :for="'nc-'+examIndex+'-'+i" @click="getExam(examCompositionID).nc = i">
+                                  <div class="text-truncate">
+                                    <template v-if="getPhase(getExam(examCompositionID)).cabecs[i-1]">
+                                      ${getPhase(getExam(examCompositionID)).cabecs[i-1]}
+                                    </template>
+                                    <template v-else>
+                                      NC${String(i).padStart(2, '0')}
+                                    </template>
+                                  </div>
+                                </label>
+                              </div>
+                            </th>
+                          </tr>
+                        </thead>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                <!-- Fim NCs -->
+                <!-- Disciplinas -->
+                <h6 class="mb-0">Selecione as disciplinas</h6>
+                <div class="d-flex bg-white my-3">
+                  <div class="flex-1 ht-200 bg-gray-100 rounded p-2">
+                    <label>Disciplinas Lize <span class="text-danger tx-bold">*</span></label>
+                    <select class="form-control h-75" v-model="subjectRelationOne" @change="handlerRelation(getExam(examCompositionID), 'fiscallize', $event)" multiple>
+                      <option :value="subject.id" v-for="subject in getExam(examCompositionID).subjects">${subject.name}</option>
+                    </select>
+                  </div>
+                  <div class="divider-text divider-vertical"><i class="fas fa-exchange-alt"></i></div>
+                  <div class="flex-1 ht-200 bg-gray-100 rounded p-2">
+                    <label>Disciplinas Activesoft <span class="text-danger tx-bold">*</span></label>
+                    <select class="form-control h-75" v-model="subjectRelationTwo" @change="handlerRelation(getExam(examCompositionID), 'activeSoft', $event)" multiple v-if="getExam(examCompositionID).subjectsActivesoft">
+                      <option :value="subject.id" v-for="subject in getExam(examCompositionID).subjectsActivesoft.filter(s => !getExam(examCompositionID).subjectsRelation.find(r => r.activeSoft.id == s.id))">${subject.name}</option>
+                    </select>
+                  </div>
+                </div>
+                <button class="btn btn-sm btn-block" :class="canAddRelation() ? 'btn-primary':'btn-secondary'" :disabled="!canAddRelation()" @click="addRelation(getExam(examCompositionID))">Adicionar disciplina</button>
+                <div class="row m-0 bg-gray-100 mt-3 py-2">
+                  <div class="col-12" v-for="relation in getExam(examCompositionID).subjectsRelation">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div>
+                        <h6 class="text-truncate mb-0" style="max-width: 20rem;" v-for="(subject, subjectIndex) in relation.fiscallize">${subject.name}</h6>
+                      </div>
+                      <div class="divider-text divider-vertical"><i class="fas fa-exchange-alt"></i></div>
+                      <div>
+                        <h6 class="text-truncate mb-0">(ActiveSoft) - ${relation.activeSoft.name}</h6>
+                      </div>
+                      <i class="fas fa-times text-danger cp" @click="getExam(examCompositionID).subjectsRelation.splice(getExam(examCompositionID).subjectsRelation.indexOf(getExam(examCompositionID).subjectsRelation.find(r => r.activeSoft.id == relation.activeSoft.id)), 1)"></i>
+                    </div>
+                    <hr class="my-2">
+                  </div>
+                </div>
+                <!-- Fim Disciplinas -->
+              </div>
+              <template v-if="!getExam(examCompositionID).selectedClasses.length">
+                <div class="row">
+                  <div class="col-12">
+                    <h6 class="text-muted">Você precisa selecionar pelo menos uma turma</h6>
+                  </div>
+                </div>
+              </template>
+              <template v-if="getExam(examCompositionID).loadingCompositions">
+                <div class="row">
+                  <div class="col-12">
+                    <h6 class="text-muted">Carregando as composições, aguarde... <i class="fas fa-sync fa-spin"></i></h6>
+                  </div>
+                </div>
+              </template>
+              <!-- Fim após selecionar as turmas -->
+            </div>
+            <div v-show="wizzard.index == 1">
+              <div>
+                <ul class="nav nav-tabs" role="tablist">
+                  <li class="nav-item" role="presentation">
+                    <button class="nav-link active" data-toggle="tab" :data-target="'#examSumary-'+examIndex" type="button" role="tab" aria-controls="home" aria-selected="true">Resumo</button>
+                  </li>
+                  <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-toggle="tab" :data-target="'#examLogs-'+examIndex" type="button" role="tab" aria-controls="profile" aria-selected="false">Logs de importação <span class="badge badge-danger ml-2" v-if="getExam(examCompositionID).logs.filter(l => l.type == 'error').length">${getExam(examCompositionID).logs.filter(l => l.type == 'error').length}</span></button>
+                  </li>
+                </ul>
+                <div class="tab-content">
+                  <div class="tab-pane fade show active" :id="'examSumary-'+examIndex" role="tabpanel">
+                    <!-- Início do resumo -->
+                    <div class="row mt-3">
+                      <div class="col-sm-5">
+                        <h3 class="tx-normal tx-rubik tx-spacing--2 mg-b-5">${'NC' + String(getExam(examCompositionID).nc).padStart(2, '0')} <span class="text-uppercase text-muted" v-if="getNCName(getExam(examCompositionID), getExam(examCompositionID).nc)">(${getNCName(getExam(examCompositionID), getExam(examCompositionID).nc) ? getNCName(getExam(examCompositionID), getExam(examCompositionID).nc).value : ''})</span></h3>
+                        <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-10" v-if="getPhase(getExam(examCompositionID))">Fase de notas: ${getPhase(getExam(examCompositionID)).name}</h6>
+                      </div>
+                    </div>
+                    <!-- Fim do resumo -->
+                    <!-- Alunos -->
+                    <div class="row mt-1">
+                      <div class="col-12">
+                        <div :id="'table-scroll-'+examIndex" class="table-scroll">
+                          <div class="table-wrap">
+                            <table class="table table-striped table-bordered mb-0 main-table">
+                              <thead>
+                                <tr>
+                                  <th class="fixed-side" style="width: 3.5rem;">Matrícula</th>
+                                  <th class="fixed-side" style="width: 0rem !important;">Aluno</th>
+                                  <th v-for="relation in getExam(examCompositionID).subjectsRelation" class="text-truncate tooltips cp" :data-tippy-content="relation.activeSoft.name">${relation.activeSoft.name}</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr v-for="(student, studentIndex) in getStudentsInSelectedClasses(getExam(examCompositionID)).sort((a, b) => a.name.localeCompare(b.name))">
+                                  <td class="fixed-side align-middle" :title="student.enrollmentNumber" style="width: 3.5rem;">${student.enrollmentNumber}</td>
+                                  <td class="fixed-side text-uppercase text-truncate" style="max-width: 15rem !important;" :title="student.name">
+                                    <p class="text-truncate mb-0">
+                                      ${student.name}
+                                    </p>
+                                    <span class="text-muted" style="font-size: .6rem;">${student.classe.name}</span>
+                                  </td>
+                                  <td class="align-middle" v-for="relation in getExam(examCompositionID).subjectsRelation">
+                                    <template v-if="student.scoreLoaded">
+                                      <template v-if="getExam(examCompositionID).errors.includes(Number(student.idErp))">
+                                        <span class="text-muted" title="O aluno não encontrado na turma selecionada, o aluno pode ter cido transferido ou desligado.">Falha</span>
+                                      </template>
+                                      <template v-else>
+                                        <span class="text-muted">
+                                          {% comment %}
+                                            ${getNCValue(getExam(examCompositionID), student.activeSoftData, relation.activeSoft, examCompositionID)} 
+                                            <i class="fas fa-arrow-right" style="font-size: .7rem;"></i>  
+                                          {% endcomment %}
+                                          ${student.score.subjects.filter(subject => subject.score !== null && relation.fiscallize.find(s => s.id == subject.id)).length ? student.score.subjects.filter(subject => subject.score >= 0 && relation.fiscallize.find(s => s.id == subject.id)).reduce((total = 0, s) => total += Number(s.score), 0).toFixed(2) : '--' }
+                                        </span>
+                                      </template>
+                                    </template>
+                                    <template v-else>
+                                      <i class="text-muted fas fa-sync fa-spin"></i>
+                                    </template>
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Fim Alunos -->
+                  </div>
+                  <div class="tab-pane fade" :id="'examLogs-'+examIndex" role="tabpanel">
+                    <div class="row mt-4">
+                      <div class="col-12">
+                        <div class="contact-content">
+                          <div class="contact-content-header">
+                            <nav class="nav">
+                              <a :href="'#examLogsSuccess-'+examIndex" class="nav-link active" data-toggle="tab">Todos os envios</a>
+                              <a :href="'#examLogsErrors-'+examIndex" v-show="getExam(examCompositionID).logs.filter(l => l.type == 'error').length" class="nav-link" data-toggle="tab">Apenas envios com erro <span class="badge badge-danger ml-2">${getExam(examCompositionID).logs.filter(l => l.type == 'error').length}</span></a>
+                            </nav>
+                          </div>
+                          <div class="contact-content-body">
+                            <div class="tab-content">
+                              <div :id="'examLogsSuccess-'+examIndex"  class="tab-pane show active">
+                                <div class="card card-widget card-events">
+                                  <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                                    <ul class="list-unstyled media-list mg-b-0">
+                                      <li class="media align-items-center" v-for="(log, index) in getExam(examCompositionID).logs">
+                                        <div class="media-left">
+                                          <p>${String(index + 1).padStart(2, '0')}</p>
+                                        </div>
+                                        <div class="media-body" :class="log.type == 'error' ? 'event-panel-pink':'event-panel-green'">
+                                          <h6 class="event-title">${log.message}</h6>
+                                        </div>
+                                      </li>
+                                    </ul>
+                                  </div><!-- card-body -->
+                                  <div class="card-footer bg-transparent">
+                                    <span class="text-muted">Lista com todos os envios</span>
+                                  </div><!-- card-footer -->
+                                </div>
+                              </div>
+                              <div :id="'examLogsErrors-'+examIndex" class="tab-pane">
+                                <div class="card card-widget card-events">
+                                  <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                                    <ul class="list-unstyled media-list mg-b-0">
+                                      <li class="media align-items-center" v-for="(log, index) in getExam(examCompositionID).logs.filter(l => l.type == 'error')">
+                                        <div class="media-left">
+                                          <p>${String(index + 1).padStart(2, '0')}</p>
+                                        </div>
+                                        <div class="media-body event-panel-pink">
+                                          <h6 class="event-title">${log.message}</h6>
+                                        </div>
+                                      </li>
+                                    </ul>
+                                  </div><!-- card-body -->
+                                  <div class="card-footer bg-transparent">
+                                    <span class="text-muted">Lista de envios com erro</span>
+                                  </div><!-- card-footer -->
+                                </div>
+                              </div><!-- tab-pane -->
+                            </div><!-- tab-content -->
+                          </div><!-- contact-content-body -->
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-3" v-show="wizzard.index == 1">
+      <div class="row">
+        <div class="col-12">
+          <div class="alert alert-warning">
+            O processo de importação será iniciado após você clicar no botão
+            "Confirmar envio de notas"
+          </div>
+        </div>
+      </div>
+      <div class="form-group row">
+        <div class="col-12">
+          <template v-if="savingComposition">
+            <button type="button" class="btn btn-secondary btn-block" disabled><i class="fas fa-sync fa-spin"></i>
+              Aguarde a finalização
+            </button>
+          </template>
+          <template v-else>
+            <button type="button" @click="sendNotes()" class="btn btn-success btn-block" :disabled="!syncIsValid()"><i class="fas fa-sync"></i> Confirmar envio de notas</button>
+            <button type="button" @click="wizzard.index = 0" class="btn btn-secondary btn-block"><i class="fas fa-arrow-left"></i> Voltar</button>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="modal fade" id="modalSelectToken" tabindex="-1" aria-labelledby="modalSelectTokenLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalSelectTokenLabel">Selecione um token</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body h-100">
+        {% for token in user.client.integration.tokens.all %}
+          <div class="row">
+              <div class="col-12">
+                  <div class="card">
+                      <div class="card-body align-items-center d-flex justify-content-between">
+                          <div>
+                              <h5 class="mb-0">{{token.name}}</h5>
+                              <p class="mb-0 text-muted">Token: {{token.fake}}</p>
+                              <p class="mb-0 text-muted">Expira em: {{token.expiration_date|default:'Sem expiração'}}</p>
+                          </div>
+                          {% if token_index == forloop.counter0 %}
+                              <button type="button" class="btn btn-secondary disabled">Selecionado</a>
+                          {% else %}
+                              <a href="{% url 'integrations:integration-notes-token' token=forloop.counter0 %}" class="btn btn-primary">Selecionar</a>
+                          {% endif %}
+                      </div>
+                  </div>
+              </div>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content-fixed %}
+
+{% block js-additional %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="{% static 'administration/lib/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'administration/lib/jquery-steps/build/jquery.steps.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
+
+<script>
+  var app = new Vue({
+    delimiters: ['${', '}'],
+    el: '#app',
+    data: {
+      relationObject: {
+        fiscallize: null,
+        activeSoft: null,
+      },
+      tablesStarteds: false,
+      subjectRelationOne: [],
+      subjectRelationTwo: [],
+      canSync: false,
+      examsOriginal: [],
+      exams: [],
+      grades: [
+        {% for grade in grades %}
+          {
+            id: "{{grade.id}}",
+            name: "{{grade}}",
+          },
+        {% endfor %}
+      ],
+      subjectsFiscallize: [
+        {% for subject in subjects %}
+          {
+            id: '{{subject.id}}',
+            name: '{{subject}}',
+          },
+        {% endfor %}
+      ],
+      classesFiscallize: [],
+      studentsFiscallize: [],
+      subjects: [],
+      phases: [],
+      students: [],
+      wizzard: {
+        index: 0,
+        labels: {
+          next: 'Próximo',
+          previous: 'Anterior',
+          finish: 'Confirmar',
+        }
+      },
+      composition: {
+        grade: null,
+        classe: null,
+        classes: [],
+        classesSubjects: [],
+        subject: null,
+        selectedSubjectsExams: [],
+        phase: null,
+        classesDetail: [],
+        note: null,
+        selectedExams: [],
+        replaceNotes: true,
+        notes: [],
+        exams: [],
+        students: [],
+        errors: {},
+        syncType: 'exam',
+        syncSubjects: false, 
+        sumNotes: false,
+        sumSubjectNotes: false,
+      },
+      loadStudents: false,
+      loadSummary: false,
+      loadingExams: false,
+      promissesInterval: null,
+      savingComposition: false,
+      syncProofs: [],
+    },
+    updated() {
+      
+    },
+    watch: {
+      'composition.sumNotes': function(val) {
+        if(val) {
+          this.composition.syncSubjects = false
+          this.composition.selectedSubjectsExams = []
+          this.composition.selectedExams.forEach((exam) => exam.selectedSubjects = [])
+        }
+      },
+      'composition.grade': function(val) {
+        if(val) {
+          this.exams = []
+          this.loadingExams = true
+          this.composition.exams = []
+          this.handlerExamsGrade(val)
+        }
+      },
+      'composition.exams': function(val) {
+        if(val.length) {
+          this.handlerExamsClasses(this.composition.grade)
+        }
+      },
+      subjectRelationTwo: function(val) {
+        if(val.length > 1) {
+          this.subjectRelationTwo = val.pop()
+        }
+      },
+    },
+    methods: {
+      getNCName(exam, ncNumber) {
+        // O número do NC precisa ser um numero de 1 a 10
+        return exam.ncs.find(nc => nc.name.includes(String(ncNumber)))
+      },
+      removeExam(examID) {
+        Swal.fire({
+          title: 'Confirmação',
+          text: "Você confirma a remoção do caderno da composição?",
+          icon: "question",
+          showCancelButton: true,
+          cancelButtonText: 'Cancelar',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'Sim, confirmo',
+          showConfirmButton: true,
+        }).then((result) => {
+          if (result.value) {
+            this.composition.exams.splice(this.composition.exams.indexOf(examID), 1)
+            this.handlerSelectInputs('#exams_id')
+          }
+        })
+      },
+      getPhase(exam) {
+        if(exam.phases.length && exam.selectedPhase) {
+          return exam.phases.find(phase => phase.id == exam.selectedPhase)
+        }
+      },
+      continueIsValid() {
+        return this.getSelectedExams().every((exam) => {
+          if(!exam.nc) return false;
+          else if(!exam.selectedPhase) return false;
+          else if(!exam.selectedClasses.length) return false;
+          else if(!exam.subjectsRelation.length) return false;
+          else {
+            return true
+          }
+        })
+      },
+      syncIsValid() {
+        return this.getSelectedExams().every((exam => this.getStudentsInSelectedClasses(exam).every(student => student.scoreLoaded)))
+      },
+      log(exam, student, message, type = 'success') {
+        exam.logs.push({
+          student: student,
+          message: message,
+          type: type,
+        })
+      },
+      getNCValue(exam, student, subject, examCompositionID) {
+
+        let phase = this.getPhase(this.getExam(examCompositionID))
+
+        boletins = this.getBoletins(student, subject.id, phase.id)
+        
+        if(boletins.length) {
+          let boletim = boletins[0]
+          ncValue = boletim["NC"+String(exam.nc).padStart(2, '0')]
+          if(ncValue) {
+            return ncValue.toFixed(2)
+          } else {
+            return '--'
+          }
+        }
+        return '--'
+      },
+      getSelectedExams() {
+        return this.exams.filter(exam => this.composition.exams.includes(exam.id))
+      },
+      handlerCanSync() {
+        this.getSelectedExams().forEach((exam) => {
+          if(exam.students.every(student => student.scoreLoaded)) {
+            this.canSync = true
+          }
+        })
+      },
+      getStudentsInSelectedClasses(exam) {
+        let students = exam.students.filter(student => {
+          if(student.classe && student.classeList){
+            return exam.selectedClasses.includes(student.classe.id) || student.classeList.some(classe => exam.selectedClasses.includes(classe.id))
+          }
+        })
+        if (exam.itineraryOnly) {
+          let studentClasse = exam.selectedClasses
+          students = students.map((student) => {
+            student.classe = student.classeList.find(classe => classe.id == studentClasse)
+            return student
+          })
+        }
+        return students
+      },
+      async getStudentsScore() {
+        for (examID of this.composition.exams) {
+          let exam = this.getExam(examID)
+          let students = this.getStudentsInSelectedClasses(exam)
+          for(student of students) {
+            {% comment %} 
+            if(!student.activeSoftData) {
+              let studentID = Number(student.idErp)
+              let classeID = Number(student.classe.idErp)
+              
+              await this.getStudentDataOnActiveSoft(studentID, classeID).then((response) => {
+                student.activeSoftData = response.data
+              }).catch((e) => {
+                
+                exam.errors.push(studentID)
+
+                  let message = `Ocorreu um erro ao tentar carregar os dados do aluno: ${student.name} da Activesoft`
+                  if(e.message.includes('timeout') && e.message.includes('exceeded')) {
+                    message = `A Activesoft demorou muito para retornar os dados do aluno: ${student.name}`
+                  } else {
+                    Swal.fire({
+                      icon: 'error',
+                      title: 'Erro',
+                      text: message,
+                    }) 
+                  }
+                })
+              }
+            {% endcomment %}
+            
+            student.scoreLoaded = false
+
+            await this.getStudentScore(exam, student).then((response) => {
+
+              // Inicializa a variável subjects dentro de score
+              if(!student.score) {
+                student.score = {
+                  subjects: []
+                }
+              }
+              
+              // Chega se tem response (Quando fo uma promise vazia o response não vai existir)
+              if(response) {
+                response.data.subjects.forEach((subject) => {
+                  if(!student.score.subjects.find((s => s.id == subject.id))) {
+                    student.score.subjects.push(subject)
+                  }
+                })
+  
+                student.score.subjects.forEach((subject) => {
+                  this.handlerCanSync()
+                })
+
+              }
+            }).finally(() => student.scoreLoaded = true)
+          }
+        }
+      },
+      handlerRelation(exam, who, event) {
+        if(who == 'fiscallize') {
+          this.relationObject.fiscallize = exam.subjects.filter(subject => this.subjectRelationOne.includes(subject.id))
+        } else {
+          this.relationObject.activeSoft = exam.subjectsActivesoft.find(subject => subject.id == event.target.value)
+        }
+      },
+      addRelation(exam) {
+        if(this.canAddRelation(showError = true)) {
+          exam.subjectsRelation.push(this.relationObject)
+          this.resetRelationObject()
+        }
+      },
+      canAddRelation(showError) {
+        if((this.relationObject.fiscallize && this.relationObject.fiscallize.length) && this.relationObject.activeSoft) {
+          return true
+        } 
+        if (showError) {
+          Swal.fire({
+            text: 'Erro ao adicionar relação',
+            icon: 'error',
+          })
+        }
+        return false
+      },
+      resetRelationObject() {
+        this.relationObject = {
+          fiscallize: null,
+          activeSoft: null,
+        }
+        this.subjectRelationOne = []
+        this.subjectRelationTwo = []
+      },
+      async getExamPhases(exam, selector, event) {
+        new Promise((resolve) => {
+          let selectTag = event.target
+          let firstClasse = exam.classes.find(classe => classe.id == selectTag.value)
+
+          if (firstClasse) {
+            let firstStudent = firstClasse.students.filter(student => student.classe && !exam.errors.includes(Number(student.idErp))).at(0)
+            if(exam.errors.length >= firstClasse.students.length) {
+              Swal.fire({
+                title: 'Erro ao carregar fase de notas',
+                html: 'Nenhuma fase de notas foi encontrado de acordo com os dados dos alunos da turma selecionada',
+                icon: 'error',
+              })
+            }
+            if(firstStudent) {
+              let student = this.getFirstStudentDataActiveSoft(exam, Number(firstStudent.idErp), Number(firstClasse.idErp)).finally(() => {
+                if(exam.phases.length) {
+                  resolve()
+                } else {
+                  this.getExamPhases(exam, selector, event)
+                }
+              })
+            }
+          }
+        }).then(() => {
+          this.handlerSelectInputs(selector)
+        })
+      },
+      handlerExams() {
+        let examsCopy = Object.assign(this.examsOriginal.filter(exam => exam.students.length), [])
+        this.exams = examsCopy
+      },
+      async getExamStudents(exam) {
+        return await axios.get(`{% url 'integrations:api-get-exams-students' %}?token={{integration_token.id|default:''}}&exam=${exam.id}`)
+      },
+      async handlerExamsClasses(gradeID) {
+        for(examID of this.composition.exams) {
+          let exam = this.getExam(examID)
+          await this.getExamStudents(exam).then((response) => {
+            exam.students = response.data.filter(s => s.classe)
+            exam.studentsLoaded = true
+          }).finally(() => {
+            let classes = []
+            exam.students.forEach((student) => {
+              student.classeList.forEach((studentClass) => {
+                let classe = classes.find(classe => classe.id == studentClass.id)
+                if(!classe) {
+                  classes.push({...studentClass, students: [student]})
+                }else{
+                  classe.students.push(student)
+                }
+              })
+            })
+            exam.classes = classes
+            this.handlerSelectInputs('#classes_id-' + this.composition.exams.indexOf(exam.id))
+          })
+        }
+      },
+      async getExamsFromDB(gradeID) {
+        return await axios.get(`{% url 'integrations:api-get-exams' %}?token={{integration_token.id|default:''}}&grade=${gradeID}`)
+      },
+      handlerExamsGrade(gradeID){
+        this.getExamsFromDB(gradeID).then((response) => {
+          this.examsOriginal = response.data
+          let examsCopy = Object.assign(this.examsOriginal, [])
+          this.exams = examsCopy
+          this.handlerSelectInputs('#exams_id')
+        }).finally(() => this.loadingExams = false)
+      }, 
+      getExam(examID) {
+        return this.exams.find((exam) => exam.id == examID)
+      },
+      headers(token) {
+        return {{headers|safe}}
+      },
+      getBoletins(student, subject, idPhase, getAll) {
+        if(getAll) {
+          return student.boletim
+        }
+        return student && student.boletim.length ? student.boletim.filter((boletim) => 
+          ["N", "D"].includes(boletim.TipoComposicao) && 
+          boletim.RequerNota && ["CURSANDO", "ATIVO", "PRÉ-MATRÍCULA (PAGA)", "AGUARDADO ASS.","PAGO NV", "PAGO VET", "PENDENCIA", "CONTRATO ENTREGUE", "DOCUMENTAÇÃO TODA OK", "APROVADO", "MATRICULADO"].includes(student.situacao_aluno_turma.toUpperCase()) && 
+          boletim.QtdNotas !== null && 
+          boletim.StFaseInformada && 
+          (subject ? Number(boletim.IdDisciplina) == Number(subject) : true) && 
+          (idPhase ? Number(boletim.IdFaseNota) == Number(idPhase) : true)
+        ) : []
+      },
+      reset(option) {
+        if (option == 'classes') {
+        
+          this.classesFiscallize = []
+          this.composition.classes = []
+        
+        } else if(option == 'students') {
+          
+          this.studentsFiscallize = []
+
+        } else {
+        
+          this.loadStudents = false
+          this.students = []
+          this.subjects = []
+          this.phases = []
+          this.composition.notes = []
+        
+        }
+      },
+      async getFirstStudentDataActiveSoft(exam, studentIDErp, classeIDErp) {
+        exam.loadingCompositions = true
+        await this.getStudentDataOnActiveSoft(Number(studentIDErp), Number(classeIDErp)).then((response) => {
+          
+          studentActiveSoft = response.data
+          let boletins = this.getBoletins(studentActiveSoft)
+          
+          if(!boletins.length) {
+            if(!exam.errors.includes(studentIDErp)) {
+              exam.errors.push(studentIDErp)
+            }
+          } else {
+            studentActiveSoft.boletim.forEach((boletim) => {
+              phaseObject = { name: boletim.CabecBoletim, id: boletim.IdFaseNota, cabecs: [] }
+              for (let key in boletim) {
+                let value = boletim[key]
+                let keyName = key.toLowerCase()
+                if((keyName.includes('cabec0') || keyName.includes('cabec1')) && value) {
+                  phaseObject.cabecs.push(value)
+                }
+              }
+
+              if(!exam.phases.find(phase => Number(phase.id) == Number(phaseObject.id)) && phaseObject.cabecs.length) {
+                exam.phases.push(phaseObject)
+              }
+            })
+          
+            // Faz o Each nos boletins
+            boletins.forEach((boletim) => {
+              
+              subjectObject = { name: boletim.NomeDisciplina, id: boletim.IdDisciplina }
+
+              // Pega as disciplinas dos boletins do primeiro aluno que vem da Activesoft
+              if(!exam.subjectsActivesoft.find((subject) => Number(subject.id) == Number(subjectObject.id))) {
+                exam.subjectsActivesoft.push(subjectObject)
+              }
+
+              for (let key in boletim) {
+                let value = boletim[key]
+                let keyName = key.toLowerCase()
+                if((keyName.includes('cabec0') || keyName.includes('cabec1')) && value) {
+                  if(!exam.ncs.find(nc => nc.value == value)) {
+                    let ncObject = { name: key, value: boletim[key] }
+                    exam.ncs.push(ncObject)
+                  }
+                }
+              }
+            })
+          }
+          exam.loadingCompositions = false
+        }).catch((e) => {  
+          // console.error(e)
+          if(!exam.errors.includes(studentIDErp)) {
+            exam.errors.push(studentIDErp)
+          }
+        })
+      },
+      async getStudentScore(exam, student) {
+        
+        let subjects = []
+
+        exam.subjectsRelation.forEach(relation => {
+          relation.fiscallize.forEach(s => {
+            subjects.push(s.id)
+          })
+        })
+
+        // Check if not includes in subjects loadeds
+        subjects = subjects.filter(s => student.score && !student.score.subjects.find(subject => subject.id == s) || !student.score)
+
+        if (!subjects.length) {
+
+          // Retorna promessa vazia para não quebrar a função
+          return await new Promise((resolve) => resolve())
+
+        } else {
+          
+          let payload =  {
+            exam: exam.id, 
+            student: student.id, 
+            subjects: subjects,
+          }
+
+          return await axios.post("{% url 'api2:students-get-score' %}", payload)
+        
+        }
+      },
+      async getStudentDataOnActiveSoft(studentIDErp, classeIDErp) {
+        const url = `{{user.client.integration.urls.boletins}}?aluno_id=${Number(studentIDErp)}&turma_id=${Number(classeIDErp)}`;
+        return await axios({
+          method: 'GET',
+          url: url, 
+          headers: this.headers(),
+        })
+      },
+      selectedClasseAndSubject() {
+        let object = {
+          classe: null,
+          subject: null,
+          label: '',
+        }
+        let classe = this.classes.find((classe) => classe.id == this.composition.classe)
+        let subject = this.composition.subject ? this.subjects.find((subject) => subject.id == this.composition.subject) : null
+        if(classe) {
+          object.classe = classe
+          object.label = `${classe.name}`
+        } if(subject) {
+          object.subject = subject
+          object.label += `/ ${subject.name}`
+        }
+        return object
+      },
+      handlerSelectInputs(selector = 'select') {
+        setTimeout(() => {
+          $(selector).selectpicker('destroy');
+          $(selector).selectpicker({
+            style: 'btn-white',
+            placeholder: "Selecione uma opção",
+            noneSelectedText: 'Nenhuma seleção',
+            noneResultsText: 'Nenhum resultado encontrado',
+            selectAllText: 'Todos',
+            deselectAllText: 'Nenhum'
+          })
+        }, 300)
+      },
+      async sendNoteToActive(composition) {
+        const url = `{{user.client.integration.urls.send_notes}}`
+        return await axios.post(url, composition, { headers: this.headers() })  
+      },
+      async handSendNote(exam) {
+
+        this.savingComposition = true
+            
+        exam.inSync = true
+        let students = this.getStudentsInSelectedClasses(exam)
+        let studentsCount = students.length * exam.subjectsRelation.length
+        let proofsLength = this.syncProofs.push({
+          exam: exam.id,
+          students: [],
+        })
+        let currentProof = this.syncProofs[proofsLength - 1]
+        
+        for(relation of exam.subjectsRelation) {
+
+          for(student of students) {
+            let composition = {
+              "turma_id": Number(student.classe.idErp),
+              "fase_nota_id": Number(exam.selectedPhase),
+              "disciplina_id": Number(relation.activeSoft.id),
+              "sobrescrever_nota": exam.replaceNotes,
+              "sobrescrever_nota_confirmada": exam.replaceConfirmedNotes,
+              "notas": []
+            }
+            let noteObject = {
+              "matricula": String(student.enrollmentNumber),
+            }
+            let studentsProofLength = currentProof.students.push({
+              pk: student.id,
+              relation: relation,
+              composition: composition,
+              noteObject: noteObject,
+              errorMessage: "",
+            })
+            let currentStudentProof = currentProof.students[studentsProofLength - 1]
+            
+            score = student.score.subjects.filter(subject => subject.score !== null && relation.fiscallize.find(s => s.id == subject.id)).length ? student.score.subjects.filter(subject => relation.fiscallize.find(s => s.id == subject.id)).reduce((total = 0, s) => total += Number(s.score), 0) : null
+
+            noteObject["nota" + String(exam.nc).padStart(2, '0')] = score !== null ? Number(score).toFixed(5) : score
+            composition["notas"].push(noteObject)
+            
+            await this.sendNoteToActive(composition).then((response) => {
+              this.log(exam, student, message = `As notas do aluno ${student.name} com matrícula ${student.enrollmentNumber} foi lançada`, type = 'succes')
+            }).catch((e) => {
+              if(e.response && e.response.data) {
+                this.log(exam, student, message = String(e.response.data.message), type = 'error')
+                currentStudentProof.errorMessage = String(e.response.data.message)
+              } else {
+                this.log(exam, student, message = `Erro temporário para enviar as notas do aluno ${student.name}, o servidor activesoft retornou um erro inesperado, tente enviar novamente.`, type = 'error')
+              }
+            }).finally(() => {
+              studentsCount--
+              if(!studentsCount) {
+                exam.inSync = false
+                this.handlerExamsSync()
+              }
+            })
+          }
+        }
+      },
+      sendNotes() {
+        
+        let exams = this.getSelectedExams()
+
+        exams.forEach((exam) => {
+          let studentsWithErrors = exam.students.filter(s => exam.errors.includes(Number(s.idErp))).map(s => s.name)
+          if(studentsWithErrors.length) {
+            Swal.fire({
+              title: 'Confirmação',
+              html: `
+                Os seguintes alunos do caderno <h5>${exam.name}</h5> não tiveram suas notas carregadas por terem <strong>mudado de turma ou saído da escola</strong>
+                <br>
+                <br>
+                <ul>
+                  ${studentsWithErrors.map(n => `<li>${n}</li>`).join(' ')}
+                <ul>
+                <br>
+                <br>
+                <strong>enviar mesmo assim?</strong> 
+                <br>
+                (esses alunos não terão notas no Active)
+              `,
+              icon: 'info',
+              confirmButtonText: "Sim, enviar!",
+              showCancelButton: true,
+              cancelButtonText: "Não, cancelar!"
+            }).then(({ isConfirmed }) => {
+              if(isConfirmed) {
+                this.handSendNote(exam)
+              }
+            })
+          } else {
+            this.handSendNote(exam)
+          }
+        })
+      }, 
+      handlerExamsSync() {
+        exams = this.getSelectedExams()
+        if(exams.every(exam => !exam.inSync)) {
+          axios.post('{% url "integrations:notes-migration-proof-create" %}', {
+            proofs: this.syncProofs,
+          }).then((response) => {
+            console.log("Comprovante de migração de notas gerado.")
+          })
+          
+          Swal.fire({
+            title: 'Finalizado',
+            text: 'Composição de notas concluída com sucesso',
+            icon: 'success',
+          }).then(({ isConfirmed }) => {
+            if(isConfirmed) {
+              this.savingComposition = false
+              //window.location.href = ''
+            }
+          })
+          
+          axios.post("{% url 'notifications:api-especial-notification' %}", { where: "after_send_note" }) // Responsável por criar notificação personalizada após enviar notas para active
+
+        }
+      },
+      getAllHandlers() {
+        this.handlerExams()
+        this.handlerSelectInputs()
+      },
+      startFixedTable() {
+        if(!this.tablesStarteds) {
+          const tables = $('.main-table')
+          if(tables.length) {
+            tables.each((i, table) => {
+              let clone = table.cloneNode(true)
+              clone.className += " fixed-table";
+              let tableBody = $(`#table-scroll-${i}`);
+              tableBody.append(clone);
+            })
+          }
+        }
+        this.tablesStarteds = true
+      },
+      checkActivesoftToken() {
+        let url = `{{user.client.integration.urls.unities_list}}`;
+        return axios.get(url, { headers: this.headers() })
+      },
+      showExpirationMessage() {
+        Swal.fire({
+            title: "Erro",
+            html: `
+              Ocorreu um erro ao tentar buscar as informações na Activesoft. Certifique-se de que o token é válido e verifique sua data de expiração.
+            `,
+            icon: "error",
+            showCancelButton: true,
+            confirmButtonColor: "#FF8F3D",
+            cancelButtonColor: "#9BA3AF",
+            confirmButtonText: "Ok",
+            showCancelButton: false,
+        }).then((result) => {
+            if (result.isConfirmed) {
+
+            }
+        });
+        this.loads.unities = false
+      },
+    },
+    mounted() {
+      {% if token_expirated %}
+        this.showExpirationMessage()
+      {% else %}
+        this.checkActivesoftToken().then(() => {
+          this.getAllHandlers()    
+        }).catch((e) => {
+          this.showExpirationMessage()
+        })
+      {% endif %}
+    }
+  })
+</script>
+
+
+{% endblock %}

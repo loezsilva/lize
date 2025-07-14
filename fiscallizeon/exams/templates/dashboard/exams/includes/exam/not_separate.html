@@ -1,0 +1,328 @@
+{% load i18n %}
+
+<div class="col-12">
+    <div class="row m-0 header break-inside-avoid">
+        <div class="col-12">
+            {% if exam_header %}
+                {{exam_header.content|safe}}
+            {% else %}
+                <table class="table table-bordered">
+                    <tr>
+                        <td class="w-25 p-4" rowspan="6">
+                            <img src="{{ object.coordinations.all.0.unity.client.logo.url }}" alt="">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" class="font-weight-bold text-center text-uppercase">
+                            {{ object.coordinations.all.0.unity.client.name }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="{% if object.external_code %}4{% else %}5{% endif %}">{% translate "PROVA" %}: 
+                            <span class="font-weight-bold text-uppercase">
+                                {{object.name}}
+                                {% if application_randomization_version %} - V{{application_randomization_version.version_number}} {% endif %}
+                            </span>
+                        </td>
+                        {% if object.external_code %}
+                            <td>
+                                {% translate "CÓDIGO" %}:
+                                <span class="font-weight-bold text-uppercase">
+                                    {{ exam.external_code|safe }}
+                                </span>
+                            </td>
+                        {% endif %}
+                    </tr>
+                    <tr>
+                        <td colspan="5">{% translate "ALUNO" %}:
+                            <span class="font-weight-bold text-uppercase">
+                                {% if application_student %}
+                                {{application_student.student.name}}
+                                {% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                    {% if header_full %}
+                        <tr>
+                            <td>{% translate "Nº" %}:
+                                <span class="font-weight-bold">
+                                    {% if application_student %}
+                                    {{application_student.student.enrollment_number}}
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>{% translate "SÉRIE" %}:
+                                <span class="font-weight-bold text-uppercase">
+                                    {% if application_student %}
+                                    {{application_student.get_last_class_student.grade}}
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>{% translate "TURMA" %}:
+                                <span class="font-weight-bold text-uppercase">
+                                    {% if application_student %}
+                                    {{application_student.get_last_class_student.name}}
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>{% translate "TURNO" %}:
+                                <span class="font-weight-bold">
+                                    {% if application_student %}
+                                    -
+                                    {% endif %}
+                                </span>
+                            </td>
+                    
+                        </tr>
+                        <tr>
+                            <td colspan="5">{% translate "PROFESSOR" %}:
+                                {% if application_student %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endif %}
+                </table>
+            {% endif %}
+        </div>
+    </div>
+    {% if object.orientations %}
+        <div class="row m-0 break-inside-avoid">
+            <div class="col-12 text-center mb-3">
+                <span class="font-weight-bold mr-auto">{% translate "ORIENTAÇÕES" %}</span>
+            </div>
+            <div class="col-12 p-0">
+                <table class="table table-bordered">
+                    <tr>
+                        <td>
+                            {{object.orientations|safe}}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+    <article class="exam-content text-justify pd-l-10 pd-r-10">
+        {% if object.get_base_text_location_display == 'Textos base no início do caderno' or object.application.exam.get_base_text_location_display == 'Textos base no início do caderno' %}
+            {% include "dashboard/exams/includes/base_texts/exam_top_bottom.html" %}
+        {% endif %}
+        {% if not randomization %}
+            <template v-for="(knowledgeArea, knowledgeIndex) in knowledgeAreas">
+                <div v-bind:class="[knowledgeArea.subjects[0].questions[0].force_one_column ? 'force-one-column' : '']">
+                    <div class="mb-0 text-muted" v-if="!printConfig.hideKnowledgeAreaName">
+                        ${knowledgeArea.name}
+                    </div>
+                    <template v-for="(subject, subjectIndex) in knowledgeArea.subjects">
+        {% else %}
+            <template v-for="examTeacherSubject in examTeacherSubjects">
+                <h4 class="mb-0 text-muted">
+                    ${examTeacherSubject.name}
+                </h4>
+        {% endif %}
+            <div class="container-exam">
+                {% if object.get_base_text_location_display == 'Textos base por disciplina' or object.application.exam.get_base_text_location_display == 'Textos base por disciplina' %}
+                    {% include "dashboard/exams/includes/base_texts/subjects_top.html" %}
+                {% endif %}
+                {% if not randomization %}
+
+                    <template v-if="{{object.is_english_spanish|lower}}">
+                        <div class="tx-bold tx-20 mt-3" v-if="(knowledgeIndex == 0 && knowledgeArea.subjects.length >= 2 ? subjectIndex <= 1 : knowledgeIndex <= 1) || !printConfig.hideDisciplineName">
+                            ${subject.name}
+                        </div>
+                    </template>
+                    <template v-else>
+                        <div class="tx-bold tx-20 mt-3" v-bind:class="[subject.questions[0].force_one_column ? 'force-one-column' : '']" v-if="!printConfig.hideDisciplineName">
+                            ${subject.name}
+                        </div>
+                    </template>
+
+                    <div class="question mt-3" :class="{ 'force-one-column': question.force_one_column, 'break-inside-avoid': printConfig.forceChoicesWithStatement || question.force_choices_with_statement }"  :id="'question-'+question.id" v-for="question in subject.questions">
+                        <template
+                            v-if="(
+                                (question.force_break_page && question.index !== 1 && subject.questions[0] !== question) ||
+                                (printConfig.breakAllQuestions && question.index !== 1 && subject.questions[0] !== question)
+                            )">
+                            <div class="pagebreak"> </div>
+                        </template>
+                {% else %}
+                    <span class="tx-bold tx-20 mt-3" v-if="!printConfig.hideDisciplineName">${examTeacherSubject.subject.name}</span>
+                    <div class="question mt-3" :class="{ 'force-one-column': question.force_one_column, 'break-inside-avoid': printConfig.forceChoicesWithStatement || question.force_choices_with_statement }"  :id="'question-'+question.id" v-for="question in examTeacherSubject.questions">
+                {% endif %}
+                    <div class="row mb-0" :class="[printConfig.economyMode || printConfig.breakEnunciation || question.break_enunciation ? 'break-inside-auto' : 'break-inside-avoid']">
+                        <div class="col-12 question-number-header">
+                            {% if object.get_base_text_location_display == 'Textos base por questão' or object.application.exam.get_base_text_location_display == 'Textos base por questão' %}
+                                {% include "dashboard/exams/includes/base_texts/per_questions.html" %}
+                            {% endif %}
+                            <div class="row break-inside-avoid mb-0 mt-2" v-if="!printConfig.hideNumbering && !question.number_is_hidden">
+                                <div class="col-12 question-number-title">
+                                    <h5 class="m-0">
+                                        <template v-if="question.number_print">
+                                            <template v-if="printConfig.showQuestionBoard && question.board">(${ question.board })</template>
+                                            {% translate "Questão" %} ${ question.number_print }
+                                            <template v-if="printConfig.showQuestionScore && question.weight">(${parseFloat(question.weight.replace(',','.')).toFixed(2)})</template>
+                                        </template>
+                                    </h5>
+                                    <div class="w-100 m-0">
+                                        <hr class="border-dark border m-0 mb-3">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mb-0 mt-0 question-enunciation">
+                                <div class="col-12">
+                                    {% if print_correct_answers %}<span class="font-weight-bold text-danger">${question.annuled ? "ANULADA" : ""}</span>{% endif %}
+                                    <article id="in-question">
+
+                                        {% include "dashboard/exams/includes/base_texts/text_relation.html" %}
+                        
+                                        <question-enunciation ref="refEnuntiation" :question="question">
+                                        </question-enunciation>
+                                    </article>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <template v-if="!question.print_only_enunciation || !question.number_is_hidden">
+                        <template v-if="question.category == 'Objetiva' || question.category == 'Somatório'">
+                            <div class="row alternatives mb-0"
+                                :class="{
+                                    'break-inside-auto': printConfig.breakAlternatives || question.break_alternatives,
+                                    'break-inside-avoid': !printConfig.breakAlternatives && !question.break_alternatives}"
+                                >
+                                <div class="col-12">
+                                    <div v-if="question.category == 'Objetiva' || question.category == 'Somatório'">
+                                        <small v-if="!printConfig.hideQuestionsReferencies" class="text-muted">{% translate "Alternativas da questão" %} ${question.number_print}</small>
+                                        {% if application_student and answered %}
+                                        <p class="text-success font-weight-bold" style="padding-bottom: 3px;"
+                                            v-if="question.correctAlternatives.includes(question.answerId)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-hand-thumbs-up-fill" viewBox="0 0 16 16">
+                                                <path d="M6.956 1.745C7.021.81 7.908.087 8.864.325l.261.066c.463.116.874.456 1.012.965.22.816.533 2.511.062 4.51a9.84 9.84 0 0 1 .443-.051c.713-.065 1.669-.072 2.516.21.518.173.994.681 1.2 1.273.184.532.16 1.162-.234 1.733.058.119.103.242.138.363.077.27.113.567.113.856 0 .289-.036.586-.113.856-.039.135-.09.273-.16.404.169.387.107.819-.003 1.148a3.163 3.163 0 0 1-.488.901c.054.152.076.312.076.465 0 .305-.089.625-.253.912C13.1 15.522 12.437 16 11.5 16H8c-.605 0-1.07-.081-1.466-.218a4.82 4.82 0 0 1-.97-.484l-.048-.03c-.504-.307-.999-.609-2.068-.722C2.682 14.464 2 13.846 2 13V9c0-.85.685-1.432 1.357-1.615.849-.232 1.574-.787 2.132-1.41.56-.627.914-1.28 1.039-1.639.199-.575.356-1.539.428-2.59z"/>
+                                            </svg>
+                                            O Aluno acertou a resposta
+                                        </p>
+                                        <p class="text-danger font-weight-bold" style="padding-bottom: 3px;" v-else>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-hand-thumbs-down-fill" viewBox="0 0 16 16">
+                                                <path d="M6.956 14.534c.065.936.952 1.659 1.908 1.42l.261-.065a1.378 1.378 0 0 0 1.012-.965c.22-.816.533-2.512.062-4.51.136.02.285.037.443.051.713.065 1.669.071 2.516-.211.518-.173.994-.68 1.2-1.272a1.896 1.896 0 0 0-.234-1.734c.058-.118.103-.242.138-.362.077-.27.113-.568.113-.856 0-.29-.036-.586-.113-.857a2.094 2.094 0 0 0-.16-.403c.169-.387.107-.82-.003-1.149a3.162 3.162 0 0 0-.488-.9c.054-.153.076-.313.076-.465a1.86 1.86 0 0 0-.253-.912C13.1.757 12.437.28 11.5.28H8c-.605 0-1.07.08-1.466.217a4.823 4.823 0 0 0-.97.485l-.048.029c-.504.308-.999.61-2.068.723C2.682 1.815 2 2.434 2 3.279v4c0 .851.685 1.433 1.357 1.616.849.232 1.574.787 2.132 1.41.56.626.914 1.28 1.039 1.638.199.575.356 1.54.428 2.591z"/>
+                                            </svg> 
+                                            O Aluno errou a resposta
+                                        </p>
+                                        {% endif %}
+                                        <table class="table table-striped mb-0">
+                                            <tr class="d-flex align-items-center" v-for="(alternative, index) in question.alternatives" :class="{'break-alternatives': printConfig.breakAlternatives || question.break_alternatives}">
+                                                <div>
+                                                    <td class="pl-0 py-0 d-flex align-items-center w-100" style="border-bottom: 1.5px solid #C2C2C2;">
+                                                    <span
+                                                        class="d-flex align-items-center justify-content-center question-number question-alternative text-uppercase font-weight-bold"
+                                                        v-bind:class="{'alternative-scratched' : alternative.scratched }"
+                                                        :for="'alternative-'+alternative.id">
+                                                        ${generateAlternativeOrder(index, question.category == 'Somatório')}
+                                                    </span>
+                                                    <div>
+                                                        {% if answered or print_correct_answers %}
+                                                        <div v-if="!question.annuled">
+                                                            <h6 class="mt-1 font-weight-bold text-success m-0" v-if="question.correctAlternatives.includes(alternative.id)">
+                                                                <i class="fas fa-thumbs-up"></i>
+
+                                                                <span v-if="alternative.id == question.answerId">Aluno
+                                                                    marcou esta</span>
+                                                                <span v-else>${question.category == 'Somatório' ? 'É correta':'É a correta'}</span>
+                                                            </h6>
+                                                            <h6 class="mt-1 font-weight-bold text-danger m-0" v-else>
+                                                                <span v-if="alternative.id == question.answerId && !question.correctAlternatives.includes(question.answerId)">
+                                                                    <i class="fas fa-thumbs-down"></i>
+                                                                    Aluno marcou esta</span>
+                                                            </h6>
+                                                        </div>
+                                                        {% endif %}
+                                                        <span :for="'alternative-'+alternative.id"
+                                                            v-html="generateAlternativeText(alternative, index)">
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                            
+                                        {% if print_correct_answers %}   
+                                            <table class="table table-striped mt-3">
+                                                <thead>
+                                                    <tr>
+                                                        <td v-if="question.commentedAwnser">Resposta comentada</td>
+                                                        <td v-if="question.teacherFeedback">Feedback do professor</td>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td v-if="question.commentedAwnser" v-html="question.commentedAwnser"></td>
+                                                        <td v-if="question.teacherFeedback" v-html="question.teacherFeedback"></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                        <div class="row mb-0" v-if="!['Objetiva', 'Somatório'].includes(question.category) && !question.print_only_enunciation">
+                            <div class="col-12">
+                                {% if line_textual %}
+                                    <small class="text-muted" v-if="!printConfig.hideQuestionsReferencies  && printConfig.textQuestionFormat">{% translate "Resposta da questão" %} ${ question.number_print }</small>
+                                    <div class="row mt-2 mb-0">
+                                        <div class="col-12 mb-0">
+                                            <template v-for="index in question.quantity_lines">
+                                                <div v-if="printConfig.textQuestionFormat" class="row lines-response discursive-line-height">
+                                                    <template v-if="printConfig.discursiveQuestionSpaceType >= 1">
+                                                        <!-- Lógica separada para melhor legibilidade -->
+                                                        <!-- Se o valor for 1, as linhas pretas não serão impressas; caso contrário, elas serão exibidas -->
+                                                        <div class="col-12" :class="{ 'border-bottom border-dark': printConfig.discursiveQuestionSpaceType == 2  }"></div>
+                                                    </template>
+                                                    <template v-else>
+                                                        <div class="col-12" :class="{ 'border-bottom border-dark': question.text_question_format  }"></div>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div v-if="question.draft_rows_number > 0 " class="draft-area">
+                            <span>{% translate "Área para rascunho/cálculos" %}</span>
+                            <p class="draft-row" v-for="(index) in question.draft_rows_number"></p>
+                        </div>
+                        {% if application_student and answered %}
+                            <div class="row break-inside-avoid mt-0 mb-0">
+                                <div class="col-12" v-if="question.answerId">
+                                    <div v-if="question.category == 'Discursiva'" class="border border-secondary p-2">
+                                        <h6>Resposta do aluno</h6>
+                                        <p> ${question.answerContent}</p>
+                                    </div>
+                                    <div v-else>
+                                        <h6 class="text-danger font-weight-bold">
+                                            O aluno não respondeu esta questão.
+                                        </h6>
+                                    </div>
+                                </div>
+                                <div class="row m-0" v-if="question.answerTeacherFeedback != 'None' && question.answerTeacherFeedback.length > 0">
+                                    <div class="col-12 border border-secondary p-2">
+                                        <span>Anotação do professor:</span>
+                                        <p>
+                                            ${question.answerTeacherFeedback}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </template>
+                    </div> <!-- question -->
+                </div> <!-- container-exam -->
+            {% if not randomization %}
+                    </template>
+                </div>
+            {% endif %}
+        </template>
+        {% if not separate_subjects and object.get_base_text_location_display == 'Textos base no final do caderno' or object.application.exam.get_base_text_location_display == 'Textos base no final do caderno' %}
+            {% include "dashboard/exams/includes/base_texts/exam_top_bottom.html" %}
+        {% endif %}
+    </article>
+</div>

@@ -1,0 +1,38 @@
+ {% load tawkto_hash %}
+ 
+ <!--Start of Tawk.to Script-->
+ <script type="text/javascript">
+     var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
+    
+    {% if user %}
+     Tawk_API.onLoad = function () {
+         Tawk_API.setAttributes({
+             'Escola': '{{user.get_clients.0.name}}',
+             'Vinculo': '{{user.get_user_function}}',
+             {% if user_type == 'student' %}
+                'Turma': '{{user.get_student.get_last_class.name}}',
+                'Matrícula': '{{user.get_student.enrollment_number}}',
+             {% endif %}
+         }, function (error) {});
+     };
+     {% endif %}
+
+     {% if user  %}
+        Tawk_API.visitor = {
+            name : "{{ user.get_user_full_name }}", 
+            email : "{{ user.email }}",
+            hash: "{{ user.email|tawkto_hash }}"
+        };
+     {% endif %}
+
+     (function () {
+         var s1 = document.createElement("script"),
+             s0 = document.getElementsByTagName("script")[0];
+         s1.async = true;
+         s1.src = 'https://embed.tawk.to/610ae1f9d6e7610a49ae9e56/{{widget_id}}';
+         s1.charset = 'UTF-8';
+         s1.setAttribute('crossorigin', '*');
+         s0.parentNode.insertBefore(s1, s0);
+     })();
+ </script>
+ <!--End of Tawk.to Script-->

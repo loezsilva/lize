@@ -1,0 +1,19 @@
+{% load permissions %}
+
+'charts-component': Vue.component('charts-component', {
+  props: ['type'],
+  ref: 'chartsComponent',
+  delimiters: ["#{", "}"],
+  data: function() {
+    return {
+      
+    }
+  },
+  methods: {
+    teste() {
+      alert('testou')
+    }
+  },
+  watch: {
+  }
+})

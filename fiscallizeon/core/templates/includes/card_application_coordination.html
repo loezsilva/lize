@@ -1,0 +1,73 @@
+{% load humanize %}
+
+<div class="card card-event mb-2">
+    <div class="card-body tx-13 p-3">
+        <h4 class="mb-0">
+        <a href="{% url 'applications:applications_monitoring_inspector' application.pk %}">
+            {{application.date|naturalday|capfirst}} às {{application.start}}
+        </a>
+        </h4>
+        {% if application.school_classes.all %}
+            {% for school_class in application.school_classes.all %}
+                <span style="width: 100%; text-overflow: ellipsis; overflow: hidden;" class="badge badge-light">{{ school_class.name }} - {{ school_class.coordination.unity.name }}</span>
+            {% endfor %}<br/>
+        {% endif %}
+        {% if application.subject %}
+            <span class="tx-12 tx-color-03 mt-3">{{application.subject}}</span>
+        {% endif %}
+    </div>
+    <div class="card-footer tx-13 p-3">
+        <span>{{application.count_students}} Alunos</span>
+        
+        <a id="buttom-{{application.pk}}" href="{% url 'applications:applications_monitoring_inspector' application.pk %}" class="btn btn-primary font-weight-bold d-none">
+            <i class="fas fa-search"></i> Monitorar
+        </a>
+
+        <span id="span-count-down-{{application.pk}}" class="d-none">
+            <span class="text-muted">Liberação em:</span>
+            <h5 id="count-down-{{application.pk}}" class="font-weight-bold text-right">
+                -
+            </h5>
+        </span>
+    </div>
+</div> 
+
+<script>
+function countDown(){
+    var time = ""
+
+    $("#span-count-down-{{application.pk}}").toggleClass("d-none");
+
+    var countDownDate = moment("{{application.date_time_clean_room|date:'Y-m-d H:i:s'}}", 'YYYY-MM-DD HH:mm:ss').toDate().getTime()
+
+    var now_datetime = moment("{% now 'Y-m-d H:i:s' %}", 'YYYY-MM-DD HH:mm:ss')
+
+    var x = setInterval(function() {
+    
+    now = now_datetime.toDate().getTime()
+
+    var distance = countDownDate - now;
+
+    var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+    time = ('0' + hours).slice(-2) + ":" + ('0' + minutes).slice(-2) + ":" + ('0' + seconds).slice(-2);
+
+    $("#count-down-{{application.pk}}").html(time)
+
+    now_datetime = now_datetime.add(1, 'seconds')
+    
+    if (distance < 0) {
+        clearInterval(x);
+
+        $("#span-count-down-{{application.pk}}").toggleClass("d-none");
+        $("#buttom-{{application.pk}}").toggleClass("d-none");
+    }
+
+
+    }, 1000);
+}
+
+countDown();
+</script>
